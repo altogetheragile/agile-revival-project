@@ -8,6 +8,7 @@ export interface Testimonial {
   content: string;
   linkedinUrl?: string;
   imageUrl?: string;
+  isLinkedIn?: boolean;
 }
 
 export const testimonials: Testimonial[] = [

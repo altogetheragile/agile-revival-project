@@ -29,7 +29,10 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({ testimonial }) => {
         
         <div className="flex-1">
           <p className="font-semibold text-gray-800">{testimonial.name}</p>
-          <p className="text-sm text-gray-600">{testimonial.role}, {testimonial.company}</p>
+          <p className="text-sm text-gray-600">
+            {testimonial.role}
+            {testimonial.company ? `, ${testimonial.company}` : ''}
+          </p>
         </div>
         
         {testimonial.linkedinUrl && (
@@ -44,6 +47,13 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({ testimonial }) => {
           </a>
         )}
       </div>
+      
+      {testimonial.isLinkedIn && (
+        <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400 flex items-center">
+          <Linkedin size={12} className="mr-1" />
+          <span>From LinkedIn</span>
+        </div>
+      )}
     </Card>
   );
 };

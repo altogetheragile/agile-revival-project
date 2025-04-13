@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { MessageSquare } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TestimonialsCarousel from '@/components/testimonials/TestimonialsCarousel';
 
 const TestimonialsSection = () => {
