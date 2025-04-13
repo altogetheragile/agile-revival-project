@@ -9,14 +9,18 @@ export const useLinkedInRecommendations = () => {
   const { toast } = useToast();
   const checkerRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
+  const cleanupFnRef = useRef<(() => void) | null>(null);
   
   const loadLinkedInRecommendations = async () => {
     try {
       setLoading(true);
       console.log("Loading LinkedIn recommendations with new approach");
       
-      // Initialize SociableKIT
-      await initSociableKit();
+      // Initialize SociableKIT - Store the cleanup function
+      if (cleanupFnRef.current) {
+        cleanupFnRef.current(); // Call previous cleanup if it exists
+      }
+      cleanupFnRef.current = initSociableKit();
       
       // Clear any existing interval
       if (checkerRef.current) {
@@ -74,15 +78,6 @@ export const useLinkedInRecommendations = () => {
         variant: "destructive"
       });
     }
-    
-    // Return cleanup function
-    return () => {
-      mountedRef.current = false;
-      if (checkerRef.current) {
-        clearInterval(checkerRef.current);
-        checkerRef.current = null;
-      }
-    };
   };
   
   useEffect(() => {
@@ -90,6 +85,10 @@ export const useLinkedInRecommendations = () => {
       mountedRef.current = false;
       if (checkerRef.current) {
         clearInterval(checkerRef.current);
+      }
+      if (cleanupFnRef.current) {
+        cleanupFnRef.current();
+        cleanupFnRef.current = null;
       }
     };
   }, []);

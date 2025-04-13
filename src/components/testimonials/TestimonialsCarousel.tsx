@@ -21,6 +21,7 @@ const TestimonialsCarousel = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const loadAttemptRef = useRef(0);
+  const cleanupFnRef = useRef<(() => void) | null>(null);
 
   const loadLinkedInTestimonials = () => {
     setLoading(true);
@@ -51,7 +52,11 @@ const TestimonialsCarousel = () => {
     document.body.appendChild(hiddenContainer);
     
     // Initialize SociableKit to load the widget into the hidden container
-    const cleanup = initSociableKit();
+    // Store the cleanup function reference
+    if (cleanupFnRef.current) {
+      cleanupFnRef.current(); // Call previous cleanup if it exists
+    }
+    cleanupFnRef.current = initSociableKit();
     
     // Set a longer timeout for LinkedIn to respond (20 seconds)
     const timeoutDuration = 20000; 
@@ -71,7 +76,9 @@ const TestimonialsCarousel = () => {
       if (hiddenContainer.parentNode) {
         hiddenContainer.parentNode.removeChild(hiddenContainer);
       }
-      cleanup();
+      if (cleanupFnRef.current) {
+        cleanupFnRef.current();
+      }
     }, timeoutDuration);
     
     // Use a MutationObserver to detect when LinkedIn recommendations are loaded
@@ -131,7 +138,9 @@ const TestimonialsCarousel = () => {
         if (hiddenContainer.parentNode) {
           hiddenContainer.parentNode.removeChild(hiddenContainer);
         }
-        cleanup();
+        if (cleanupFnRef.current) {
+          cleanupFnRef.current();
+        }
       }
     });
     
@@ -147,14 +156,27 @@ const TestimonialsCarousel = () => {
         hiddenContainer.parentNode.removeChild(hiddenContainer);
       }
       
-      cleanup();
+      if (cleanupFnRef.current) {
+        cleanupFnRef.current();
+      }
     };
   };
   
   // Load LinkedIn testimonials on component mount
   useEffect(() => {
-    const cleanupFn = loadLinkedInTestimonials();
-    return cleanupFn;
+    const cleanup = loadLinkedInTestimonials();
+    
+    // Cleanup on unmount
+    return () => {
+      if (cleanup) {
+        cleanup();
+      }
+      // Make sure we also call our stored cleanup function
+      if (cleanupFnRef.current) {
+        cleanupFnRef.current();
+        cleanupFnRef.current = null;
+      }
+    };
   }, []);
   
   return (

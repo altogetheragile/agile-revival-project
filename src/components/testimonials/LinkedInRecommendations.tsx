@@ -19,6 +19,7 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
   const { toast } = useToast();
   const checkerRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
+  const cleanupFnRef = useRef<(() => void) | null>(null);
   
   // Function to check if widget is loaded
   const checkWidgetLoaded = () => {
@@ -77,13 +78,18 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
   };
   
   // Load the LinkedIn recommendations
-  const loadRecommendations = async () => {
+  const loadRecommendations = () => {
     if (!isActive || !containerRef.current) return;
     
     try {
       setLoading(true);
       setError(null);
       setLoaded(false);
+      
+      // Clean up previous
+      if (cleanupFnRef.current) {
+        cleanupFnRef.current();
+      }
       
       // Clear any previous container content
       if (containerRef.current) {
@@ -94,7 +100,7 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
       }
       
       // Initialize SociableKit
-      await initSociableKit();
+      cleanupFnRef.current = initSociableKit();
       
       // Setup polling to check if widget loaded
       setupLoadChecker();
@@ -123,6 +129,10 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
       if (checkerRef.current) {
         clearInterval(checkerRef.current);
         checkerRef.current = null;
+      }
+      if (cleanupFnRef.current) {
+        cleanupFnRef.current();
+        cleanupFnRef.current = null;
       }
     };
   }, [isActive]);
