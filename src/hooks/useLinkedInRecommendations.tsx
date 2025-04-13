@@ -1,56 +1,70 @@
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { initSociableKit, isLinkedInRecommendationsReady } from '@/utils/sociableKitLoader';
+import { initSociableKit, isWidgetLoaded } from '@/utils/sociableKitLoader';
 
 export const useLinkedInRecommendations = () => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [linkedInLoaded, setLinkedInLoaded] = useState(false);
   const { toast } = useToast();
+  const checkerRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
   
-  const loadLinkedInRecommendations = () => {
+  const loadLinkedInRecommendations = async () => {
     try {
       setLoading(true);
-      console.log("Initializing LinkedIn recommendations widget");
+      console.log("Loading LinkedIn recommendations with new approach");
       
-      // Initialize SociableKIT for LinkedIn recommendations
-      const cleanup = initSociableKit();
+      // Initialize SociableKIT
+      await initSociableKit();
       
-      // Check if LinkedIn widget is loaded every second for up to 10 seconds
+      // Clear any existing interval
+      if (checkerRef.current) {
+        clearInterval(checkerRef.current);
+      }
+      
+      // Check immediately
+      if (isWidgetLoaded()) {
+        setLinkedInLoaded(true);
+        setLoading(false);
+        return;
+      }
+      
+      // Set up interval to check every second for up to 20 seconds
       let attempts = 0;
-      const maxAttempts = 10;
-      let checkInterval: number | null = null;
+      const maxAttempts = 20;
       
-      checkInterval = window.setInterval(() => {
+      checkerRef.current = window.setInterval(() => {
         attempts++;
-        const isReady = isLinkedInRecommendationsReady();
-        console.log(`Checking if widget is ready (attempt ${attempts}/${maxAttempts}): ${isReady ? 'Yes' : 'No'}`);
+        const isReady = isWidgetLoaded();
+        console.log(`Checking if LinkedIn widget is ready (attempt ${attempts}/${maxAttempts}): ${isReady ? 'Yes' : 'No'}`);
         
         if (isReady || attempts >= maxAttempts) {
-          if (checkInterval !== null) {
-            window.clearInterval(checkInterval);
-          }
-          setLinkedInLoaded(isReady);
-          setLoading(false);
+          clearInterval(checkerRef.current!);
+          checkerRef.current = null;
           
-          if (attempts >= maxAttempts && !isReady) {
-            console.error("LinkedIn widget failed to load after maximum attempts");
-            toast({
-              title: "LinkedIn Widget Error",
-              description: "There was an issue loading LinkedIn recommendations. Local testimonials are still available.",
-              variant: "destructive"
-            });
+          if (mountedRef.current) {
+            setLinkedInLoaded(isReady);
+            setLoading(false);
+            
+            if (attempts >= maxAttempts && !isReady) {
+              console.error("LinkedIn widget failed to load after maximum attempts");
+              toast({
+                title: "LinkedIn Widget Error",
+                description: "There was an issue loading LinkedIn recommendations. Local testimonials are still available.",
+                variant: "destructive"
+              });
+            } else if (isReady) {
+              toast({
+                title: "LinkedIn Recommendations",
+                description: "LinkedIn recommendations loaded successfully.",
+                variant: "default"
+              });
+            }
           }
         }
       }, 1000);
       
-      // Return a synchronous cleanup function
-      return () => {
-        if (checkInterval !== null) {
-          window.clearInterval(checkInterval);
-        }
-        cleanup(); // Call the cleanup function from initSociableKit
-      };
     } catch (error) {
       console.error("Error loading LinkedIn recommendations:", error);
       setLoading(false);
@@ -59,9 +73,26 @@ export const useLinkedInRecommendations = () => {
         description: "There was an issue loading LinkedIn recommendations. Local testimonials are still available.",
         variant: "destructive"
       });
-      return () => {}; // Return empty cleanup function in case of error
     }
+    
+    // Return cleanup function
+    return () => {
+      mountedRef.current = false;
+      if (checkerRef.current) {
+        clearInterval(checkerRef.current);
+        checkerRef.current = null;
+      }
+    };
   };
+  
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      if (checkerRef.current) {
+        clearInterval(checkerRef.current);
+      }
+    };
+  }, []);
   
   return {
     loading,

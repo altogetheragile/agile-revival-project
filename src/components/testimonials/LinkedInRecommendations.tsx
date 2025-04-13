@@ -4,8 +4,8 @@ import { Linkedin, RefreshCw, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { initSociableKit, isLinkedInRecommendationsReady } from '@/utils/sociableKitLoader';
 import { Button } from '@/components/ui/button';
+import { initSociableKit, createWidgetContainer, isWidgetLoaded } from '@/utils/sociableKitLoader';
 
 interface LinkedInRecommendationsProps {
   isActive: boolean;
@@ -13,113 +13,123 @@ interface LinkedInRecommendationsProps {
 
 const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => {
   const [loading, setLoading] = useState(true);
-  const [linkedInLoaded, setLinkedInLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const linkedInContainerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const checkerRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
   
-  useEffect(() => {
-    if (!isActive) return;
+  // Function to check if widget is loaded
+  const checkWidgetLoaded = () => {
+    if (!mountedRef.current) return;
     
-    let cleanup: () => void;
-    
-    const loadWidget = () => {
-      try {
-        setLoading(true);
-        setError(null);
-        console.log("Initializing LinkedIn recommendations widget with direct approach");
-        
-        // Initialize SociableKIT for LinkedIn recommendations
-        cleanup = initSociableKit();
-        
-        // Check if LinkedIn widget is loaded every second for up to 15 seconds
-        let attempts = 0;
-        const maxAttempts = 15;
-        
-        const checkInterval = setInterval(() => {
-          attempts++;
-          const isReady = isLinkedInRecommendationsReady();
-          console.log(`Checking if widget is ready (attempt ${attempts}/${maxAttempts}): ${isReady ? 'Yes' : 'No'}`);
-          
-          if (isReady || attempts >= maxAttempts) {
-            clearInterval(checkInterval);
-            setLinkedInLoaded(isReady);
-            setLoading(false);
-            
-            if (attempts >= maxAttempts && !isReady) {
-              console.error("LinkedIn widget failed to load after maximum attempts");
-              setError("LinkedIn recommendations could not be loaded");
-              toast({
-                title: "LinkedIn Widget Error",
-                description: "There was an issue loading LinkedIn recommendations. Please try again.",
-                variant: "destructive"
-              });
-            }
-          }
-        }, 1000);
-        
-        return () => {
-          clearInterval(checkInterval);
-        };
-      } catch (error) {
-        console.error("Error loading LinkedIn recommendations:", error);
-        setLoading(false);
-        setError("Error initializing LinkedIn recommendations");
-        toast({
-          title: "LinkedIn Widget Error",
-          description: "There was an issue loading LinkedIn recommendations.",
-          variant: "destructive"
-        });
-        return () => {};
+    const isLoaded = isWidgetLoaded();
+    if (isLoaded) {
+      setLoaded(true);
+      setLoading(false);
+      setError(null);
+      if (checkerRef.current) {
+        clearInterval(checkerRef.current);
+        checkerRef.current = null;
       }
-    };
-    
-    const intervalCleanup = loadWidget();
-    
-    return () => {
-      if (intervalCleanup) {
-        intervalCleanup();
-      }
-      if (cleanup) {
-        cleanup();
-      }
-    };
-  }, [isActive, toast]);
+    }
+    return isLoaded;
+  };
   
-  const reloadLinkedInRecommendations = () => {
-    setLinkedInLoaded(false);
-    setLoading(true);
-    setError(null);
+  // Setup polling for widget load
+  const setupLoadChecker = () => {
+    // Clear any existing interval
+    if (checkerRef.current) {
+      clearInterval(checkerRef.current);
+    }
     
-    // This timeout ensures the DOM elements are properly reset before attempting to reload
-    setTimeout(() => {
-      const cleanup = initSociableKit();
+    // Check immediately
+    if (checkWidgetLoaded()) return;
+    
+    // Set up interval to check every 1.5 seconds
+    let attempts = 0;
+    const maxAttempts = 15; // 22.5 seconds total
+    
+    checkerRef.current = window.setInterval(() => {
+      attempts++;
       
-      // Check if LinkedIn widget is loaded every second for up to 15 seconds
-      let attempts = 0;
-      const maxAttempts = 15;
-      
-      const checkInterval = setInterval(() => {
-        attempts++;
-        const isReady = isLinkedInRecommendationsReady();
-        
-        if (isReady || attempts >= maxAttempts) {
-          clearInterval(checkInterval);
-          setLinkedInLoaded(isReady);
+      if (checkWidgetLoaded() || attempts >= maxAttempts) {
+        // If reached max attempts and still not loaded
+        if (attempts >= maxAttempts && !isWidgetLoaded() && mountedRef.current) {
+          console.error("LinkedIn widget failed to load after maximum attempts");
+          setError("LinkedIn recommendations could not be loaded");
           setLoading(false);
-          
-          if (attempts >= maxAttempts && !isReady) {
-            console.error("LinkedIn widget failed to load after maximum attempts");
-            setError("LinkedIn recommendations could not be loaded");
-            toast({
-              title: "LinkedIn Widget Error",
-              description: "There was an issue loading LinkedIn recommendations. Please try again later.",
-              variant: "destructive"
-            });
-          }
+          toast({
+            title: "LinkedIn Widget Error",
+            description: "There was an issue loading LinkedIn recommendations. Please try again later.",
+            variant: "destructive"
+          });
         }
-      }, 1000);
-    }, 500);
+        
+        // Clear the interval either way
+        if (checkerRef.current) {
+          clearInterval(checkerRef.current);
+          checkerRef.current = null;
+        }
+      }
+    }, 1500);
+  };
+  
+  // Load the LinkedIn recommendations
+  const loadRecommendations = async () => {
+    if (!isActive || !containerRef.current) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      setLoaded(false);
+      
+      // Clear any previous container content
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+        
+        // Create widget container inside our ref container
+        createWidgetContainer(containerRef.current);
+      }
+      
+      // Initialize SociableKit
+      await initSociableKit();
+      
+      // Setup polling to check if widget loaded
+      setupLoadChecker();
+      
+    } catch (error) {
+      console.error("Error loading LinkedIn recommendations:", error);
+      setLoading(false);
+      setError("Error initializing LinkedIn recommendations");
+      toast({
+        title: "LinkedIn Widget Error",
+        description: "There was an issue loading LinkedIn recommendations.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Initial load
+  useEffect(() => {
+    if (isActive) {
+      loadRecommendations();
+    }
+    
+    // Cleanup function
+    return () => {
+      mountedRef.current = false;
+      if (checkerRef.current) {
+        clearInterval(checkerRef.current);
+        checkerRef.current = null;
+      }
+    };
+  }, [isActive]);
+  
+  // Handle manual reload
+  const handleRetryLoad = () => {
+    loadRecommendations();
   };
 
   if (loading && isActive) {
@@ -145,9 +155,9 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
         </h3>
       </div>
       
-      <div ref={linkedInContainerRef} className="sk-ww-linkedin-recommendations" data-embed-id="166933"></div>
+      <div ref={containerRef} className="linkedin-container min-h-[200px]"></div>
       
-      {!linkedInLoaded && !loading && (
+      {!loaded && !loading && error && (
         <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
           <Alert variant="destructive" className="max-w-lg mx-auto bg-red-50 mb-4">
             <AlertDescription>
@@ -156,7 +166,7 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
           </Alert>
           
           <Button 
-            onClick={reloadLinkedInRecommendations} 
+            onClick={handleRetryLoad} 
             className="mt-2 bg-green-600 text-white hover:bg-green-700 flex items-center gap-2 mx-auto"
           >
             <RefreshCw className="h-4 w-4" />
