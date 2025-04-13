@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const WorkshopFeedbackSection = () => {
   const [loading, setLoading] = useState(true);
+  const apiKey = 'YOUR_API_KEY'; // Replace this with a secure method of storing the key
 
   useEffect(() => {
     // Workshop Butler script injection
@@ -54,7 +55,7 @@ const WorkshopFeedbackSection = () => {
         {/* Workshop Butler testimonials widget */}
         <div 
           className="wsb-testimonials" 
-          data-api-key="YOUR_API_KEY"
+          data-api-key={apiKey}
           data-type="recommendations"
           data-theme="light"
           data-max="6">
