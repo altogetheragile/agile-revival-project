@@ -1,5 +1,5 @@
 
-import { Activity, Compass, BarChart3, Users, Laptop, PuzzlePiece } from "lucide-react";
+import { Activity, Compass, BarChart3, Users, Laptop, Puzzle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const ServiceCard = ({ title, description, icon: Icon }) => {
@@ -47,7 +47,7 @@ const ServicesSection = () => {
     {
       title: "Custom Agile Solutions",
       description: "Tailored agile approaches designed to address your unique challenges.",
-      icon: PuzzlePiece
+      icon: Puzzle
     }
   ];
 
