@@ -23,11 +23,9 @@ const TestimonialsCarousel = () => {
   const loadAttemptRef = useRef(0);
   const cleanupFnRef = useRef<(() => void) | null>(null);
   
-  // Use our new hook to fetch testimonials
   const { testimonials: supabaseTestimonials, isLoading: isLoadingSupabase, error: supabaseError } = useTestimonials();
   const [allTestimonials, setAllTestimonials] = useState<Testimonial[]>(supabaseTestimonials.length > 0 ? supabaseTestimonials : localTestimonials);
   
-  // Update testimonials when supabaseTestimonials change
   useEffect(() => {
     if (supabaseTestimonials && supabaseTestimonials.length > 0) {
       setAllTestimonials(supabaseTestimonials);
@@ -42,7 +40,6 @@ const TestimonialsCarousel = () => {
     
     console.log(`Loading LinkedIn testimonials (attempt ${currentAttempt})...`);
     
-    // Create a hidden container for LinkedIn recommendations
     const hiddenContainer = document.createElement('div');
     hiddenContainer.id = 'linkedin-hidden-container';
     hiddenContainer.className = 'sk-ww-linkedin-recommendations';
@@ -53,26 +50,21 @@ const TestimonialsCarousel = () => {
     hiddenContainer.style.height = '500px';
     hiddenContainer.style.overflow = 'hidden';
     
-    // Remove any existing hidden containers
     const existingContainer = document.getElementById('linkedin-hidden-container');
     if (existingContainer && existingContainer.parentNode) {
       existingContainer.parentNode.removeChild(existingContainer);
     }
     
-    // Add the new container to the body
     document.body.appendChild(hiddenContainer);
     
-    // Initialize SociableKit to load the widget into the hidden container
-    // Store the cleanup function reference
     if (cleanupFnRef.current) {
-      cleanupFnRef.current(); // Call previous cleanup if it exists
+      cleanupFnRef.current();
     }
     cleanupFnRef.current = initSociableKit();
     
-    // Set a longer timeout for LinkedIn to respond (20 seconds)
     const timeoutDuration = 20000; 
     const timeout = setTimeout(() => {
-      if (currentAttempt !== loadAttemptRef.current) return; // Skip if newer attempt in progress
+      if (currentAttempt !== loadAttemptRef.current) return;
       
       console.log("LinkedIn recommendations loading timed out");
       setLoading(false);
@@ -92,11 +84,9 @@ const TestimonialsCarousel = () => {
       }
     }, timeoutDuration);
     
-    // Use a MutationObserver to detect when LinkedIn recommendations are loaded
     const observer = new MutationObserver((mutations) => {
-      if (currentAttempt !== loadAttemptRef.current) return; // Skip if newer attempt in progress
+      if (currentAttempt !== loadAttemptRef.current) return;
       
-      // Check if LinkedIn items are loaded
       const recommendations = document.querySelectorAll('.sk-ww-linkedin-recommendations-item');
       
       if (recommendations && recommendations.length > 0) {
@@ -104,7 +94,6 @@ const TestimonialsCarousel = () => {
         clearTimeout(timeout);
         
         try {
-          // Convert LinkedIn recommendations to our Testimonial format
           const linkedInTestimonials: Testimonial[] = Array.from(recommendations).map((element, index) => {
             const nameElement = element.querySelector('.sk-ww-linkedin-recommendations-reviewer-name');
             const titleElement = element.querySelector('.sk-ww-linkedin-recommendations-reviewer-title');
@@ -125,8 +114,7 @@ const TestimonialsCarousel = () => {
           });
           
           if (linkedInTestimonials.length > 0) {
-            // Combine with local testimonials
-            setAllTestimonials([...testimonials, ...linkedInTestimonials]);
+            setAllTestimonials([...allTestimonials, ...linkedInTestimonials]);
             setErrorMessage(null);
             
             toast({
@@ -145,7 +133,6 @@ const TestimonialsCarousel = () => {
         observer.disconnect();
         setLoading(false);
         
-        // Clean up the hidden container
         if (hiddenContainer.parentNode) {
           hiddenContainer.parentNode.removeChild(hiddenContainer);
         }
@@ -155,10 +142,8 @@ const TestimonialsCarousel = () => {
       }
     });
     
-    // Start observing the entire document for LinkedIn elements
     observer.observe(document.body, { childList: true, subtree: true });
     
-    // Return cleanup function
     return () => {
       clearTimeout(timeout);
       observer.disconnect();
@@ -173,16 +158,13 @@ const TestimonialsCarousel = () => {
     };
   };
   
-  // Load LinkedIn testimonials on component mount
   useEffect(() => {
     const cleanup = loadLinkedInTestimonials();
     
-    // Cleanup on unmount
     return () => {
       if (cleanup) {
         cleanup();
       }
-      // Make sure we also call our stored cleanup function
       if (cleanupFnRef.current) {
         cleanupFnRef.current();
         cleanupFnRef.current = null;
@@ -190,7 +172,6 @@ const TestimonialsCarousel = () => {
     };
   }, []);
   
-  // Show loader while fetching from Supabase
   if (isLoadingSupabase) {
     return (
       <div className="px-4 md:px-10 py-6 flex justify-center items-center min-h-[300px]">
@@ -202,7 +183,6 @@ const TestimonialsCarousel = () => {
     );
   }
   
-  // Show error if Supabase fetch failed
   if (supabaseError) {
     return (
       <div className="px-4 md:px-10 py-6">
