@@ -36,6 +36,7 @@ export const initSociableKit = () => {
   sociableKitScript.src = "https://widgets.sociablekit.com/linkedin-recommendations/widget.js";
   sociableKitScript.async = true;
   sociableKitScript.defer = true;
+  sociableKitScript.setAttribute('data-embed-id', '166933');
   document.body.appendChild(sociableKitScript);
   
   // Mark as loaded

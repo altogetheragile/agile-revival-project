@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { initSociableKit, isLinkedInRecommendationsReady } from '@/utils/sociableKitLoader';
 
@@ -19,14 +19,17 @@ export const useLinkedInRecommendations = () => {
       // Check if LinkedIn widget is loaded every second for up to 10 seconds
       let attempts = 0;
       const maxAttempts = 10;
+      let checkInterval: number | null = null;
       
-      const checkInterval = setInterval(() => {
+      checkInterval = window.setInterval(() => {
         attempts++;
         const isReady = isLinkedInRecommendationsReady();
         console.log(`Checking if widget is ready (attempt ${attempts}/${maxAttempts}): ${isReady ? 'Yes' : 'No'}`);
         
         if (isReady || attempts >= maxAttempts) {
-          clearInterval(checkInterval);
+          if (checkInterval !== null) {
+            window.clearInterval(checkInterval);
+          }
           setLinkedInLoaded(isReady);
           setLoading(false);
           
@@ -43,7 +46,9 @@ export const useLinkedInRecommendations = () => {
       
       // Return a synchronous cleanup function
       return () => {
-        clearInterval(checkInterval);
+        if (checkInterval !== null) {
+          window.clearInterval(checkInterval);
+        }
         cleanup(); // Call the cleanup function from initSociableKit
       };
     } catch (error) {

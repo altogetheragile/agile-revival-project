@@ -1,6 +1,6 @@
 
 import { useRef, useState, useEffect } from 'react';
-import { Linkedin } from 'lucide-react';
+import { Linkedin, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { initSociableKit, isLinkedInRecommendationsReady } from '@/utils/sociableKitLoader';
@@ -18,7 +18,7 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
   useEffect(() => {
     if (!isActive) return;
     
-    let cleanup: () => void = () => {};
+    let cleanup: () => void;
     
     const loadWidget = () => {
       try {
@@ -44,7 +44,11 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
             
             if (attempts >= maxAttempts && !isReady) {
               console.error("LinkedIn widget failed to load after maximum attempts");
-              throw new Error("LinkedIn recommendations widget failed to load");
+              toast({
+                title: "LinkedIn Widget Error",
+                description: "There was an issue loading LinkedIn recommendations. Please try again.",
+                variant: "destructive"
+              });
             }
           }
         }, 1000);
@@ -60,16 +64,17 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
           description: "There was an issue loading LinkedIn recommendations. Local testimonials are still available.",
           variant: "destructive"
         });
+        return () => {};
       }
     };
     
-    const widgetLoader = loadWidget();
+    const intervalCleanup = loadWidget();
     
     return () => {
-      if (widgetLoader && typeof widgetLoader === 'function') {
-        widgetLoader();
+      if (intervalCleanup) {
+        intervalCleanup();
       }
-      if (cleanup && typeof cleanup === 'function') {
+      if (cleanup) {
         cleanup();
       }
     };
@@ -136,8 +141,9 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
           <p className="text-gray-500">LinkedIn recommendations are currently unavailable.</p>
           <button 
             onClick={loadLinkedInRecommendations} 
-            className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 mx-auto"
           >
+            <RefreshCw className="h-4 w-4" />
             Retry Loading
           </button>
         </div>
