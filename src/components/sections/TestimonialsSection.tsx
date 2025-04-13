@@ -21,7 +21,7 @@ const TestimonialsSection = () => {
   const linkedInContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
-  const loadLinkedInRecommendations = async () => {
+  const loadLinkedInRecommendations = () => {
     try {
       setLoading(true);
       console.log("Initializing LinkedIn recommendations widget");
@@ -50,7 +50,10 @@ const TestimonialsSection = () => {
         }
       }, 1000);
       
-      return cleanupFn;
+      return () => {
+        clearInterval(checkInterval);
+        if (cleanupFn) cleanupFn();
+      };
     } catch (error) {
       console.error("Error loading LinkedIn recommendations:", error);
       setLoading(false);
@@ -59,23 +62,22 @@ const TestimonialsSection = () => {
         description: "There was an issue loading LinkedIn recommendations. Local testimonials are still available.",
         variant: "destructive"
       });
+      return () => {}; // Return empty cleanup function in case of error
     }
   };
   
   // Initialize LinkedIn recommendations widget when the component mounts
   // or when the LinkedIn tab is selected
   useEffect(() => {
-    let cleanupFn: (() => void) | undefined;
+    let cleanup = () => {};
     
     if (activeTab === "linkedin" || activeTab === "all") {
-      cleanupFn = loadLinkedInRecommendations();
+      cleanup = loadLinkedInRecommendations();
     }
     
     // Clean up on component unmount or tab change
-    return () => {
-      if (cleanupFn) cleanupFn();
-    };
-  }, [activeTab, toast]);
+    return cleanup;
+  }, [activeTab]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
