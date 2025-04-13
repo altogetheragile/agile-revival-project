@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const WorkshopFeedbackSection = () => {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const apiKey = 'pk_iZTowfIlTpReqCFZlaXf9bTwHOcn2OERmKBkE2pTcyMAKQSpwdys7GhGPzsX5JgN';
 
   useEffect(() => {
@@ -13,12 +15,29 @@ const WorkshopFeedbackSection = () => {
     script.async = true;
     script.defer = true;
     
-    script.onload = () => {
+    const handleScriptLoad = () => {
       // Initialize the widget after script is loaded
       if (window.WorkshopButlerWidget) {
-        window.WorkshopButlerWidget.init();
-        setLoading(false);
+        try {
+          console.log("Workshop Butler widget found, initializing...");
+          window.WorkshopButlerWidget.init();
+          setLoading(false);
+        } catch (e) {
+          console.error("Error initializing Workshop Butler widget:", e);
+          setError("Failed to initialize Workshop Butler widget");
+        }
+      } else {
+        console.error("Workshop Butler widget not found after script load");
+        setError("Workshop Butler widget not available");
       }
+    };
+    
+    script.onload = handleScriptLoad;
+    
+    script.onerror = () => {
+      console.error("Failed to load Workshop Butler script");
+      setError("Failed to load Workshop Butler widget");
+      setLoading(false);
     };
     
     document.body.appendChild(script);
@@ -30,6 +49,9 @@ const WorkshopFeedbackSection = () => {
       }
     };
   }, []);
+
+  // Add console log to check if the component is rendering
+  console.log("Rendering WorkshopFeedbackSection, loading:", loading, "error:", error);
 
   return (
     <section id="workshop-feedback" className="section-container bg-gradient-to-br from-blue-100 to-white py-16">
@@ -48,6 +70,10 @@ const WorkshopFeedbackSection = () => {
                 <Skeleton className="h-4 w-1/2" />
               </Card>
             ))}
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 text-center text-red-700">
+            {error}. Please try refreshing the page.
           </div>
         ) : null}
         

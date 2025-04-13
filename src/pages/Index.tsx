@@ -15,9 +15,25 @@ import { initWorkshopButler } from '@/utils/workshopButlerLoader';
 const Index = () => {
   // Initialize SociableKIT and Workshop Butler on page load
   useEffect(() => {
-    const cleanupSociableKit = initSociableKit();
-    const cleanupWorkshopButler = initWorkshopButler();
+    let cleanupSociableKit: (() => void) | undefined;
+    let cleanupWorkshopButler: (() => void) | undefined;
     
+    const initWidgets = async () => {
+      try {
+        // Initialize SociableKIT
+        cleanupSociableKit = initSociableKit();
+        
+        // Initialize Workshop Butler with enhanced error handling
+        cleanupWorkshopButler = await initWorkshopButler();
+        console.log("Widgets initialization complete");
+      } catch (error) {
+        console.error("Error initializing widgets:", error);
+      }
+    };
+    
+    initWidgets();
+    
+    // Clean up on component unmount
     return () => {
       if (cleanupSociableKit) cleanupSociableKit();
       if (cleanupWorkshopButler) cleanupWorkshopButler();
