@@ -17,53 +17,74 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 const TestimonialsSection = () => {
   const [loading, setLoading] = useState(true);
   const [linkedInLoaded, setLinkedInLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
   const linkedInContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
-  // Initialize LinkedIn recommendations widget
-  useEffect(() => {
-    let cleanupSociableKit: (() => void) | undefined;
-    
-    const loadLinkedInRecommendations = async () => {
-      try {
-        setLoading(true);
+  const loadLinkedInRecommendations = async () => {
+    try {
+      setLoading(true);
+      console.log("Initializing LinkedIn recommendations widget");
+      
+      // Initialize SociableKIT for LinkedIn recommendations
+      const cleanupFn = initSociableKit();
+      
+      // Check if LinkedIn widget is loaded every second for up to 10 seconds
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      const checkInterval = setInterval(() => {
+        attempts++;
+        const isReady = isLinkedInRecommendationsReady();
+        console.log(`Checking if widget is ready (attempt ${attempts}/${maxAttempts}): ${isReady ? 'Yes' : 'No'}`);
         
-        // Initialize SociableKIT for LinkedIn recommendations
-        cleanupSociableKit = initSociableKit();
-        
-        // Check if LinkedIn widget is loaded every second for 10 seconds max
-        let attempts = 0;
-        const checkInterval = setInterval(() => {
-          if (isLinkedInRecommendationsReady() || attempts >= 10) {
-            clearInterval(checkInterval);
-            setLinkedInLoaded(isLinkedInRecommendationsReady());
-            setLoading(false);
-            
-            if (attempts >= 10 && !isLinkedInRecommendationsReady()) {
-              throw new Error("LinkedIn recommendations widget failed to load");
-            }
+        if (isReady || attempts >= maxAttempts) {
+          clearInterval(checkInterval);
+          setLinkedInLoaded(isReady);
+          setLoading(false);
+          
+          if (attempts >= maxAttempts && !isReady) {
+            console.error("LinkedIn widget failed to load after maximum attempts");
+            throw new Error("LinkedIn recommendations widget failed to load");
           }
-          attempts++;
-        }, 1000);
-        
-      } catch (error) {
-        console.error("Error loading LinkedIn recommendations:", error);
-        setLoading(false);
-        toast({
-          title: "LinkedIn Widget Error",
-          description: "There was an issue loading LinkedIn recommendations. Local testimonials are still available.",
-          variant: "destructive"
-        });
-      }
-    };
+        }
+      }, 1000);
+      
+      return cleanupFn;
+    } catch (error) {
+      console.error("Error loading LinkedIn recommendations:", error);
+      setLoading(false);
+      toast({
+        title: "LinkedIn Widget Error",
+        description: "There was an issue loading LinkedIn recommendations. Local testimonials are still available.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Initialize LinkedIn recommendations widget when the component mounts
+  // or when the LinkedIn tab is selected
+  useEffect(() => {
+    let cleanupFn: (() => void) | undefined;
     
-    loadLinkedInRecommendations();
+    if (activeTab === "linkedin" || activeTab === "all") {
+      cleanupFn = loadLinkedInRecommendations();
+    }
     
-    // Clean up on component unmount
+    // Clean up on component unmount or tab change
     return () => {
-      if (cleanupSociableKit) cleanupSociableKit();
+      if (cleanupFn) cleanupFn();
     };
-  }, [toast]);
+  }, [activeTab, toast]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    
+    // If switching to LinkedIn tab and it's not loaded, try loading it
+    if ((value === "linkedin" || value === "all") && !linkedInLoaded) {
+      loadLinkedInRecommendations();
+    }
+  };
 
   return (
     <section id="testimonials" className="section-container bg-gradient-to-br from-green-100 to-white py-16">
@@ -73,7 +94,7 @@ const TestimonialsSection = () => {
           Real testimonials from professionals who have experienced our leadership and agile coaching services.
         </p>
         
-        <Tabs defaultValue="all" className="w-full">
+        <Tabs defaultValue="all" className="w-full" onValueChange={handleTabChange}>
           <div className="flex justify-center mb-6">
             <TabsList>
               <TabsTrigger value="all" className="flex items-center gap-2">
@@ -93,7 +114,7 @@ const TestimonialsSection = () => {
           
           <TabsContent value="all" className="mt-2">
             <div className="mb-6">
-              {loading ? (
+              {loading && activeTab === "all" ? (
                 <div className="flex justify-center items-center py-16">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
                 </div>
@@ -125,28 +146,30 @@ const TestimonialsSection = () => {
                   </div>
                   
                   {/* LinkedIn recommendations */}
-                  <div className="mt-12 max-w-4xl mx-auto">
-                    <div className="text-center mb-6">
-                      <h3 className="text-xl font-semibold text-green-700 flex items-center justify-center gap-2">
-                        <Linkedin className="h-5 w-5" />
-                        LinkedIn Recommendations
-                      </h3>
-                    </div>
-                    
-                    <div ref={linkedInContainerRef} className="sk-ww-linkedin-recommendations" data-embed-id="166933"></div>
-                    
-                    {!linkedInLoaded && (
-                      <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
-                        <p className="text-gray-500">LinkedIn recommendations are currently unavailable.</p>
-                        <button 
-                          onClick={() => initSociableKit()} 
-                          className="mt-2 text-sm text-green-600 hover:text-green-800"
-                        >
-                          Retry Loading
-                        </button>
+                  {!loading && (
+                    <div className="mt-12 max-w-4xl mx-auto">
+                      <div className="text-center mb-6">
+                        <h3 className="text-xl font-semibold text-green-700 flex items-center justify-center gap-2">
+                          <Linkedin className="h-5 w-5" />
+                          LinkedIn Recommendations
+                        </h3>
                       </div>
-                    )}
-                  </div>
+                      
+                      <div ref={linkedInContainerRef} className="sk-ww-linkedin-recommendations" data-embed-id="166933"></div>
+                      
+                      {!linkedInLoaded && (
+                        <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
+                          <p className="text-gray-500">LinkedIn recommendations are currently unavailable.</p>
+                          <button 
+                            onClick={loadLinkedInRecommendations} 
+                            className="mt-2 text-sm text-green-600 hover:text-green-800"
+                          >
+                            Retry Loading
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -179,7 +202,7 @@ const TestimonialsSection = () => {
           </TabsContent>
           
           <TabsContent value="linkedin" className="mt-2">
-            {loading ? (
+            {loading && activeTab === "linkedin" ? (
               <div className="flex justify-center items-center py-16">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
               </div>
@@ -191,7 +214,7 @@ const TestimonialsSection = () => {
                   <div className="text-center py-16 border border-dashed border-gray-300 rounded-lg">
                     <p className="text-gray-500">LinkedIn recommendations are currently unavailable.</p>
                     <button 
-                      onClick={() => initSociableKit()} 
+                      onClick={loadLinkedInRecommendations} 
                       className="mt-2 text-sm text-green-600 hover:text-green-800"
                     >
                       Retry Loading

@@ -15,8 +15,7 @@ import { Toaster } from '@/components/ui/toaster';
 const Index = () => {
   const { toast } = useToast();
 
-  // No global SociableKIT initialization needed as it's handled in TestimonialsSection
-
+  // Each section handles its own external script loading
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
