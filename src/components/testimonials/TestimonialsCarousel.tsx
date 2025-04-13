@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { 
   Carousel, 
@@ -12,6 +11,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import TestimonialCard from '@/components/testimonials/TestimonialCard';
 import { useTestimonials } from '@/hooks/useTestimonials';
+import { Testimonial } from '@/types/testimonials';
 import { testimonials as localTestimonials } from '@/data/testimonials';
 import { initSociableKit } from '@/utils/sociableKitLoader';
 
@@ -25,7 +25,7 @@ const TestimonialsCarousel = () => {
   
   // Use our new hook to fetch testimonials
   const { testimonials: supabaseTestimonials, isLoading: isLoadingSupabase, error: supabaseError } = useTestimonials();
-  const [allTestimonials, setAllTestimonials] = useState(supabaseTestimonials.length > 0 ? supabaseTestimonials : localTestimonials);
+  const [allTestimonials, setAllTestimonials] = useState<Testimonial[]>(supabaseTestimonials.length > 0 ? supabaseTestimonials : localTestimonials);
   
   // Update testimonials when supabaseTestimonials change
   useEffect(() => {
