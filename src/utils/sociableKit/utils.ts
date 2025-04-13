@@ -5,7 +5,7 @@
 
 // Configuration constants
 export const EMBED_ID = '166933';
-export const MAX_ATTEMPTS = 5;
+export const MAX_ATTEMPTS = 5; // Increased from 3 to 5
 export const DEBUG = true;
 
 // Function to log messages conditionally
