@@ -6,55 +6,71 @@
 // Track if the script has already been loaded
 let sociableKitLoaded = false;
 let sociableKitScript: HTMLScriptElement | null = null;
+let styleElement: HTMLLinkElement | null = null;
 let retryAttempts = 0;
 const MAX_RETRY_ATTEMPTS = 3;
 
-export const initSociableKit = () => {
-  // If already loaded, don't add another script
-  if (sociableKitLoaded && sociableKitScript) {
-    console.log("SociableKIT script already loaded, refreshing widget");
-    
-    // Try to reinitialize the widget if it exists
-    if (window.SK_LINKEDIN_RECOMMENDATIONS) {
-      try {
-        window.SK_LINKEDIN_RECOMMENDATIONS.reload();
-        return () => {};
-      } catch (err) {
-        console.error("Failed to reload LinkedIn recommendations:", err);
-      }
+// Function to create a clean container for LinkedIn recommendations
+const createRecommendationsContainer = () => {
+  // Remove any existing containers first
+  const existingContainers = document.querySelectorAll('.sk-ww-linkedin-recommendations');
+  existingContainers.forEach(container => {
+    if (container.parentNode) {
+      container.parentNode.removeChild(container);
     }
-  }
+  });
+
+  // Create a fresh container
+  const container = document.createElement('div');
+  container.className = 'sk-ww-linkedin-recommendations';
+  container.setAttribute('data-embed-id', '166933');
+  return container;
+};
+
+export const initSociableKit = () => {
+  console.log("Initializing SociableKit with fresh settings");
   
-  // Clear any previous attempt
+  // Clean up any previous attempt
   if (sociableKitScript && document.body.contains(sociableKitScript)) {
     document.body.removeChild(sociableKitScript);
     sociableKitLoaded = false;
+    sociableKitScript = null;
   }
   
-  console.log("Loading SociableKIT script for LinkedIn recommendations");
+  if (styleElement && document.head.contains(styleElement)) {
+    document.head.removeChild(styleElement);
+    styleElement = null;
+  }
   
-  // Use a direct script URL for the LinkedIn recommendations widget for better reliability
+  // Reset the global variable to force a fresh load
+  if (window.SK_LINKEDIN_RECOMMENDATIONS) {
+    try {
+      // @ts-ignore
+      window.SK_LINKEDIN_RECOMMENDATIONS = undefined;
+    } catch (err) {
+      console.error("Failed to reset LinkedIn widget globals:", err);
+    }
+  }
+  
+  // Create a style element first to improve widget visibility
+  styleElement = document.createElement('link');
+  styleElement.rel = 'stylesheet';
+  styleElement.href = 'https://widgets.sociablekit.com/linkedin-recommendations/widget.css?' + new Date().getTime();
+  document.head.appendChild(styleElement);
+  
+  // Use a direct script URL with cache-busting
   sociableKitScript = document.createElement('script');
-  sociableKitScript.src = "https://widgets.sociablekit.com/linkedin-recommendations/widget.js";
+  sociableKitScript.src = "https://widgets.sociablekit.com/linkedin-recommendations/widget.js?" + new Date().getTime();
   sociableKitScript.async = true;
   sociableKitScript.defer = true;
   
   // Use a valid embed ID - this is critical
   sociableKitScript.setAttribute('data-embed-id', '166933');
-  document.body.appendChild(sociableKitScript);
-  
-  // Create a style element to improve widget visibility
-  const styleElement = document.createElement('link');
-  styleElement.rel = 'stylesheet';
-  styleElement.href = 'https://widgets.sociablekit.com/linkedin-recommendations/widget.css';
-  document.head.appendChild(styleElement);
-  
-  // Mark as loaded
-  sociableKitLoaded = true;
   
   sociableKitScript.onload = () => {
     console.log("SociableKIT script loaded successfully");
     retryAttempts = 0; // Reset retry attempts on successful load
+    sociableKitLoaded = true;
   };
   
   sociableKitScript.onerror = (err) => {
@@ -73,6 +89,9 @@ export const initSociableKit = () => {
       setTimeout(initSociableKit, 2000); // Retry after 2 seconds
     }
   };
+  
+  // Append the script to document body
+  document.body.appendChild(sociableKitScript);
 
   // Return a cleanup function
   return () => {
@@ -82,12 +101,17 @@ export const initSociableKit = () => {
       sociableKitLoaded = false;
       sociableKitScript = null;
     }
+    
+    if (styleElement && document.head.contains(styleElement)) {
+      document.head.removeChild(styleElement);
+      styleElement = null;
+    }
   };
 };
 
 // Function to check if LinkedIn recommendations are loaded
 export const isLinkedInRecommendationsReady = () => {
-  // More reliable detection - check for actual recommendation items
+  // More reliable detection - check for actual recommendation items using direct DOM query
   const recommendationItems = document.querySelectorAll('.sk-ww-linkedin-recommendations-item');
   const containerExists = document.querySelector('.sk-ww-linkedin-recommendations') !== null;
   const globalExists = typeof window !== 'undefined' && !!window.SK_LINKEDIN_RECOMMENDATIONS;

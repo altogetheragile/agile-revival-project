@@ -1,9 +1,11 @@
 
 import { useRef, useState, useEffect } from 'react';
-import { Linkedin, RefreshCw } from 'lucide-react';
+import { Linkedin, RefreshCw, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { initSociableKit, isLinkedInRecommendationsReady } from '@/utils/sociableKitLoader';
+import { Button } from '@/components/ui/button';
 
 interface LinkedInRecommendationsProps {
   isActive: boolean;
@@ -12,6 +14,7 @@ interface LinkedInRecommendationsProps {
 const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => {
   const [loading, setLoading] = useState(true);
   const [linkedInLoaded, setLinkedInLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const linkedInContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
@@ -23,14 +26,15 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
     const loadWidget = () => {
       try {
         setLoading(true);
-        console.log("Initializing LinkedIn recommendations widget");
+        setError(null);
+        console.log("Initializing LinkedIn recommendations widget with direct approach");
         
         // Initialize SociableKIT for LinkedIn recommendations
         cleanup = initSociableKit();
         
-        // Check if LinkedIn widget is loaded every second for up to 10 seconds
+        // Check if LinkedIn widget is loaded every second for up to 15 seconds
         let attempts = 0;
-        const maxAttempts = 10;
+        const maxAttempts = 15;
         
         const checkInterval = setInterval(() => {
           attempts++;
@@ -44,6 +48,7 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
             
             if (attempts >= maxAttempts && !isReady) {
               console.error("LinkedIn widget failed to load after maximum attempts");
+              setError("LinkedIn recommendations could not be loaded");
               toast({
                 title: "LinkedIn Widget Error",
                 description: "There was an issue loading LinkedIn recommendations. Please try again.",
@@ -59,9 +64,10 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
       } catch (error) {
         console.error("Error loading LinkedIn recommendations:", error);
         setLoading(false);
+        setError("Error initializing LinkedIn recommendations");
         toast({
           title: "LinkedIn Widget Error",
-          description: "There was an issue loading LinkedIn recommendations. Local testimonials are still available.",
+          description: "There was an issue loading LinkedIn recommendations.",
           variant: "destructive"
         });
         return () => {};
@@ -80,17 +86,18 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
     };
   }, [isActive, toast]);
   
-  const loadLinkedInRecommendations = () => {
+  const reloadLinkedInRecommendations = () => {
     setLinkedInLoaded(false);
     setLoading(true);
+    setError(null);
     
     // This timeout ensures the DOM elements are properly reset before attempting to reload
     setTimeout(() => {
       const cleanup = initSociableKit();
       
-      // Check if LinkedIn widget is loaded every second for up to 10 seconds
+      // Check if LinkedIn widget is loaded every second for up to 15 seconds
       let attempts = 0;
-      const maxAttempts = 10;
+      const maxAttempts = 15;
       
       const checkInterval = setInterval(() => {
         attempts++;
@@ -103,6 +110,7 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
           
           if (attempts >= maxAttempts && !isReady) {
             console.error("LinkedIn widget failed to load after maximum attempts");
+            setError("LinkedIn recommendations could not be loaded");
             toast({
               title: "LinkedIn Widget Error",
               description: "There was an issue loading LinkedIn recommendations. Please try again later.",
@@ -117,7 +125,10 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
   if (loading && isActive) {
     return (
       <div className="flex flex-col gap-4 w-full py-16">
-        <Skeleton className="h-10 w-40 mx-auto mb-6" />
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <Loader2 className="h-5 w-5 animate-spin text-green-600" />
+          <h3 className="text-xl font-semibold text-green-700">Loading LinkedIn Recommendations</h3>
+        </div>
         <Skeleton className="h-24 w-full max-w-2xl mx-auto rounded-lg" />
         <Skeleton className="h-24 w-full max-w-2xl mx-auto rounded-lg" />
         <Skeleton className="h-24 w-full max-w-2xl mx-auto rounded-lg" />
@@ -138,14 +149,19 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
       
       {!linkedInLoaded && !loading && (
         <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
-          <p className="text-gray-500">LinkedIn recommendations are currently unavailable.</p>
-          <button 
-            onClick={loadLinkedInRecommendations} 
-            className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 mx-auto"
+          <Alert variant="destructive" className="max-w-lg mx-auto bg-red-50 mb-4">
+            <AlertDescription>
+              {error || "LinkedIn recommendations are currently unavailable."}
+            </AlertDescription>
+          </Alert>
+          
+          <Button 
+            onClick={reloadLinkedInRecommendations} 
+            className="mt-2 bg-green-600 text-white hover:bg-green-700 flex items-center gap-2 mx-auto"
           >
             <RefreshCw className="h-4 w-4" />
             Retry Loading
-          </button>
+          </Button>
         </div>
       )}
     </div>
