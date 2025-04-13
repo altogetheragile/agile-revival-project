@@ -10,44 +10,38 @@ import ContactSection from "@/components/sections/ContactSection";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { initSociableKit } from '@/utils/sociableKitLoader';
-import { initWorkshopButler } from '@/utils/workshopButlerLoader';
-import { Toast } from '@/components/ui/toast';
 import { useToast } from '@/components/ui/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 const Index = () => {
-  const [widgetsLoaded, setWidgetsLoaded] = useState(false);
+  const [sociableKitLoaded, setSociableKitLoaded] = useState(false);
   const { toast } = useToast();
 
-  // Initialize SociableKIT and Workshop Butler on page load
+  // Only initialize SociableKIT on page load - Workshop Butler is handled in its own component
   useEffect(() => {
     let cleanupSociableKit: (() => void) | undefined;
-    let cleanupWorkshopButler: (() => void) | undefined;
     
-    const initWidgets = async () => {
+    const loadSociableKit = async () => {
       try {
         // Initialize SociableKIT
         cleanupSociableKit = initSociableKit();
-        
-        // Initialize Workshop Butler with enhanced error handling
-        cleanupWorkshopButler = await initWorkshopButler();
-        console.log("Widgets initialization complete");
-        setWidgetsLoaded(true);
+        console.log("SociableKIT initialization complete");
+        setSociableKitLoaded(true);
       } catch (error) {
-        console.error("Error initializing widgets:", error);
+        console.error("Error initializing SociableKIT:", error);
         toast({
           title: "Widget Error",
-          description: "There was an issue loading some widgets. Please refresh the page.",
+          description: "There was an issue loading social widgets. Please refresh the page.",
           variant: "destructive"
         });
       }
     };
     
-    initWidgets();
+    loadSociableKit();
     
     // Clean up on component unmount
     return () => {
       if (cleanupSociableKit) cleanupSociableKit();
-      if (cleanupWorkshopButler) cleanupWorkshopButler();
     };
   }, [toast]);
 

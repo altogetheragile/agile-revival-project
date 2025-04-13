@@ -3,97 +3,105 @@
  * Utility to load and initialize Workshop Butler widget
  */
 
-// Create a flag to track if initialization has been attempted
-let initAttempted = false;
-let scriptLoaded = false;
+// Track the initialization state
+let isInitialized = false;
+let isLoading = false;
+let scriptElement: HTMLScriptElement | null = null;
 
 export const initWorkshopButler = () => {
   return new Promise<(() => void) | undefined>((resolve, reject) => {
-    // If we already tried to initialize, check if successful
-    if (initAttempted) {
-      if (window.WorkshopButlerWidget) {
-        console.log("Workshop Butler already initialized, reusing instance");
-        resolve(() => {
-          // No-op cleanup for already initialized widget
-        });
-      } else if (scriptLoaded) {
-        console.error("Script loaded but widget not available");
-        reject(new Error("Workshop Butler widget not available after script load"));
-      } else {
-        console.error("Previous initialization attempt failed");
-        reject(new Error("Workshop Butler initialization previously failed"));
-      }
+    // If already initialized, resolve immediately
+    if (isInitialized && window.WorkshopButlerWidget) {
+      console.log("Workshop Butler already initialized, reusing instance");
+      resolve(undefined);
+      return;
+    }
+
+    // If currently loading, wait for that process
+    if (isLoading) {
+      console.log("Workshop Butler is already loading, waiting...");
+      const checkInterval = setInterval(() => {
+        if (isInitialized && window.WorkshopButlerWidget) {
+          clearInterval(checkInterval);
+          console.log("Workshop Butler finished loading while waiting");
+          resolve(undefined);
+        }
+      }, 500);
+      
+      // Set a timeout to prevent indefinite waiting
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        if (!isInitialized) {
+          console.error("Workshop Butler loading timed out");
+          reject(new Error("Loading timed out"));
+        }
+      }, 10000);
+      
       return;
     }
     
-    // Mark that initialization has been attempted
-    initAttempted = true;
+    // Start loading the script
+    isLoading = true;
     
-    // Check if the script already exists to avoid duplicates
+    // Remove any existing script to avoid conflicts
     const existingScript = document.querySelector('script[src*="workshopbutler"]');
     if (existingScript) {
-      console.log("Workshop Butler script already exists, reusing");
-      
-      // If script exists, try to initialize
-      if (window.WorkshopButlerWidget) {
-        console.log("Workshop Butler widget found, initializing from utility");
-        try {
-          window.WorkshopButlerWidget.init();
-          scriptLoaded = true;
-          resolve(undefined);
-        } catch (error) {
-          console.error("Failed to initialize existing Workshop Butler:", error);
-          reject(error);
-        }
-      } else {
-        console.error("Workshop Butler script exists but widget not available");
-        reject(new Error("Workshop Butler widget not available"));
-      }
-      
-      return;
+      existingScript.remove();
+      console.log("Removed existing Workshop Butler script");
     }
     
-    // Initialize the Workshop Butler script
-    const script = document.createElement('script');
-    script.src = "https://workshopbutler.com/js/widget.js";
-    script.async = true;
-    script.defer = true;
+    // Create and append the new script
+    scriptElement = document.createElement('script');
+    scriptElement.src = "https://workshopbutler.com/js/widget.js";
+    scriptElement.async = true;
+    scriptElement.defer = true;
     
-    script.onload = () => {
+    // Handle successful script loading
+    scriptElement.onload = () => {
       console.log("Workshop Butler script loaded successfully");
-      scriptLoaded = true;
       
-      // Add a small delay to ensure the widget object is properly initialized
+      // Add a delay to ensure the widget object is properly initialized
       setTimeout(() => {
-        // Check if the widget object is available after script load
         if (window.WorkshopButlerWidget) {
-          console.log("Workshop Butler widget found, initializing from utility");
           try {
             window.WorkshopButlerWidget.init();
+            console.log("Workshop Butler widget initialized successfully");
+            isInitialized = true;
+            isLoading = false;
             resolve(() => {
-              // Clean up function
-              if (document.body.contains(script)) {
-                document.body.removeChild(script);
-                scriptLoaded = false;
-                initAttempted = false;
+              // Cleanup function
+              isInitialized = false;
+              isLoading = false;
+              if (scriptElement && document.body.contains(scriptElement)) {
+                document.body.removeChild(scriptElement);
+                scriptElement = null;
               }
             });
           } catch (error) {
             console.error("Error initializing Workshop Butler:", error);
+            isLoading = false;
             reject(error);
           }
         } else {
           console.error("Workshop Butler widget not available after script load");
-          reject(new Error("Workshop Butler widget not available after script load"));
+          isLoading = false;
+          reject(new Error("Widget not available after script load"));
         }
-      }, 500); // Short delay to ensure widget is registered
+      }, 1000); // Longer delay to ensure widget is registered
     };
     
-    script.onerror = (error) => {
+    // Handle script loading errors
+    scriptElement.onerror = (error) => {
       console.error("Failed to load Workshop Butler script:", error);
+      isLoading = false;
       reject(new Error("Failed to load Workshop Butler script"));
     };
     
-    document.body.appendChild(script);
+    document.body.appendChild(scriptElement);
   });
+};
+
+// Function to check if widget is loaded and available
+export const isWorkshopButlerAvailable = () => {
+  return isInitialized && !!window.WorkshopButlerWidget;
 };
