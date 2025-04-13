@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { initWorkshopButler } from '@/utils/workshopButlerLoader';
 
 const WorkshopFeedbackSection = () => {
   const [loading, setLoading] = useState(true);
@@ -9,45 +10,31 @@ const WorkshopFeedbackSection = () => {
   const apiKey = 'pk_iZTowfIlTpReqCFZlaXf9bTwHOcn2OERmKBkE2pTcyMAKQSpwdys7GhGPzsX5JgN';
 
   useEffect(() => {
-    // Workshop Butler script injection
-    const script = document.createElement('script');
-    script.src = "https://workshopbutler.com/js/widget.js";
-    script.async = true;
-    script.defer = true;
-    
-    const handleScriptLoad = () => {
-      // Initialize the widget after script is loaded
-      if (window.WorkshopButlerWidget) {
-        try {
-          console.log("Workshop Butler widget found, initializing...");
-          window.WorkshopButlerWidget.init();
+    // Use the utility function instead of inline script loading
+    const loadWidget = async () => {
+      try {
+        // Wait for Workshop Butler to initialize
+        await initWorkshopButler();
+        
+        // Check if widget was properly initialized
+        if (window.WorkshopButlerWidget) {
+          console.log("Workshop Butler widget initialized in WorkshopFeedbackSection");
           setLoading(false);
-        } catch (e) {
-          console.error("Error initializing Workshop Butler widget:", e);
+        } else {
+          console.error("Workshop Butler widget not available after initialization");
           setError("Failed to initialize Workshop Butler widget");
+          setLoading(false);
         }
-      } else {
-        console.error("Workshop Butler widget not found after script load");
-        setError("Workshop Butler widget not available");
+      } catch (e) {
+        console.error("Error initializing Workshop Butler widget:", e);
+        setError("Failed to initialize Workshop Butler widget");
+        setLoading(false);
       }
     };
     
-    script.onload = handleScriptLoad;
+    loadWidget();
     
-    script.onerror = () => {
-      console.error("Failed to load Workshop Butler script");
-      setError("Failed to load Workshop Butler widget");
-      setLoading(false);
-    };
-    
-    document.body.appendChild(script);
-    
-    return () => {
-      // Clean up the script when component unmounts
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
+    // No cleanup needed here as the utility handles script cleanup
   }, []);
 
   // Add console log to check if the component is rendering
