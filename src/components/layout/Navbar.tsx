@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -26,11 +27,12 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { name: 'Home', href: '#home' },
-    { name: 'Services', href: '#services' },
-    { name: 'About Us', href: '#about' },
-    { name: 'Testimonials', href: '#testimonials' },
-    { name: 'Contact', href: '#contact' }
+    { name: 'Home', href: '/' },
+    { name: 'Services', href: '/#services' },
+    { name: 'About Us', href: '/#about' },
+    { name: 'Training', href: '/training-schedule' },
+    { name: 'Testimonials', href: '/#testimonials' },
+    { name: 'Contact', href: '/#contact' }
   ];
 
   return (
@@ -40,24 +42,24 @@ const Navbar = () => {
       }`}
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
-        <a href="#home" className="font-bold text-2xl text-agile-purple">
+        <Link to="/" className="font-bold text-2xl text-agile-purple">
           Altogether<span className="text-agile-purple-dark">Agile</span>
-        </a>
+        </Link>
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex space-x-8">
           {navLinks.map((link) => (
-            <a
+            <Link
               key={link.name}
-              href={link.href}
+              to={link.href.startsWith('/#') ? link.href.substring(1) : link.href}
               className="text-gray-700 hover:text-agile-purple font-medium transition-colors"
             >
               {link.name}
-            </a>
+            </Link>
           ))}
-          <a href="#contact" className="cta-button py-2 px-4">
+          <Link to="/#contact" className="cta-button py-2 px-4">
             Get Started
-          </a>
+          </Link>
         </div>
         
         {/* Mobile Navigation Toggle */}
@@ -70,18 +72,18 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-white shadow-lg absolute top-full left-0 right-0 p-4 flex flex-col space-y-4 animate-fade-in">
           {navLinks.map((link) => (
-            <a
+            <Link
               key={link.name}
-              href={link.href}
+              to={link.href.startsWith('/#') ? link.href.substring(1) : link.href}
               className="text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               {link.name}
-            </a>
+            </Link>
           ))}
-          <a href="#contact" className="cta-button text-center" onClick={() => setIsMenuOpen(false)}>
+          <Link to="/#contact" className="cta-button text-center" onClick={() => setIsMenuOpen(false)}>
             Get Started
-          </a>
+          </Link>
         </div>
       )}
     </nav>
