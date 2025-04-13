@@ -1,4 +1,5 @@
 
+import { useEffect } from 'react';
 import Navbar from "@/components/layout/Navbar";
 import HeroSection from "@/components/sections/HeroSection";
 import ServicesSection from "@/components/sections/ServicesSection";
@@ -7,8 +8,15 @@ import TestimonialsSection from "@/components/sections/TestimonialsSection";
 import ContactSection from "@/components/sections/ContactSection";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import { initSociableKit } from '@/utils/sociableKitLoader';
 
 const Index = () => {
+  // Initialize SociableKIT on page load
+  useEffect(() => {
+    const cleanup = initSociableKit();
+    return cleanup;
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
