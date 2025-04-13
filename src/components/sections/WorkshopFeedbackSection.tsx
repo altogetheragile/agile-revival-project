@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const WorkshopFeedbackSection = () => {
   const [loading, setLoading] = useState(true);
-  const apiKey = 'YOUR_API_KEY'; // Replace this with a secure method of storing the key
+  const apiKey = 'pk_iZTowfIlTpReqCFZlaXf9bTwHOcn2OERmKBkE2pTcyMAKQSpwdys7GhGPzsX5JgN';
 
   useEffect(() => {
     // Workshop Butler script injection
