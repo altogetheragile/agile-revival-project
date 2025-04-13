@@ -50,7 +50,7 @@ const LinkedInRecommendations = ({ isActive }: LinkedInRecommendationsProps) => 
     
     // Set up interval to check every 1.5 seconds
     let attempts = 0;
-    const maxAttempts = 15; // 22.5 seconds total
+    const maxAttempts = 20; // Increased from 15 to 20 attempts
     
     checkerRef.current = window.setInterval(() => {
       attempts++;

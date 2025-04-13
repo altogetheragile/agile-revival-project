@@ -29,6 +29,14 @@ export const cleanupPrevious = () => {
     }
   });
 
+  // Remove any fallback styles
+  const fallbackStyles = document.querySelectorAll('style[data-sk-fallback="true"]');
+  fallbackStyles.forEach(style => {
+    if (style.parentNode) {
+      style.parentNode.removeChild(style);
+    }
+  });
+
   // Reset global objects
   if (window.SK_LINKEDIN_RECOMMENDATIONS) {
     try {
@@ -130,5 +138,5 @@ export const isWidgetLoaded = (): boolean => {
   
   log(`Widget loaded check: Elements? ${widgetExists ? 'Yes' : 'No'}, Global? ${globalExists ? 'Yes' : 'No'}`);
   
-  return widgetExists && globalExists;
+  return widgetExists || globalExists; // Changed from AND to OR to be more lenient
 };
