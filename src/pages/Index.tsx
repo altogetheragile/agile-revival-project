@@ -5,16 +5,23 @@ import HeroSection from "@/components/sections/HeroSection";
 import ServicesSection from "@/components/sections/ServicesSection";
 import AboutSection from "@/components/sections/AboutSection";
 import TestimonialsSection from "@/components/sections/TestimonialsSection";
+import WorkshopFeedbackSection from "@/components/sections/WorkshopFeedbackSection";
 import ContactSection from "@/components/sections/ContactSection";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { initSociableKit } from '@/utils/sociableKitLoader';
+import { initWorkshopButler } from '@/utils/workshopButlerLoader';
 
 const Index = () => {
-  // Initialize SociableKIT on page load
+  // Initialize SociableKIT and Workshop Butler on page load
   useEffect(() => {
-    const cleanup = initSociableKit();
-    return cleanup;
+    const cleanupSociableKit = initSociableKit();
+    const cleanupWorkshopButler = initWorkshopButler();
+    
+    return () => {
+      if (cleanupSociableKit) cleanupSociableKit();
+      if (cleanupWorkshopButler) cleanupWorkshopButler();
+    };
   }, []);
 
   return (
@@ -24,6 +31,7 @@ const Index = () => {
       <ServicesSection />
       <AboutSection />
       <TestimonialsSection />
+      <WorkshopFeedbackSection />
       <ContactSection />
       <Footer />
       <ScrollToTop />
