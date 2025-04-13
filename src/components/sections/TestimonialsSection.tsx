@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { MessageSquare } from 'lucide-react';
 import TestimonialsCarousel from '@/components/testimonials/TestimonialsCarousel';
 

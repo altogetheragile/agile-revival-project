@@ -14,17 +14,6 @@ import TestimonialCard from '@/components/testimonials/TestimonialCard';
 import { testimonials, Testimonial } from '@/data/testimonials';
 import { initSociableKit, isLinkedInRecommendationsReady } from '@/utils/sociableKitLoader';
 
-// Interface for LinkedIn recommendations
-interface LinkedInRecommendation {
-  id: string;
-  name: string;
-  title: string;
-  company: string;
-  content: string;
-  profileUrl: string;
-  imageUrl?: string;
-}
-
 const TestimonialsCarousel = () => {
   const [loading, setLoading] = useState(true);
   const [linkedInLoaded, setLinkedInLoaded] = useState(false);
@@ -32,10 +21,131 @@ const TestimonialsCarousel = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Create a hidden container for LinkedIn recommendations if it doesn't exist
+    let hiddenContainer = document.getElementById('linkedin-recommendations-container');
+    
+    if (!hiddenContainer) {
+      hiddenContainer = document.createElement('div');
+      hiddenContainer.id = 'linkedin-recommendations-container';
+      hiddenContainer.style.position = 'absolute';
+      hiddenContainer.style.left = '-9999px';
+      hiddenContainer.style.visibility = 'hidden';
+      hiddenContainer.className = 'sk-ww-linkedin-recommendations';
+      hiddenContainer.setAttribute('data-embed-id', '166933');
+      document.body.appendChild(hiddenContainer);
+    }
+    
     // Use a MutationObserver to detect when LinkedIn recommendations are added to the DOM
     const observer = new MutationObserver((mutations) => {
+      console.log("DOM mutation detected in LinkedIn container");
+      
+      // Only process if we detect changes with added nodes
       for (const mutation of mutations) {
-        if (mutation.type === 'childList') {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          const recommendationElements = document.querySelectorAll('.sk-ww-linkedin-recommendations-item');
+          
+          if (recommendationElements.length > 0) {
+            console.log(`Found ${recommendationElements.length} LinkedIn recommendations`);
+            
+            // Convert LinkedIn recommendations to our Testimonial format
+            const linkedInRecommendations: Testimonial[] = Array.from(recommendationElements).map((element, index) => {
+              const nameElement = element.querySelector('.sk-ww-linkedin-recommendations-reviewer-name');
+              const titleElement = element.querySelector('.sk-ww-linkedin-recommendations-reviewer-title');
+              const textElement = element.querySelector('.sk-ww-linkedin-recommendations-text');
+              const imageElement = element.querySelector('.sk-ww-linkedin-recommendations-reviewer-image') as HTMLImageElement;
+              const profileElement = element.querySelector('a.sk-ww-linkedin-recommendations-reviewer-name') as HTMLAnchorElement;
+              
+              return {
+                id: `linkedin-${index}`,
+                name: nameElement?.textContent?.trim() || 'LinkedIn Connection',
+                role: titleElement?.textContent?.trim().split(' at ')[0] || 'Professional',
+                company: titleElement?.textContent?.trim().split(' at ')[1] || '',
+                content: textElement?.textContent?.trim() || 'Recommendation from LinkedIn',
+                linkedinUrl: profileElement?.href || undefined,
+                imageUrl: imageElement?.src || undefined,
+                isLinkedIn: true
+              };
+            });
+            
+            // Combine local and LinkedIn testimonials
+            setCombinedTestimonials([...testimonials, ...linkedInRecommendations]);
+            setLinkedInLoaded(true);
+            setLoading(false);
+            
+            toast({
+              title: "LinkedIn Recommendations",
+              description: `Successfully loaded ${linkedInRecommendations.length} recommendations from LinkedIn.`,
+              variant: "default",
+            });
+            
+            // Stop observing once we've processed the recommendations
+            observer.disconnect();
+            return;
+          }
+        }
+      }
+    });
+    
+    // Start observing the container for changes
+    if (hiddenContainer) {
+      observer.observe(hiddenContainer, { childList: true, subtree: true });
+    }
+    
+    // Initialize SociableKIT to load LinkedIn recommendations
+    console.log("Initializing LinkedIn recommendations widget");
+    const cleanup = initSociableKit();
+    
+    // Set a timeout to stop waiting after 10 seconds
+    const timeoutId = setTimeout(() => {
+      if (!linkedInLoaded) {
+        setLoading(false);
+        observer.disconnect();
+        console.log("LinkedIn recommendations timed out, showing local testimonials only");
+        toast({
+          title: "LinkedIn Recommendations",
+          description: "Could not load recommendations from LinkedIn. Showing local testimonials only.",
+          variant: "destructive",
+        });
+      }
+    }, 15000); // Extended timeout to 15 seconds for better chance of loading
+    
+    // Return cleanup function
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+      cleanup();
+    };
+  }, []);
+
+  // Function to retry loading LinkedIn recommendations
+  const retryLoadLinkedInRecommendations = () => {
+    setLoading(true);
+    
+    // Clear any existing LinkedIn recommendations from the combined list
+    setCombinedTestimonials(testimonials);
+    
+    // Recreate the hidden container
+    let hiddenContainer = document.getElementById('linkedin-recommendations-container');
+    if (hiddenContainer && document.body.contains(hiddenContainer)) {
+      document.body.removeChild(hiddenContainer);
+    }
+    
+    hiddenContainer = document.createElement('div');
+    hiddenContainer.id = 'linkedin-recommendations-container';
+    hiddenContainer.style.position = 'absolute';
+    hiddenContainer.style.left = '-9999px';
+    hiddenContainer.style.visibility = 'hidden';
+    hiddenContainer.className = 'sk-ww-linkedin-recommendations';
+    hiddenContainer.setAttribute('data-embed-id', '166933');
+    document.body.appendChild(hiddenContainer);
+    
+    // Reinitialize SociableKIT
+    const cleanup = initSociableKit();
+    
+    // Set up a new observer
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
           const recommendationElements = document.querySelectorAll('.sk-ww-linkedin-recommendations-item');
           
           if (recommendationElements.length > 0) {
@@ -64,97 +174,45 @@ const TestimonialsCarousel = () => {
             setLinkedInLoaded(true);
             setLoading(false);
             
-            // Stop observing once we've processed the recommendations
+            toast({
+              title: "LinkedIn Recommendations",
+              description: `Successfully loaded ${linkedInRecommendations.length} recommendations from LinkedIn.`,
+              variant: "default",
+            });
+            
+            // Stop observing
             observer.disconnect();
+            return;
           }
         }
       }
     });
-
-    // Function to load LinkedIn recommendations
-    const loadLinkedInRecommendations = () => {
-      try {
-        console.log("Initializing LinkedIn recommendations widget");
-        // Create a hidden container for LinkedIn recommendations
-        const hiddenContainer = document.createElement('div');
-        hiddenContainer.id = 'linkedin-recommendations-container';
-        hiddenContainer.style.position = 'absolute';
-        hiddenContainer.style.left = '-9999px';
-        hiddenContainer.style.visibility = 'hidden';
-        hiddenContainer.className = 'sk-ww-linkedin-recommendations';
-        hiddenContainer.setAttribute('data-embed-id', '166933');
-        document.body.appendChild(hiddenContainer);
-        
-        // Initialize SociableKIT
-        const cleanup = initSociableKit();
-        
-        // Start observing the hidden container
-        observer.observe(hiddenContainer, { childList: true, subtree: true });
-        
-        // Set a timeout to stop waiting after 10 seconds
-        const timeoutId = setTimeout(() => {
-          if (!linkedInLoaded) {
-            setLoading(false);
-            observer.disconnect();
-            console.log("LinkedIn recommendations timed out, showing local testimonials only");
-          }
-        }, 10000);
-        
-        // Return cleanup function
-        return () => {
-          clearTimeout(timeoutId);
-          observer.disconnect();
-          if (hiddenContainer && document.body.contains(hiddenContainer)) {
-            document.body.removeChild(hiddenContainer);
-          }
-          cleanup();
-        };
-      } catch (error) {
-        console.error("Error loading LinkedIn recommendations:", error);
+    
+    // Start observing the container
+    if (hiddenContainer) {
+      observer.observe(hiddenContainer, { childList: true, subtree: true });
+    }
+    
+    // Set a timeout for the retry attempt
+    const timeoutId = setTimeout(() => {
+      if (!linkedInLoaded) {
         setLoading(false);
-        return () => {};
+        observer.disconnect();
+        console.error("LinkedIn recommendations retry failed");
+        toast({
+          title: "LinkedIn Widget Error",
+          description: "Could not load LinkedIn recommendations after retry. Showing local testimonials only.",
+          variant: "destructive"
+        });
       }
-    };
-    
-    // Load LinkedIn recommendations when component mounts
-    const cleanupFn = loadLinkedInRecommendations();
-    
-    // Cleanup when component unmounts
+    }, 15000);
+
+    // Return a cleanup function for the component
     return () => {
-      cleanupFn();
+      clearTimeout(timeoutId);
+      observer.disconnect();
+      cleanup();
     };
-  }, []);
-
-  // Function to retry loading LinkedIn recommendations
-  const retryLoadLinkedInRecommendations = () => {
-    setLoading(true);
-    setCombinedTestimonials(testimonials);
-    
-    const cleanup = initSociableKit();
-    
-    // Check if LinkedIn widget is loaded every second for up to 10 seconds
-    let attempts = 0;
-    const maxAttempts = 10;
-    
-    const checkInterval = setInterval(() => {
-      attempts++;
-      const isReady = isLinkedInRecommendationsReady();
-      
-      if (isReady || attempts >= maxAttempts) {
-        clearInterval(checkInterval);
-        setLinkedInLoaded(isReady);
-        setLoading(false);
-        
-        if (attempts >= maxAttempts && !isReady) {
-          console.error("LinkedIn widget failed to load after maximum attempts");
-          toast({
-            title: "LinkedIn Widget Error",
-            description: "Could not load LinkedIn recommendations. Showing local testimonials only.",
-            variant: "destructive"
-          });
-        }
-      }
-    }, 1000);
   };
 
   return (
