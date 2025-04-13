@@ -8,14 +8,14 @@ const HeroSection = () => {
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 md:pr-10 mb-10 md:mb-0 animate-fade-in">
             <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-agile-purple-dark to-agile-purple">
-              Transform Your Organization with Agile
+              Professional Agile Coaching & Leadership Development
             </h1>
             <p className="text-lg md:text-xl text-gray-700 mb-8">
-              We help teams and organizations embrace agility, improve collaboration, and sustainably deliver exceptional value to customers.
+              We help leaders and teams build sustainable agility through expert coaching, practical training, and collaborative development approaches.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a href="#services" className="cta-button flex items-center justify-center gap-2">
-                Explore Services
+                Explore Coaching Services
                 <ArrowRightCircle size={20} />
               </a>
               <a href="#contact" className="secondary-button flex items-center justify-center">

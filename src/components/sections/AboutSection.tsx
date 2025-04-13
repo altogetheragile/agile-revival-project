@@ -3,10 +3,10 @@ import { CheckCircle } from "lucide-react";
 
 const AboutSection = () => {
   const values = [
-    "Client-centered approach to agile transformation",
-    "Experienced coaches with real-world implementation expertise",
-    "Focus on sustainable change and measurable results",
-    "Adaptable methodologies tailored to your unique context"
+    "Professional coaching expertise with industry certifications",
+    "Practical, hands-on approach to leadership development",
+    "Focus on sustainable skills development and coaching culture",
+    "Evidence-based methods adapted to your organizational context"
   ];
 
   return (
@@ -14,18 +14,18 @@ const AboutSection = () => {
       <div className="flex flex-col lg:flex-row items-center gap-12">
         <div className="lg:w-1/2 animate-fade-in">
           <img
-            src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80"
-            alt="Mountain landscape with sunlight"
+            src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80"
+            alt="Team collaboration session in natural setting"
             className="rounded-lg shadow-lg"
           />
         </div>
         <div className="lg:w-1/2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          <h2 className="text-3xl font-bold mb-4 text-agile-purple-dark">About Altogether Agile</h2>
+          <h2 className="text-3xl font-bold mb-4 text-agile-purple-dark">About Our Coaching Approach</h2>
           <p className="text-gray-700 mb-6">
-            We are a team of passionate agile coaches and consultants dedicated to helping organizations unlock their full potential through agile methodologies. With decades of combined experience across various industries, we bring practical knowledge and a results-oriented approach to every engagement.
+            We are professional agile coaches with extensive experience in leadership development and team coaching. Our certified coaches bring real-world expertise from various industries, focusing on practical skills that create lasting results.
           </p>
           <p className="text-gray-700 mb-8">
-            Our mission is to make agility accessible and effective for teams of all sizes, from startups to enterprise organizations. We believe that agile is not just about following processes but embracing a mindset that values collaboration, continuous improvement, and delivering customer value.
+            Our coaching philosophy centers on building internal capability and a sustainable coaching culture within your organization. We believe effective agile coaching goes beyond processes to develop the mindset, behaviors, and leadership skills needed for true organizational agility.
           </p>
           <div className="space-y-3">
             {values.map((value, index) => (

@@ -20,42 +20,42 @@ const ServiceCard = ({ title, description, icon: Icon }) => {
 const ServicesSection = () => {
   const services = [
     {
-      title: "Agile Transformation",
-      description: "We guide organizations through the process of adopting agile practices and mindsets at scale.",
+      title: "Leadership Coaching",
+      description: "One-on-one coaching for leaders to develop an agile mindset and effectively support self-organizing teams.",
       icon: Compass
     },
     {
-      title: "Agile Team Coaching",
-      description: "Our coaches work directly with teams to improve their effectiveness using Scrum, Kanban, or hybrid approaches.",
+      title: "Team Coaching",
+      description: "Hands-on coaching for agile teams using Scrum, Kanban, or hybrid approaches to improve collaboration and delivery.",
       icon: Users
     },
     {
-      title: "Leadership Development",
-      description: "We help leaders develop the skills to support and enable agile teams to thrive.",
-      icon: Activity
-    },
-    {
-      title: "Agile Training & Workshops",
-      description: "Practical, hands-on training customized for your organization's specific needs.",
+      title: "Agile Training",
+      description: "Interactive workshops and certification courses on agile methodologies, tailored to your organization's context.",
       icon: Laptop
     },
     {
-      title: "Metrics & Measurement",
-      description: "Develop meaningful measurement approaches that support continuous improvement.",
+      title: "Agile Facilitation",
+      description: "Expert facilitation of key agile ceremonies, retrospectives, and strategic planning sessions.",
+      icon: Activity
+    },
+    {
+      title: "Performance Metrics",
+      description: "Developing meaningful measurement approaches that focus on outcomes and support continuous improvement.",
       icon: BarChart3
     },
     {
-      title: "Custom Agile Solutions",
-      description: "Tailored agile approaches designed to address your unique challenges.",
+      title: "Custom Coaching Solutions",
+      description: "Tailored coaching programs designed to address your organization's unique challenges and goals.",
       icon: Puzzle
     }
   ];
 
   return (
     <section id="services" className="section-container bg-gradient-to-b from-white to-agile-purple-light">
-      <h2 className="section-title text-agile-purple-dark">Our Services</h2>
+      <h2 className="section-title text-agile-purple-dark">Professional Agile Coaching</h2>
       <p className="text-center text-gray-600 max-w-3xl mx-auto mb-12">
-        We offer a comprehensive range of agile coaching and consulting services to help your organization become more adaptive, collaborative, and sustainable.
+        Our experienced coaches provide personalized leadership development and team coaching services to help build sustainable agile practices in your organization.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {services.map((service, index) => (
