@@ -52,10 +52,10 @@ const ServicesSection = () => {
   ];
 
   return (
-    <section id="services" className="section-container bg-gray-50">
-      <h2 className="section-title">Our Services</h2>
+    <section id="services" className="section-container bg-gradient-to-b from-white to-agile-purple-light">
+      <h2 className="section-title text-agile-purple-dark">Our Services</h2>
       <p className="text-center text-gray-600 max-w-3xl mx-auto mb-12">
-        We offer a comprehensive range of agile coaching and consulting services to help your organization become more adaptive, collaborative, and customer-focused.
+        We offer a comprehensive range of agile coaching and consulting services to help your organization become more adaptive, collaborative, and sustainable.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {services.map((service, index) => (

@@ -10,17 +10,17 @@ const AboutSection = () => {
   ];
 
   return (
-    <section id="about" className="section-container">
+    <section id="about" className="section-container bg-white">
       <div className="flex flex-col lg:flex-row items-center gap-12">
         <div className="lg:w-1/2 animate-fade-in">
           <img
-            src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80"
-            alt="Team working together"
+            src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80"
+            alt="Mountain landscape with sunlight"
             className="rounded-lg shadow-lg"
           />
         </div>
         <div className="lg:w-1/2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          <h2 className="text-3xl font-bold mb-4">About Altogether Agile</h2>
+          <h2 className="text-3xl font-bold mb-4 text-agile-purple-dark">About Altogether Agile</h2>
           <p className="text-gray-700 mb-6">
             We are a team of passionate agile coaches and consultants dedicated to helping organizations unlock their full potential through agile methodologies. With decades of combined experience across various industries, we bring practical knowledge and a results-oriented approach to every engagement.
           </p>

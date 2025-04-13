@@ -37,7 +37,7 @@ const TestimonialsSection = () => {
   return (
     <section id="testimonials" className="section-container bg-gradient-to-br from-agile-purple-light to-white">
       <div className="max-w-5xl mx-auto">
-        <h2 className="section-title">What Our Clients Say</h2>
+        <h2 className="section-title text-agile-purple-dark">What Our Clients Say</h2>
         <div className="relative mt-12 pb-12">
           <div className="flex justify-center">
             <div className="relative w-full">

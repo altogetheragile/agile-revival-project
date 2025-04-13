@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -63,11 +62,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom colors for Altogether Agile site
+				// Updated colors for a green, nature-focused theme
 				agile: {
-					purple: '#9b87f5',
-					'purple-dark': '#7E69AB',
-					'purple-light': '#E5DEFF',
+					purple: '#4CAF50', // Changed to green
+					'purple-dark': '#2E7D32', // Darker green
+					'purple-light': '#E8F5E9', // Light green
 				}
 			},
 			borderRadius: {
