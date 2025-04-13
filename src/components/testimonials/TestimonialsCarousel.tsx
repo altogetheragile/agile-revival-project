@@ -11,17 +11,28 @@ import { RefreshCw, Linkedin, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import TestimonialCard from '@/components/testimonials/TestimonialCard';
-import { testimonials, Testimonial } from '@/data/testimonials';
+import { useTestimonials } from '@/hooks/useTestimonials';
+import { testimonials as localTestimonials } from '@/data/testimonials';
 import { initSociableKit } from '@/utils/sociableKitLoader';
 
 const TestimonialsCarousel = () => {
   const [loading, setLoading] = useState(false);
-  const [allTestimonials, setAllTestimonials] = useState<Testimonial[]>(testimonials);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const loadAttemptRef = useRef(0);
   const cleanupFnRef = useRef<(() => void) | null>(null);
+  
+  // Use our new hook to fetch testimonials
+  const { testimonials: supabaseTestimonials, isLoading: isLoadingSupabase, error: supabaseError } = useTestimonials();
+  const [allTestimonials, setAllTestimonials] = useState(supabaseTestimonials.length > 0 ? supabaseTestimonials : localTestimonials);
+  
+  // Update testimonials when supabaseTestimonials change
+  useEffect(() => {
+    if (supabaseTestimonials && supabaseTestimonials.length > 0) {
+      setAllTestimonials(supabaseTestimonials);
+    }
+  }, [supabaseTestimonials]);
 
   const loadLinkedInTestimonials = () => {
     setLoading(true);
@@ -179,6 +190,49 @@ const TestimonialsCarousel = () => {
     };
   }, []);
   
+  // Show loader while fetching from Supabase
+  if (isLoadingSupabase) {
+    return (
+      <div className="px-4 md:px-10 py-6 flex justify-center items-center min-h-[300px]">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+          <p className="text-gray-600">Loading testimonials...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Show error if Supabase fetch failed
+  if (supabaseError) {
+    return (
+      <div className="px-4 md:px-10 py-6">
+        <Alert variant="destructive" className="bg-red-50 border-red-200 max-w-lg mx-auto">
+          <AlertTitle>Error Loading Testimonials</AlertTitle>
+          <AlertDescription>
+            <p>{supabaseError}</p>
+            <p className="text-sm mt-2">Showing fallback testimonials instead.</p>
+          </AlertDescription>
+        </Alert>
+        
+        <Carousel className="w-full mt-8">
+          <CarouselContent>
+            {localTestimonials.map((testimonial) => (
+              <CarouselItem key={testimonial.id} className="md:basis-1/2 lg:basis-1/3 pl-4 pr-4">
+                <div className="h-full pb-6">
+                  <TestimonialCard testimonial={testimonial} />
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <div className="flex justify-center mt-8 gap-4">
+            <CarouselPrevious className="relative static transform-none" />
+            <CarouselNext className="relative static transform-none" />
+          </div>
+        </Carousel>
+      </div>
+    );
+  }
+  
   return (
     <div className="px-4 md:px-10 py-6">
       <Carousel
@@ -232,7 +286,7 @@ const TestimonialsCarousel = () => {
         </div>
       )}
       
-      {!loading && !errorMessage && allTestimonials.length === testimonials.length && (
+      {!loading && !errorMessage && allTestimonials.length === supabaseTestimonials.length && (
         <div className="mt-8 flex justify-center gap-2 items-center">
           <button 
             onClick={loadLinkedInTestimonials}
