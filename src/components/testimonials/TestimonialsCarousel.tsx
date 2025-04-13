@@ -1,28 +1,21 @@
 
 import { useState, useEffect } from 'react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Linkedin } from 'lucide-react';
 import TestimonialCard from '@/components/testimonials/TestimonialCard';
-import LinkedInLoader from '@/components/testimonials/LinkedInLoader';
 import TestimonialsLoading from '@/components/testimonials/TestimonialsLoading';
 import TestimonialsErrorState from '@/components/testimonials/TestimonialsErrorState';
 import { useTestimonials } from '@/hooks/useTestimonials';
-import { Testimonial } from '@/types/testimonials';
 import { testimonials as localTestimonials } from '@/data/testimonials';
 
 const TestimonialsCarousel = () => {
   const { testimonials: supabaseTestimonials, isLoading: isLoadingSupabase, error: supabaseError } = useTestimonials();
-  const [allTestimonials, setAllTestimonials] = useState<Testimonial[]>(supabaseTestimonials.length > 0 ? supabaseTestimonials : localTestimonials);
+  const [allTestimonials, setAllTestimonials] = useState<any[]>(supabaseTestimonials.length > 0 ? supabaseTestimonials : localTestimonials);
   
   useEffect(() => {
     if (supabaseTestimonials && supabaseTestimonials.length > 0) {
       setAllTestimonials(supabaseTestimonials);
     }
   }, [supabaseTestimonials]);
-
-  const handleLinkedInTestimonialsLoaded = (linkedInTestimonials: Testimonial[]) => {
-    setAllTestimonials(prevTestimonials => [...prevTestimonials, ...linkedInTestimonials]);
-  };
   
   if (isLoadingSupabase) {
     return <TestimonialsLoading />;
@@ -55,13 +48,6 @@ const TestimonialsCarousel = () => {
           <CarouselNext className="relative static transform-none" />
         </div>
       </Carousel>
-      
-      {allTestimonials.length === supabaseTestimonials.length && (
-        <LinkedInLoader 
-          onTestimonialsLoaded={handleLinkedInTestimonialsLoaded} 
-          autoLoad={true}
-        />
-      )}
     </div>
   );
 };
