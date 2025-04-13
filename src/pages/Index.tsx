@@ -17,13 +17,13 @@ const Index = () => {
   const [sociableKitLoaded, setSociableKitLoaded] = useState(false);
   const { toast } = useToast();
 
-  // Only initialize SociableKIT on page load - Workshop Butler is handled in its own component
+  // Only initialize SociableKIT for non-testimonial widgets (if needed)
   useEffect(() => {
     let cleanupSociableKit: (() => void) | undefined;
     
     const loadSociableKit = async () => {
       try {
-        // Initialize SociableKIT
+        // Initialize SociableKIT for non-testimonial widgets
         cleanupSociableKit = initSociableKit();
         console.log("SociableKIT initialization complete");
         setSociableKitLoaded(true);
@@ -56,6 +56,7 @@ const Index = () => {
       <ContactSection />
       <Footer />
       <ScrollToTop />
+      <Toaster />
     </div>
   );
 };
