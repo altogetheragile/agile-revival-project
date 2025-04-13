@@ -42,7 +42,7 @@ const TestimonialsSection = () => {
         ) : null}
         
         <div className="sk-ww-linkedin-recommendations" 
-          data-embed-id="234906"
+          data-embed-id="25545673"
           data-theme="light_no_border">
         </div>
         
