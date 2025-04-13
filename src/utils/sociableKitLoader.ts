@@ -33,7 +33,7 @@ export const initSociableKit = () => {
   
   console.log("Loading SociableKIT script for LinkedIn recommendations");
   
-  // Initialize the SociableKIT script for LinkedIn recommendations with a valid embed ID
+  // Use a direct script URL for the LinkedIn recommendations widget for better reliability
   sociableKitScript = document.createElement('script');
   sociableKitScript.src = "https://widgets.sociablekit.com/linkedin-recommendations/widget.js";
   sociableKitScript.async = true;
@@ -42,6 +42,12 @@ export const initSociableKit = () => {
   // Use a valid embed ID - this is critical
   sociableKitScript.setAttribute('data-embed-id', '166933');
   document.body.appendChild(sociableKitScript);
+  
+  // Create a style element to improve widget visibility
+  const styleElement = document.createElement('link');
+  styleElement.rel = 'stylesheet';
+  styleElement.href = 'https://widgets.sociablekit.com/linkedin-recommendations/widget.css';
+  document.head.appendChild(styleElement);
   
   // Mark as loaded
   sociableKitLoaded = true;
@@ -68,7 +74,7 @@ export const initSociableKit = () => {
     }
   };
 
-  // Return a synchronous cleanup function
+  // Return a cleanup function
   return () => {
     // Clean up function
     if (sociableKitScript && document.body.contains(sociableKitScript)) {
@@ -85,6 +91,8 @@ export const isLinkedInRecommendationsReady = () => {
   const recommendationItems = document.querySelectorAll('.sk-ww-linkedin-recommendations-item');
   const containerExists = document.querySelector('.sk-ww-linkedin-recommendations') !== null;
   const globalExists = typeof window !== 'undefined' && !!window.SK_LINKEDIN_RECOMMENDATIONS;
+  
+  console.log(`LinkedIn Widget Check - Container: ${containerExists ? 'Yes' : 'No'}, Global: ${globalExists ? 'Yes' : 'No'}, Items: ${recommendationItems.length}`);
   
   return containerExists && globalExists && recommendationItems.length > 0;
 };
