@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { initSociableKit, isLinkedInRecommendationsReady } from '@/utils/sociableKitLoader';
 
@@ -14,7 +14,7 @@ export const useLinkedInRecommendations = () => {
       console.log("Initializing LinkedIn recommendations widget");
       
       // Initialize SociableKIT for LinkedIn recommendations
-      const cleanupFn = initSociableKit();
+      const cleanup = initSociableKit();
       
       // Check if LinkedIn widget is loaded every second for up to 10 seconds
       let attempts = 0;
@@ -32,14 +32,19 @@ export const useLinkedInRecommendations = () => {
           
           if (attempts >= maxAttempts && !isReady) {
             console.error("LinkedIn widget failed to load after maximum attempts");
-            throw new Error("LinkedIn recommendations widget failed to load");
+            toast({
+              title: "LinkedIn Widget Error",
+              description: "There was an issue loading LinkedIn recommendations. Local testimonials are still available.",
+              variant: "destructive"
+            });
           }
         }
       }, 1000);
       
+      // Return a synchronous cleanup function
       return () => {
         clearInterval(checkInterval);
-        if (cleanupFn) cleanupFn();
+        cleanup(); // Call the cleanup function from initSociableKit
       };
     } catch (error) {
       console.error("Error loading LinkedIn recommendations:", error);

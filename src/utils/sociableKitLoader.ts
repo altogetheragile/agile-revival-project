@@ -5,17 +5,17 @@
 
 // Track if the script has already been loaded
 let sociableKitLoaded = false;
+let sociableKitScript: HTMLScriptElement | null = null;
 
 export const initSociableKit = () => {
   // If already loaded, don't add another script
-  if (sociableKitLoaded) {
+  if (sociableKitLoaded && sociableKitScript) {
     console.log("SociableKIT script already loaded, refreshing widget");
     
     // Try to reinitialize the widget if it exists
     if (window.SK_LINKEDIN_RECOMMENDATIONS) {
       try {
         window.SK_LINKEDIN_RECOMMENDATIONS.reload();
-        return () => {};
       } catch (err) {
         console.error("Failed to reload LinkedIn recommendations:", err);
       }
@@ -25,30 +25,42 @@ export const initSociableKit = () => {
   
   console.log("Loading SociableKIT script for LinkedIn recommendations");
   
+  // Remove any existing script to avoid conflicts
+  if (sociableKitScript && document.body.contains(sociableKitScript)) {
+    document.body.removeChild(sociableKitScript);
+    sociableKitLoaded = false;
+  }
+  
   // Initialize the SociableKIT script for LinkedIn recommendations
-  const script = document.createElement('script');
-  script.src = "https://widgets.sociablekit.com/linkedin-recommendations/widget.js";
-  script.async = true;
-  script.defer = true;
-  document.body.appendChild(script);
+  sociableKitScript = document.createElement('script');
+  sociableKitScript.src = "https://widgets.sociablekit.com/linkedin-recommendations/widget.js";
+  sociableKitScript.async = true;
+  sociableKitScript.defer = true;
+  document.body.appendChild(sociableKitScript);
   
   // Mark as loaded
   sociableKitLoaded = true;
   
-  script.onload = () => {
+  sociableKitScript.onload = () => {
     console.log("SociableKIT script loaded successfully");
   };
   
-  script.onerror = (err) => {
+  sociableKitScript.onerror = (err) => {
     console.error("Error loading SociableKIT script:", err);
     sociableKitLoaded = false; // Reset flag to allow retry
+    if (sociableKitScript && document.body.contains(sociableKitScript)) {
+      document.body.removeChild(sociableKitScript);
+    }
+    sociableKitScript = null;
   };
 
+  // Return a synchronous cleanup function
   return () => {
     // Clean up function
-    if (document.body.contains(script)) {
-      document.body.removeChild(script);
+    if (sociableKitScript && document.body.contains(sociableKitScript)) {
+      document.body.removeChild(sociableKitScript);
       sociableKitLoaded = false;
+      sociableKitScript = null;
     }
   };
 };
