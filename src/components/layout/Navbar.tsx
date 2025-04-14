@@ -33,8 +33,17 @@ const Navbar = () => {
     { name: 'Training', href: '/training-schedule' },
     { name: 'Blog', href: '/blog' },
     { name: 'Testimonials', href: '/#testimonials' },
-    { name: 'Contact', href: '/#contact' }
+    { name: 'Contact', href: '/#contact' },
+    { name: 'Admin', href: '/admin', isAdmin: true } // Added admin link with flag
   ];
+
+  // In a real application, this would come from your authentication system
+  const isAdmin = true; // Placeholder - replace with actual auth check
+
+  // Filter navigation links based on user role
+  const filteredNavLinks = navLinks.filter(link => 
+    !link.isAdmin || (link.isAdmin && isAdmin)
+  );
 
   return (
     <nav 
@@ -49,7 +58,7 @@ const Navbar = () => {
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex space-x-8">
-          {navLinks.map((link) => (
+          {filteredNavLinks.map((link) => (
             <Link
               key={link.name}
               to={link.href.startsWith('/#') ? link.href.substring(1) : link.href}
@@ -72,7 +81,7 @@ const Navbar = () => {
       {/* Mobile Navigation Menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white shadow-lg absolute top-full left-0 right-0 p-4 flex flex-col space-y-4 animate-fade-in">
-          {navLinks.map((link) => (
+          {filteredNavLinks.map((link) => (
             <Link
               key={link.name}
               to={link.href.startsWith('/#') ? link.href.substring(1) : link.href}
