@@ -2,80 +2,21 @@
 import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
-import { Course, CourseFormData } from "@/types/course";
-import { 
-  getAllCourses, 
-  createCourse, 
-  updateCourse, 
-  deleteCourse 
-} from "@/services/courseService";
+import { Course } from "@/types/course";
+import { getAllCourses } from "@/services/courseService";
 import CourseCategoryTabs, { CourseCategory } from "@/components/courses/CourseCategoryTabs";
 import CourseTable from "@/components/courses/CourseTable";
-import CourseFormDialog from "@/components/courses/CourseFormDialog";
 
 const TrainingSchedule = () => {
   const [selectedTab, setSelectedTab] = useState<CourseCategory>("all");
-  const [courses, setCourses] = useState<Course[]>(getAllCourses());
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
-  const { toast } = useToast();
+  const [courses] = useState<Course[]>(getAllCourses());
 
   const filteredCourses = selectedTab === "all" 
     ? courses 
     : courses.filter(course => course.category === selectedTab);
-
-  const handleAddCourse = () => {
-    setCurrentCourse(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditCourse = (course: Course) => {
-    setCurrentCourse(course);
-    setIsFormOpen(true);
-  };
-
-  const handleDeleteCourse = (course: Course) => {
-    if (window.confirm(`Are you sure you want to delete "${course.title}"?`)) {
-      if (deleteCourse(course.id)) {
-        setCourses(getAllCourses());
-        toast({
-          title: "Course deleted",
-          description: `"${course.title}" has been removed successfully.`
-        });
-      }
-    }
-  };
-
-  const handleFormSubmit = (data: CourseFormData) => {
-    if (currentCourse) {
-      // Update existing course
-      const updated = updateCourse(currentCourse.id, data);
-      if (updated) {
-        setCourses(getAllCourses());
-        toast({
-          title: "Course updated",
-          description: `"${data.title}" has been updated successfully.`
-        });
-      }
-    } else {
-      // Create new course
-      const created = createCourse(data);
-      setCourses(getAllCourses());
-      toast({
-        title: "Course created",
-        description: `"${created.title}" has been added successfully.`
-      });
-    }
-    setIsFormOpen(false);
-  };
-
-  const handleFormCancel = () => {
-    setIsFormOpen(false);
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -94,9 +35,6 @@ const TrainingSchedule = () => {
               selectedTab={selectedTab}
               onTabChange={(value) => setSelectedTab(value as CourseCategory)}
               filteredCourses={filteredCourses}
-              onAddCourse={handleAddCourse}
-              onEditCourse={handleEditCourse}
-              onDeleteCourse={handleDeleteCourse}
             />
           </div>
 
@@ -119,14 +57,6 @@ const TrainingSchedule = () => {
           </div>
         </section>
       </main>
-
-      <CourseFormDialog
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        currentCourse={currentCourse}
-        onSubmit={handleFormSubmit}
-        onCancel={handleFormCancel}
-      />
 
       <Footer />
       <ScrollToTop />
