@@ -6,4 +6,10 @@ export interface BlogPost {
   date: string;
   url: string;
   imageUrl?: string;
+  isDraft?: boolean;
 }
+
+export type BlogPostFormData = Omit<BlogPost, "id" | "date"> & {
+  id?: number;
+  date?: string;
+};
