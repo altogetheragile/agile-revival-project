@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Course } from "@/types/course";
 import CourseList from "./CourseList";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export type CourseCategory = "scrum" | "kanban" | "leadership" | "all";
 
@@ -25,6 +26,8 @@ const CourseCategoryTabs: React.FC<CourseCategoryTabsProps> = ({
   onEditCourse,
   onDeleteCourse,
 }) => {
+  const isMobile = useIsMobile();
+  
   return (
     <Tabs 
       defaultValue={selectedTab} 
@@ -32,8 +35,8 @@ const CourseCategoryTabs: React.FC<CourseCategoryTabsProps> = ({
       className="w-full max-w-6xl mx-auto" 
       onValueChange={onTabChange}
     >
-      <div className="flex justify-between items-center">
-        <TabsList className="grid grid-cols-4 w-full max-w-md">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full sm:max-w-md">
           <TabsTrigger value="all">All Courses</TabsTrigger>
           <TabsTrigger value="scrum">Scrum</TabsTrigger>
           <TabsTrigger value="kanban">Kanban</TabsTrigger>
@@ -44,35 +47,39 @@ const CourseCategoryTabs: React.FC<CourseCategoryTabsProps> = ({
         </Button>
       </div>
 
-      <TabsContent value="all" className="space-y-8">
+      <TabsContent value="all" className="space-y-8 mt-6">
         <CourseList 
           courses={filteredCourses} 
           onEdit={onEditCourse} 
-          onDelete={onDeleteCourse} 
+          onDelete={onDeleteCourse}
+          isMobile={isMobile}
         />
       </TabsContent>
 
-      <TabsContent value="scrum" className="space-y-8">
+      <TabsContent value="scrum" className="space-y-8 mt-6">
         <CourseList 
           courses={filteredCourses} 
           onEdit={onEditCourse} 
           onDelete={onDeleteCourse} 
+          isMobile={isMobile}
         />
       </TabsContent>
 
-      <TabsContent value="kanban" className="space-y-8">
+      <TabsContent value="kanban" className="space-y-8 mt-6">
         <CourseList 
           courses={filteredCourses} 
           onEdit={onEditCourse} 
           onDelete={onDeleteCourse} 
+          isMobile={isMobile}
         />
       </TabsContent>
 
-      <TabsContent value="leadership" className="space-y-8">
+      <TabsContent value="leadership" className="space-y-8 mt-6">
         <CourseList 
           courses={filteredCourses} 
           onEdit={onEditCourse} 
           onDelete={onDeleteCourse} 
+          isMobile={isMobile}
         />
       </TabsContent>
     </Tabs>

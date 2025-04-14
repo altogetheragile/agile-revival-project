@@ -9,19 +9,22 @@ interface CourseCardProps {
   course: Course;
   onEdit?: (course: Course) => void;
   onDelete?: (course: Course) => void;
+  isMobile?: boolean;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete }) => {
+const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete, isMobile }) => {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="relative">
-        <CardTitle className="text-agile-purple-dark">{course.title}</CardTitle>
-        <CardDescription className="font-medium flex items-center gap-2">
-          <Calendar className="h-4 w-4" /> {course.dates}
-        </CardDescription>
+        <div className="flex flex-col">
+          <CardTitle className="text-agile-purple-dark">{course.title}</CardTitle>
+          <CardDescription className="font-medium flex items-center gap-2 mt-1">
+            <Calendar className="h-4 w-4" /> {course.dates}
+          </CardDescription>
+        </div>
         
         {onEdit && onDelete && (
-          <div className="absolute top-4 right-4 flex gap-2">
+          <div className={`${isMobile ? 'flex mt-4' : 'absolute top-4 right-4 flex'} gap-2`}>
             <Button variant="ghost" size="icon" onClick={() => onEdit(course)}>
               <Edit className="h-4 w-4" />
             </Button>
