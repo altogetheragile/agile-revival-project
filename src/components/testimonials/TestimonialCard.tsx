@@ -65,8 +65,14 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({ testimonial }) => {
         <div className="flex-1">
           <p className="font-semibold text-gray-800">{testimonial.name}</p>
           <p className="text-sm text-gray-600">
-            {testimonial.role}
-            {testimonial.company ? `, ${testimonial.company}` : ''}
+            {testimonial.role ? (
+              <>
+                {testimonial.role}
+                {testimonial.company ? `, ${testimonial.company}` : ''}
+              </>
+            ) : (
+              testimonial.company ? <span className="font-medium">{testimonial.company}</span> : ''
+            )}
           </p>
         </div>
         

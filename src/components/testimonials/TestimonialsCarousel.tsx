@@ -8,8 +8,13 @@ import { useTestimonials } from '@/hooks/useTestimonials';
 import { testimonials as localTestimonials } from '@/data/testimonials';
 
 const TestimonialsCarousel = () => {
-  const { testimonials: supabaseTestimonials, isLoading: isLoadingSupabase, error: supabaseError } = useTestimonials();
-  const [allTestimonials, setAllTestimonials] = useState<any[]>(supabaseTestimonials.length > 0 ? supabaseTestimonials : localTestimonials);
+  // Limit to 10 testimonials
+  const { testimonials: supabaseTestimonials, isLoading: isLoadingSupabase, error: supabaseError } = useTestimonials(10);
+  const [allTestimonials, setAllTestimonials] = useState<any[]>(
+    supabaseTestimonials.length > 0 ? 
+      supabaseTestimonials : 
+      [...localTestimonials].sort(() => Math.random() - 0.5).slice(0, 10)
+  );
   
   useEffect(() => {
     if (supabaseTestimonials && supabaseTestimonials.length > 0) {
@@ -22,7 +27,10 @@ const TestimonialsCarousel = () => {
   }
   
   if (supabaseError) {
-    return <TestimonialsErrorState error={supabaseError} fallbackTestimonials={localTestimonials} />;
+    return <TestimonialsErrorState 
+      error={supabaseError} 
+      fallbackTestimonials={[...localTestimonials].sort(() => Math.random() - 0.5).slice(0, 10)} 
+    />;
   }
   
   return (

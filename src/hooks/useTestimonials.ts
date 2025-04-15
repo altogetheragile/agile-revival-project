@@ -4,8 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { SupabaseTestimonial, Testimonial, mapSupabaseToTestimonial } from '@/types/testimonials';
 import { testimonials as fallbackTestimonials } from '@/data/testimonials';
 
-export function useTestimonials() {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(fallbackTestimonials);
+export function useTestimonials(limit: number = 10) {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(
+    // Randomly shuffle and limit fallback testimonials
+    [...fallbackTestimonials]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, limit)
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +35,13 @@ export function useTestimonials() {
           const mappedTestimonials = data.map((item: SupabaseTestimonial) => 
             mapSupabaseToTestimonial(item)
           );
-          setTestimonials(mappedTestimonials);
+          
+          // Randomly shuffle and limit testimonials
+          const randomizedTestimonials = [...mappedTestimonials]
+            .sort(() => Math.random() - 0.5)
+            .slice(0, limit);
+            
+          setTestimonials(randomizedTestimonials);
         }
       } catch (err) {
         console.error('Unexpected error:', err);
@@ -41,7 +52,7 @@ export function useTestimonials() {
     }
 
     fetchTestimonials();
-  }, []);
+  }, [limit]);
 
   return { testimonials, isLoading, error };
 }
