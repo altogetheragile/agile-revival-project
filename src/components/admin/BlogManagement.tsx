@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { PlusCircle, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import BlogForm from "@/components/blog/BlogForm";
 import { BlogPost, BlogPostFormData } from "@/types/blog";
 import { 
@@ -22,19 +22,16 @@ const BlogManagement = () => {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const { toast } = useToast();
 
-  // Load blog posts with drafts
   useEffect(() => {
     const loadedPosts = getAllBlogPosts(true);
     setPosts(loadedPosts);
   }, []);
 
-  // Open dialog to create a new post
   const handleAddNew = () => {
     setCurrentPost(undefined);
     setIsDialogOpen(true);
   };
 
-  // Open dialog to edit a post
   const handleEdit = (id: number) => {
     const post = getBlogPostById(id);
     if (post) {
@@ -43,13 +40,11 @@ const BlogManagement = () => {
     }
   };
 
-  // Open confirmation dialog for deletion
   const handleDeleteConfirm = (id: number) => {
     setDeleteId(id);
     setIsConfirmDialogOpen(true);
   };
 
-  // Delete a post after confirmation
   const handleDelete = () => {
     if (deleteId !== null) {
       const success = deleteBlogPost(deleteId);
@@ -58,7 +53,6 @@ const BlogManagement = () => {
           title: "Post deleted",
           description: "The blog post has been deleted successfully.",
         });
-        // Refresh the posts list
         setPosts(getAllBlogPosts(true));
       } else {
         toast({
@@ -72,10 +66,8 @@ const BlogManagement = () => {
     }
   };
 
-  // Handle form submission for creating/editing posts
   const handleSubmit = (data: BlogPostFormData) => {
     if (currentPost?.id) {
-      // Update existing post
       const updatedPost = updateBlogPost(currentPost.id, data);
       if (updatedPost) {
         toast({
@@ -85,7 +77,6 @@ const BlogManagement = () => {
         setPosts(getAllBlogPosts(true));
       }
     } else {
-      // Create new post
       const newPost = createBlogPost(data);
       toast({
         title: "Post created",
@@ -137,9 +128,8 @@ const BlogManagement = () => {
         </div>
       )}
 
-      {/* Blog Post Form Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>{currentPost?.id ? 'Edit Blog Post' : 'Create Blog Post'}</DialogTitle>
             <DialogDescription>
@@ -148,15 +138,16 @@ const BlogManagement = () => {
                 : 'Fill out the form to create a new blog post'}
             </DialogDescription>
           </DialogHeader>
-          <BlogForm 
-            initialData={currentPost} 
-            onSubmit={handleSubmit}
-            onCancel={() => setIsDialogOpen(false)}
-          />
+          <ScrollArea className="max-h-[70vh] pr-4">
+            <BlogForm 
+              initialData={currentPost} 
+              onSubmit={handleSubmit}
+              onCancel={() => setIsDialogOpen(false)}
+            />
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader>
