@@ -171,10 +171,14 @@ const UserManagement = () => {
         description: "User information has been updated successfully.",
       });
     } else {
-      // Create new user
+      // Create new user - fixed by ensuring all properties are non-optional
       const newUser: User = {
         id: `${users.length + 1}`,
-        ...data,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
+        status: data.status,
         createdAt: new Date().toISOString().split('T')[0]
       };
       setUsers([...users, newUser]);
