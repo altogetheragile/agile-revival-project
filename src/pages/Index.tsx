@@ -6,20 +6,22 @@ import AboutSection from "@/components/sections/AboutSection";
 import TestimonialsSection from "@/components/sections/TestimonialsSection";
 import ContactSection from "@/components/sections/ContactSection";
 import Footer from "@/components/layout/Footer";
-import ScrollToTop from "@/components/layout/ScrollToTop";
 import { Toaster } from '@/components/ui/toaster';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <HeroSection />
-      <ServicesSection />
-      <AboutSection />
-      <TestimonialsSection />
-      <ContactSection />
+      <main className="relative">
+        <HeroSection />
+        <div className="relative z-10 bg-white">
+          <ServicesSection />
+          <AboutSection />
+          <TestimonialsSection />
+          <ContactSection />
+        </div>
+      </main>
       <Footer />
-      <ScrollToTop />
       <Toaster />
     </div>
   );

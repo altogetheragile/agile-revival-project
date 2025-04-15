@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -116,4 +117,33 @@
   .secondary-button {
     @apply bg-white text-agile-purple border border-agile-purple hover:bg-agile-purple-light font-semibold py-3 px-6 rounded-md transition-all duration-300 inline-block;
   }
+}
+
+/* Parallax and animation related styles */
+@layer utilities {
+  .parallax {
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+  
+  .animate-blob {
+    animation: blob-bounce 7s infinite;
+  }
+
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+}
+
+@keyframes blob-bounce {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(5%, 5%) scale(1.1); }
+  50% { transform: translate(0, 10%) scale(1); }
+  75% { transform: translate(-5%, 5%) scale(0.9); }
 }
