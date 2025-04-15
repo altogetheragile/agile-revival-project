@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import TrainingSchedule from "./pages/TrainingSchedule";
+import CourseDetails from "./pages/CourseDetails";
 import Blog from "./pages/Blog";
 import AdminDashboard from "./pages/AdminDashboard";
 import ScrollToTop from "./components/layout/ScrollToTop";
@@ -28,6 +29,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/training-schedule" element={<TrainingSchedule />} />
+          <Route path="/course/:id" element={<CourseDetails />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/admin" element={<AdminDashboard />} />
           

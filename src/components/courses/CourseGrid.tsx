@@ -1,5 +1,6 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Course } from "@/types/course";
 import { 
   Card,
@@ -17,9 +18,16 @@ interface CourseGridProps {
 }
 
 const CourseGrid: React.FC<CourseGridProps> = ({ courses }) => {
+  const navigate = useNavigate();
+  
   // Convert price string to use £ symbol
   const formatPrice = (price: string) => {
     return price.replace(/\$/, '£');
+  };
+
+  // Handle Details button click to navigate to course details page
+  const handleViewDetails = (courseId: string) => {
+    navigate(`/course/${courseId}`);
   };
 
   return (
@@ -53,7 +61,11 @@ const CourseGrid: React.FC<CourseGridProps> = ({ courses }) => {
             </div>
           </CardContent>
           <CardFooter className="flex justify-between items-center">
-            <Button variant="outline" className="flex gap-2">
+            <Button 
+              variant="outline" 
+              className="flex gap-2"
+              onClick={() => handleViewDetails(course.id)}
+            >
               <Eye className="h-4 w-4" /> Details
             </Button>
             <Button>Reserve Spot</Button>
