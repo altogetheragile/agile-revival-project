@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -32,28 +33,40 @@ const Footer = () => {
             <h4 className="text-lg font-semibold mb-6">Services</h4>
             <ul className="space-y-3">
               <li>
-                <a href="#services" className="text-gray-400 hover:text-agile-purple flex items-center">
+                <Link to="/services/leadership-coaching" className="text-gray-400 hover:text-agile-purple flex items-center">
                   <ChevronRight size={16} className="mr-1" />
-                  Agile Transformation
-                </a>
+                  Leadership Coaching
+                </Link>
               </li>
               <li>
-                <a href="#services" className="text-gray-400 hover:text-agile-purple flex items-center">
+                <Link to="/services/team-coaching" className="text-gray-400 hover:text-agile-purple flex items-center">
                   <ChevronRight size={16} className="mr-1" />
-                  Agile Team Coaching
-                </a>
+                  Team Coaching
+                </Link>
               </li>
               <li>
-                <a href="#services" className="text-gray-400 hover:text-agile-purple flex items-center">
+                <Link to="/training-schedule" className="text-gray-400 hover:text-agile-purple flex items-center">
                   <ChevronRight size={16} className="mr-1" />
-                  Leadership Development
-                </a>
+                  Agile Training
+                </Link>
               </li>
               <li>
-                <a href="#services" className="text-gray-400 hover:text-agile-purple flex items-center">
+                <Link to="/services/agile-facilitation" className="text-gray-400 hover:text-agile-purple flex items-center">
                   <ChevronRight size={16} className="mr-1" />
-                  Agile Training & Workshops
-                </a>
+                  Agile Facilitation
+                </Link>
+              </li>
+              <li>
+                <Link to="/services/performance-metrics" className="text-gray-400 hover:text-agile-purple flex items-center">
+                  <ChevronRight size={16} className="mr-1" />
+                  Performance Metrics
+                </Link>
+              </li>
+              <li>
+                <Link to="/services/custom-coaching" className="text-gray-400 hover:text-agile-purple flex items-center">
+                  <ChevronRight size={16} className="mr-1" />
+                  Custom Coaching Solutions
+                </Link>
               </li>
             </ul>
           </div>
