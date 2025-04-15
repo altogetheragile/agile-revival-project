@@ -32,7 +32,7 @@ const TrainingSchedule = () => {
             filteredCourses={filteredCourses}
           />
           
-          <CourseScheduleView courses={courses} />
+          <CourseScheduleView courses={filteredCourses} />
           
           <CustomTrainingCTA />
         </section>
