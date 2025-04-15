@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { ArrowUp } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 const ScrollToTop = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const location = useLocation();
 
   // Show button when page is scrolled down
   const toggleVisibility = () => {
@@ -19,6 +21,13 @@ const ScrollToTop = () => {
     window.addEventListener('scroll', toggleVisibility);
     return () => window.removeEventListener('scroll', toggleVisibility);
   }, []);
+
+  // Reset scroll position when the route changes
+  useEffect(() => {
+    if (!location.hash) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [location.pathname]);
 
   // Scroll to top when button is clicked
   const scrollToTop = () => {

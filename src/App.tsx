@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import TrainingSchedule from "./pages/TrainingSchedule";
 import Blog from "./pages/Blog";
 import AdminDashboard from "./pages/AdminDashboard";
+import ScrollToTop from "./components/layout/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/training-schedule" element={<TrainingSchedule />} />

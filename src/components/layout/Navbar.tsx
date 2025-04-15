@@ -37,8 +37,8 @@ const Navbar = () => {
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
-    } else if (location.pathname === '/') {
-      // Scroll to top when on home page without hash
+    } else {
+      // Scroll to top when on any page without hash
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [location]);
@@ -57,6 +57,11 @@ const Navbar = () => {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleFullPageLinkClick = () => {
+    closeMenu();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const navLinks = [
@@ -85,7 +90,11 @@ const Navbar = () => {
       }`}
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
-        <Link to="/" className="font-bold text-2xl text-agile-purple">
+        <Link 
+          to="/" 
+          className="font-bold text-2xl text-agile-purple"
+          onClick={handleFullPageLinkClick}
+        >
           Altogether<span className="text-agile-purple-dark">Agile</span>
         </Link>
         
@@ -105,6 +114,7 @@ const Navbar = () => {
                   ) : (
                     <Link
                       to={link.href}
+                      onClick={link.isHash ? undefined : handleFullPageLinkClick}
                       className={navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
                     >
                       {link.name}
@@ -160,7 +170,7 @@ const Navbar = () => {
                 key={link.name}
                 to={link.href}
                 className="text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors"
-                onClick={closeMenu}
+                onClick={link.isHash ? closeMenu : handleFullPageLinkClick}
               >
                 {link.name}
               </Link>
