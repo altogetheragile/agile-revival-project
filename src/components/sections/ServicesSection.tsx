@@ -1,8 +1,9 @@
 
 import { Activity, Compass, BarChart3, Users, Laptop, Puzzle } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
-const ServiceCard = ({ title, description, icon: Icon }) => {
+const ServiceCard = ({ title, description, icon: Icon, url }) => {
   return (
     <Card className="p-6 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-300 hover:border-agile-purple h-full flex flex-col">
       <div className="bg-agile-purple-light p-3 rounded-full w-12 h-12 flex items-center justify-center mb-5">
@@ -10,9 +11,9 @@ const ServiceCard = ({ title, description, icon: Icon }) => {
       </div>
       <h3 className="text-xl font-semibold mb-3">{title}</h3>
       <p className="text-gray-600 flex-grow">{description}</p>
-      <a href="#contact" className="mt-4 text-agile-purple font-medium hover:text-agile-purple-dark flex items-center gap-1">
+      <Link to={url} className="mt-4 text-agile-purple font-medium hover:text-agile-purple-dark flex items-center gap-1">
         Learn More
-      </a>
+      </Link>
     </Card>
   );
 };
@@ -22,32 +23,38 @@ const ServicesSection = () => {
     {
       title: "Leadership Coaching",
       description: "One-on-one coaching for leaders to develop an agile mindset and effectively support self-organizing teams.",
-      icon: Compass
+      icon: Compass,
+      url: "/services/leadership-coaching"
     },
     {
       title: "Team Coaching",
       description: "Hands-on coaching for agile teams using Scrum, Kanban, or hybrid approaches to improve collaboration and delivery.",
-      icon: Users
+      icon: Users,
+      url: "/services/team-coaching"
     },
     {
       title: "Agile Training",
       description: "Interactive workshops and certification courses on agile methodologies, tailored to your organization's context.",
-      icon: Laptop
+      icon: Laptop,
+      url: "/training-schedule"
     },
     {
       title: "Agile Facilitation",
       description: "Expert facilitation of key agile ceremonies, retrospectives, and strategic planning sessions.",
-      icon: Activity
+      icon: Activity,
+      url: "/services/agile-facilitation"
     },
     {
       title: "Performance Metrics",
       description: "Developing meaningful measurement approaches that focus on outcomes and support continuous improvement.",
-      icon: BarChart3
+      icon: BarChart3,
+      url: "/services/performance-metrics"
     },
     {
       title: "Custom Coaching Solutions",
       description: "Tailored coaching programs designed to address your organization's unique challenges and goals.",
-      icon: Puzzle
+      icon: Puzzle,
+      url: "/services/custom-coaching"
     }
   ];
 

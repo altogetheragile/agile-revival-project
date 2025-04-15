@@ -10,6 +10,11 @@ import TrainingSchedule from "./pages/TrainingSchedule";
 import Blog from "./pages/Blog";
 import AdminDashboard from "./pages/AdminDashboard";
 import ScrollToTop from "./components/layout/ScrollToTop";
+import LeadershipCoaching from "./pages/services/LeadershipCoaching";
+import TeamCoaching from "./pages/services/TeamCoaching";
+import AgileFacilitation from "./pages/services/AgileFacilitation";
+import PerformanceMetrics from "./pages/services/PerformanceMetrics";
+import CustomCoaching from "./pages/services/CustomCoaching";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +30,14 @@ const App = () => (
           <Route path="/training-schedule" element={<TrainingSchedule />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          
+          {/* Service Pages */}
+          <Route path="/services/leadership-coaching" element={<LeadershipCoaching />} />
+          <Route path="/services/team-coaching" element={<TeamCoaching />} />
+          <Route path="/services/agile-facilitation" element={<AgileFacilitation />} />
+          <Route path="/services/performance-metrics" element={<PerformanceMetrics />} />
+          <Route path="/services/custom-coaching" element={<CustomCoaching />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
