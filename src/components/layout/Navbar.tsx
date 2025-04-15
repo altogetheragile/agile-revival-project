@@ -1,18 +1,18 @@
 
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuItem,
-  NavigationMenuLink,
   navigationMenuTriggerStyle
 } from '@/components/ui/navigation-menu';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,6 +29,20 @@ const Navbar = () => {
     };
   }, []);
 
+  // Handle hash navigation when route changes
+  useEffect(() => {
+    // Check if the URL contains a hash
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else if (location.pathname === '/') {
+      // Scroll to top when on home page without hash
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [location]);
+
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
@@ -37,14 +51,22 @@ const Navbar = () => {
     setIsMenuOpen(false);
   };
 
+  const handleHashLinkClick = (elementId: string) => {
+    closeMenu();
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const navLinks = [
     { name: 'Home', href: '/' },
-    { name: 'Services', href: '/#services' },
-    { name: 'About Us', href: '/#about' },
+    { name: 'Services', href: '/#services', isHash: true },
+    { name: 'About Us', href: '/#about', isHash: true },
     { name: 'Training', href: '/training-schedule' },
     { name: 'Blog', href: '/blog' },
-    { name: 'Testimonials', href: '/#testimonials' },
-    { name: 'Contact', href: '/#contact' },
+    { name: 'Testimonials', href: '/#testimonials', isHash: true },
+    { name: 'Contact', href: '/#contact', isHash: true },
     { name: 'Admin', href: '/admin', isAdmin: true }
   ];
 
@@ -73,21 +95,39 @@ const Navbar = () => {
             <NavigationMenuList>
               {filteredNavLinks.map((link) => (
                 <NavigationMenuItem key={link.name}>
-                  <Link
-                    to={link.href.startsWith('/#') ? link.href.substring(1) : link.href}
-                    className={navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
-                  >
-                    {link.name}
-                  </Link>
+                  {link.isHash && location.pathname === '/' ? (
+                    <button
+                      onClick={() => handleHashLinkClick(link.href.split('#')[1])}
+                      className={navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
+                    >
+                      {link.name}
+                    </button>
+                  ) : (
+                    <Link
+                      to={link.href}
+                      className={navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
+                    >
+                      {link.name}
+                    </Link>
+                  )}
                 </NavigationMenuItem>
               ))}
               <NavigationMenuItem>
-                <Link 
-                  to="/#contact" 
-                  className="cta-button py-2 px-4"
-                >
-                  Get Started
-                </Link>
+                {location.pathname === '/' ? (
+                  <button 
+                    onClick={() => handleHashLinkClick('contact')} 
+                    className="cta-button py-2 px-4"
+                  >
+                    Get Started
+                  </button>
+                ) : (
+                  <Link 
+                    to="/#contact" 
+                    className="cta-button py-2 px-4"
+                  >
+                    Get Started
+                  </Link>
+                )}
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
@@ -107,22 +147,41 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-white shadow-lg absolute top-full left-0 right-0 p-4 flex flex-col space-y-4 animate-fade-in">
           {filteredNavLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.href.startsWith('/#') ? link.href.substring(1) : link.href}
-              className="text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors"
+            link.isHash && location.pathname === '/' ? (
+              <button
+                key={link.name}
+                onClick={() => handleHashLinkClick(link.href.split('#')[1])}
+                className="text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors text-left"
+              >
+                {link.name}
+              </button>
+            ) : (
+              <Link
+                key={link.name}
+                to={link.href}
+                className="text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors"
+                onClick={closeMenu}
+              >
+                {link.name}
+              </Link>
+            )
+          ))}
+          {location.pathname === '/' ? (
+            <button 
+              onClick={() => handleHashLinkClick('contact')} 
+              className="cta-button text-center py-2"
+            >
+              Get Started
+            </button>
+          ) : (
+            <Link 
+              to="/#contact" 
+              className="cta-button text-center py-2" 
               onClick={closeMenu}
             >
-              {link.name}
+              Get Started
             </Link>
-          ))}
-          <Link 
-            to="/#contact" 
-            className="cta-button text-center py-2" 
-            onClick={closeMenu}
-          >
-            Get Started
-          </Link>
+          )}
         </div>
       )}
     </nav>
