@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Mail, MapPin, Send } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 const ContactSection = () => {
@@ -47,7 +46,6 @@ const ContactSection = () => {
         </p>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Contact Form */}
           <div className="bg-white p-8 rounded-lg shadow-md animate-fade-in">
             <h3 className="text-2xl font-bold mb-6">Send us a Message</h3>
             <form onSubmit={handleSubmit}>
@@ -115,7 +113,6 @@ const ContactSection = () => {
             </form>
           </div>
           
-          {/* Contact Information */}
           <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <div className="bg-gradient-to-br from-agile-purple to-agile-purple-dark text-white p-8 rounded-lg shadow-md h-full">
               <h3 className="text-2xl font-bold mb-6">Contact Information</h3>
@@ -130,20 +127,10 @@ const ContactSection = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <Phone className="mt-1" />
-                  <div>
-                    <h4 className="font-medium">Phone</h4>
-                    <a href="tel:+11234567890" className="text-white/90 hover:text-white">
-                      +1 (123) 456-7890
-                    </a>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
                   <MapPin className="mt-1" />
                   <div>
                     <h4 className="font-medium">Location</h4>
                     <p className="text-white/90">
-                      123 Agile Street<br />
                       San Francisco, CA 94101
                     </p>
                   </div>
