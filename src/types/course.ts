@@ -18,4 +18,5 @@ export interface Course {
 
 export type CourseFormData = Omit<Course, "id"> & {
   id?: string;
+  learningOutcomes?: string[] | string;
 };
