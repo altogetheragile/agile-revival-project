@@ -8,6 +8,7 @@ import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import CourseManagement from "@/components/admin/CourseManagement";
 import BlogManagement from "@/components/admin/BlogManagement";
+import UserManagement from "@/components/admin/UserManagement";
 
 const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("courses");
@@ -54,10 +55,7 @@ const AdminDashboard = () => {
               </TabsContent>
               
               <TabsContent value="users" className="pt-4">
-                <div className="bg-white shadow-md rounded-md p-6">
-                  <h2 className="text-xl font-semibold mb-4">User Management</h2>
-                  <p className="text-gray-600">User management functionality will be implemented here.</p>
-                </div>
+                <UserManagement />
               </TabsContent>
               
               <TabsContent value="settings" className="pt-4">
