@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CourseGridProps {
@@ -17,12 +17,20 @@ interface CourseGridProps {
 }
 
 const CourseGrid: React.FC<CourseGridProps> = ({ courses }) => {
+  // Convert price string to use £ symbol
+  const formatPrice = (price: string) => {
+    return price.replace(/\$/, '£');
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
       {courses.map((course) => (
         <Card key={course.id} className="h-full flex flex-col">
           <CardHeader>
-            <CardTitle className="text-agile-purple-dark">{course.title}</CardTitle>
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-agile-purple-dark">{course.title}</CardTitle>
+              <div className="font-bold text-lg">{formatPrice(course.price)}</div>
+            </div>
             <CardDescription className="font-medium flex items-center gap-2">
               <Calendar className="h-4 w-4" /> {course.dates}
             </CardDescription>
@@ -44,9 +52,11 @@ const CourseGrid: React.FC<CourseGridProps> = ({ courses }) => {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col items-start space-y-2 sm:flex-row sm:justify-between sm:space-y-0 sm:items-center">
-            <div className="font-bold text-lg">{course.price}</div>
-            <Button className="w-full sm:w-auto">Reserve Spot</Button>
+          <CardFooter className="flex justify-between items-center">
+            <Button variant="outline" className="flex gap-2">
+              <Eye className="h-4 w-4" /> Details
+            </Button>
+            <Button>Reserve Spot</Button>
           </CardFooter>
         </Card>
       ))}
