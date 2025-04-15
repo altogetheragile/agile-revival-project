@@ -97,7 +97,7 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-6">Contact</h4>
             <address className="not-italic text-gray-400 space-y-3">
-              <p>San Francisco, CA 94101</p>
+              <p>London, United Kingdom</p>
               <p>Email: info@altogetheragile.com</p>
             </address>
           </div>

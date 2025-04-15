@@ -131,7 +131,7 @@ const ContactSection = () => {
                   <div>
                     <h4 className="font-medium">Location</h4>
                     <p className="text-white/90">
-                      San Francisco, CA 94101
+                      London, United Kingdom
                     </p>
                   </div>
                 </div>
