@@ -9,6 +9,11 @@ export interface Course {
   price: string;
   category: "scrum" | "kanban" | "leadership" | "all";
   spotsAvailable: number;
+  learningOutcomes?: string[];
+  prerequisites?: string;
+  targetAudience?: string;
+  duration?: string;
+  skillLevel?: "beginner" | "intermediate" | "advanced" | "all-levels";
 }
 
 export type CourseFormData = Omit<Course, "id"> & {

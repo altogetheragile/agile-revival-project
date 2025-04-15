@@ -37,7 +37,12 @@ const CourseForm: React.FC<CourseFormProps> = ({
     instructor: "",
     price: "",
     category: "scrum",
-    spotsAvailable: 10
+    spotsAvailable: 10,
+    learningOutcomes: [],
+    prerequisites: "",
+    targetAudience: "",
+    duration: "",
+    skillLevel: "all-levels"
   },
   onSubmit,
   onCancel
@@ -46,7 +51,16 @@ const CourseForm: React.FC<CourseFormProps> = ({
     defaultValues: initialData
   });
 
+  // Convert comma-separated string to array for learning outcomes
   const handleSubmit = (data: CourseFormData) => {
+    // Process learning outcomes if provided as a string
+    if (typeof data.learningOutcomes === 'string') {
+      data.learningOutcomes = data.learningOutcomes
+        .split('\n')
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+    }
+    
     onSubmit({
       ...data,
       spotsAvailable: Number(data.spotsAvailable)
@@ -140,7 +154,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
               <FormItem>
                 <FormLabel>Price</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. $1,195" {...field} />
+                  <Input placeholder="e.g. £1,195" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -194,6 +208,113 @@ const CourseForm: React.FC<CourseFormProps> = ({
             )}
           />
         </div>
+
+        {/* New fields for additional course details */}
+        <FormField
+          control={form.control}
+          name="duration"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Duration</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. 2 days, 16 hours" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="skillLevel"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Skill Level</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a skill level" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="all-levels">All Levels</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="targetAudience"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Target Audience</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Who is this course for?"
+                  className="min-h-[80px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="prerequisites"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Prerequisites</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Any requirements before taking this course?"
+                  className="min-h-[80px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="learningOutcomes"
+          render={({ field }) => {
+            // Handle the case where learningOutcomes is an array
+            const value = Array.isArray(field.value)
+              ? field.value.join('\n')
+              : field.value || '';
+              
+            return (
+              <FormItem>
+                <FormLabel>Learning Outcomes</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Enter learning outcomes (one per line)"
+                    className="min-h-[120px]"
+                    value={value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Enter each learning outcome on a new line
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
 
         <div className="flex justify-end space-x-4">
           <Button type="button" variant="outline" onClick={onCancel}>

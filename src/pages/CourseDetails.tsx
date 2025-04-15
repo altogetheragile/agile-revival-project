@@ -1,12 +1,13 @@
 
 import { useParams, useNavigate } from "react-router-dom";
 import { getCourseById } from "@/services/courseService";
-import { Calendar, Clock, MapPin, Users, ArrowLeft } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, ArrowLeft, BookOpen, Target, GraduationCap, Clock3 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 const CourseDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,12 @@ const CourseDetails = () => {
   // Handle back button click
   const handleBack = () => {
     navigate('/training-schedule');
+  };
+
+  // Format skill level for display
+  const formatSkillLevel = (level?: string) => {
+    if (!level) return "All Levels";
+    return level.charAt(0).toUpperCase() + level.slice(1).replace('-', ' ');
   };
 
   // If course is not found
@@ -66,6 +73,14 @@ const CourseDetails = () => {
               <div className="mt-3 flex items-center gap-2 text-gray-600">
                 <Calendar className="h-5 w-5" /> {course.dates}
               </div>
+              
+              {course.skillLevel && (
+                <div className="mt-2">
+                  <Badge variant="outline" className="bg-white">
+                    {formatSkillLevel(course.skillLevel)}
+                  </Badge>
+                </div>
+              )}
             </div>
             
             <div className="p-8">
@@ -88,19 +103,57 @@ const CourseDetails = () => {
                       <Clock className="h-5 w-5 text-agile-purple" />
                       <span>{course.spotsAvailable} spots available</span>
                     </div>
+                    {course.duration && (
+                      <div className="flex items-center gap-2">
+                        <Clock3 className="h-5 w-5 text-agile-purple" />
+                        <span>Duration: {course.duration}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold mb-3">What You'll Learn</h3>
-                  <ul className="list-disc list-inside space-y-2 text-gray-700">
-                    <li>Understand the key principles and practices of {course.category} methodology</li>
-                    <li>Apply {course.category} techniques to real-world scenarios</li>
-                    <li>Learn how to enhance team collaboration and productivity</li>
-                    <li>Develop skills to address common challenges in {course.category} adoption</li>
-                  </ul>
+                  {course.learningOutcomes && course.learningOutcomes.length > 0 ? (
+                    <ul className="list-disc list-inside space-y-2 text-gray-700">
+                      {course.learningOutcomes.map((outcome, index) => (
+                        <li key={index}>{outcome}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <ul className="list-disc list-inside space-y-2 text-gray-700">
+                      <li>Understand the key principles and practices of {course.category} methodology</li>
+                      <li>Apply {course.category} techniques to real-world scenarios</li>
+                      <li>Learn how to enhance team collaboration and productivity</li>
+                      <li>Develop skills to address common challenges in {course.category} adoption</li>
+                    </ul>
+                  )}
                 </div>
               </div>
+              
+              {(course.targetAudience || course.prerequisites) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  {course.targetAudience && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <Target className="h-5 w-5 text-agile-purple" />
+                        Target Audience
+                      </h3>
+                      <p className="text-gray-700">{course.targetAudience}</p>
+                    </div>
+                  )}
+                  
+                  {course.prerequisites && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <GraduationCap className="h-5 w-5 text-agile-purple" />
+                        Prerequisites
+                      </h3>
+                      <p className="text-gray-700">{course.prerequisites}</p>
+                    </div>
+                  )}
+                </div>
+              )}
               
               <Separator className="my-6" />
               
