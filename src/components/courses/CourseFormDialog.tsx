@@ -3,6 +3,7 @@ import React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CourseForm from "./CourseForm";
 import { Course, CourseFormData } from "@/types/course";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CourseFormDialogProps {
   open: boolean;
@@ -21,7 +22,7 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>
             {currentCourse ? `Edit Course: ${currentCourse.title}` : "Add New Course"}
@@ -30,11 +31,13 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
             Fill in the details below to {currentCourse ? "update" : "create"} a course.
           </DialogDescription>
         </DialogHeader>
-        <CourseForm 
-          initialData={currentCourse || undefined}
-          onSubmit={onSubmit}
-          onCancel={onCancel}
-        />
+        <ScrollArea className="max-h-[70vh] pr-4">
+          <CourseForm 
+            initialData={currentCourse || undefined}
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+          />
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
