@@ -2,6 +2,13 @@
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { 
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  navigationMenuTriggerStyle
+} from '@/components/ui/navigation-menu';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -26,6 +33,10 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
+
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Services', href: '/#services' },
@@ -34,7 +45,7 @@ const Navbar = () => {
     { name: 'Blog', href: '/blog' },
     { name: 'Testimonials', href: '/#testimonials' },
     { name: 'Contact', href: '/#contact' },
-    { name: 'Admin', href: '/admin', isAdmin: true } // Added admin link with flag
+    { name: 'Admin', href: '/admin', isAdmin: true }
   ];
 
   // In a real application, this would come from your authentication system
@@ -57,23 +68,37 @@ const Navbar = () => {
         </Link>
         
         {/* Desktop Navigation */}
-        <div className="hidden md:flex space-x-8">
-          {filteredNavLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.href.startsWith('/#') ? link.href.substring(1) : link.href}
-              className="text-gray-700 hover:text-agile-purple font-medium transition-colors"
-            >
-              {link.name}
-            </Link>
-          ))}
-          <Link to="/#contact" className="cta-button py-2 px-4">
-            Get Started
-          </Link>
+        <div className="hidden md:block">
+          <NavigationMenu>
+            <NavigationMenuList>
+              {filteredNavLinks.map((link) => (
+                <NavigationMenuItem key={link.name}>
+                  <Link
+                    to={link.href.startsWith('/#') ? link.href.substring(1) : link.href}
+                    className={navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
+                  >
+                    {link.name}
+                  </Link>
+                </NavigationMenuItem>
+              ))}
+              <NavigationMenuItem>
+                <Link 
+                  to="/#contact" 
+                  className="cta-button py-2 px-4"
+                >
+                  Get Started
+                </Link>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
         </div>
         
         {/* Mobile Navigation Toggle */}
-        <button className="md:hidden text-gray-700" onClick={toggleMenu}>
+        <button 
+          className="md:hidden text-gray-700 focus:outline-none" 
+          onClick={toggleMenu}
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        >
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
@@ -86,12 +111,16 @@ const Navbar = () => {
               key={link.name}
               to={link.href.startsWith('/#') ? link.href.substring(1) : link.href}
               className="text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
+              onClick={closeMenu}
             >
               {link.name}
             </Link>
           ))}
-          <Link to="/#contact" className="cta-button text-center" onClick={() => setIsMenuOpen(false)}>
+          <Link 
+            to="/#contact" 
+            className="cta-button text-center py-2" 
+            onClick={closeMenu}
+          >
             Get Started
           </Link>
         </div>
