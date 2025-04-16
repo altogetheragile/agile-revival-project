@@ -43,6 +43,18 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+
+  // Get the tab parameter from URL if it exists
+  const searchParams = new URLSearchParams(window.location.search);
+  const tabParam = searchParams.get('tab');
+  
+  // Set the active tab based on URL parameter if it exists
+  useState(() => {
+    if (tabParam && ['login', 'signup', 'reset'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  });
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -91,10 +103,16 @@ export default function Auth() {
 
   const onResetPasswordSubmit = async (data: ResetPasswordFormValues) => {
     setIsLoading(true);
+    setResetError(null);
+    
     try {
-      await resetPassword(data.email);
+      const result = await resetPassword(data.email);
       setResetEmailSent(true);
-      resetPasswordForm.reset();
+      
+      if (!result.success) {
+        setResetError(result.message);
+      }
+      
     } finally {
       setIsLoading(false);
     }
@@ -158,6 +176,15 @@ export default function Auth() {
                         "Sign In"
                       )}
                     </Button>
+                    <div className="text-center mt-2">
+                      <button 
+                        type="button" 
+                        className="text-sm text-blue-600 hover:underline"
+                        onClick={() => setActiveTab("reset")}
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
                   </form>
                 </Form>
               </TabsContent>
@@ -252,7 +279,14 @@ export default function Auth() {
                     {resetEmailSent && (
                       <Alert className="mb-4">
                         <AlertDescription>
-                          If an account exists with this email, you will receive password reset instructions.
+                          If an account exists with this email, you will receive password reset instructions. Please check both your inbox and spam folder.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    {resetError && (
+                      <Alert className="mb-4 bg-red-50 border-red-200">
+                        <AlertDescription className="text-red-800">
+                          {resetError}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -269,7 +303,7 @@ export default function Auth() {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full" disabled={isLoading}>
+                    <Button type="submit" className="w-full" disabled={isLoading || resetEmailSent}>
                       {isLoading ? (
                         <>
                           <Loader className="mr-2 h-4 w-4 animate-spin" />
@@ -279,6 +313,21 @@ export default function Auth() {
                         "Reset Password"
                       )}
                     </Button>
+                    {resetEmailSent && (
+                      <div className="text-center mt-4">
+                        <Button 
+                          variant="outline"
+                          type="button" 
+                          className="text-sm"
+                          onClick={() => {
+                            setResetEmailSent(false);
+                            resetPasswordForm.reset();
+                          }}
+                        >
+                          Send again to a different email
+                        </Button>
+                      </div>
+                    )}
                   </form>
                 </Form>
               </TabsContent>

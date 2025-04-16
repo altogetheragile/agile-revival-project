@@ -15,7 +15,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -134,23 +134,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function resetPassword(email: string) {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?tab=login`,
+      // Define the full URL for password reset
+      const redirectUrl = `${window.location.origin}/auth?tab=login`;
+      console.log("Reset password redirect URL:", redirectUrl);
+      
+      const { error, data } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
       });
 
       if (error) throw error;
       
       toast({
         title: "Password reset email sent",
-        description: "Please check your email for password reset instructions.",
+        description: "Please check your inbox and spam folder for the password reset link.",
       });
+      
+      return { 
+        success: true, 
+        message: "If an account exists with this email, you will receive password reset instructions." 
+      };
     } catch (error: any) {
+      console.error("Password reset error:", error);
+      
       toast({
-        title: "Error resetting password",
-        description: error.message || "An unexpected error occurred",
-        variant: "destructive",
+        title: "Password reset request sent",
+        description: "If an account exists with this email, you will receive password reset instructions.",
       });
-      throw error;
+      
+      // Return success even on error to prevent user enumeration
+      return { 
+        success: false, 
+        message: error.message || "An unexpected error occurred" 
+      };
     }
   }
 
