@@ -1,3 +1,4 @@
+
 import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -46,8 +47,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
       const { error } = await supabase
         .from('course_registrations')
         .insert({
-          // Convert the string course ID to a UUID
-          // If it's not a valid UUID format, generate a new one based on the course ID
+          // Use the same UUID generation logic as in CourseRegistrations.tsx
           course_id: generateCourseUuid(course.id),
           first_name: values.firstName,
           last_name: values.lastName,
@@ -79,15 +79,16 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
   };
 
   // Function to generate a consistent UUID from a course ID string
+  // Uses a deterministic approach to ensure consistent IDs across components
   const generateCourseUuid = (courseId: string): string => {
     // If the courseId is already a valid UUID, return it
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId)) {
       return courseId;
     }
     
-    // Otherwise, generate a deterministic UUID based on the course ID
-    // This ensures we get the same UUID for the same course ID every time
-    return crypto.randomUUID();
+    // For non-UUID course IDs, create a deterministic UUID
+    // This ensures we get the same UUID for the same courseId every time
+    return `00000000-0000-0000-0000-${courseId.padStart(12, '0').slice(-12)}`;
   };
 
   return (

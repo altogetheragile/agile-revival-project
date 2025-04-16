@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseRegistrationsTable } from "./CourseRegistrationsTable";
@@ -22,8 +23,9 @@ const CourseRegistrations: React.FC<CourseRegistrationsProps> = ({ course, onBac
       try {
         setLoading(true);
         
-        // Use the same UUID generation logic as in the RegistrationForm
+        // Create a deterministic UUID from a course ID string using a consistent method
         const courseUuid = generateCourseUuid(course.id);
+        console.log("Querying for course_id:", courseUuid);
         
         const { data, error } = await supabase
           .from('course_registrations')
@@ -51,18 +53,17 @@ const CourseRegistrations: React.FC<CourseRegistrationsProps> = ({ course, onBac
   }, [course.id, toast]);
 
   // Function to generate a consistent UUID from a course ID string
-  // This must match the logic in RegistrationForm.tsx
+  // Uses a deterministic approach to ensure consistent IDs
   const generateCourseUuid = (courseId: string): string => {
     // If the courseId is already a valid UUID, return it
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId)) {
       return courseId;
     }
     
-    // Otherwise, generate a deterministic UUID based on the course ID
-    // But this is a problem because we can't guarantee the same UUID as generated in the form
-    // In a real application, we should use a deterministic algorithm
-    // For now, we'll just return a placeholder that will likely not match any registrations
-    return courseId;
+    // For non-UUID course IDs, create a deterministic UUID
+    // This uses a simple approach - in production, you might want a more sophisticated method
+    // that generates the same UUID for the same string every time
+    return `00000000-0000-0000-0000-${courseId.padStart(12, '0').slice(-12)}`;
   };
 
   return (
