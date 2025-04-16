@@ -43,12 +43,14 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
 
   const onSubmit = async (values: RegistrationFormValues) => {
     try {
-      // Save registration to Supabase
+      // Save registration to Supabase using the same UUID generation method
+      const courseUuid = generateCourseUuid(course.id);
+      console.log("Registering for course_id:", courseUuid);
+      
       const { error } = await supabase
         .from('course_registrations')
         .insert({
-          // Use the same UUID generation logic as in CourseRegistrations.tsx
-          course_id: generateCourseUuid(course.id),
+          course_id: courseUuid,
           first_name: values.firstName,
           last_name: values.lastName,
           email: values.email,
@@ -78,18 +80,27 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
     }
   };
 
-  // Function to generate a consistent UUID from a course ID string
-  // Uses a deterministic approach to ensure consistent IDs across components
+  // Function to generate a properly formatted UUID from a course ID 
+  // IMPORTANT: This must match the function in CourseRegistrations.tsx
   const generateCourseUuid = (courseId: string): string => {
     // If the courseId is already a valid UUID, return it
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId)) {
       return courseId;
     }
     
-    // For non-UUID course IDs, create a valid deterministic UUID
-    // We need to ensure the format is precisely correct for PostgreSQL
-    const sanitizedId = courseId.replace(/[^a-zA-Z0-9]/g, '');
-    return `00000000-0000-0000-0000-${sanitizedId.padStart(12, '0').substring(0, 12)}`;
+    // For non-UUID course IDs, create a valid UUID format
+    // We need to ensure it's a valid hex string for PostgreSQL
+    let hex = '';
+    
+    // Convert the courseId to a hex representation
+    for (let i = 0; i < courseId.length; i++) {
+      hex += courseId.charCodeAt(i).toString(16);
+    }
+    
+    // Pad and format to ensure valid UUID format
+    hex = hex.padEnd(32, '0');
+    
+    return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20, 32)}`;
   };
 
   return (
