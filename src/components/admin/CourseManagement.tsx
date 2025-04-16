@@ -1,19 +1,32 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
-import CourseList from "@/components/courses/CourseList";
-import CourseFormDialog from "@/components/courses/CourseFormDialog";
+import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData } from "@/types/course";
 import { getAllCourses, createCourse, updateCourse, deleteCourse } from "@/services/courseService";
-import { useToast } from "@/hooks/use-toast";
+import { CourseManagementHeader } from "./courses/CourseManagementHeader";
+import { CourseTable } from "./courses/CourseTable";
+import CourseFormDialog from "@/components/courses/CourseFormDialog";
+import { DeleteConfirmationDialog } from "./users/DeleteConfirmationDialog";
 
 const CourseManagement = () => {
   const [courses, setCourses] = useState<Course[]>(getAllCourses());
+  const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
+  const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
   const { toast } = useToast();
   
+  // Filter courses based on search term
+  const filteredCourses = courses.filter(course => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      course.title.toLowerCase().includes(searchLower) ||
+      course.category.toLowerCase().includes(searchLower) ||
+      course.instructor.toLowerCase().includes(searchLower)
+    );
+  });
+
   const handleAddCourse = () => {
     setCurrentCourse(null);
     setIsFormOpen(true);
@@ -24,15 +37,22 @@ const CourseManagement = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteCourse = (course: Course) => {
-    if (window.confirm(`Are you sure you want to delete "${course.title}"?`)) {
-      if (deleteCourse(course.id)) {
+  const handleDeleteConfirm = (course: Course) => {
+    setDeleteCourseId(course.id);
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (deleteCourseId) {
+      if (deleteCourse(deleteCourseId)) {
         setCourses(getAllCourses());
         toast({
           title: "Course deleted",
-          description: `"${course.title}" has been removed successfully.`
+          description: "The course has been removed successfully."
         });
       }
+      setIsConfirmDialogOpen(false);
+      setDeleteCourseId(null);
     }
   };
 
@@ -59,38 +79,32 @@ const CourseManagement = () => {
     setIsFormOpen(false);
   };
 
-  const handleFormCancel = () => {
-    setIsFormOpen(false);
-  };
-
   return (
     <div className="bg-white shadow-md rounded-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Course Management</h2>
-        <Button onClick={handleAddCourse} className="flex items-center gap-2">
-          <PlusCircle size={16} /> Add New Course
-        </Button>
-      </div>
+      <CourseManagementHeader 
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onAddNew={handleAddCourse}
+      />
       
-      {courses.length > 0 ? (
-        <CourseList 
-          courses={courses} 
-          onEdit={handleEditCourse} 
-          onDelete={handleDeleteCourse}
-          isMobile={true} // Always show edit/delete buttons inline for admin view
-        />
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          No courses found. Click "Add New Course" to create one.
-        </div>
-      )}
+      <CourseTable 
+        courses={filteredCourses} 
+        onEdit={handleEditCourse} 
+        onDelete={handleDeleteConfirm}
+      />
       
       <CourseFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         currentCourse={currentCourse}
         onSubmit={handleFormSubmit}
-        onCancel={handleFormCancel}
+        onCancel={() => setIsFormOpen(false)}
+      />
+
+      <DeleteConfirmationDialog 
+        open={isConfirmDialogOpen}
+        onOpenChange={setIsConfirmDialogOpen}
+        onConfirm={handleDelete}
       />
     </div>
   );
