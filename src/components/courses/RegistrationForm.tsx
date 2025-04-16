@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Course } from "@/types/course";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -41,8 +43,20 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
 
   const onSubmit = async (values: RegistrationFormValues) => {
     try {
-      // In a real application, this would send the registration data to a backend
-      console.log("Registration details:", { courseId: course.id, ...values });
+      // Save registration to Supabase
+      const { error } = await supabase
+        .from('course_registrations')
+        .insert({
+          course_id: course.id,
+          first_name: values.firstName,
+          last_name: values.lastName,
+          email: values.email,
+          phone: values.phone,
+          company: values.company || null,
+          additional_notes: values.additionalNotes || null,
+        });
+
+      if (error) throw error;
       
       // Show success toast
       toast({
@@ -54,6 +68,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
       // Close the form
       onComplete();
     } catch (error) {
+      console.error("Registration error:", error);
       toast({
         title: "Registration failed",
         description: "There was a problem with your registration. Please try again.",
@@ -144,7 +159,11 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
             <FormItem>
               <FormLabel>Additional Notes (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Any specific requirements or questions?" {...field} />
+                <Textarea 
+                  placeholder="Any specific requirements or questions?" 
+                  className="min-h-[80px]" 
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
