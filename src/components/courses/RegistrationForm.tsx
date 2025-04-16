@@ -1,4 +1,3 @@
-
 import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -43,14 +42,14 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
 
   const onSubmit = async (values: RegistrationFormValues) => {
     try {
-      // Save registration to Supabase using the same UUID generation method
-      const courseUuid = generateCourseUuid(course.id);
-      console.log("Registering for course_id:", courseUuid);
+      // Use the simple course ID directly
+      const courseId = course.id;
+      console.log("Registering for course_id:", courseId);
       
       const { error } = await supabase
         .from('course_registrations')
         .insert({
-          course_id: courseUuid,
+          course_id: courseId,
           first_name: values.firstName,
           last_name: values.lastName,
           email: values.email,
@@ -78,29 +77,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
         variant: "destructive",
       });
     }
-  };
-
-  // Function to generate a properly formatted UUID from a course ID 
-  // IMPORTANT: This must match the function in CourseRegistrations.tsx
-  const generateCourseUuid = (courseId: string): string => {
-    // If the courseId is already a valid UUID, return it
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId)) {
-      return courseId;
-    }
-    
-    // For non-UUID course IDs, create a valid UUID format
-    // We need to ensure it's a valid hex string for PostgreSQL
-    let hex = '';
-    
-    // Convert the courseId to a hex representation
-    for (let i = 0; i < courseId.length; i++) {
-      hex += courseId.charCodeAt(i).toString(16);
-    }
-    
-    // Pad and format to ensure valid UUID format
-    hex = hex.padEnd(32, '0');
-    
-    return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20, 32)}`;
   };
 
   return (
