@@ -1,7 +1,7 @@
 
 import { User } from "@/types/user";
 
-// Mock data for users
+// Mock data for users - no longer used directly, as we're now using Supabase
 export const mockUsers: User[] = [
   {
     id: "1",
