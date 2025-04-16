@@ -86,9 +86,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
       return courseId;
     }
     
-    // For non-UUID course IDs, create a deterministic UUID
-    // This ensures we get the same UUID for the same courseId every time
-    return `00000000-0000-0000-0000-${courseId.padStart(12, '0').slice(-12)}`;
+    // For non-UUID course IDs, create a valid deterministic UUID
+    // We need to ensure the format is precisely correct for PostgreSQL
+    const sanitizedId = courseId.replace(/[^a-zA-Z0-9]/g, '');
+    return `00000000-0000-0000-0000-${sanitizedId.padStart(12, '0').substring(0, 12)}`;
   };
 
   return (
