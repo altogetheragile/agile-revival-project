@@ -7,6 +7,7 @@ import { CourseManagementHeader } from "./courses/CourseManagementHeader";
 import { CourseTable } from "./courses/CourseTable";
 import CourseFormDialog from "@/components/courses/CourseFormDialog";
 import { DeleteConfirmationDialog } from "./users/DeleteConfirmationDialog";
+import CourseRegistrations from "./courses/CourseRegistrations";
 
 const CourseManagement = () => {
   const [courses, setCourses] = useState<Course[]>(getAllCourses());
@@ -15,6 +16,7 @@ const CourseManagement = () => {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
   const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
+  const [viewingRegistrations, setViewingRegistrations] = useState(false);
   const { toast } = useToast();
   
   // Filter courses based on search term
@@ -78,6 +80,20 @@ const CourseManagement = () => {
     }
     setIsFormOpen(false);
   };
+  
+  const handleViewRegistrations = (course: Course) => {
+    setCurrentCourse(course);
+    setViewingRegistrations(true);
+  };
+
+  if (viewingRegistrations && currentCourse) {
+    return (
+      <CourseRegistrations 
+        course={currentCourse}
+        onBack={() => setViewingRegistrations(false)}
+      />
+    );
+  }
 
   return (
     <div className="bg-white shadow-md rounded-md p-6">
@@ -91,6 +107,7 @@ const CourseManagement = () => {
         courses={filteredCourses} 
         onEdit={handleEditCourse} 
         onDelete={handleDeleteConfirm}
+        onViewRegistrations={handleViewRegistrations}
       />
       
       <CourseFormDialog

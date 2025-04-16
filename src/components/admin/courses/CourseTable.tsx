@@ -3,15 +3,16 @@ import { Course } from "@/types/course";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Users } from "lucide-react";
 
 interface CourseTableProps {
   courses: Course[];
   onEdit: (course: Course) => void;
   onDelete: (course: Course) => void;
+  onViewRegistrations: (course: Course) => void;
 }
 
-export const CourseTable = ({ courses, onEdit, onDelete }: CourseTableProps) => {
+export const CourseTable = ({ courses, onEdit, onDelete, onViewRegistrations }: CourseTableProps) => {
   return (
     <Card className="overflow-hidden">
       <div className="overflow-x-auto">
@@ -23,7 +24,7 @@ export const CourseTable = ({ courses, onEdit, onDelete }: CourseTableProps) => 
               <TableHead>Dates</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Spots</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="w-[150px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -37,10 +38,29 @@ export const CourseTable = ({ courses, onEdit, onDelete }: CourseTableProps) => 
                   <TableCell>{course.spotsAvailable}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button size="sm" variant="ghost" onClick={() => onEdit(course)}>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => onViewRegistrations(course)}
+                        title="View Registrations"
+                      >
+                        <Users size={16} />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => onEdit(course)}
+                        title="Edit Course"
+                      >
                         <Edit size={16} />
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => onDelete(course)}>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="text-destructive" 
+                        onClick={() => onDelete(course)}
+                        title="Delete Course"
+                      >
                         <Trash2 size={16} />
                       </Button>
                     </div>
