@@ -83,9 +83,23 @@ export const useAuthService = () => {
       const redirectUrl = `${window.location.origin}/auth?tab=login`;
       console.log("Reset password redirect URL:", redirectUrl);
       
-      const { error, data } = await supabase.auth.resetPasswordForEmail(email, {
+      // Add a timeout to the promise to prevent infinite waiting
+      const resetPromise = supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
       });
+      
+      // Set a timeout of 10 seconds
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Password reset request timed out. This might be due to network issues or the Supabase service being temporarily unavailable."));
+        }, 10000);
+      });
+      
+      // Race between the actual request and the timeout
+      const { error } = await Promise.race([
+        resetPromise,
+        timeoutPromise,
+      ]) as any;
 
       if (error) throw error;
       
@@ -101,16 +115,31 @@ export const useAuthService = () => {
     } catch (error: any) {
       console.error("Password reset error:", error);
       
-      toast({
-        title: "Password reset request sent",
-        description: "If an account exists with this email, you will receive password reset instructions.",
-      });
-      
-      // Return success even on error to prevent user enumeration
-      return { 
-        success: false, 
-        message: error.message || "An unexpected error occurred" 
-      };
+      // Check if it's a timeout error
+      if (error.message && error.message.includes("timed out")) {
+        toast({
+          title: "Password reset request issue",
+          description: "The request timed out. Please try again later or contact support if the problem persists.",
+          variant: "destructive",
+        });
+        
+        return {
+          success: false,
+          message: "Request timed out. Please try again later."
+        };
+      } else {
+        // For other errors, we still show a generic message to prevent user enumeration
+        toast({
+          title: "Password reset request sent",
+          description: "If an account exists with this email, you will receive password reset instructions.",
+        });
+        
+        // Return success even on error to prevent user enumeration
+        return { 
+          success: true,
+          message: "If an account exists with this email, you will receive password reset instructions."
+        };
+      }
     }
   };
 

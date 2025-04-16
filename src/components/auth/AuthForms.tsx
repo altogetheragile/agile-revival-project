@@ -239,12 +239,14 @@ export function ResetPasswordForm() {
     
     try {
       const result = await resetPassword(data.email);
-      setResetEmailSent(true);
       
       if (!result.success) {
         setResetError(result.message);
+      } else {
+        setResetEmailSent(true);
       }
-      
+    } catch (error: any) {
+      setResetError(error.message || "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -253,7 +255,7 @@ export function ResetPasswordForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {resetEmailSent && (
+        {resetEmailSent && !resetError && (
           <Alert className="mb-4">
             <AlertDescription>
               If an account exists with this email, you will receive password reset instructions. Please check both your inbox and spam folder.
@@ -280,7 +282,7 @@ export function ResetPasswordForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isLoading || resetEmailSent}>
+        <Button type="submit" className="w-full" disabled={isLoading || (resetEmailSent && !resetError)}>
           {isLoading ? (
             <>
               <Loader className="mr-2 h-4 w-4 animate-spin" />
@@ -290,7 +292,7 @@ export function ResetPasswordForm() {
             "Reset Password"
           )}
         </Button>
-        {resetEmailSent && (
+        {(resetEmailSent || resetError) && (
           <div className="text-center mt-4">
             <Button 
               variant="outline"
@@ -298,6 +300,7 @@ export function ResetPasswordForm() {
               className="text-sm"
               onClick={() => {
                 setResetEmailSent(false);
+                setResetError(null);
                 form.reset();
               }}
             >
