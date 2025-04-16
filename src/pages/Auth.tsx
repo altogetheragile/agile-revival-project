@@ -9,6 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
@@ -28,13 +30,19 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const resetPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
 type LoginFormValues = z.infer<typeof loginSchema>;
 type SignupFormValues = z.infer<typeof signupSchema>;
+type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function Auth() {
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, resetPassword } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -52,6 +60,13 @@ export default function Auth() {
       email: "",
       password: "",
       confirmPassword: "",
+    },
+  });
+
+  const resetPasswordForm = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: "",
     },
   });
 
@@ -74,6 +89,17 @@ export default function Auth() {
     }
   };
 
+  const onResetPasswordSubmit = async (data: ResetPasswordFormValues) => {
+    setIsLoading(true);
+    try {
+      await resetPassword(data.email);
+      setResetEmailSent(true);
+      resetPasswordForm.reset();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Redirect if user is already logged in
   if (user) {
     return <Navigate to="/" replace />;
@@ -87,9 +113,10 @@ export default function Auth() {
           <div className="bg-white shadow-md rounded-lg p-6">
             <h1 className="text-2xl font-bold text-center mb-6">Account Access</h1>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsList className="grid w-full grid-cols-3 mb-8">
                 <TabsTrigger value="login">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="reset">Reset</TabsTrigger>
               </TabsList>
               
               <TabsContent value="login">
@@ -122,7 +149,14 @@ export default function Auth() {
                       )}
                     />
                     <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Signing In..." : "Sign In"}
+                      {isLoading ? (
+                        <>
+                          <Loader className="mr-2 h-4 w-4 animate-spin" />
+                          Signing In...
+                        </>
+                      ) : (
+                        "Sign In"
+                      )}
                     </Button>
                   </form>
                 </Form>
@@ -199,7 +233,51 @@ export default function Auth() {
                       )}
                     />
                     <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Creating Account..." : "Create Account"}
+                      {isLoading ? (
+                        <>
+                          <Loader className="mr-2 h-4 w-4 animate-spin" />
+                          Creating Account...
+                        </>
+                      ) : (
+                        "Create Account"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </TabsContent>
+
+              <TabsContent value="reset">
+                <Form {...resetPasswordForm}>
+                  <form onSubmit={resetPasswordForm.handleSubmit(onResetPasswordSubmit)} className="space-y-4">
+                    {resetEmailSent && (
+                      <Alert className="mb-4">
+                        <AlertDescription>
+                          If an account exists with this email, you will receive password reset instructions.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    <FormField
+                      control={resetPasswordForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="you@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? (
+                        <>
+                          <Loader className="mr-2 h-4 w-4 animate-spin" />
+                          Sending Instructions...
+                        </>
+                      ) : (
+                        "Reset Password"
+                      )}
                     </Button>
                   </form>
                 </Form>
