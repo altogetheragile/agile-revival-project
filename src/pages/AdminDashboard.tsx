@@ -1,18 +1,34 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import CourseManagement from "@/components/admin/CourseManagement";
 import BlogManagement from "@/components/admin/BlogManagement";
 import UserManagement from "@/components/admin/UserManagement";
-import { useAuth } from "@/contexts/AuthContext";
 
 const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("courses");
   const { toast } = useToast();
-  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  
+  // Admin authentication check (placeholder - replace with actual auth check)
+  // In a real app, you would check if the current user has admin privileges
+  const isAdmin = true; // This should come from your authentication system
+  
+  if (!isAdmin) {
+    // Redirect non-admin users
+    toast({
+      title: "Access denied",
+      description: "You don't have permission to access this page.",
+      variant: "destructive"
+    });
+    navigate("/");
+    return null;
+  }
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -20,12 +36,7 @@ const AdminDashboard = () => {
       <main className="flex-grow pt-24 pb-16">
         <section className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-3xl font-bold text-agile-purple-dark">Admin Dashboard</h1>
-              <div className="text-sm text-gray-600">
-                Logged in as: <span className="font-medium">{user?.email}</span>
-              </div>
-            </div>
+            <h1 className="text-3xl font-bold text-agile-purple-dark mb-6">Admin Dashboard</h1>
             
             <Tabs defaultValue="courses" value={currentTab} onValueChange={setCurrentTab} className="w-full">
               <TabsList className="mb-8 w-full grid grid-cols-2 md:flex md:w-auto">
