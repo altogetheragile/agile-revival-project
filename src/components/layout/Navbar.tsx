@@ -1,13 +1,16 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import DesktopNav from './DesktopNav';
 import MobileNav from './MobileNav';
+import UserMenu from '@/components/auth/UserMenu';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -59,9 +62,6 @@ const Navbar = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // In a real application, this would come from your authentication system
-  const isAdmin = true; // Placeholder - replace with actual auth check
-
   return (
     <nav 
       className={`fixed w-full z-50 transition-all duration-300 ${
@@ -78,11 +78,14 @@ const Navbar = () => {
         </Link>
         
         {/* Desktop Navigation */}
-        <DesktopNav 
-          handleHashLinkClick={handleHashLinkClick}
-          handleFullPageLinkClick={handleFullPageLinkClick}
-          isAdmin={isAdmin}
-        />
+        <div className="flex items-center gap-4">
+          <DesktopNav 
+            handleHashLinkClick={handleHashLinkClick}
+            handleFullPageLinkClick={handleFullPageLinkClick}
+            isAdmin={isAdmin}
+          />
+          <UserMenu />
+        </div>
         
         {/* Mobile Navigation */}
         <MobileNav 

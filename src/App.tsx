@@ -4,7 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import TrainingSchedule from "./pages/TrainingSchedule";
 import CourseDetails from "./pages/CourseDetails";
@@ -22,28 +25,37 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/training-schedule" element={<TrainingSchedule />} />
-          <Route path="/course/:id" element={<CourseDetails />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          
-          {/* Service Pages */}
-          <Route path="/services/leadership-coaching" element={<LeadershipCoaching />} />
-          <Route path="/services/team-coaching" element={<TeamCoaching />} />
-          <Route path="/services/agile-facilitation" element={<AgileFacilitation />} />
-          <Route path="/services/performance-metrics" element={<PerformanceMetrics />} />
-          <Route path="/services/custom-coaching" element={<CustomCoaching />} />
-          
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/training-schedule" element={<TrainingSchedule />} />
+            <Route path="/course/:id" element={<CourseDetails />} />
+            <Route path="/blog" element={<Blog />} />
+            
+            {/* Protected Admin Route */}
+            <Route path="/admin" element={
+              <ProtectedRoute requireAdmin>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Service Pages */}
+            <Route path="/services/leadership-coaching" element={<LeadershipCoaching />} />
+            <Route path="/services/team-coaching" element={<TeamCoaching />} />
+            <Route path="/services/agile-facilitation" element={<AgileFacilitation />} />
+            <Route path="/services/performance-metrics" element={<PerformanceMetrics />} />
+            <Route path="/services/custom-coaching" element={<CustomCoaching />} />
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
