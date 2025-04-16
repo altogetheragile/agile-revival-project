@@ -1,4 +1,4 @@
-
+import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 
 // Schema definitions
 const loginSchema = z.object({

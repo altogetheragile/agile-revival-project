@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,16 +26,13 @@ const Navbar = () => {
     };
   }, []);
 
-  // Handle hash navigation when route changes
   useEffect(() => {
-    // Check if the URL contains a hash
     if (location.hash) {
       const element = document.getElementById(location.hash.substring(1));
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
     } else {
-      // Scroll to top when on any page without hash
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [location]);
@@ -77,7 +73,6 @@ const Navbar = () => {
           Altogether<span className="text-agile-purple-dark">Agile</span>
         </Link>
         
-        {/* Desktop Navigation */}
         <div className="flex items-center gap-4">
           <DesktopNav 
             handleHashLinkClick={handleHashLinkClick}
@@ -87,7 +82,6 @@ const Navbar = () => {
           <UserMenu />
         </div>
         
-        {/* Mobile Navigation */}
         <MobileNav 
           isMenuOpen={isMenuOpen}
           toggleMenu={toggleMenu}
