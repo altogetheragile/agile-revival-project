@@ -35,14 +35,14 @@ const UserManagement = () => {
       }
 
       if (data) {
-        // Transform data from snake_case to camelCase
-        const transformedUsers = data.map(user => ({
+        // Transform data from snake_case to camelCase and ensure proper typing
+        const transformedUsers: User[] = data.map(user => ({
           id: user.id,
           email: user.email,
           firstName: user.first_name,
           lastName: user.last_name,
-          role: user.role,
-          status: user.status,
+          role: validateRole(user.role),
+          status: validateStatus(user.status),
           createdAt: new Date(user.created_at).toISOString().split('T')[0]
         }));
         setUsers(transformedUsers);
@@ -57,6 +57,21 @@ const UserManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper functions to validate role and status
+  const validateRole = (role: string): 'admin' | 'user' | 'editor' => {
+    if (role === 'admin' || role === 'user' || role === 'editor') {
+      return role;
+    }
+    return 'user'; // Default to 'user' if invalid role
+  };
+
+  const validateStatus = (status: string): 'active' | 'inactive' | 'pending' => {
+    if (status === 'active' || status === 'inactive' || status === 'pending') {
+      return status;
+    }
+    return 'active'; // Default to 'active' if invalid status
   };
 
   const filteredUsers = users.filter(user => {
@@ -171,8 +186,8 @@ const UserManagement = () => {
           email: newUser.email,
           firstName: newUser.first_name,
           lastName: newUser.last_name,
-          role: newUser.role,
-          status: newUser.status,
+          role: validateRole(newUser.role),
+          status: validateStatus(newUser.status),
           createdAt: new Date(newUser.created_at).toISOString().split('T')[0]
         };
         setUsers([...users, formattedUser]);
