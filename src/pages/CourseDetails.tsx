@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCourseById } from "@/services/courseService";
 import { Calendar, Clock, MapPin, Users, ArrowLeft, BookOpen, Target, GraduationCap, Clock3 } from "lucide-react";
@@ -8,11 +9,13 @@ import ScrollToTop from "@/components/layout/ScrollToTop";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import RegistrationDialog from "@/components/courses/RegistrationDialog";
 
 const CourseDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const course = id ? getCourseById(id) : undefined;
+  const [registrationOpen, setRegistrationOpen] = useState(false);
 
   // Convert price string to use £ symbol
   const formatPrice = (price: string | undefined) => {
@@ -162,7 +165,7 @@ const CourseDetails = () => {
                   <p className="text-sm text-gray-500">Have questions about this course?</p>
                   <p className="text-sm text-gray-500">Contact us at courses@altogetheragile.com</p>
                 </div>
-                <Button size="lg">Reserve Your Spot</Button>
+                <Button size="lg" onClick={() => setRegistrationOpen(true)}>Reserve Your Spot</Button>
               </div>
             </div>
           </div>
@@ -170,6 +173,12 @@ const CourseDetails = () => {
       </main>
       <Footer />
       <ScrollToTop />
+      
+      <RegistrationDialog
+        course={course}
+        open={registrationOpen}
+        onOpenChange={setRegistrationOpen}
+      />
     </div>
   );
 };

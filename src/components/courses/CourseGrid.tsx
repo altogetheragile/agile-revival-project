@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Course } from "@/types/course";
 import { 
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Calendar, Clock, MapPin, Users, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import RegistrationDialog from "./RegistrationDialog";
 
 interface CourseGridProps {
   courses: Course[];
@@ -19,6 +20,8 @@ interface CourseGridProps {
 
 const CourseGrid: React.FC<CourseGridProps> = ({ courses }) => {
   const navigate = useNavigate();
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
   
   // Convert price string to use £ symbol
   const formatPrice = (price: string) => {
@@ -29,50 +32,64 @@ const CourseGrid: React.FC<CourseGridProps> = ({ courses }) => {
   const handleViewDetails = (courseId: string) => {
     navigate(`/course/${courseId}`);
   };
+  
+  // Handle Reserve Spot button click
+  const handleReserveClick = (course: Course) => {
+    setSelectedCourse(course);
+    setRegistrationOpen(true);
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-      {courses.map((course) => (
-        <Card key={course.id} className="h-full flex flex-col">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <CardTitle className="text-agile-purple-dark">{course.title}</CardTitle>
-              <div className="font-bold text-lg">{formatPrice(course.price)}</div>
-            </div>
-            <CardDescription className="font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4" /> {course.dates}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <p className="text-gray-600 mb-4 line-clamp-3">{course.description}</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-agile-purple" />
-                <span>{course.location}</span>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+        {courses.map((course) => (
+          <Card key={course.id} className="h-full flex flex-col">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <CardTitle className="text-agile-purple-dark">{course.title}</CardTitle>
+                <div className="font-bold text-lg">{formatPrice(course.price)}</div>
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-agile-purple" />
-                <span>Instructor: {course.instructor}</span>
+              <CardDescription className="font-medium flex items-center gap-2">
+                <Calendar className="h-4 w-4" /> {course.dates}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <p className="text-gray-600 mb-4 line-clamp-3">{course.description}</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-agile-purple" />
+                  <span>{course.location}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-agile-purple" />
+                  <span>Instructor: {course.instructor}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-agile-purple" />
+                  <span>{course.spotsAvailable} spots available</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-agile-purple" />
-                <span>{course.spotsAvailable} spots available</span>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between items-center">
-            <Button 
-              variant="outline" 
-              className="flex gap-2"
-              onClick={() => handleViewDetails(course.id)}
-            >
-              <Eye className="h-4 w-4" /> Details
-            </Button>
-            <Button>Reserve Spot</Button>
-          </CardFooter>
-        </Card>
-      ))}
-    </div>
+            </CardContent>
+            <CardFooter className="flex justify-between items-center">
+              <Button 
+                variant="outline" 
+                className="flex gap-2"
+                onClick={() => handleViewDetails(course.id)}
+              >
+                <Eye className="h-4 w-4" /> Details
+              </Button>
+              <Button onClick={() => handleReserveClick(course)}>Reserve Spot</Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+      
+      <RegistrationDialog
+        course={selectedCourse}
+        open={registrationOpen}
+        onOpenChange={setRegistrationOpen}
+      />
+    </>
   );
 };
 
