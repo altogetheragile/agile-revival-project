@@ -10,10 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, UserCog, Settings } from "lucide-react";
+import { User, LogOut, UserCog, Settings, Shield } from "lucide-react";
 
 export default function UserMenu() {
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, userRole, isAdmin } = useAuth();
 
   if (!user) {
     return (
@@ -34,9 +34,12 @@ export default function UserMenu() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.email}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {isAdmin ? 'Administrator' : 'Registered User'}
-            </p>
+            <div className="flex items-center space-x-2">
+              <p className="text-xs leading-none text-muted-foreground">
+                {isAdmin ? 'Administrator' : 'Registered User'}
+              </p>
+              {isAdmin && <Shield className="h-3 w-3 text-green-500" />}
+            </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
