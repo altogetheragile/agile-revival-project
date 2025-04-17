@@ -1,3 +1,4 @@
+
 import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -42,7 +43,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
 
   const onSubmit = async (values: RegistrationFormValues) => {
     try {
-      // Use the simple course ID directly
+      // Use the direct course ID
       const courseId = course.id;
       console.log("Registering for course_id:", courseId);
       
@@ -56,6 +57,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
           phone: values.phone,
           company: values.company || null,
           additional_notes: values.additionalNotes || null,
+          status: 'pending',
         });
 
       if (error) throw error;

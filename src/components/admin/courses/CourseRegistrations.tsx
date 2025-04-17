@@ -7,7 +7,6 @@ import { Course } from "@/types/course";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { createCourseRegistrationId } from "@/utils/courseUtils";
 
 interface CourseRegistrationsProps {
   course: Course;
@@ -24,11 +23,10 @@ const CourseRegistrations: React.FC<CourseRegistrationsProps> = ({ course, onBac
       try {
         setLoading(true);
         
-        // Use the simple course ID directly instead of trying to convert it
-        // This matches how data is saved in RegistrationForm.tsx
         const courseId = course.id;
-        console.log("Querying for course_id:", courseId);
+        console.log("Fetching registrations for course_id:", courseId);
         
+        // Using text-based course ID
         const { data, error } = await supabase
           .from('course_registrations')
           .select('*')
@@ -38,6 +36,7 @@ const CourseRegistrations: React.FC<CourseRegistrationsProps> = ({ course, onBac
           throw error;
         }
         
+        console.log("Registration data fetched:", data);
         setRegistrations(data || []);
       } catch (error) {
         console.error("Error fetching registrations:", error);

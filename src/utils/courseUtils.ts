@@ -1,4 +1,3 @@
-
 /**
  * Course utility functions for handling course-related operations
  */
