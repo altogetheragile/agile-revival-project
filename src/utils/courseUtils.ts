@@ -57,3 +57,50 @@ export const formatRegistrationStatus = (status: string): string => {
   if (!status) return 'Pending';
   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 };
+
+/**
+ * Group registrations by company/organization
+ * @param registrations Array of registration objects
+ * @returns Object with registrations grouped by company
+ */
+export const groupRegistrationsByCompany = (registrations: any[]) => {
+  const grouped: { [key: string]: any[] } = {};
+  
+  // Group registrations by company name
+  registrations.forEach(registration => {
+    const company = registration.company || 'Individual';
+    
+    if (!grouped[company]) {
+      grouped[company] = [];
+    }
+    
+    grouped[company].push(registration);
+  });
+  
+  return grouped;
+};
+
+/**
+ * Get a summary of registrations by status and company/organization
+ * @param registrations Array of registration objects
+ * @returns Object with registration statistics
+ */
+export const getRegistrationsSummary = (registrations: any[]) => {
+  const groupedByCompany = groupRegistrationsByCompany(registrations);
+  const companies = Object.keys(groupedByCompany);
+  
+  const totalRegistrations = registrations.length;
+  const confirmedRegistrations = registrations.filter(r => r.status === "confirmed").length;
+  const pendingRegistrations = registrations.filter(r => r.status === "pending").length;
+  const cancelledRegistrations = registrations.filter(r => r.status === "cancelled").length;
+  const organizationCount = companies.filter(c => c !== 'Individual').length;
+  
+  return {
+    total: totalRegistrations,
+    confirmed: confirmedRegistrations,
+    pending: pendingRegistrations,
+    cancelled: cancelledRegistrations,
+    organizations: organizationCount,
+    groupedByCompany
+  };
+};
