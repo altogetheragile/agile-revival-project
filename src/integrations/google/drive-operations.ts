@@ -37,7 +37,31 @@ export const createDriveFolder = async (folderName: string, parentFolderId?: str
     
     if (!response.ok) {
       console.error("Failed to create folder. Status:", response.status, "Response:", responseText);
-      throw new Error(`Failed to create folder: (${response.status}) ${responseText}`);
+      // Parse the error response if it's valid JSON
+      try {
+        const errorJson = JSON.parse(responseText);
+        let errorMessage = `Failed to create folder: (${response.status})`;
+        
+        // Check for specific API-not-enabled error
+        if (
+          errorJson?.error?.status === "PERMISSION_DENIED" && 
+          errorJson?.error?.message?.includes("has not been used in project") &&
+          errorJson?.error?.message?.includes("drive.googleapis.com")
+        ) {
+          // Pass through the complete Google error message with the activation URL
+          throw new Error(responseText);
+        } else {
+          errorMessage = `${errorMessage} ${responseText}`;
+        }
+        
+        throw new Error(errorMessage);
+      } catch (jsonError) {
+        // If error isn't valid JSON or we failed to parse it, throw original error
+        if (jsonError instanceof SyntaxError) {
+          throw new Error(`Failed to create folder: (${response.status}) ${responseText}`);
+        }
+        throw jsonError; // Re-throw if it's our custom error
+      }
     }
     
     // Parse the response back to JSON after logging it as text

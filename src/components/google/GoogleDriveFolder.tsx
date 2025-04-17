@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import {
   uploadFileToDrive 
 } from "@/integrations/google/drive";
 import { GoogleAuthButton } from "./GoogleAuthButton";
-import { FileText, FolderOpen, Link, Upload, X, AlertCircle, RefreshCw } from "lucide-react";
+import { FileText, FolderOpen, Link, Upload, X, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -45,6 +46,7 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [apiEnableUrl, setApiEnableUrl] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const { toast } = useToast();
 
@@ -82,6 +84,7 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
     } catch (error) {
       console.error("Error loading folder contents:", error);
       setError(`Could not load files from Google Drive: ${error.message || 'Unknown error'}`);
+      checkForApiEnableUrl(error.message);
       toast({
         title: "Error",
         description: "Could not load files from Google Drive",
@@ -89,6 +92,16 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkForApiEnableUrl = (errorMessage: string) => {
+    // Extract API enable URL from error message if present
+    const match = errorMessage?.match(/https:\/\/console\.developers\.google\.com\/apis\/api\/drive\.googleapis\.com\/overview\?project=[0-9]+/);
+    if (match) {
+      setApiEnableUrl(match[0]);
+    } else {
+      setApiEnableUrl(null);
     }
   };
 
@@ -104,6 +117,7 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
 
     setIsCreating(true);
     setError(null);
+    setApiEnableUrl(null);
     try {
       console.log("Starting folder creation for:", folderName);
       const result = await createDriveFolder(folderName);
@@ -122,7 +136,9 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
       }
     } catch (error) {
       console.error("Error creating folder:", error);
-      setError(`Failed to create Google Drive folder: ${error.message || 'Unknown error'}`);
+      const errorMessage = error.message || 'Unknown error';
+      setError(`Failed to create Google Drive folder: ${errorMessage}`);
+      checkForApiEnableUrl(errorMessage);
       toast({
         title: "Error",
         description: "Failed to create Google Drive folder",
@@ -189,10 +205,32 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant={apiEnableUrl ? "warning" : "destructive"}>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertTitle>{apiEnableUrl ? "API Not Enabled" : "Error"}</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p>{error}</p>
+            {apiEnableUrl && (
+              <div className="mt-2">
+                <p className="font-medium mb-1">Please enable the Google Drive API:</p>
+                <ol className="list-decimal pl-5 space-y-1 text-sm">
+                  <li>Click the button below to open the Google Cloud Console</li>
+                  <li>Click the "Enable" button on the Google Cloud page</li>
+                  <li>Wait a few minutes for changes to propagate</li>
+                  <li>Return here and try again</li>
+                </ol>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="mt-2 flex items-center gap-1"
+                  onClick={() => window.open(apiEnableUrl, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Enable Google Drive API
+                </Button>
+              </div>
+            )}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -235,7 +273,6 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
             <div>Folder Name: {folderName || 'Not set'}</div>
             <div>Current URL: {window.location.href}</div>
             <div>Redirect Path: /auth/google/callback</div>
-            <div>Full Redirect URL: {window.location.origin}/auth/google/callback</div>
           </div>
         </div>
       )}
