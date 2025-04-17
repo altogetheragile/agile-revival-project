@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,7 @@ import {
   uploadFileToDrive 
 } from "@/integrations/google/drive";
 import { GoogleAuthButton } from "./GoogleAuthButton";
-import { FileText, FolderOpen, Link, Upload, X, AlertCircle } from "lucide-react";
+import { FileText, FolderOpen, Link, Upload, X, AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -46,6 +45,7 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,6 +59,17 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
       loadFolderContents();
     }
   }, [folderId, isAuthenticated]);
+  
+  useEffect(() => {
+    const checkAuth = () => {
+      const authStatus = isGoogleAuthenticated();
+      console.log("Authentication check result:", authStatus);
+      setIsAuthenticated(authStatus);
+      setLastChecked(new Date());
+    };
+    
+    checkAuth();
+  }, []);
 
   const loadFolderContents = async () => {
     if (!folderId) return;
@@ -104,7 +115,6 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
           title: "Folder created",
           description: "Successfully created Google Drive folder"
         });
-        // Automatically load folder contents
         setFiles([]);
         await loadFolderContents();
       } else {
@@ -155,12 +165,20 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
       }
     }
     
-    // Reload folder contents
     await loadFolderContents();
     setIsUploading(false);
     
-    // Reset input value to allow uploading the same file again
     e.target.value = '';
+  };
+
+  const refreshAuthStatus = () => {
+    const authStatus = isGoogleAuthenticated();
+    setIsAuthenticated(authStatus);
+    setLastChecked(new Date());
+    toast({
+      title: "Authentication status refreshed",
+      description: authStatus ? "You are authenticated with Google Drive" : "Not authenticated with Google Drive"
+    });
   };
 
   return (
@@ -190,18 +208,34 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
             />
           </div>
           
-          <Button 
-            onClick={handleCreateFolder} 
-            disabled={!isAuthenticated || !folderName || isCreating}
-          >
-            <FolderOpen className="mr-2 h-4 w-4" />
-            {isCreating ? "Creating folder..." : "Create Google Drive Folder"}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleCreateFolder} 
+              disabled={!isAuthenticated || !folderName || isCreating}
+              className="flex-grow"
+            >
+              <FolderOpen className="mr-2 h-4 w-4" />
+              {isCreating ? "Creating folder..." : "Create Google Drive Folder"}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={refreshAuthStatus}
+              title="Refresh authentication status"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
           
           <div className="text-xs text-gray-400 mt-1 p-2 bg-gray-50 rounded">
-            <div>Debug Information:</div>
+            <div className="font-medium">Debug Information:</div>
             <div>Authentication Status: {isAuthenticated ? 'Authenticated' : 'Not Authenticated'}</div>
+            <div>Last Checked: {lastChecked ? lastChecked.toLocaleTimeString() : 'Not checked'}</div>
             <div>Folder Name: {folderName || 'Not set'}</div>
+            <div>Current URL: {window.location.href}</div>
+            <div>Redirect Path: /auth/google/callback</div>
+            <div>Full Redirect URL: {window.location.origin}/auth/google/callback</div>
           </div>
         </div>
       )}

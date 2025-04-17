@@ -10,6 +10,7 @@ export const createDriveFolder = async (folderName: string, parentFolderId?: str
   const accessToken = await getAccessToken();
   
   console.log(`Creating folder: ${folderName}`, parentFolderId ? `with parent: ${parentFolderId}` : 'without parent');
+  console.log(`Using access token: ${accessToken.substring(0, 10)}...`);
   
   const metadata = {
     name: folderName,
@@ -18,6 +19,8 @@ export const createDriveFolder = async (folderName: string, parentFolderId?: str
   };
   
   try {
+    console.log("Sending folder creation request with metadata:", JSON.stringify(metadata));
+    
     const response = await fetch(`${GOOGLE_API_URL}/files`, {
       method: "POST",
       headers: {
@@ -27,16 +30,22 @@ export const createDriveFolder = async (folderName: string, parentFolderId?: str
       body: JSON.stringify(metadata)
     });
     
+    const responseText = await response.text();
+    console.log(`Folder creation response status: ${response.status}`);
+    console.log(`Folder creation response headers:`, Object.fromEntries(response.headers.entries()));
+    console.log(`Folder creation response body: ${responseText}`);
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Failed to create folder. Status:", response.status, "Response:", errorText);
-      throw new Error(`Failed to create folder: ${response.statusText} (${response.status})`);
+      console.error("Failed to create folder. Status:", response.status, "Response:", responseText);
+      throw new Error(`Failed to create folder: (${response.status}) ${responseText}`);
     }
     
-    const folder = await response.json();
+    // Parse the response back to JSON after logging it as text
+    const folder = JSON.parse(responseText);
     console.log("Folder created:", folder);
     
     // Make the folder accessible via a link
+    console.log(`Setting permissions for folder ${folder.id}...`);
     const permissionResponse = await fetch(`${GOOGLE_API_URL}/files/${folder.id}/permissions`, {
       method: "POST",
       headers: {
@@ -49,11 +58,16 @@ export const createDriveFolder = async (folderName: string, parentFolderId?: str
       })
     });
     
+    const permissionResponseText = await permissionResponse.text();
+    console.log(`Permission response status: ${permissionResponse.status}`);
+    console.log(`Permission response: ${permissionResponseText}`);
+    
     if (!permissionResponse.ok) {
-      console.warn("Could not set folder permissions:", await permissionResponse.text());
+      console.warn("Could not set folder permissions:", permissionResponseText);
     }
     
     // Get the folder URL
+    console.log(`Getting details for folder ${folder.id}...`);
     const folderResponse = await fetch(
       `${GOOGLE_API_URL}/files/${folder.id}?fields=id,name,webViewLink`, {
       headers: {
@@ -62,6 +76,8 @@ export const createDriveFolder = async (folderName: string, parentFolderId?: str
     });
     
     if (!folderResponse.ok) {
+      const folderErrorText = await folderResponse.text();
+      console.error(`Could not get folder details: ${folderResponse.status}`, folderErrorText);
       throw new Error(`Could not get folder details: ${folderResponse.statusText}`);
     }
     
