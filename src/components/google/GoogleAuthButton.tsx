@@ -48,7 +48,10 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
     }
   }, [toast, onAuthStateChange]);
 
-  const handleAuth = async () => {
+  const handleAuth = async (e: React.MouseEvent) => {
+    // Prevent form submission when button is clicked
+    e.preventDefault();
+    
     if (isAuthenticated) {
       // Sign out
       localStorage.removeItem("googleAccessToken");
@@ -83,6 +86,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
       onClick={handleAuth}
       disabled={isAuthenticating}
       variant={isAuthenticated ? "outline" : "default"}
+      type="button" // Explicitly set type to button to prevent form submission
     >
       {isAuthenticating 
         ? "Connecting..."
