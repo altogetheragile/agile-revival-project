@@ -31,6 +31,8 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
     
     if (code && state) {
       console.log(`Detected auth code: ${code.substring(0, 5)}... and state: ${state}`);
+      console.log(`Current location: ${window.location.href}`);
+      console.log(`Expected redirect: ${window.location.origin}/admin`);
       setIsAuthenticating(true);
       handleGoogleRedirect()
         .then(() => {
@@ -86,10 +88,9 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
         setErrorMessage(null);
         
         console.log("Current window location:", window.location.href);
-        console.log("Redirect will be set to:", window.location.origin + "/admin");
         
         const authUrl = await getGoogleAuthUrl();
-        console.log("Generated auth URL:", authUrl);
+        console.log("Redirecting to auth URL:", authUrl);
         
         // Navigate to Google auth page
         window.location.href = authUrl;

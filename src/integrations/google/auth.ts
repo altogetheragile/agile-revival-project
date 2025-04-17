@@ -3,7 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Google OAuth configuration
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/auth";
-const REDIRECT_URI = window.location.origin + "/admin";
+
+// Dynamic redirect URI determination
+const getRedirectUri = () => {
+  // Use the current origin plus /admin path for the redirect
+  return window.location.origin + "/admin";
+};
 
 // Scopes needed for Drive operations
 const SCOPES = [
@@ -101,9 +106,13 @@ export const getGoogleAuthUrl = async () => {
   const state = Math.random().toString(36).substring(2, 15);
   localStorage.setItem("googleOAuthState", state);
   
+  // Get the redirect URI
+  const redirectUri = getRedirectUri();
+  console.log("Using redirect URI:", redirectUri);
+  
   const authUrl = new URL(GOOGLE_AUTH_URL);
   authUrl.searchParams.append("client_id", clientId);
-  authUrl.searchParams.append("redirect_uri", REDIRECT_URI);
+  authUrl.searchParams.append("redirect_uri", redirectUri);
   authUrl.searchParams.append("response_type", "code");
   authUrl.searchParams.append("scope", SCOPES);
   authUrl.searchParams.append("access_type", "offline");
@@ -146,8 +155,9 @@ const exchangeCodeForTokens = async (code: string) => {
     throw new Error("Google API credentials not available");
   }
   
-  console.log("Exchanging code for tokens...");
-  console.log("Redirect URI:", REDIRECT_URI);
+  // Get the same redirect URI that was used for the auth request
+  const redirectUri = getRedirectUri();
+  console.log("Using redirect URI for token exchange:", redirectUri);
   
   const tokenResponse = await supabase.functions.invoke("google-token-exchange", {
     method: "POST",
@@ -155,7 +165,7 @@ const exchangeCodeForTokens = async (code: string) => {
       code,
       client_id: clientId,
       client_secret: clientSecret,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: redirectUri,
       grant_type: "authorization_code"
     },
   });

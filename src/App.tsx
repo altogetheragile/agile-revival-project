@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import TrainingSchedule from "./pages/TrainingSchedule";
@@ -16,6 +16,7 @@ import TeamCoaching from "./pages/services/TeamCoaching";
 import AgileFacilitation from "./pages/services/AgileFacilitation";
 import PerformanceMetrics from "./pages/services/PerformanceMetrics";
 import CustomCoaching from "./pages/services/CustomCoaching";
+import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/course/:id" element={<CourseDetails />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
           
           {/* Service Pages */}
           <Route path="/services/leadership-coaching" element={<LeadershipCoaching />} />
