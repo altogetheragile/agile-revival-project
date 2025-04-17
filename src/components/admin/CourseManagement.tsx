@@ -8,6 +8,7 @@ import { CourseTable } from "./courses/CourseTable";
 import CourseFormDialog from "@/components/courses/CourseFormDialog";
 import { DeleteConfirmationDialog } from "./users/DeleteConfirmationDialog";
 import CourseRegistrations from "./courses/CourseRegistrations";
+import { supabase } from "@/integrations/supabase/client";
 
 const CourseManagement = () => {
   const [courses, setCourses] = useState<Course[]>(getAllCourses());
@@ -58,27 +59,102 @@ const CourseManagement = () => {
     }
   };
 
-  const handleFormSubmit = (data: CourseFormData) => {
-    if (currentCourse) {
-      // Update existing course
-      const updated = updateCourse(currentCourse.id, data);
-      if (updated) {
+  const uploadMaterials = async (courseId: string, materials?: File[]) => {
+    if (!materials || materials.length === 0) return [];
+    
+    const uploadedMaterials = [];
+    
+    for (const file of materials) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${courseId}/${Date.now()}-${file.name}`;
+      
+      const { data, error } = await supabase.storage
+        .from('course_materials')
+        .upload(fileName, file);
+        
+      if (error) {
+        console.error('Error uploading file:', error);
+        toast({
+          title: "Upload Error",
+          description: `Failed to upload ${file.name}`,
+          variant: "destructive"
+        });
+        continue;
+      }
+      
+      // Get the public URL
+      const { data: urlData } = supabase.storage
+        .from('course_materials')
+        .getPublicUrl(fileName);
+        
+      if (urlData) {
+        // Store file information in the database
+        const { data: materialData, error: materialError } = await supabase
+          .from('course_materials')
+          .insert({
+            course_id: courseId,
+            file_name: file.name,
+            file_url: urlData.publicUrl,
+            file_type: file.type,
+            file_size: file.size
+          });
+          
+        if (materialError) {
+          console.error('Error saving material metadata:', materialError);
+        } else {
+          uploadedMaterials.push({
+            fileName: file.name,
+            fileUrl: urlData.publicUrl,
+            fileType: file.type,
+            fileSize: file.size
+          });
+        }
+      }
+    }
+    
+    return uploadedMaterials;
+  };
+
+  const handleFormSubmit = async (data: CourseFormData) => {
+    try {
+      if (currentCourse) {
+        // Update existing course
+        const updated = updateCourse(currentCourse.id, data);
+        
+        if (updated && data.materials && data.materials.length > 0) {
+          await uploadMaterials(currentCourse.id, data.materials);
+        }
+        
+        if (updated) {
+          setCourses(getAllCourses());
+          toast({
+            title: "Course updated",
+            description: `"${data.title}" has been updated successfully.`
+          });
+        }
+      } else {
+        // Create new course
+        const created = createCourse(data);
+        
+        if (data.materials && data.materials.length > 0) {
+          await uploadMaterials(created.id, data.materials);
+        }
+        
         setCourses(getAllCourses());
         toast({
-          title: "Course updated",
-          description: `"${data.title}" has been updated successfully.`
+          title: "Course created",
+          description: `"${created.title}" has been ${data.status === 'published' ? 'published' : 'saved as draft'}.`
         });
       }
-    } else {
-      // Create new course
-      const created = createCourse(data);
-      setCourses(getAllCourses());
+      setIsFormOpen(false);
+    } catch (error) {
+      console.error("Error handling course submission:", error);
       toast({
-        title: "Course created",
-        description: `"${created.title}" has been added successfully.`
+        title: "Error",
+        description: "There was a problem saving the course.",
+        variant: "destructive"
       });
     }
-    setIsFormOpen(false);
   };
   
   const handleViewRegistrations = (course: Course) => {

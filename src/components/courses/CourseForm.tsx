@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { CourseFormData } from "@/types/course";
@@ -10,6 +10,8 @@ import { CourseCategoryFields } from "./form-utils/CourseCategoryFields";
 import { CourseDetailsFields } from "./form-utils/CourseDetailsFields";
 import { LearningOutcomeField } from "./form-utils/LearningOutcomeField";
 import { CourseFormActions } from "./form-utils/CourseFormActions";
+import { CourseFormatFields } from "./form-utils/CourseFormatFields";
+import { CourseMaterialsUpload } from "./form-utils/CourseMaterialsUpload";
 
 interface CourseFormProps {
   initialData?: CourseFormData;
@@ -31,7 +33,9 @@ const CourseForm: React.FC<CourseFormProps> = ({
     prerequisites: "",
     targetAudience: "",
     duration: "",
-    skillLevel: "all-levels"
+    skillLevel: "all-levels",
+    format: "in-person",
+    status: "draft"
   },
   onSubmit,
   onCancel
@@ -39,6 +43,8 @@ const CourseForm: React.FC<CourseFormProps> = ({
   const form = useForm<CourseFormData>({
     defaultValues: initialData
   });
+  
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   // Convert comma-separated string to array for learning outcomes
   const handleSubmit = (data: CourseFormData) => {
@@ -49,6 +55,9 @@ const CourseForm: React.FC<CourseFormProps> = ({
         .map(item => item.trim())
         .filter(item => item.length > 0);
     }
+    
+    // Add uploaded files to the form data
+    data.materials = uploadedFiles;
     
     onSubmit({
       ...data,
@@ -64,8 +73,17 @@ const CourseForm: React.FC<CourseFormProps> = ({
         <CourseInstructorPriceFields form={form} />
         <CourseCategoryFields form={form} />
         <CourseDetailsFields form={form} />
+        <CourseFormatFields form={form} />
         <LearningOutcomeField form={form} />
-        <CourseFormActions onCancel={onCancel} isEditing={!!initialData.id} />
+        <CourseMaterialsUpload 
+          onFilesChange={setUploadedFiles} 
+          files={uploadedFiles}
+        />
+        <CourseFormActions 
+          onCancel={onCancel} 
+          isEditing={!!initialData.id}
+          isDraft={form.watch("status") === "draft"}
+        />
       </form>
     </Form>
   );

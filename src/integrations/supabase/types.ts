@@ -39,6 +39,50 @@ export type Database = {
         }
         Relationships: []
       }
+      course_materials: {
+        Row: {
+          course_id: string
+          description: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          course_id: string
+          description?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          course_id?: string
+          description?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_materials_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_registrations: {
         Row: {
           additional_notes: string | null
@@ -78,6 +122,72 @@ export type Database = {
           phone?: string
           status?: string
           status_history?: Json[] | null
+        }
+        Relationships: []
+      }
+      courses: {
+        Row: {
+          category: string
+          created_at: string | null
+          created_by: string | null
+          dates: string
+          description: string
+          duration: string | null
+          format: string | null
+          id: string
+          instructor: string
+          learning_outcomes: string[] | null
+          location: string
+          prerequisites: string | null
+          price: string
+          skill_level: string | null
+          spots_available: number
+          status: string | null
+          target_audience: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          dates: string
+          description: string
+          duration?: string | null
+          format?: string | null
+          id?: string
+          instructor: string
+          learning_outcomes?: string[] | null
+          location: string
+          prerequisites?: string | null
+          price: string
+          skill_level?: string | null
+          spots_available: number
+          status?: string | null
+          target_audience?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          dates?: string
+          description?: string
+          duration?: string | null
+          format?: string | null
+          id?: string
+          instructor?: string
+          learning_outcomes?: string[] | null
+          location?: string
+          prerequisites?: string | null
+          price?: string
+          skill_level?: string | null
+          spots_available?: number
+          status?: string | null
+          target_audience?: string | null
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

@@ -5,7 +5,8 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
+  FormDescription
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
@@ -27,6 +28,9 @@ export const CourseScheduleFields: React.FC<CourseScheduleFieldsProps> = ({ form
             <FormControl>
               <Input placeholder="e.g. May 15-16, 2025" {...field} />
             </FormControl>
+            <FormDescription>
+              When will this course take place? For multiple dates, separate with commas.
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -41,6 +45,9 @@ export const CourseScheduleFields: React.FC<CourseScheduleFieldsProps> = ({ form
             <FormControl>
               <Input placeholder="e.g. San Francisco, CA" {...field} />
             </FormControl>
+            <FormDescription>
+              Physical location or "Online" for virtual courses
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}

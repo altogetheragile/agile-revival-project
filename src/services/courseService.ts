@@ -12,7 +12,9 @@ const initialCourses: Course[] = [
     instructor: "Sarah Johnson",
     price: "$1,195",
     category: "scrum",
-    spotsAvailable: 8
+    spotsAvailable: 8,
+    format: "in-person",
+    status: "published"
   },
   {
     id: "crs-002",
@@ -23,7 +25,9 @@ const initialCourses: Course[] = [
     instructor: "Michael Chen",
     price: "$1,295",
     category: "scrum",
-    spotsAvailable: 12
+    spotsAvailable: 12,
+    format: "online",
+    status: "published"
   },
   {
     id: "crs-003",
@@ -34,7 +38,9 @@ const initialCourses: Course[] = [
     instructor: "Emily Rodriguez",
     price: "$1,195",
     category: "kanban",
-    spotsAvailable: 10
+    spotsAvailable: 10,
+    format: "in-person",
+    status: "published"
   },
   {
     id: "crs-004",
@@ -45,7 +51,9 @@ const initialCourses: Course[] = [
     instructor: "David Washington",
     price: "$1,495",
     category: "leadership",
-    spotsAvailable: 6
+    spotsAvailable: 6,
+    format: "hybrid",
+    status: "published"
   },
   {
     id: "crs-005",
@@ -56,7 +64,9 @@ const initialCourses: Course[] = [
     instructor: "Lisa Park",
     price: "$995",
     category: "leadership",
-    spotsAvailable: 15
+    spotsAvailable: 15,
+    format: "live",
+    status: "published"
   }
 ];
 
@@ -142,4 +152,10 @@ export const deleteCourse = (id: string): boolean => {
   
   saveCourses(filteredCourses);
   return true;
+};
+
+// Get published courses only
+export const getPublishedCourses = (): Course[] => {
+  const courses = loadCourses();
+  return courses.filter(course => course.status === 'published');
 };
