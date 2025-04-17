@@ -2,6 +2,7 @@
 import React from "react";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface Registration {
   id: string;
@@ -27,6 +28,18 @@ export const CourseRegistrationsTable = ({ registrations }: CourseRegistrationsT
       </Card>
     );
   }
+
+  const getStatusBadge = (status: string) => {
+    switch(status.toLowerCase()) {
+      case 'confirmed':
+        return <Badge className="bg-green-500">Confirmed</Badge>;
+      case 'cancelled':
+        return <Badge variant="destructive">Cancelled</Badge>;
+      case 'pending':
+      default:
+        return <Badge className="bg-amber-500">Pending</Badge>;
+    }
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -54,7 +67,7 @@ export const CourseRegistrationsTable = ({ registrations }: CourseRegistrationsT
                 <TableCell>
                   {new Date(registration.created_at).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="capitalize">{registration.status}</TableCell>
+                <TableCell>{getStatusBadge(registration.status || 'pending')}</TableCell>
               </TableRow>
             ))}
           </TableBody>
