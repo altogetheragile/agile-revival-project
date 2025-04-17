@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Google Drive API endpoints
@@ -16,26 +17,59 @@ const SCOPES = [
 let clientId: string | null = null;
 let clientSecret: string | null = null;
 let credentialsPromise: Promise<boolean> | null = null;
+let credentialsLastFetched: number | null = null;
+let credentialsRetryCount = 0;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000; // 2 seconds
+const CREDENTIALS_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Initialize Google Drive credentials
- * This is called once when the module is loaded
+ * This is called when needed with retry and caching logic
  */
-const initializeCredentials = async () => {
+const initializeCredentials = async (forceRefresh = false): Promise<boolean> => {
+  // Return cached credentials if they exist and aren't expired
+  if (
+    !forceRefresh &&
+    clientId && 
+    clientSecret && 
+    credentialsLastFetched && 
+    Date.now() - credentialsLastFetched < CREDENTIALS_TTL
+  ) {
+    console.log("Using cached Google credentials");
+    return true;
+  }
+
+  // Reset retry count when forcing refresh
+  if (forceRefresh) {
+    credentialsRetryCount = 0;
+  }
+  
+  // Limit retries
+  if (credentialsRetryCount >= MAX_RETRIES) {
+    console.error(`Failed to fetch Google credentials after ${MAX_RETRIES} retries`);
+    return false;
+  }
+  
   try {
     console.log("Fetching Google credentials from edge function...");
+    credentialsRetryCount++;
+    
     const { data, error } = await supabase.functions.invoke("get-google-credentials", {
       method: "GET",
     });
     
     if (error) {
       console.error("Error fetching Google credentials:", error);
-      return false;
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return initializeCredentials(false);
     }
     
     if (data && data.clientId && data.clientSecret) {
       clientId = data.clientId;
       clientSecret = data.clientSecret;
+      credentialsLastFetched = Date.now();
       console.log("Google credentials loaded successfully");
       return true;
     }
@@ -48,12 +82,14 @@ const initializeCredentials = async () => {
   }
 };
 
-// Initialize credentials promise
-const getCredentials = () => {
-  if (!credentialsPromise) {
-    credentialsPromise = initializeCredentials();
+/**
+ * Get credentials with caching
+ */
+const getCredentials = async (forceRefresh = false): Promise<boolean> => {
+  if (!credentialsPromise || forceRefresh) {
+    credentialsPromise = initializeCredentials(forceRefresh);
   }
-  return credentialsPromise;
+  return await credentialsPromise;
 };
 
 /**

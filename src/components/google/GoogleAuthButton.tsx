@@ -11,6 +11,7 @@ interface GoogleAuthButtonProps {
 export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateChange }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Check if we're coming back from Google auth redirect
@@ -24,6 +25,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
       handleGoogleRedirect()
         .then(() => {
           setIsAuthenticated(true);
+          setErrorMessage(null);
           onAuthStateChange?.(true);
           toast({
             title: "Google Drive connected",
@@ -32,6 +34,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
         })
         .catch(error => {
           console.error("Google auth error:", error);
+          setErrorMessage(error.message || "Authentication failed");
           toast({
             title: "Authentication failed",
             description: error.message || "Failed to connect to Google Drive",
@@ -58,6 +61,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
       localStorage.removeItem("googleRefreshToken");
       localStorage.removeItem("googleTokenExpiry");
       setIsAuthenticated(false);
+      setErrorMessage(null);
       onAuthStateChange?.(false);
       toast({
         title: "Signed out",
@@ -67,10 +71,12 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
       // Sign in
       try {
         setIsAuthenticating(true);
+        setErrorMessage(null);
         const authUrl = await getGoogleAuthUrl();
         window.location.href = authUrl;
       } catch (error) {
         console.error("Google auth error:", error);
+        setErrorMessage(error.message || "Authentication error");
         toast({
           title: "Authentication error",
           description: error.message || "Could not start Google authentication",
@@ -82,18 +88,23 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
   };
 
   return (
-    <Button
-      onClick={handleAuth}
-      disabled={isAuthenticating}
-      variant={isAuthenticated ? "outline" : "default"}
-      type="button" // Explicitly set type to button to prevent form submission
-    >
-      {isAuthenticating 
-        ? "Connecting..."
-        : isAuthenticated 
-          ? "Disconnect Google Drive" 
-          : "Connect Google Drive"
-      }
-    </Button>
+    <div>
+      <Button
+        onClick={handleAuth}
+        disabled={isAuthenticating}
+        variant={isAuthenticated ? "outline" : "default"}
+        type="button" // Explicitly set type to button to prevent form submission
+      >
+        {isAuthenticating 
+          ? "Connecting..."
+          : isAuthenticated 
+            ? "Disconnect Google Drive" 
+            : "Connect Google Drive"
+        }
+      </Button>
+      {errorMessage && (
+        <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
+      )}
+    </div>
   );
 };
