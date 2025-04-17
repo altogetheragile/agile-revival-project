@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Course } from "@/types/course";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { checkCourseAvailability } from "@/utils/courseUtils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -29,6 +32,13 @@ interface RegistrationFormProps {
 
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete }) => {
   const { toast } = useToast();
+  const [submitting, setSubmitting] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [courseAvailability, setCourseAvailability] = useState<{
+    isFull: boolean;
+    spotsLeft: number;
+  }>({ isFull: false, spotsLeft: course.spotsAvailable });
+
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -41,11 +51,42 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
     },
   });
 
+  // Check course availability when component mounts
+  useEffect(() => {
+    const checkAvailability = async () => {
+      try {
+        const courseId = String(course.id);
+        const availability = await checkCourseAvailability(courseId, course.spotsAvailable);
+        setCourseAvailability({
+          isFull: availability.isFull,
+          spotsLeft: availability.spotsLeft
+        });
+      } catch (error) {
+        console.error("Error checking course availability:", error);
+      }
+    };
+    
+    checkAvailability();
+  }, [course.id, course.spotsAvailable]);
+
   const onSubmit = async (values: RegistrationFormValues) => {
     try {
+      setSubmitting(true);
+      
       // Ensure we're using string format for course_id
       const courseId = String(course.id);
       console.log("Registering for course_id:", courseId);
+      
+      // Check course availability again right before submitting
+      const availability = await checkCourseAvailability(courseId, course.spotsAvailable);
+      if (availability.isFull) {
+        toast({
+          title: "Course is full",
+          description: "Sorry, this course is now full. Please try another course or contact us.",
+          variant: "destructive",
+        });
+        return;
+      }
       
       const registrationData = {
         course_id: courseId,
@@ -71,6 +112,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
       }
       
       console.log("Registration successful:", data);
+      setRegistrationSuccess(true);
       
       // Show success toast
       toast({
@@ -79,8 +121,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
         variant: "default",
       });
       
-      // Close the form
-      onComplete();
+      // Close the form after a short delay
+      setTimeout(() => {
+        onComplete();
+      }, 3000);
     } catch (error) {
       console.error("Registration error:", error);
       toast({
@@ -88,11 +132,47 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
         description: "There was a problem with your registration. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  if (registrationSuccess) {
+    return (
+      <Alert className="bg-green-50 border-green-200">
+        <CheckCircle2 className="h-5 w-5 text-green-600" />
+        <AlertTitle className="text-green-800">Registration Successful!</AlertTitle>
+        <AlertDescription className="text-green-700">
+          Thank you for registering for {course.title}. We'll contact you with further details shortly.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
+  if (courseAvailability.isFull) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-5 w-5" />
+        <AlertTitle>Course is full</AlertTitle>
+        <AlertDescription>
+          Sorry, this course is currently full. Please contact us for waiting list options or check our other courses.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <Form {...form}>
+      {courseAvailability.spotsLeft <= 3 && (
+        <Alert className="mb-4 bg-amber-50 border-amber-200">
+          <AlertCircle className="h-5 w-5 text-amber-600" />
+          <AlertTitle className="text-amber-800">Limited Availability</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            Only {courseAvailability.spotsLeft} {courseAvailability.spotsLeft === 1 ? 'spot' : 'spots'} remaining for this course. Register now to secure your place.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -186,7 +266,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
 
         <div className="pt-4 flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onComplete}>Cancel</Button>
-          <Button type="submit">Complete Registration</Button>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Processing..." : "Complete Registration"}
+          </Button>
         </div>
       </form>
     </Form>
