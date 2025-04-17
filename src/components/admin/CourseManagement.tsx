@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { Course, CourseFormData } from "@/types/course";
-import { getAllCourses, createCourse, updateCourse, deleteCourse } from "@/services/courseService";
+import { Course, CourseFormData, CourseMaterial } from "@/types/course";
+import { getAllCourses, createCourse, updateCourse, deleteCourse, addCourseMaterial } from "@/services/courseService";
 import { CourseManagementHeader } from "./courses/CourseManagementHeader";
 import { CourseTable } from "./courses/CourseTable";
 import CourseFormDialog from "@/components/courses/CourseFormDialog";
@@ -20,7 +19,6 @@ const CourseManagement = () => {
   const [viewingRegistrations, setViewingRegistrations] = useState(false);
   const { toast } = useToast();
   
-  // Filter courses based on search term
   const filteredCourses = courses.filter(course => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -62,7 +60,7 @@ const CourseManagement = () => {
   const uploadMaterials = async (courseId: string, materials?: File[]) => {
     if (!materials || materials.length === 0) return [];
     
-    const uploadedMaterials = [];
+    const uploadedMaterials: CourseMaterial[] = [];
     
     for (const file of materials) {
       const fileExt = file.name.split('.').pop();
@@ -82,13 +80,23 @@ const CourseManagement = () => {
         continue;
       }
       
-      // Get the public URL
       const { data: urlData } = supabase.storage
         .from('course_materials')
         .getPublicUrl(fileName);
         
       if (urlData) {
-        // Store file information in the database
+        const courseMaterial: CourseMaterial = {
+          id: `mat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          fileName: file.name,
+          fileUrl: urlData.publicUrl,
+          fileType: file.type,
+          fileSize: file.size
+        };
+        
+        uploadedMaterials.push(courseMaterial);
+        
+        addCourseMaterial(courseId, courseMaterial);
+        
         const { data: materialData, error: materialError } = await supabase
           .from('course_materials')
           .insert({
@@ -101,13 +109,6 @@ const CourseManagement = () => {
           
         if (materialError) {
           console.error('Error saving material metadata:', materialError);
-        } else {
-          uploadedMaterials.push({
-            fileName: file.name,
-            fileUrl: urlData.publicUrl,
-            fileType: file.type,
-            fileSize: file.size
-          });
         }
       }
     }
@@ -118,7 +119,6 @@ const CourseManagement = () => {
   const handleFormSubmit = async (data: CourseFormData) => {
     try {
       if (currentCourse) {
-        // Update existing course
         const updated = updateCourse(currentCourse.id, data);
         
         if (updated && data.materials && data.materials.length > 0) {
@@ -133,7 +133,6 @@ const CourseManagement = () => {
           });
         }
       } else {
-        // Create new course
         const created = createCourse(data);
         
         if (data.materials && data.materials.length > 0) {

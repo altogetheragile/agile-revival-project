@@ -1,5 +1,4 @@
-
-import { Course, CourseFormData } from "@/types/course";
+import { Course, CourseFormData, CourseMaterial, CourseWithFormData } from "@/types/course";
 
 // Initial course data
 const initialCourses: Course[] = [
@@ -108,9 +107,14 @@ export const createCourse = (courseData: CourseFormData): Course => {
   // Generate a unique ID
   const newId = `crs-${String(Date.now()).slice(-6)}`;
   
+  // Convert CourseFormData to Course (exclude materials as they need separate handling)
+  const { materials, ...restCourseData } = courseData;
+  
   const newCourse: Course = {
-    ...courseData,
-    id: newId
+    ...restCourseData,
+    id: newId,
+    // Initialize with empty materials array
+    materials: []
   };
   
   courses.push(newCourse);
@@ -128,10 +132,15 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
     return null;
   }
   
+  // Keep existing materials and exclude materials from formData
+  const { materials, ...restCourseData } = courseData;
+  const existingMaterials = courses[index].materials || [];
+  
   const updatedCourse: Course = {
     ...courses[index],
-    ...courseData,
-    id // Ensure ID remains unchanged
+    ...restCourseData,
+    id, // Ensure ID remains unchanged
+    materials: existingMaterials // Keep existing materials
   };
   
   courses[index] = updatedCourse;
@@ -158,4 +167,50 @@ export const deleteCourse = (id: string): boolean => {
 export const getPublishedCourses = (): Course[] => {
   const courses = loadCourses();
   return courses.filter(course => course.status === 'published');
+};
+
+// Add a course material to a course
+export const addCourseMaterial = (courseId: string, material: CourseMaterial): Course | null => {
+  const courses = loadCourses();
+  const index = courses.findIndex(course => course.id === courseId);
+  
+  if (index === -1) {
+    return null;
+  }
+  
+  const course = courses[index];
+  const materials = [...(course.materials || []), material];
+  
+  const updatedCourse: Course = {
+    ...course,
+    materials
+  };
+  
+  courses[index] = updatedCourse;
+  saveCourses(courses);
+  
+  return updatedCourse;
+};
+
+// Remove a course material from a course
+export const removeCourseMaterial = (courseId: string, materialId: string): Course | null => {
+  const courses = loadCourses();
+  const index = courses.findIndex(course => course.id === courseId);
+  
+  if (index === -1) {
+    return null;
+  }
+  
+  const course = courses[index];
+  const materials = (course.materials || []).filter(m => m.id !== materialId);
+  
+  const updatedCourse: Course = {
+    ...course,
+    materials
+  };
+  
+  courses[index] = updatedCourse;
+  saveCourses(courses);
+  
+  return updatedCourse;
 };

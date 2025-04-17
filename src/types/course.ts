@@ -33,3 +33,8 @@ export type CourseFormData = Omit<Course, "id" | "materials"> & {
   learningOutcomes?: string[] | string;
   materials?: File[];
 };
+
+// This type helps us bridge between Course and CourseFormData
+export interface CourseWithFormData extends Omit<Course, "materials"> {
+  materials?: File[] | CourseMaterial[];
+}

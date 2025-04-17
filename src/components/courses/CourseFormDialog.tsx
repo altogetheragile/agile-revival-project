@@ -20,6 +20,18 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  // Convert Course to CourseFormData for the form
+  const convertToFormData = (course: Course): CourseFormData => {
+    // Omit materials from course since we need to handle it differently
+    const { materials, ...courseData } = course;
+    
+    return {
+      ...courseData,
+      // Files will be provided through the form's file input
+      materials: undefined
+    };
+  };
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh]">
@@ -33,7 +45,7 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
         </DialogHeader>
         <ScrollArea className="max-h-[70vh] pr-4">
           <CourseForm 
-            initialData={currentCourse || undefined}
+            initialData={currentCourse ? convertToFormData(currentCourse) : undefined}
             onSubmit={onSubmit}
             onCancel={onCancel}
           />
