@@ -30,13 +30,12 @@ const CourseRegistrations: React.FC<CourseRegistrationsProps> = ({ course, onBac
     try {
       setLoading(true);
       
-      // Ensure we're using string format for course_id
       const courseId = String(course.id);
       console.log("Fetching registrations for course_id:", courseId);
       
       const { data, error } = await supabase
         .from('course_registrations')
-        .select('*')
+        .select('*, status_history')
         .eq('course_id', courseId);
         
       if (error) {
@@ -47,7 +46,6 @@ const CourseRegistrations: React.FC<CourseRegistrationsProps> = ({ course, onBac
       console.log("Registration data fetched:", data);
       setRegistrations(data || []);
       
-      // Get availability info
       const availability = await checkCourseAvailability(courseId, course.spotsAvailable);
       setAvailabilityInfo({
         spotsLeft: availability.spotsLeft,
@@ -93,7 +91,10 @@ const CourseRegistrations: React.FC<CourseRegistrationsProps> = ({ course, onBac
             registrations={registrations} 
             spotsAvailable={course.spotsAvailable} 
           />
-          <CourseRegistrationsTable registrations={registrations} />
+          <CourseRegistrationsTable 
+            registrations={registrations}
+            onRegistrationUpdated={fetchRegistrations}
+          />
         </>
       )}
     </div>

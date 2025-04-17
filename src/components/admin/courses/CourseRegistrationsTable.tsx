@@ -3,6 +3,8 @@ import React from "react";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { RegistrationStatusManager } from "./RegistrationStatusManager";
+import { RegistrationStatusHistory } from "./RegistrationStatusHistory";
 
 interface Registration {
   id: string;
@@ -14,13 +16,18 @@ interface Registration {
   additional_notes: string | null;
   created_at: string;
   status: string;
+  status_history?: any[];
 }
 
 interface CourseRegistrationsTableProps {
   registrations: Registration[];
+  onRegistrationUpdated?: () => void;
 }
 
-export const CourseRegistrationsTable = ({ registrations }: CourseRegistrationsTableProps) => {
+export const CourseRegistrationsTable = ({ 
+  registrations,
+  onRegistrationUpdated 
+}: CourseRegistrationsTableProps) => {
   if (registrations.length === 0) {
     return (
       <Card className="p-6 text-center text-gray-500">
@@ -53,6 +60,8 @@ export const CourseRegistrationsTable = ({ registrations }: CourseRegistrationsT
               <TableHead>Company</TableHead>
               <TableHead>Registration Date</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>History</TableHead>
+              <TableHead className="w-[50px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -67,7 +76,17 @@ export const CourseRegistrationsTable = ({ registrations }: CourseRegistrationsT
                 <TableCell>
                   {new Date(registration.created_at).toLocaleDateString()}
                 </TableCell>
-                <TableCell>{getStatusBadge(registration.status || 'pending')}</TableCell>
+                <TableCell>{getStatusBadge(registration.status)}</TableCell>
+                <TableCell>
+                  <RegistrationStatusHistory history={registration.status_history || []} />
+                </TableCell>
+                <TableCell>
+                  <RegistrationStatusManager
+                    registrationId={registration.id}
+                    currentStatus={registration.status}
+                    onStatusChange={onRegistrationUpdated || (() => {})}
+                  />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

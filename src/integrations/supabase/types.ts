@@ -51,6 +51,7 @@ export type Database = {
           last_name: string
           phone: string
           status: string
+          status_history: Json[] | null
         }
         Insert: {
           additional_notes?: string | null
@@ -63,6 +64,7 @@ export type Database = {
           last_name: string
           phone: string
           status?: string
+          status_history?: Json[] | null
         }
         Update: {
           additional_notes?: string | null
@@ -75,6 +77,7 @@ export type Database = {
           last_name?: string
           phone?: string
           status?: string
+          status_history?: Json[] | null
         }
         Relationships: []
       }
