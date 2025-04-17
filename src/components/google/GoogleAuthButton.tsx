@@ -20,8 +20,17 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
     const state = urlParams.get("state");
+    const error = urlParams.get("error");
+    
+    // Log any errors from the redirect
+    if (error) {
+      console.error("Google auth redirect error:", error);
+      setErrorMessage(`Google returned error: ${error}`);
+      return;
+    }
     
     if (code && state) {
+      console.log(`Detected auth code: ${code.substring(0, 5)}... and state: ${state}`);
       setIsAuthenticating(true);
       handleGoogleRedirect()
         .then(() => {
@@ -47,8 +56,10 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
         });
     } else {
       // Check if we're already authenticated
-      setIsAuthenticated(isGoogleAuthenticated());
-      onAuthStateChange?.(isGoogleAuthenticated());
+      const authStatus = isGoogleAuthenticated();
+      console.log("Current authentication status:", authStatus);
+      setIsAuthenticated(authStatus);
+      onAuthStateChange?.(authStatus);
     }
   }, [toast, onAuthStateChange]);
 
@@ -73,8 +84,14 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
       try {
         setIsAuthenticating(true);
         setErrorMessage(null);
+        
+        console.log("Current window location:", window.location.href);
+        console.log("Redirect will be set to:", window.location.origin + "/admin");
+        
         const authUrl = await getGoogleAuthUrl();
         console.log("Generated auth URL:", authUrl);
+        
+        // Navigate to Google auth page
         window.location.href = authUrl;
       } catch (error) {
         console.error("Google auth error:", error);
@@ -110,6 +127,9 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
           <span>{errorMessage}</span>
         </div>
       )}
+      <div className="text-xs text-gray-400 mt-1">
+        Current URL: {window.location.href}
+      </div>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Google Drive API endpoints
@@ -110,6 +109,7 @@ export const getGoogleAuthUrl = async () => {
   const state = Math.random().toString(36).substring(2, 15);
   localStorage.setItem("googleOAuthState", state);
   
+  // Create URL with proper encoding
   const authUrl = new URL(GOOGLE_AUTH_URL);
   authUrl.searchParams.append("client_id", clientId);
   authUrl.searchParams.append("redirect_uri", REDIRECT_URI);
@@ -118,8 +118,12 @@ export const getGoogleAuthUrl = async () => {
   authUrl.searchParams.append("access_type", "offline");
   authUrl.searchParams.append("state", state);
   authUrl.searchParams.append("prompt", "consent");
+  authUrl.searchParams.append("include_granted_scopes", "true");
   
-  return authUrl.toString();
+  const finalUrl = authUrl.toString();
+  console.log("Generated Google Auth URL:", finalUrl);
+  
+  return finalUrl;
 };
 
 /**
@@ -155,6 +159,9 @@ const exchangeCodeForTokens = async (code: string) => {
     throw new Error("Google API credentials not available. Please check your API credentials in Supabase Edge Function settings.");
   }
   
+  console.log("Exchanging code for tokens...");
+  console.log("Redirect URI:", REDIRECT_URI);
+  
   const tokenResponse = await supabase.functions.invoke("google-token-exchange", {
     method: "POST",
     body: {
@@ -167,9 +174,11 @@ const exchangeCodeForTokens = async (code: string) => {
   });
 
   if (tokenResponse.error) {
+    console.error("Token exchange error:", tokenResponse.error);
     throw new Error(`Token exchange failed: ${tokenResponse.error.message}`);
   }
   
+  console.log("Token exchange successful");
   const { access_token, refresh_token, expires_in } = tokenResponse.data;
   
   // Store tokens

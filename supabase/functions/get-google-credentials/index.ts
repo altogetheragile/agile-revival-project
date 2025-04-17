@@ -28,9 +28,13 @@ serve(async (req) => {
   }
   
   console.log(`Returning Google credentials to client (ID: ${clientId.substring(0, 5)}...)`);
-  // The response in the network tab shows values are swapped, let's fix that
+  
+  // Return credentials with proper naming
   return new Response(
-    JSON.stringify({ clientId, clientSecret }),
+    JSON.stringify({
+      clientId: clientId,
+      clientSecret: clientSecret
+    }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 });
