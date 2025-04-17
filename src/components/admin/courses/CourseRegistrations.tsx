@@ -23,16 +23,17 @@ const CourseRegistrations: React.FC<CourseRegistrationsProps> = ({ course, onBac
       try {
         setLoading(true);
         
-        const courseId = course.id;
+        // Ensure we're using string format for course_id
+        const courseId = String(course.id);
         console.log("Fetching registrations for course_id:", courseId);
         
-        // Using text-based course ID
         const { data, error } = await supabase
           .from('course_registrations')
           .select('*')
           .eq('course_id', courseId);
           
         if (error) {
+          console.error("Supabase error:", error);
           throw error;
         }
         

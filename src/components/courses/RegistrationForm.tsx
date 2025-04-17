@@ -43,24 +43,34 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
 
   const onSubmit = async (values: RegistrationFormValues) => {
     try {
-      // Use the direct course ID
-      const courseId = course.id;
+      // Ensure we're using string format for course_id
+      const courseId = String(course.id);
       console.log("Registering for course_id:", courseId);
       
-      const { error } = await supabase
+      const registrationData = {
+        course_id: courseId,
+        first_name: values.firstName,
+        last_name: values.lastName,
+        email: values.email,
+        phone: values.phone,
+        company: values.company || null,
+        additional_notes: values.additionalNotes || null,
+        status: 'pending',
+      };
+      
+      console.log("Submitting registration data:", registrationData);
+      
+      const { error, data } = await supabase
         .from('course_registrations')
-        .insert({
-          course_id: courseId,
-          first_name: values.firstName,
-          last_name: values.lastName,
-          email: values.email,
-          phone: values.phone,
-          company: values.company || null,
-          additional_notes: values.additionalNotes || null,
-          status: 'pending',
-        });
+        .insert(registrationData)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase insert error:", error);
+        throw error;
+      }
+      
+      console.log("Registration successful:", data);
       
       // Show success toast
       toast({
