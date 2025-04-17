@@ -15,6 +15,7 @@ const SCOPES = [
 // Retrieve credentials from Supabase edge function
 let clientId: string | null = null;
 let clientSecret: string | null = null;
+let credentialsPromise: Promise<boolean> | null = null;
 
 /**
  * Initialize Google Drive credentials
@@ -22,6 +23,7 @@ let clientSecret: string | null = null;
  */
 const initializeCredentials = async () => {
   try {
+    console.log("Fetching Google credentials from edge function...");
     const { data, error } = await supabase.functions.invoke("get-google-credentials", {
       method: "GET",
     });
@@ -34,9 +36,11 @@ const initializeCredentials = async () => {
     if (data && data.clientId && data.clientSecret) {
       clientId = data.clientId;
       clientSecret = data.clientSecret;
+      console.log("Google credentials loaded successfully");
       return true;
     }
     
+    console.error("Invalid Google credentials received", data);
     return false;
   } catch (error) {
     console.error("Failed to initialize Google credentials:", error);
@@ -44,16 +48,21 @@ const initializeCredentials = async () => {
   }
 };
 
-// Call initialize immediately
-const credentialsPromise = initializeCredentials();
+// Initialize credentials promise
+const getCredentials = () => {
+  if (!credentialsPromise) {
+    credentialsPromise = initializeCredentials();
+  }
+  return credentialsPromise;
+};
 
 /**
  * Generate OAuth URL for user authorization
  */
 export const getGoogleAuthUrl = async () => {
-  await credentialsPromise;
-  if (!clientId) {
-    throw new Error("Google API client ID not available");
+  const success = await getCredentials();
+  if (!success || !clientId) {
+    throw new Error("Google API client ID not available. Please check your API credentials in Supabase Edge Function settings.");
   }
   
   // Create a random state to prevent CSRF
@@ -99,10 +108,10 @@ export const handleGoogleRedirect = async () => {
  * Exchange authorization code for access and refresh tokens
  */
 const exchangeCodeForTokens = async (code: string) => {
-  await credentialsPromise;
+  const success = await getCredentials();
   
-  if (!clientId || !clientSecret) {
-    throw new Error("Google API credentials not available");
+  if (!success || !clientId || !clientSecret) {
+    throw new Error("Google API credentials not available. Please check your API credentials in Supabase Edge Function settings.");
   }
   
   const tokenResponse = await supabase.functions.invoke("google-token-exchange", {
@@ -154,9 +163,9 @@ export const getAccessToken = async (): Promise<string> => {
   }
   
   // Otherwise refresh the token
-  await credentialsPromise;
-  if (!clientId || !clientSecret) {
-    throw new Error("Google API credentials not available");
+  const success = await getCredentials();
+  if (!success || !clientId || !clientSecret) {
+    throw new Error("Google API credentials not available. Please check your API credentials in Supabase Edge Function settings.");
   }
   
   const refreshResponse = await supabase.functions.invoke("google-token-refresh", {

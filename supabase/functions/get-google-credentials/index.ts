@@ -38,12 +38,14 @@ serve(async (req) => {
   const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
   
   if (!clientId || !clientSecret) {
+    console.error("Google API credentials not configured in Edge Function secrets");
     return new Response(
       JSON.stringify({ error: "Google API credentials not configured" }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
   
+  console.log("Returning Google credentials to client");
   return new Response(
     JSON.stringify({ clientId, clientSecret }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
