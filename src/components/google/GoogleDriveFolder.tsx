@@ -12,7 +12,7 @@ import {
 } from "@/integrations/google/drive";
 import { GoogleAuthButton } from "./GoogleAuthButton";
 import { FileText, FolderOpen, Link, Upload, X, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface GoogleDriveFolderProps {
@@ -205,7 +205,7 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
       </div>
 
       {error && (
-        <Alert variant={apiEnableUrl ? "warning" : "destructive"}>
+        <Alert variant={apiEnableUrl ? "destructive" : "destructive"}>
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>{apiEnableUrl ? "API Not Enabled" : "Error"}</AlertTitle>
           <AlertDescription className="space-y-2">
