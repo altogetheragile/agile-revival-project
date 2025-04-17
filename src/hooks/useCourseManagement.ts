@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData, CourseMaterial } from "@/types/course";
@@ -30,28 +31,47 @@ export const useCourseManagement = () => {
     
     for (const file of materials) {
       try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${courseId}/${Date.now()}-${file.name}`;
-        
-        const { data, error } = await supabase.storage
-          .from('course_materials')
-          .upload(fileName, file);
-          
-        if (error) {
-          console.error('Error uploading file:', error);
+        // Check file size - reject if too large (10MB per file)
+        const maxFileSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxFileSize) {
           toast({
-            title: "Upload Error",
-            description: `Failed to upload ${file.name}`,
+            title: "File too large",
+            description: `${file.name} exceeds the 10MB limit`,
             variant: "destructive"
           });
           continue;
         }
         
+        // Generate a unique file path
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const filePath = `${courseId}/${fileName}`;
+        
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from('course_materials')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+          
+        if (error) {
+          console.error('Error uploading file:', error);
+          toast({
+            title: "Upload Error",
+            description: `Failed to upload ${file.name}: ${error.message}`,
+            variant: "destructive"
+          });
+          continue;
+        }
+        
+        // Get the public URL
         const { data: urlData } = supabase.storage
           .from('course_materials')
-          .getPublicUrl(fileName);
+          .getPublicUrl(filePath);
           
-        if (urlData) {
+        if (urlData && urlData.publicUrl) {
+          // Create course material object
           const courseMaterial: CourseMaterial = {
             id: `mat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             fileName: file.name,
@@ -60,8 +80,25 @@ export const useCourseManagement = () => {
             fileSize: file.size
           };
           
+          // Save to local storage via the service
           uploadedMaterials.push(courseMaterial);
           await addCourseMaterial(courseId, courseMaterial);
+          
+          // Add to database (optional, as we're using localStorage)
+          try {
+            await supabase
+              .from('course_materials')
+              .insert({
+                course_id: courseId,
+                file_name: file.name,
+                file_url: urlData.publicUrl,
+                file_type: file.type,
+                file_size: file.size
+              });
+          } catch (dbErr) {
+            // Log error but don't fail the upload as we've already stored it locally
+            console.warn('Error saving to database:', dbErr);
+          }
         }
       } catch (err) {
         console.error('Error processing file upload:', err);

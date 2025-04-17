@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,11 @@ export const CourseMaterialsUpload: React.FC<CourseMaterialsUploadProps> = ({
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const totalSize = Array.from(e.target.files).reduce((acc, file) => acc + file.size, 0);
+      // Check total size of all files
+      const newFilesToAdd = Array.from(e.target.files);
+      const existingFilesSize = files.reduce((acc, file) => acc + file.size, 0);
+      const newFilesSize = newFilesToAdd.reduce((acc, file) => acc + file.size, 0);
+      const totalSize = existingFilesSize + newFilesSize;
       const maxSize = 100 * 1024 * 1024; // 100MB total limit
       
       if (totalSize > maxSize) {
@@ -33,8 +38,27 @@ export const CourseMaterialsUpload: React.FC<CourseMaterialsUploadProps> = ({
         return;
       }
       
-      const newFiles = [...files, ...Array.from(e.target.files)];
-      onFilesChange(newFiles);
+      // Check individual file sizes
+      const maxIndividualSize = 10 * 1024 * 1024; // 10MB per file
+      const oversizedFiles = newFilesToAdd.filter(file => file.size > maxIndividualSize);
+      
+      if (oversizedFiles.length > 0) {
+        toast({
+          title: "File size error",
+          description: `${oversizedFiles.length} file(s) exceed the 10MB individual file limit`,
+          variant: "destructive"
+        });
+        // Only add files that are within size limit
+        const validFiles = newFilesToAdd.filter(file => file.size <= maxIndividualSize);
+        onFilesChange([...files, ...validFiles]);
+        return;
+      }
+      
+      // All files are valid, add them
+      onFilesChange([...files, ...newFilesToAdd]);
+      
+      // Clear the input to allow selecting the same file again
+      e.target.value = '';
     }
   }, [files, onFilesChange, toast]);
 
@@ -66,6 +90,13 @@ export const CourseMaterialsUpload: React.FC<CourseMaterialsUploadProps> = ({
     return <FileText className="h-5 w-5 text-gray-500" />;
   };
 
+  const handleUploadClick = () => {
+    const fileInput = document.getElementById('file-upload');
+    if (fileInput) {
+      fileInput.click();
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -73,7 +104,7 @@ export const CourseMaterialsUpload: React.FC<CourseMaterialsUploadProps> = ({
           Course Materials
         </Label>
         <p className="text-sm text-gray-500 mb-2">
-          Upload PDFs, videos, or other course materials (max 100MB total)
+          Upload PDFs, videos, or other course materials (max 100MB total, 10MB per file)
         </p>
         <div className="flex items-center gap-2">
           <Input
@@ -82,9 +113,14 @@ export const CourseMaterialsUpload: React.FC<CourseMaterialsUploadProps> = ({
             onChange={handleFileChange}
             className="flex-1"
             multiple
-            accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.mp4,.mov,.zip"
+            accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.mp4,.mov,.zip,.jpg,.jpeg,.png,.gif"
           />
-          <Button type="button" size="sm" className="gap-2">
+          <Button 
+            type="button" 
+            size="sm" 
+            className="gap-2"
+            onClick={handleUploadClick}
+          >
             <Upload className="h-4 w-4" /> Upload
           </Button>
         </div>
