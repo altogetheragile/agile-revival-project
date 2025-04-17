@@ -58,6 +58,7 @@ const RegistrationDialog: React.FC<RegistrationDialogProps> = ({
             />
           </TabsContent>
         </Tabs>
+        <p className="text-xs text-gray-500 mt-2">* All fields marked with an asterisk are required.</p>
       </DialogContent>
     </Dialog>
   );

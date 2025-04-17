@@ -104,7 +104,8 @@ const GroupRegistrationForm: React.FC<GroupRegistrationFormProps> = ({ course, o
         first_name: participant.firstName,
         last_name: participant.lastName,
         email: participant.email,
-        phone: participant.phone || null,
+        // Make sure phone is never null - use empty string as fallback
+        phone: participant.phone || "",
         company: values.organizationName,
         additional_notes: `Group registration by ${values.contactPerson.firstName} ${values.contactPerson.lastName} (${values.contactPerson.email}, ${values.contactPhone})${values.additionalNotes ? `. Notes: ${values.additionalNotes}` : ''}`,
         status: 'pending'

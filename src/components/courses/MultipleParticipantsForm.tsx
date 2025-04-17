@@ -12,7 +12,8 @@ export const participantSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  phone: z.string().optional(),
+  // Make phone a required field with a reasonable validation
+  phone: z.string().min(1, "Phone number is required"),
 });
 
 // Schema for group registration form
@@ -43,7 +44,7 @@ const MultipleParticipantsForm: React.FC<MultipleParticipantsFormProps> = ({ for
       firstName: "",
       lastName: "",
       email: "",
-      phone: "",
+      phone: "", // Empty string default ensures it's not null
     });
   };
 
@@ -78,7 +79,8 @@ const MultipleParticipantsForm: React.FC<MultipleParticipantsFormProps> = ({ for
             firstName: columns[0].trim(),
             lastName: columns[1].trim(),
             email: columns[2].trim(),
-            phone: columns.length > 3 ? columns[3].trim() : ""
+            // Ensure phone is always a string, even if empty
+            phone: columns.length > 3 && columns[3].trim() ? columns[3].trim() : ""
           });
         }
         
@@ -147,7 +149,7 @@ const MultipleParticipantsForm: React.FC<MultipleParticipantsFormProps> = ({ for
       
       <div className="p-3 bg-blue-50 text-blue-600 rounded-md border border-blue-200 text-sm">
         <p className="font-medium">CSV Format:</p>
-        <p>First Name, Last Name, Email, Phone (optional)</p>
+        <p>First Name, Last Name, Email, Phone (required)</p>
         <p className="text-xs mt-1">Example: John, Doe, john.doe@example.com, +1234567890</p>
       </div>
       
@@ -216,9 +218,14 @@ const MultipleParticipantsForm: React.FC<MultipleParticipantsFormProps> = ({ for
                   name={`participants.${index}.phone`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone (Optional)</FormLabel>
+                      <FormLabel>Phone*</FormLabel>
                       <FormControl>
-                        <Input type="tel" placeholder="Enter phone number" {...field} />
+                        <Input 
+                          type="tel" 
+                          placeholder="Enter phone number" 
+                          {...field} 
+                          className="border-amber-300" 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
