@@ -115,8 +115,17 @@ export const useCourseManagement = () => {
 
   const handleFormSubmit = async (data: CourseFormData) => {
     try {
+      // Handle Google Drive folder information
+      const googleDriveData = {
+        googleDriveFolderId: data.googleDriveFolderId,
+        googleDriveFolderUrl: data.googleDriveFolderUrl
+      };
+      
       if (currentCourse) {
-        const updated = updateCourse(currentCourse.id, data);
+        const updated = updateCourse(currentCourse.id, {
+          ...data,
+          ...googleDriveData
+        });
         
         if (updated && data.materials && data.materials.length > 0) {
           await uploadMaterials(currentCourse.id, data.materials);
@@ -130,7 +139,10 @@ export const useCourseManagement = () => {
           });
         }
       } else {
-        const created = createCourse(data);
+        const created = createCourse({
+          ...data,
+          ...googleDriveData
+        });
         
         if (data.materials && data.materials.length > 0) {
           await uploadMaterials(created.id, data.materials);

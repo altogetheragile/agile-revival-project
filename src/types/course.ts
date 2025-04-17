@@ -17,6 +17,8 @@ export interface Course {
   format?: "online" | "live" | "in-person" | "hybrid";
   status?: "draft" | "published";
   materials?: CourseMaterial[];
+  googleDriveFolderId?: string;
+  googleDriveFolderUrl?: string;
 }
 
 export interface CourseMaterial {
@@ -26,12 +28,15 @@ export interface CourseMaterial {
   fileType: string;
   fileSize?: number;
   description?: string;
+  googleFileId?: string;
 }
 
 export type CourseFormData = Omit<Course, "id" | "materials"> & {
   id?: string;
   learningOutcomes?: string[] | string;
   materials?: File[];
+  googleDriveFolderId?: string;
+  googleDriveFolderUrl?: string;
 };
 
 // This type helps us bridge between Course and CourseFormData

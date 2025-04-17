@@ -1,3 +1,4 @@
+
 import { Course, CourseFormData, CourseMaterial, CourseWithFormData } from "@/types/course";
 
 // Initial course data
@@ -140,7 +141,10 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
     ...courses[index],
     ...restCourseData,
     id, // Ensure ID remains unchanged
-    materials: existingMaterials // Keep existing materials
+    materials: existingMaterials, // Keep existing materials
+    // Update Google Drive information if provided
+    googleDriveFolderId: courseData.googleDriveFolderId || courses[index].googleDriveFolderId,
+    googleDriveFolderUrl: courseData.googleDriveFolderUrl || courses[index].googleDriveFolderUrl
   };
   
   courses[index] = updatedCourse;

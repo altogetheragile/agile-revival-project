@@ -1,1 +1,11 @@
-project_id = "ctsjvuoucopnederhkko"
+
+project_id = "your-project-id"
+
+[functions.get-google-credentials]
+verify_jwt = true
+
+[functions.google-token-exchange]
+verify_jwt = false
+
+[functions.google-token-refresh]
+verify_jwt = false

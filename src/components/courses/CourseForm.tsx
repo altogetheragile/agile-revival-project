@@ -12,6 +12,8 @@ import { LearningOutcomeField } from "./form-utils/LearningOutcomeField";
 import { CourseFormActions } from "./form-utils/CourseFormActions";
 import { CourseFormatFields } from "./form-utils/CourseFormatFields";
 import { CourseMaterialsUpload } from "./form-utils/CourseMaterialsUpload";
+import { Separator } from "@/components/ui/separator";
+import { CourseGoogleDriveSection } from "./form-utils/CourseGoogleDriveSection";
 
 interface CourseFormProps {
   initialData?: CourseFormData;
@@ -75,10 +77,16 @@ const CourseForm: React.FC<CourseFormProps> = ({
         <CourseDetailsFields form={form} />
         <CourseFormatFields form={form} />
         <LearningOutcomeField form={form} />
+        
+        <Separator className="my-6" />
+        
+        <CourseGoogleDriveSection courseId={initialData.id} />
+        
         <CourseMaterialsUpload 
           onFilesChange={setUploadedFiles} 
           files={uploadedFiles}
         />
+        
         <CourseFormActions 
           onCancel={onCancel} 
           isEditing={!!initialData.id}

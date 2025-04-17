@@ -28,13 +28,16 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
     return {
       ...courseData,
       // Files will be provided through the form's file input
-      materials: undefined
+      materials: undefined,
+      // Include Google Drive folder information
+      googleDriveFolderId: course.googleDriveFolderId,
+      googleDriveFolderUrl: course.googleDriveFolderUrl
     };
   };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
+      <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>
             {currentCourse ? `Edit Course: ${currentCourse.title}` : "Add New Course"}
