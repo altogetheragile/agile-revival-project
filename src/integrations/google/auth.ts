@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Google OAuth configuration
@@ -65,7 +66,6 @@ const initializeCredentials = async (forceRefresh = false): Promise<boolean> => 
     }
     
     const data = response.data;
-    console.log("Received credential response:", JSON.stringify(data, null, 2));
     
     if (data && data.clientId && data.clientSecret) {
       clientId = data.clientId;
@@ -135,10 +135,12 @@ export const handleGoogleRedirect = async () => {
   const state = urlParams.get("state");
   const storedState = localStorage.getItem("googleOAuthState");
   
-  window.history.replaceState({}, document.title, window.location.pathname);
+  if (!code) {
+    throw new Error("No authorization code found in URL");
+  }
   
-  if (!code || state !== storedState) {
-    throw new Error("Invalid OAuth state or missing code");
+  if (state !== storedState) {
+    throw new Error("OAuth state mismatch - possible CSRF attack");
   }
   
   localStorage.removeItem("googleOAuthState");
@@ -159,6 +161,7 @@ const exchangeCodeForTokens = async (code: string) => {
   const redirectUri = getRedirectUri();
   console.log("Using redirect URI for token exchange:", redirectUri);
   
+  console.log("Sending token exchange request...");
   const tokenResponse = await supabase.functions.invoke("google-token-exchange", {
     method: "POST",
     body: {
@@ -176,16 +179,27 @@ const exchangeCodeForTokens = async (code: string) => {
   }
   
   console.log("Token exchange successful");
+  console.log("Token response:", tokenResponse);
+  
   const { access_token, refresh_token, expires_in } = tokenResponse.data;
+  
+  if (!access_token) {
+    throw new Error("No access token returned");
+  }
   
   const tokenExpiry = Date.now() + (expires_in * 1000);
   localStorage.setItem("googleAccessToken", access_token);
-  localStorage.setItem("googleRefreshToken", refresh_token);
+  
+  // Store refresh token only if we got a new one
+  if (refresh_token) {
+    localStorage.setItem("googleRefreshToken", refresh_token);
+  }
+  
   localStorage.setItem("googleTokenExpiry", tokenExpiry.toString());
   
   return {
     accessToken: access_token,
-    refreshToken: refresh_token,
+    refreshToken: refresh_token || localStorage.getItem("googleRefreshToken"),
     expiresAt: tokenExpiry
   };
 };
@@ -210,6 +224,8 @@ export const getAccessToken = async (): Promise<string> => {
   if (!success || !clientId || !clientSecret) {
     throw new Error("Google API credentials not available");
   }
+  
+  console.log("Access token expired, refreshing...");
   
   const refreshResponse = await supabase.functions.invoke("google-token-refresh", {
     method: "POST",

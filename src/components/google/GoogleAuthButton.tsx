@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { getGoogleAuthUrl, handleGoogleRedirect, isGoogleAuthenticated } from "@/integrations/google/drive";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { AlertCircle } from "lucide-react";
 
 interface GoogleAuthButtonProps {
@@ -15,12 +15,27 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Check if we're coming back from Google auth redirect
+  // Check authentication status once on mount
+  useEffect(() => {
+    const checkAuth = () => {
+      const authStatus = isGoogleAuthenticated();
+      console.log("Initial authentication check result:", authStatus);
+      setIsAuthenticated(authStatus);
+      onAuthStateChange?.(authStatus);
+    };
+    
+    checkAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Handle redirect response separately - only when code and state are present
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
     const state = urlParams.get("state");
     const error = urlParams.get("error");
+    
+    if (!code || !state) return;
     
     // Log any errors from the redirect
     if (error) {
@@ -29,44 +44,41 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
       return;
     }
     
-    if (code && state) {
-      console.log(`Detected auth code: ${code.substring(0, 5)}... and state: ${state}`);
-      console.log(`Current location: ${window.location.href}`);
-      console.log(`Expected redirect: ${window.location.origin}/auth/google/callback`);
-      setIsAuthenticating(true);
-      handleGoogleRedirect()
-        .then(() => {
-          setIsAuthenticated(true);
-          setErrorMessage(null);
-          onAuthStateChange?.(true);
-          toast({
-            title: "Google Drive connected",
-            description: "Successfully authenticated with Google Drive"
-          });
-        })
-        .catch(error => {
-          console.error("Google auth error:", error);
-          setErrorMessage(error.message || "Authentication failed");
-          toast({
-            title: "Authentication failed",
-            description: error.message || "Failed to connect to Google Drive",
-            variant: "destructive"
-          });
-        })
-        .finally(() => {
-          setIsAuthenticating(false);
+    console.log(`Detected auth code: ${code.substring(0, 5)}... and state: ${state}`);
+    console.log(`Current location: ${window.location.href}`);
+    console.log(`Expected redirect: ${window.location.origin}/auth/google/callback`);
+    
+    const processRedirect = async () => {
+      try {
+        setIsAuthenticating(true);
+        await handleGoogleRedirect();
+        setIsAuthenticated(true);
+        setErrorMessage(null);
+        onAuthStateChange?.(true);
+        toast({
+          title: "Google Drive connected",
+          description: "Successfully authenticated with Google Drive"
         });
-    } else {
-      // Check if we're already authenticated
-      const authStatus = isGoogleAuthenticated();
-      console.log("Current authentication status:", authStatus);
-      setIsAuthenticated(authStatus);
-      onAuthStateChange?.(authStatus);
-    }
-  }, [toast, onAuthStateChange]);
+      } catch (error) {
+        console.error("Google auth redirect processing error:", error);
+        setErrorMessage(error.message || "Authentication failed");
+        toast({
+          title: "Authentication failed",
+          description: error.message || "Failed to connect to Google Drive",
+          variant: "destructive"
+        });
+      } finally {
+        setIsAuthenticating(false);
+        
+        // Clean up URL parameters after processing
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    };
+    
+    processRedirect();
+  }, [onAuthStateChange, toast]);
 
   const handleAuth = async (e: React.MouseEvent) => {
-    // Prevent form submission when button is clicked
     e.preventDefault();
     
     if (isAuthenticated) {
@@ -86,8 +98,6 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
       try {
         setIsAuthenticating(true);
         setErrorMessage(null);
-        
-        console.log("Current window location:", window.location.href);
         
         const authUrl = await getGoogleAuthUrl();
         console.log("Redirecting to auth URL:", authUrl);
@@ -128,11 +138,6 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
           <span>{errorMessage}</span>
         </div>
       )}
-      <div className="text-xs text-gray-400 mt-1 p-2 bg-gray-50 rounded">
-        <div>Debug Information:</div>
-        <div>Current URL: {window.location.href}</div>
-        <div>Redirect Path: /auth/google/callback</div>
-      </div>
     </div>
   );
 };
