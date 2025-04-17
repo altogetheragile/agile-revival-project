@@ -55,17 +55,18 @@ const initializeCredentials = async (forceRefresh = false): Promise<boolean> => 
     console.log("Fetching Google credentials from edge function...");
     credentialsRetryCount++;
     
-    const { data, error } = await supabase.functions.invoke("get-google-credentials", {
+    const response = await supabase.functions.invoke("get-google-credentials", {
       method: "GET",
     });
     
-    if (error) {
-      console.error("Error fetching Google credentials:", error);
+    if (response.error) {
+      console.error("Error fetching Google credentials:", response.error);
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
       return initializeCredentials(false);
     }
     
+    const data = response.data;
     if (data && data.clientId && data.clientSecret) {
       clientId = data.clientId;
       clientSecret = data.clientSecret;

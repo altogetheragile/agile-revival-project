@@ -15,8 +15,7 @@ serve(async (req) => {
   
   console.log("Google credentials function called");
   
-  // For development testing purposes, bypass auth check
-  // Remove this in production or add proper authentication
+  // Get the credentials from environment variables
   const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
   const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
   
@@ -28,7 +27,7 @@ serve(async (req) => {
     );
   }
   
-  console.log("Returning Google credentials to client");
+  console.log(`Returning Google credentials to client (ID: ${clientId.substring(0, 5)}...)`);
   return new Response(
     JSON.stringify({ clientId, clientSecret }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
