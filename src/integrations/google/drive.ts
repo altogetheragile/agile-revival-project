@@ -67,11 +67,15 @@ const initializeCredentials = async (forceRefresh = false): Promise<boolean> => 
     }
     
     const data = response.data;
+    // Debug what we're getting back
+    console.log("Received credential response:", JSON.stringify(data, null, 2));
+    
     if (data && data.clientId && data.clientSecret) {
       clientId = data.clientId;
       clientSecret = data.clientSecret;
       credentialsLastFetched = Date.now();
       console.log("Google credentials loaded successfully");
+      console.log(`Client ID: ${clientId.substring(0, 10)}...`);
       return true;
     }
     

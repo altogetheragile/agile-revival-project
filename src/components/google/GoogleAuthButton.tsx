@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { getGoogleAuthUrl, handleGoogleRedirect, isGoogleAuthenticated } from "@/integrations/google/drive";
 import { useToast } from "@/components/ui/use-toast";
+import { AlertCircle } from "lucide-react";
 
 interface GoogleAuthButtonProps {
   onAuthStateChange?: (authenticated: boolean) => void;
@@ -73,6 +74,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
         setIsAuthenticating(true);
         setErrorMessage(null);
         const authUrl = await getGoogleAuthUrl();
+        console.log("Generated auth URL:", authUrl);
         window.location.href = authUrl;
       } catch (error) {
         console.error("Google auth error:", error);
@@ -88,7 +90,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
   };
 
   return (
-    <div>
+    <div className="space-y-2">
       <Button
         onClick={handleAuth}
         disabled={isAuthenticating}
@@ -103,7 +105,10 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
         }
       </Button>
       {errorMessage && (
-        <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
+        <div className="text-red-500 text-sm flex items-center gap-1 mt-2">
+          <AlertCircle className="h-4 w-4" />
+          <span>{errorMessage}</span>
+        </div>
       )}
     </div>
   );
