@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData, CourseMaterial } from "@/types/course";
@@ -30,52 +29,47 @@ export const useCourseManagement = () => {
     const uploadedMaterials: CourseMaterial[] = [];
     
     for (const file of materials) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${courseId}/${Date.now()}-${file.name}`;
-      
-      const { data, error } = await supabase.storage
-        .from('course_materials')
-        .upload(fileName, file);
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${courseId}/${Date.now()}-${file.name}`;
         
-      if (error) {
-        console.error('Error uploading file:', error);
+        const { data, error } = await supabase.storage
+          .from('course_materials')
+          .upload(fileName, file);
+          
+        if (error) {
+          console.error('Error uploading file:', error);
+          toast({
+            title: "Upload Error",
+            description: `Failed to upload ${file.name}`,
+            variant: "destructive"
+          });
+          continue;
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('course_materials')
+          .getPublicUrl(fileName);
+          
+        if (urlData) {
+          const courseMaterial: CourseMaterial = {
+            id: `mat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            fileName: file.name,
+            fileUrl: urlData.publicUrl,
+            fileType: file.type,
+            fileSize: file.size
+          };
+          
+          uploadedMaterials.push(courseMaterial);
+          await addCourseMaterial(courseId, courseMaterial);
+        }
+      } catch (err) {
+        console.error('Error processing file upload:', err);
         toast({
           title: "Upload Error",
-          description: `Failed to upload ${file.name}`,
+          description: `Failed to process ${file.name}`,
           variant: "destructive"
         });
-        continue;
-      }
-      
-      const { data: urlData } = supabase.storage
-        .from('course_materials')
-        .getPublicUrl(fileName);
-        
-      if (urlData) {
-        const courseMaterial: CourseMaterial = {
-          id: `mat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-          fileName: file.name,
-          fileUrl: urlData.publicUrl,
-          fileType: file.type,
-          fileSize: file.size
-        };
-        
-        uploadedMaterials.push(courseMaterial);
-        addCourseMaterial(courseId, courseMaterial);
-        
-        const { data: materialData, error: materialError } = await supabase
-          .from('course_materials')
-          .insert({
-            course_id: courseId,
-            file_name: file.name,
-            file_url: urlData.publicUrl,
-            file_type: file.type,
-            file_size: file.size
-          });
-          
-        if (materialError) {
-          console.error('Error saving material metadata:', materialError);
-        }
       }
     }
     

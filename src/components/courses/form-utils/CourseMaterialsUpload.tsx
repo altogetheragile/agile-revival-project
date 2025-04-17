@@ -1,11 +1,11 @@
-
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Upload, FileText } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/components/ui/use-toast";
 
 interface CourseMaterialsUploadProps {
   onFilesChange: (files: File[]) => void;
@@ -17,13 +17,26 @@ export const CourseMaterialsUpload: React.FC<CourseMaterialsUploadProps> = ({
   files,
 }) => {
   const [fileDescriptions, setFileDescriptions] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      const totalSize = Array.from(e.target.files).reduce((acc, file) => acc + file.size, 0);
+      const maxSize = 100 * 1024 * 1024; // 100MB total limit
+      
+      if (totalSize > maxSize) {
+        toast({
+          title: "Upload Error",
+          description: "Total file size exceeds 100MB limit",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const newFiles = [...files, ...Array.from(e.target.files)];
       onFilesChange(newFiles);
     }
-  };
+  }, [files, onFilesChange, toast]);
 
   const removeFile = (index: number) => {
     const newFiles = [...files];
@@ -60,7 +73,7 @@ export const CourseMaterialsUpload: React.FC<CourseMaterialsUploadProps> = ({
           Course Materials
         </Label>
         <p className="text-sm text-gray-500 mb-2">
-          Upload PDFs, videos, or other course materials
+          Upload PDFs, videos, or other course materials (max 100MB total)
         </p>
         <div className="flex items-center gap-2">
           <Input
@@ -69,6 +82,7 @@ export const CourseMaterialsUpload: React.FC<CourseMaterialsUploadProps> = ({
             onChange={handleFileChange}
             className="flex-1"
             multiple
+            accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.mp4,.mov,.zip"
           />
           <Button type="button" size="sm" className="gap-2">
             <Upload className="h-4 w-4" /> Upload
