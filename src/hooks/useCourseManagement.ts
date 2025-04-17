@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData, CourseMaterial } from "@/types/course";
@@ -24,95 +23,6 @@ export const useCourseManagement = () => {
     );
   });
 
-  const uploadMaterials = async (courseId: string, materials?: File[]) => {
-    if (!materials || materials.length === 0) return [];
-    
-    const uploadedMaterials: CourseMaterial[] = [];
-    
-    for (const file of materials) {
-      try {
-        // Check file size - reject if too large (10MB per file)
-        const maxFileSize = 10 * 1024 * 1024; // 10MB
-        if (file.size > maxFileSize) {
-          toast({
-            title: "File too large",
-            description: `${file.name} exceeds the 10MB limit`,
-            variant: "destructive"
-          });
-          continue;
-        }
-        
-        // Generate a unique file path
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-        const filePath = `${courseId}/${fileName}`;
-        
-        // Upload to Supabase Storage
-        const { data, error } = await supabase.storage
-          .from('course_materials')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-          
-        if (error) {
-          console.error('Error uploading file:', error);
-          toast({
-            title: "Upload Error",
-            description: `Failed to upload ${file.name}: ${error.message}`,
-            variant: "destructive"
-          });
-          continue;
-        }
-        
-        // Get the public URL
-        const { data: urlData } = supabase.storage
-          .from('course_materials')
-          .getPublicUrl(filePath);
-          
-        if (urlData && urlData.publicUrl) {
-          // Create course material object
-          const courseMaterial: CourseMaterial = {
-            id: `mat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-            fileName: file.name,
-            fileUrl: urlData.publicUrl,
-            fileType: file.type,
-            fileSize: file.size
-          };
-          
-          // Save to local storage via the service
-          uploadedMaterials.push(courseMaterial);
-          await addCourseMaterial(courseId, courseMaterial);
-          
-          // Add to database (optional, as we're using localStorage)
-          try {
-            await supabase
-              .from('course_materials')
-              .insert({
-                course_id: courseId,
-                file_name: file.name,
-                file_url: urlData.publicUrl,
-                file_type: file.type,
-                file_size: file.size
-              });
-          } catch (dbErr) {
-            // Log error but don't fail the upload as we've already stored it locally
-            console.warn('Error saving to database:', dbErr);
-          }
-        }
-      } catch (err) {
-        console.error('Error processing file upload:', err);
-        toast({
-          title: "Upload Error",
-          description: `Failed to process ${file.name}`,
-          variant: "destructive"
-        });
-      }
-    }
-    
-    return uploadedMaterials;
-  };
-
   const handleFormSubmit = async (data: CourseFormData) => {
     try {
       // Handle Google Drive folder information
@@ -127,10 +37,6 @@ export const useCourseManagement = () => {
           ...googleDriveData
         });
         
-        if (updated && data.materials && data.materials.length > 0) {
-          await uploadMaterials(currentCourse.id, data.materials);
-        }
-        
         if (updated) {
           setCourses(getAllCourses());
           toast({
@@ -143,10 +49,6 @@ export const useCourseManagement = () => {
           ...data,
           ...googleDriveData
         });
-        
-        if (data.materials && data.materials.length > 0) {
-          await uploadMaterials(created.id, data.materials);
-        }
         
         setCourses(getAllCourses());
         toast({
