@@ -32,7 +32,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
     if (code && state) {
       console.log(`Detected auth code: ${code.substring(0, 5)}... and state: ${state}`);
       console.log(`Current location: ${window.location.href}`);
-      console.log(`Expected redirect: ${window.location.origin}/admin`);
+      console.log(`Expected redirect: ${window.location.origin}/auth/google/callback`);
       setIsAuthenticating(true);
       handleGoogleRedirect()
         .then(() => {
@@ -128,8 +128,10 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onAuthStateC
           <span>{errorMessage}</span>
         </div>
       )}
-      <div className="text-xs text-gray-400 mt-1">
-        Current URL: {window.location.href}
+      <div className="text-xs text-gray-400 mt-1 p-2 bg-gray-50 rounded">
+        <div>Debug Information:</div>
+        <div>Current URL: {window.location.href}</div>
+        <div>Redirect Path: /auth/google/callback</div>
       </div>
     </div>
   );

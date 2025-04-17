@@ -100,6 +100,12 @@ const GoogleAuthCallback = () => {
             </p>
           </>
         )}
+        
+        <div className="mt-6 text-xs text-gray-400 bg-gray-50 p-2 rounded">
+          <div>Debug Information:</div>
+          <div>Current URL: {window.location.href}</div>
+          <div>Redirect Path: /auth/google/callback</div>
+        </div>
       </div>
     </div>
   );

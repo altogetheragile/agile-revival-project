@@ -6,8 +6,8 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/auth";
 
 // Dynamic redirect URI determination
 const getRedirectUri = () => {
-  // Use the current origin plus /admin path for the redirect
-  return window.location.origin + "/admin";
+  // Use the current origin plus /auth/google/callback path for the redirect
+  return window.location.origin + "/auth/google/callback";
 };
 
 // Scopes needed for Drive operations
