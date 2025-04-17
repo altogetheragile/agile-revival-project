@@ -4,7 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { Course } from "@/types/course";
-import { getAllCourses } from "@/services/courseService";
+import { getPublishedCourses } from "@/services/courseService";
 import { CourseCategory } from "@/components/courses/CourseCategoryTabs";
 import TrainingHeader from "@/components/courses/TrainingHeader";
 import CourseFilters from "@/components/courses/CourseFilters";
@@ -13,7 +13,7 @@ import CustomTrainingCTA from "@/components/courses/CustomTrainingCTA";
 
 const TrainingSchedule = () => {
   const [selectedTab, setSelectedTab] = useState<CourseCategory>("all");
-  const [courses] = useState<Course[]>(getAllCourses());
+  const [courses] = useState<Course[]>(getPublishedCourses());
 
   const filteredCourses = selectedTab === "all" 
     ? courses 
