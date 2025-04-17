@@ -1,4 +1,3 @@
-
 import { getAccessToken } from './auth';
 
 // Google Drive API endpoint
@@ -9,6 +8,8 @@ const GOOGLE_API_URL = "https://www.googleapis.com/drive/v3";
  */
 export const createDriveFolder = async (folderName: string, parentFolderId?: string) => {
   const accessToken = await getAccessToken();
+  
+  console.log(`Creating folder: ${folderName}`, parentFolderId ? `with parent: ${parentFolderId}` : 'without parent');
   
   const metadata = {
     name: folderName,
@@ -27,10 +28,47 @@ export const createDriveFolder = async (folderName: string, parentFolderId?: str
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to create folder: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("Failed to create folder. Status:", response.status, "Response:", errorText);
+      throw new Error(`Failed to create folder: ${response.statusText} (${response.status})`);
     }
     
-    return await response.json();
+    const folder = await response.json();
+    console.log("Folder created:", folder);
+    
+    // Make the folder accessible via a link
+    const permissionResponse = await fetch(`${GOOGLE_API_URL}/files/${folder.id}/permissions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        role: "reader",
+        type: "anyone"
+      })
+    });
+    
+    if (!permissionResponse.ok) {
+      console.warn("Could not set folder permissions:", await permissionResponse.text());
+    }
+    
+    // Get the folder URL
+    const folderResponse = await fetch(
+      `${GOOGLE_API_URL}/files/${folder.id}?fields=id,name,webViewLink`, {
+      headers: {
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!folderResponse.ok) {
+      throw new Error(`Could not get folder details: ${folderResponse.statusText}`);
+    }
+    
+    const folderDetails = await folderResponse.json();
+    console.log("Folder details:", folderDetails);
+    
+    return folderDetails;
   } catch (error) {
     console.error("Error creating Google Drive folder:", error);
     throw error;

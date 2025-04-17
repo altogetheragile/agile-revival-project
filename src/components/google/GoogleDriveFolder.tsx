@@ -11,8 +11,9 @@ import {
   uploadFileToDrive 
 } from "@/integrations/google/drive";
 import { GoogleAuthButton } from "./GoogleAuthButton";
-import { FileText, FolderOpen, Link, Upload, X } from "lucide-react";
+import { FileText, FolderOpen, Link, Upload, X, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface GoogleDriveFolderProps {
   courseId: string;
@@ -44,7 +45,14 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
   const [folderName, setFolderName] = useState(`Course: ${courseTitle}`);
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (courseTitle && !folderId) {
+      setFolderName(`Course: ${courseTitle}`);
+    }
+  }, [courseTitle]);
 
   useEffect(() => {
     if (folderId && isAuthenticated) {
@@ -56,11 +64,13 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
     if (!folderId) return;
     
     setIsLoading(true);
+    setError(null);
     try {
       const result = await getFolderContents(folderId);
       setFiles(result.files || []);
     } catch (error) {
       console.error("Error loading folder contents:", error);
+      setError(`Could not load files from Google Drive: ${error.message || 'Unknown error'}`);
       toast({
         title: "Error",
         description: "Could not load files from Google Drive",
@@ -82,18 +92,27 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
     }
 
     setIsCreating(true);
+    setError(null);
     try {
+      console.log("Starting folder creation for:", folderName);
       const result = await createDriveFolder(folderName);
-      onFolderCreated(result.id, result.webViewLink);
-      toast({
-        title: "Folder created",
-        description: "Successfully created Google Drive folder"
-      });
-      // Automatically load folder contents
-      setFiles([]);
-      loadFolderContents();
+      console.log("Folder creation result:", result);
+      
+      if (result && result.id && result.webViewLink) {
+        onFolderCreated(result.id, result.webViewLink);
+        toast({
+          title: "Folder created",
+          description: "Successfully created Google Drive folder"
+        });
+        // Automatically load folder contents
+        setFiles([]);
+        await loadFolderContents();
+      } else {
+        throw new Error("Invalid folder creation response");
+      }
     } catch (error) {
       console.error("Error creating folder:", error);
+      setError(`Failed to create Google Drive folder: ${error.message || 'Unknown error'}`);
       toast({
         title: "Error",
         description: "Failed to create Google Drive folder",
@@ -151,6 +170,14 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
         <GoogleAuthButton onAuthStateChange={setIsAuthenticated} />
       </div>
 
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       {!folderId && (
         <div className="space-y-4">
           <div className="space-y-2">
@@ -170,6 +197,12 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
             <FolderOpen className="mr-2 h-4 w-4" />
             {isCreating ? "Creating folder..." : "Create Google Drive Folder"}
           </Button>
+          
+          <div className="text-xs text-gray-400 mt-1 p-2 bg-gray-50 rounded">
+            <div>Debug Information:</div>
+            <div>Authentication Status: {isAuthenticated ? 'Authenticated' : 'Not Authenticated'}</div>
+            <div>Folder Name: {folderName || 'Not set'}</div>
+          </div>
         </div>
       )}
 
