@@ -77,14 +77,8 @@ export default function AuthPage() {
     }
     
     try {
-      const { data: userExists } = await supabase.auth.admin
-        .getUserByEmail(email);
-
-      if (!userExists) {
-        console.log("No user found with this email:", email);
-        return;
-      }
-
+      console.log("Attempting password reset for:", email);
+      
       const redirectUrl = `${window.location.origin}/reset-password`;
       console.log("Reset password redirect URL:", redirectUrl);
       
