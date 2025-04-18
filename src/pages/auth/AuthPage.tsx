@@ -54,10 +54,19 @@ export default function AuthPage() {
       }
     } catch (error: any) {
       console.error('Authentication error:', error);
-      setErrorMessage(error.message || "An error occurred during authentication");
+      
+      // Improve error message for timeout issues
+      if (error.status === 504 || error.message?.includes('timeout') || error.message === '{}') {
+        setErrorMessage(
+          "The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later."
+        );
+      } else {
+        setErrorMessage(error.message || "An error occurred during authentication");
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "An error occurred during authentication",
+        description: errorMessage || "An error occurred during authentication",
         variant: "destructive",
       });
     } finally {
@@ -66,12 +75,22 @@ export default function AuthPage() {
   };
 
   const resetPassword = async (email: string) => {
+    if (!email || !email.includes('@')) {
+      throw new Error("Please enter a valid email address");
+    }
+    
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password',
+      // Add more specific redirectTo URL including the origin
+      const redirectUrl = `${window.location.origin}/reset-password`;
+      console.log("Reset password redirect URL:", redirectUrl);
+      
+      const { error, data } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
       });
       
       if (error) throw error;
+      console.log("Password reset request sent successfully", data);
+      return data;
     } catch (error: any) {
       console.error('Password reset error:', error);
       throw error;
@@ -82,31 +101,37 @@ export default function AuthPage() {
     if (mode === 'reset') {
       if (resetEmailSent) {
         return (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              If an account exists with this email, you'll receive password reset instructions.
-              Please check your email inbox and spam folders.
+          <Alert className="bg-green-50 border-green-200">
+            <AlertCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-700">
+              If an account exists with this email, you'll receive password reset instructions shortly.
+              <p className="mt-2">Please check your email inbox and spam folders.</p>
             </AlertDescription>
           </Alert>
         );
       }
       
       return (
-        <div>
-          <Input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+        <div className="space-y-4">
+          <div className="text-sm text-gray-500 mb-4">
+            Enter your email address and we'll send you instructions to reset your password.
+          </div>
+          <div>
+            <Input
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full"
+            />
+          </div>
         </div>
       );
     }
 
     return (
-      <>
+      <div className="space-y-4">
         {mode === 'signup' && (
           <>
             <div>
@@ -116,6 +141,7 @@ export default function AuthPage() {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
+                className="w-full"
               />
             </div>
             <div>
@@ -125,6 +151,7 @@ export default function AuthPage() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
+                className="w-full"
               />
             </div>
           </>
@@ -136,6 +163,7 @@ export default function AuthPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className="w-full"
           />
         </div>
         <div>
@@ -145,9 +173,10 @@ export default function AuthPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            className="w-full"
           />
         </div>
-      </>
+      </div>
     );
   };
 
