@@ -1,9 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, XCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 interface ResetPasswordFormProps {
@@ -24,26 +24,73 @@ export default function ResetPasswordForm({
   const [email, setEmail] = useState('');
   const [retryCount, setRetryCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeoutError, setTimeoutError] = useState<string | null>(null);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  
+  // Clear timeout error when email changes
+  useEffect(() => {
+    if (timeoutError) {
+      setTimeoutError(null);
+    }
+  }, [email]);
+  
+  // Cleanup function for any pending requests
+  useEffect(() => {
+    return () => {
+      if (abortController) {
+        abortController.abort();
+      }
+    };
+  }, [abortController]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
     
     setIsSubmitting(true);
+    setTimeoutError(null);
+    
+    // Create a new abort controller for this request
+    const controller = new AbortController();
+    setAbortController(controller);
+    
+    // Set a timeout to abort the request after 15 seconds
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      setTimeoutError("Request timed out. Please try again later.");
+      setIsSubmitting(false);
+    }, 15000);
+    
     try {
       await onSubmit(email);
       // Reset retry count on successful submission
       setRetryCount(0);
-    } catch (error) {
-      // Increment retry count
-      setRetryCount(prev => prev + 1);
-      console.error('Password reset error:', error);
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        // Already handled by the timeout
+      } else {
+        // Increment retry count for other errors
+        setRetryCount(prev => prev + 1);
+        console.error('Password reset error:', error);
+      }
     } finally {
+      clearTimeout(timeoutId);
+      setIsSubmitting(false);
+      setAbortController(null);
+    }
+  };
+
+  // Allow user to cancel a pending request
+  const handleCancel = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
       setIsSubmitting(false);
     }
   };
 
   const isLoading = loading || isSubmitting;
+  const displayError = timeoutError || error;
   const buttonText = isLoading ? 'Processing...' : 'Send Reset Link';
 
   if (resetEmailSent) {
@@ -68,11 +115,11 @@ export default function ResetPasswordForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
+      {displayError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error}
+            {displayError}
             {retryCount > 0 && (
               <p className="mt-2 text-sm">
                 Tips to resolve:
@@ -108,14 +155,33 @@ export default function ResetPasswordForm({
       </div>
       
       <div>
-        <Button 
-          type="submit" 
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {buttonText}
-        </Button>
+        {isLoading ? (
+          <div className="flex space-x-2">
+            <Button 
+              type="button" 
+              className="w-full bg-amber-500 hover:bg-amber-600"
+              onClick={handleCancel}
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              className="w-full"
+              disabled={true}
+            >
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {buttonText}
+            </Button>
+          </div>
+        ) : (
+          <Button 
+            type="submit" 
+            className="w-full"
+          >
+            {buttonText}
+          </Button>
+        )}
       </div>
       
       <div className="text-center">
