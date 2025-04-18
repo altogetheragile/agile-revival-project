@@ -107,7 +107,9 @@ const NavLinks = ({
         isAdmin ? (
           <Link 
             to="/admin" 
-            className="text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors"
+            className={isMobile 
+              ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors" 
+              : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
             onClick={closeMenu}
           >
             Admin Dashboard
@@ -119,7 +121,9 @@ const NavLinks = ({
     return (
       <Link 
         to="/auth" 
-        className="text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors"
+        className={isMobile 
+          ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors" 
+          : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
         onClick={closeMenu}
       >
         Login
