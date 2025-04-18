@@ -38,7 +38,12 @@ export default function AuthPage() {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('provider is not enabled')) {
+          throw new Error('Google authentication is not enabled. Please enable it in the Supabase dashboard under Authentication > Providers > Google.');
+        }
+        throw error;
+      }
     } catch (error: any) {
       handleError(error);
     } finally {
@@ -159,6 +164,8 @@ export default function AuthPage() {
       message = "Email already registered. Please use another email or try logging in.";
     } else if (error.message?.includes('password')) {
       message = "Invalid password. Please check your password and try again.";
+    } else if (error.message?.includes('provider is not enabled')) {
+      message = "Google authentication is not configured. Please contact the administrator.";
     }
     
     setErrorMessage(message);
