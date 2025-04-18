@@ -1,10 +1,12 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Separator } from '@/components/ui/separator';
+import { AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import LoginForm from '@/components/auth/LoginForm';
 import SignupForm from '@/components/auth/SignupForm';
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm';
@@ -25,6 +27,25 @@ export default function AuthPage() {
     return null;
   }
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/admin`
+        }
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      handleError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSignIn = async (email: string, password: string) => {
     setLoading(true);
     setErrorMessage(null);
@@ -43,14 +64,12 @@ export default function AuthPage() {
     setErrorMessage(null);
     
     try {
-      // Create an AbortController specifically for the signup page logic
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       
       try {
-        // Use Promise.race to handle potential timeouts
         const signupResult = await Promise.race([
-          signUp(email, password, firstName, lastName), // Already has its own timeout handling
+          signUp(email, password, firstName, lastName),
           new Promise((_, reject) => {
             controller.signal.addEventListener('abort', () => 
               reject(new Error("The request timed out. Please try again later."))
@@ -88,8 +107,6 @@ export default function AuthPage() {
     try {
       const redirectUrl = `${window.location.origin}/reset-password`;
       
-      // Add a shorter timeout for the reset password request
-      // We'll handle this on the client side to give faster feedback to users
       const response = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
       });
@@ -123,7 +140,7 @@ export default function AuthPage() {
         variant: "destructive",
       });
       
-      return Promise.reject(error); // Propagate the error to the ResetPasswordForm
+      return Promise.reject(error);
     } finally {
       setLoading(false);
     }
@@ -177,32 +194,80 @@ export default function AuthPage() {
         </CardHeader>
         <CardContent>
           {mode === 'login' && (
-            <LoginForm
-              onSubmit={handleSignIn}
-              onSwitchToSignup={() => {
-                setMode('signup');
-                setErrorMessage(null);
-              }}
-              onSwitchToReset={() => {
-                setMode('reset');
-                setErrorMessage(null);
-                setResetEmailSent(false);
-              }}
-              loading={loading}
-              error={errorMessage}
-            />
+            <div className="space-y-4">
+              <Button 
+                onClick={handleGoogleSignIn}
+                className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2"
+                disabled={loading}
+              >
+                <img 
+                  src="https://www.google.com/favicon.ico" 
+                  alt="Google" 
+                  className="w-4 h-4"
+                />
+                Sign in with Google
+              </Button>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                </div>
+              </div>
+
+              <LoginForm
+                onSubmit={handleSignIn}
+                onSwitchToSignup={() => {
+                  setMode('signup');
+                  setErrorMessage(null);
+                }}
+                onSwitchToReset={() => {
+                  setMode('reset');
+                  setErrorMessage(null);
+                  setResetEmailSent(false);
+                }}
+                loading={loading}
+                error={errorMessage}
+              />
+            </div>
           )}
           
           {mode === 'signup' && (
-            <SignupForm
-              onSubmit={handleSignUp}
-              onSwitchToLogin={() => {
-                setMode('login');
-                setErrorMessage(null);
-              }}
-              loading={loading}
-              error={errorMessage}
-            />
+            <div className="space-y-4">
+              <Button 
+                onClick={handleGoogleSignIn}
+                className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2"
+                disabled={loading}
+              >
+                <img 
+                  src="https://www.google.com/favicon.ico" 
+                  alt="Google" 
+                  className="w-4 h-4"
+                />
+                Sign up with Google
+              </Button>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                </div>
+              </div>
+
+              <SignupForm
+                onSubmit={handleSignUp}
+                onSwitchToLogin={() => {
+                  setMode('login');
+                  setErrorMessage(null);
+                }}
+                loading={loading}
+                error={errorMessage}
+              />
+            </div>
           )}
           
           {mode === 'reset' && (
