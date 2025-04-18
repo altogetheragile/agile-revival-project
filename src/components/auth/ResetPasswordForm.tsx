@@ -84,9 +84,10 @@ export default function ResetPasswordForm({
   const handleCancel = () => {
     if (abortController) {
       abortController.abort();
-      setAbortController(null);
-      setIsSubmitting(false);
+      setTimeoutError("Request canceled by user.");
     }
+    setIsSubmitting(false);
+    setAbortController(null);
   };
 
   const isLoading = loading || isSubmitting;

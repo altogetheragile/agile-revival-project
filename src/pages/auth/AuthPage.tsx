@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,7 +19,6 @@ export default function AuthPage() {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const MAX_RETRIES = 2;
 
   if (user) {
     navigate('/admin');
@@ -101,10 +101,17 @@ export default function AuthPage() {
     } catch (error: any) {
       console.error('Password reset error:', error);
       
+      // Reset the loading state to allow retrying
+      setLoading(false);
+      
       let message = error.message || "An error occurred during the password reset";
       
       if (error.status === 504 || error.message?.includes('timeout') || error.message === '{}' || error.name === 'AbortError') {
-        message = "The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later.";
+        if (error.message?.includes('canceled by user')) {
+          message = "Request canceled by user.";
+        } else {
+          message = "The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later.";
+        }
       } else if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
         message = "Network error. Please check your internet connection and try again.";
       }
@@ -115,6 +122,8 @@ export default function AuthPage() {
         description: message,
         variant: "destructive",
       });
+      
+      return Promise.reject(error); // Propagate the error to the ResetPasswordForm
     } finally {
       setLoading(false);
     }
