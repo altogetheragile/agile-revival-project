@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { CourseFormData } from "@/types/course";
@@ -11,7 +11,6 @@ import { CourseDetailsFields } from "./form-utils/CourseDetailsFields";
 import { LearningOutcomeField } from "./form-utils/LearningOutcomeField";
 import { CourseFormActions } from "./form-utils/CourseFormActions";
 import { CourseFormatFields } from "./form-utils/CourseFormatFields";
-import { CourseMaterialsUpload } from "./form-utils/CourseMaterialsUpload";
 import { Separator } from "@/components/ui/separator";
 import { CourseGoogleDriveSection } from "./form-utils/CourseGoogleDriveSection";
 
@@ -45,10 +44,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
   const form = useForm<CourseFormData>({
     defaultValues: initialData
   });
-  
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
-  // Convert comma-separated string to array for learning outcomes
   const handleSubmit = (data: CourseFormData) => {
     // Process learning outcomes if provided as a string
     if (typeof data.learningOutcomes === 'string') {
@@ -57,9 +53,6 @@ const CourseForm: React.FC<CourseFormProps> = ({
         .map(item => item.trim())
         .filter(item => item.length > 0);
     }
-    
-    // Add uploaded files to the form data
-    data.materials = uploadedFiles;
     
     onSubmit({
       ...data,
@@ -81,11 +74,6 @@ const CourseForm: React.FC<CourseFormProps> = ({
         <Separator className="my-6" />
         
         <CourseGoogleDriveSection courseId={initialData.id} />
-        
-        <CourseMaterialsUpload 
-          onFilesChange={setUploadedFiles} 
-          files={uploadedFiles}
-        />
         
         <CourseFormActions 
           onCancel={onCancel} 
