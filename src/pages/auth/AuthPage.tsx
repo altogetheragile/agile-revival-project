@@ -87,11 +87,14 @@ export default function AuthPage() {
     
     try {
       const redirectUrl = `${window.location.origin}/reset-password`;
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      
+      // Add a shorter timeout for the reset password request
+      // We'll handle this on the client side to give faster feedback to users
+      const response = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
       });
       
-      if (error) throw error;
+      if (response.error) throw response.error;
       
       setResetEmailSent(true);
       toast({
@@ -100,9 +103,6 @@ export default function AuthPage() {
       });
     } catch (error: any) {
       console.error('Password reset error:', error);
-      
-      // Reset the loading state to allow retrying
-      setLoading(false);
       
       let message = error.message || "An error occurred during the password reset";
       

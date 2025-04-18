@@ -54,20 +54,23 @@ export default function ResetPasswordForm({
     const controller = new AbortController();
     setAbortController(controller);
     
-    // Set a timeout to abort the request after 15 seconds
+    // Set a timeout to abort the request after 10 seconds instead of 15
+    // This provides quicker feedback to the user
     const timeoutId = setTimeout(() => {
-      controller.abort();
+      controller.abort('timeout');
       setTimeoutError("Request timed out. Please try again later.");
       setIsSubmitting(false);
-    }, 15000);
+    }, 10000);
     
     try {
       await onSubmit(email);
       // Reset retry count on successful submission
       setRetryCount(0);
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        // Already handled by the timeout
+      console.log('Error in ResetPasswordForm:', error);
+      if (error.name === 'AbortError' || error.message?.includes('abort')) {
+        // No need to set the error message here as it's already handled by the timeout or cancel
+        console.log('Request was aborted:', error.message);
       } else {
         // Increment retry count for other errors
         setRetryCount(prev => prev + 1);
@@ -83,7 +86,7 @@ export default function ResetPasswordForm({
   // Allow user to cancel a pending request
   const handleCancel = () => {
     if (abortController) {
-      abortController.abort();
+      abortController.abort('canceled by user');
       setTimeoutError("Request canceled by user.");
     }
     setIsSubmitting(false);
@@ -160,7 +163,7 @@ export default function ResetPasswordForm({
           <div className="flex space-x-2">
             <Button 
               type="button" 
-              className="w-full bg-amber-500 hover:bg-amber-600"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white"
               onClick={handleCancel}
             >
               <XCircle className="mr-2 h-4 w-4" />
