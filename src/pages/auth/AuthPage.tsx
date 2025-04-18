@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -79,23 +80,38 @@ export default function AuthPage() {
     try {
       console.log("Attempting password reset for:", email);
       
-      const redirectUrl = `${window.location.origin}/reset-password`;
-      console.log("Reset password redirect URL:", redirectUrl);
-      
-      const { error, data } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
+      // Set up timeout handling
+      const timeoutDuration = 10000; // 10 seconds
+      const resetPromise = new Promise(async (resolve, reject) => {
+        try {
+          const redirectUrl = `${window.location.origin}/reset-password`;
+          console.log("Reset password redirect URL:", redirectUrl);
+          
+          const { error, data } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: redirectUrl,
+          });
+          
+          if (error) {
+            console.error('Reset password error:', error);
+            reject(error);
+          } else {
+            console.log("Password reset request sent successfully");
+            resolve(data);
+          }
+        } catch (err) {
+          reject(err);
+        }
       });
       
-      if (error) {
-        console.error('Reset password error:', error);
-        if (error.status === 504) {
-          throw new Error("The server is taking too long to respond. Please try again in a few moments.");
-        }
-        throw error;
-      }
-
-      console.log("Password reset request sent successfully for:", email);
-      return data;
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("The server is taking too long to respond. Please try again in a few moments."));
+        }, timeoutDuration);
+      });
+      
+      // Race the promises
+      return await Promise.race([resetPromise, timeoutPromise]);
     } catch (error: any) {
       console.error('Password reset error:', error);
       throw error;
