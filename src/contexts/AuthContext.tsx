@@ -86,8 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     // Create an AbortController to handle timeouts
     const controller = new AbortController();
-    // Set a timeout of 15 seconds - increasing from 8 to give more time
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    // Set a timeout of 30 seconds - increasing significantly from 15 seconds
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     
     try {
       // Use Promise.race with AbortController signal to handle timeouts
