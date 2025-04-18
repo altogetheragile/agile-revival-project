@@ -11,8 +11,6 @@ import { CourseDetailsFields } from "./form-utils/CourseDetailsFields";
 import { LearningOutcomeField } from "./form-utils/LearningOutcomeField";
 import { CourseFormActions } from "./form-utils/CourseFormActions";
 import { CourseFormatFields } from "./form-utils/CourseFormatFields";
-import { Separator } from "@/components/ui/separator";
-import { CourseGoogleDriveSection } from "./form-utils/CourseGoogleDriveSection";
 
 interface CourseFormProps {
   initialData?: CourseFormData;
@@ -72,10 +70,6 @@ const CourseForm: React.FC<CourseFormProps> = ({
         <CourseDetailsFields form={form} />
         <CourseFormatFields form={form} />
         <LearningOutcomeField form={form} />
-        
-        <Separator className="my-6" />
-        
-        <CourseGoogleDriveSection courseId={initialData.id} />
         
         <CourseFormActions 
           onCancel={onCancel} 

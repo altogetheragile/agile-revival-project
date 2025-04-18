@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -9,18 +8,16 @@ import ScrollToTop from "@/components/layout/ScrollToTop";
 import CourseManagement from "@/components/admin/CourseManagement";
 import BlogManagement from "@/components/admin/BlogManagement";
 import UserManagement from "@/components/admin/UserManagement";
+import SiteSettings from "@/components/admin/SiteSettings";
 
 const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("courses");
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Admin authentication check (placeholder - replace with actual auth check)
-  // In a real app, you would check if the current user has admin privileges
   const isAdmin = true; // This should come from your authentication system
   
   if (!isAdmin) {
-    // Redirect non-admin users
     toast({
       title: "Access denied",
       description: "You don't have permission to access this page.",
@@ -59,10 +56,7 @@ const AdminDashboard = () => {
               </TabsContent>
               
               <TabsContent value="settings" className="pt-4">
-                <div className="bg-white shadow-md rounded-md p-6">
-                  <h2 className="text-xl font-semibold mb-4">Site Settings</h2>
-                  <p className="text-gray-600">Site settings functionality will be implemented here.</p>
-                </div>
+                <SiteSettings />
               </TabsContent>
             </Tabs>
           </div>
