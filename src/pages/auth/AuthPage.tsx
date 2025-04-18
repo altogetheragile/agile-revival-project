@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,19 +22,18 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Use useEffect to handle redirects after the component mounts
   useEffect(() => {
     if (user && window.location.pathname === '/auth') {
       console.log('User authenticated, redirecting', { user, isAdmin });
-      // Redirect to home page
-      navigate('/');
+      setTimeout(() => navigate('/'), 10);
     }
   }, [user, isAdmin, navigate]);
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setErrorMessage(null);
     try {
+      setLoading(true);
+      setErrorMessage(null);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -57,11 +55,16 @@ export default function AuthPage() {
   };
 
   const handleSignIn = async (email: string, password: string) => {
-    setLoading(true);
-    setErrorMessage(null);
     try {
+      setLoading(true);
+      setErrorMessage(null);
+      
       await signIn(email, password);
-      navigate('/admin');
+      toast({
+        title: "Login successful",
+        description: "You have been successfully logged in.",
+      });
+      navigate('/');
     } catch (error: any) {
       handleError(error);
     } finally {
@@ -211,6 +214,7 @@ export default function AuthPage() {
                 onClick={handleGoogleSignIn}
                 className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2"
                 disabled={loading}
+                type="button"
               >
                 <img 
                   src="https://www.google.com/favicon.ico" 
@@ -252,6 +256,7 @@ export default function AuthPage() {
                 onClick={handleGoogleSignIn}
                 className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2"
                 disabled={loading}
+                type="button"
               >
                 <img 
                   src="https://www.google.com/favicon.ico" 
