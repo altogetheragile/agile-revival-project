@@ -13,11 +13,10 @@ interface AuthContextType {
   isAdmin: boolean;
 }
 
-interface ProfileData {
+interface UserRole {
   id: string;
-  first_name: string;
-  last_name: string;
-  role?: string;
+  user_id: string;
+  role: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch user profile with role information
+        // Fetch user role information
         if (session?.user) {
           setTimeout(() => {
             checkAdminStatus(session.user.id);
@@ -59,18 +58,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
-    // Using maybeSingle to handle the case where no profile is found
+    // Query the user_roles table to check if the user has an admin role
     const { data, error } = await supabase
-      .from('profiles')
+      .from('user_roles')
       .select('*')
-      .eq('id', userId)
+      .eq('user_id', userId)
+      .eq('role', 'admin')
       .maybeSingle();
 
     if (data && !error) {
-      const profileData = data as ProfileData;
-      setIsAdmin(profileData.role === 'admin');
+      setIsAdmin(true);
     } else {
-      console.error('Error fetching user profile:', error);
+      console.error('Error fetching user role or user is not admin:', error);
       setIsAdmin(false);
     }
   };
