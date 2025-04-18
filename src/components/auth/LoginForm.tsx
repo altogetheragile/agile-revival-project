@@ -31,7 +31,7 @@ export default function LoginForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="animate-in fade-in-50">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -73,6 +73,7 @@ export default function LoginForm({
           type="button"
           variant="link"
           onClick={onSwitchToSignup}
+          className="text-green-600 hover:text-green-700"
         >
           Don't have an account? Sign Up
         </Button>

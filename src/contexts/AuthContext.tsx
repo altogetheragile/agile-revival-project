@@ -84,18 +84,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          first_name: firstName,
-          last_name: lastName,
+    try {
+      // Add a timeout promise to handle potential network issues
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out. Please try again later.')), 8000);
+      });
+      
+      const signupPromise = supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          },
         },
-      },
-    });
-
-    if (error) throw error;
+      });
+      
+      // Race the signup promise against the timeout
+      const result = await Promise.race([signupPromise, timeoutPromise]) as any;
+      
+      if (result?.error) throw result.error;
+    } catch (error) {
+      console.error('Error during signup:', error);
+      throw error;
+    }
   };
 
   const signOut = async () => {

@@ -41,14 +41,37 @@ export default function AuthPage() {
   const handleSignUp = async (email: string, password: string, firstName: string, lastName: string) => {
     setLoading(true);
     setErrorMessage(null);
+    
+    // Create an AbortController for timeout management
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
     try {
-      await signUp(email, password, firstName, lastName);
+      // Use Promise.race to handle potential timeouts
+      await Promise.race([
+        signUp(email, password, firstName, lastName),
+        new Promise((_, reject) => {
+          // This promise will reject if the controller aborts
+          controller.signal.addEventListener('abort', () => 
+            reject(new Error("The request timed out. Please try again later."))
+          );
+        })
+      ]);
+      
+      clearTimeout(timeoutId);
+      
       toast({
         title: "Registration successful",
         description: "Please check your email to verify your account.",
       });
     } catch (error: any) {
-      handleError(error);
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError' || error.message?.includes('timed out')) {
+        setErrorMessage("The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later.");
+      } else {
+        handleError(error);
+      }
     } finally {
       setLoading(false);
     }
@@ -98,10 +121,14 @@ export default function AuthPage() {
     
     let message = error.message || "An error occurred during authentication";
     
-    if (error.status === 504 || error.message?.includes('timeout') || error.message === '{}') {
+    if (error.status === 504 || error.message?.includes('timeout') || error.message === '{}' || error.name === 'AbortError') {
       message = "The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later.";
     } else if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
       message = "Network error. Please check your internet connection and try again.";
+    } else if (error.message?.includes('already registered')) {
+      message = "Email already registered. Please use another email or try logging in.";
+    } else if (error.message?.includes('password')) {
+      message = "Invalid password. Please check your password and try again.";
     }
     
     setErrorMessage(message);

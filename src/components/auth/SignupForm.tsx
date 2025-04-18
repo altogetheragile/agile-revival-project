@@ -31,7 +31,7 @@ export default function SignupForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="animate-in fade-in-50">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -44,7 +44,7 @@ export default function SignupForm({
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           required
-          className="w-full"
+          className="w-full bg-yellow-50"
         />
       </div>
       <div>
@@ -54,7 +54,7 @@ export default function SignupForm({
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
           required
-          className="w-full"
+          className="w-full bg-yellow-50"
         />
       </div>
       <div>
@@ -64,7 +64,7 @@ export default function SignupForm({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full"
+          className="w-full bg-yellow-50"
         />
       </div>
       <div>
@@ -74,14 +74,14 @@ export default function SignupForm({
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full"
+          className="w-full bg-yellow-50"
         />
       </div>
       
       <div>
         <Button 
           type="submit" 
-          className="w-full"
+          className="w-full bg-green-600 hover:bg-green-700"
           disabled={loading}
         >
           {loading ? 'Creating Account...' : 'Sign Up'}
@@ -93,6 +93,7 @@ export default function SignupForm({
           type="button"
           variant="link"
           onClick={onSwitchToLogin}
+          className="text-green-600 hover:text-green-700"
         >
           Already have an account? Sign In
         </Button>
