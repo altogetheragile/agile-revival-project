@@ -20,30 +20,152 @@ import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 import { AuthProvider } from "@/contexts/AuthContext";
 import AuthPage from "@/pages/auth/AuthPage";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 
 const queryClient = new QueryClient();
 
 const ResetPasswordPage = () => {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const { toast } = useToast();
+
   useEffect(() => {
-    // Handle the password reset
+    // Check if we're in the password reset flow by looking for hash parameters
     const handlePasswordReset = async () => {
-      const { error } = await supabase.auth.refreshSession();
-      // After handling the reset, we could redirect to a change password form or display a message
+      try {
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.error('Error refreshing session:', error);
+          toast({
+            title: "Error",
+            description: "There was an issue processing your password reset request. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } catch (err) {
+        console.error('Error handling password reset:', err);
+      }
     };
     
     handlePasswordReset();
-  }, []);
+  }, [toast]);
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    // Validate passwords
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      
+      setSuccess(true);
+      toast({
+        title: "Success",
+        description: "Your password has been updated successfully.",
+      });
+    } catch (err: any) {
+      console.error('Error updating password:', err);
+      setError(err.message || "Failed to update password");
+      toast({
+        title: "Error",
+        description: err.message || "Failed to update password",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <Card className="max-w-md w-full p-8">
+          <h1 className="text-2xl font-bold text-center mb-6">Password Updated!</h1>
+          <p className="text-center mb-6">
+            Your password has been reset successfully.
+          </p>
+          <Button 
+            className="w-full" 
+            onClick={() => window.location.href = '/auth'}
+          >
+            Continue to Login
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center">Reset Your Password</h1>
-        <p className="text-center">
-          Please check your email for further instructions on how to reset your password.
-        </p>
-      </div>
+      <Card className="max-w-md w-full p-8">
+        <h1 className="text-2xl font-bold text-center mb-6">Reset Your Password</h1>
+        
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4">
+            {error}
+          </div>
+        )}
+        
+        <form onSubmit={handleResetPassword} className="space-y-4">
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              New Password
+            </label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter new password"
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              Confirm Password
+            </label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              required
+            />
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={loading}
+          >
+            {loading ? 'Processing...' : 'Reset Password'}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 };
