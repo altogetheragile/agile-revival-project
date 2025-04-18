@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createDriveFolder, getFolderContents, uploadFileToDrive } from "@/integrations/google/drive";
 import { isGoogleAuthenticated } from "@/integrations/google/drive";
 import { useToast } from "@/hooks/use-toast";
@@ -39,19 +39,19 @@ export const useGoogleDrive = ({ courseId, courseTitle, folderId, onFolderCreate
     checkAuthStatus();
   }, []);
 
-  const checkAuthStatus = () => {
+  const checkAuthStatus = useCallback(() => {
     const authStatus = isGoogleAuthenticated();
     console.log("Authentication check result:", authStatus);
     setIsAuthenticated(authStatus);
     setLastChecked(new Date());
-  };
+  }, []);
 
-  const checkForApiEnableUrl = (errorMessage: string) => {
+  const checkForApiEnableUrl = useCallback((errorMessage: string) => {
     const match = errorMessage?.match(/https:\/\/console\.developers\.google\.com\/apis\/api\/drive\.googleapis\.com\/overview\?project=[0-9]+/);
     setApiEnableUrl(match ? match[0] : null);
-  };
+  }, []);
 
-  const loadFolderContents = async () => {
+  const loadFolderContents = useCallback(async () => {
     if (!folderId) return;
     
     setIsLoading(true);
@@ -71,7 +71,7 @@ export const useGoogleDrive = ({ courseId, courseTitle, folderId, onFolderCreate
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [folderId, toast, checkForApiEnableUrl]);
 
   const handleCreateFolder = async () => {
     if (!isAuthenticated) {
@@ -129,27 +129,40 @@ export const useGoogleDrive = ({ courseId, courseTitle, folderId, onFolderCreate
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      try {
-        await uploadFileToDrive(file, folderId);
-        toast({
-          title: "Upload successful",
-          description: `${file.name} has been uploaded to Google Drive`
-        });
-      } catch (error) {
-        console.error("Upload error:", error);
-        toast({
-          title: "Upload failed",
-          description: `Could not upload ${file.name}`,
-          variant: "destructive"
-        });
-      }
-    }
+    setError(null);
     
-    await loadFolderContents();
-    setIsUploading(false);
-    e.target.value = '';
+    let uploadSuccessful = false;
+    
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        try {
+          await uploadFileToDrive(file, folderId);
+          uploadSuccessful = true;
+          toast({
+            title: "Upload successful",
+            description: `${file.name} has been uploaded to Google Drive`
+          });
+        } catch (error) {
+          console.error("Upload error:", error);
+          const errorMessage = error.message || 'Unknown error';
+          setError(`Failed to upload ${file.name}: ${errorMessage}`);
+          checkForApiEnableUrl(errorMessage);
+          toast({
+            title: "Upload failed",
+            description: `Could not upload ${file.name}`,
+            variant: "destructive"
+          });
+        }
+      }
+    } finally {
+      // Regardless of success/failure, refresh the file list
+      if (uploadSuccessful) {
+        await loadFolderContents();
+      }
+      setIsUploading(false);
+      e.target.value = '';
+    }
   };
 
   return {
@@ -164,7 +177,7 @@ export const useGoogleDrive = ({ courseId, courseTitle, folderId, onFolderCreate
     setFolderName,
     handleCreateFolder,
     handleFileUpload,
-    checkAuthStatus
+    checkAuthStatus,
+    loadFolderContents // Export this to allow manual refresh
   };
 };
-

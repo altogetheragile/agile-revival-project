@@ -18,6 +18,7 @@ interface CourseFormProps {
   initialData?: CourseFormData;
   onSubmit: (data: CourseFormData) => void;
   onCancel: () => void;
+  stayOpenOnSubmit?: boolean;
 }
 
 const CourseForm: React.FC<CourseFormProps> = ({
@@ -39,7 +40,8 @@ const CourseForm: React.FC<CourseFormProps> = ({
     status: "draft"
   },
   onSubmit,
-  onCancel
+  onCancel,
+  stayOpenOnSubmit = false
 }) => {
   const form = useForm<CourseFormData>({
     defaultValues: initialData
@@ -79,6 +81,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
           onCancel={onCancel} 
           isEditing={!!initialData.id}
           isDraft={form.watch("status") === "draft"}
+          stayOpenOnSubmit={stayOpenOnSubmit}
         />
       </form>
     </Form>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData, CourseMaterial } from "@/types/course";
@@ -39,6 +40,7 @@ export const useCourseManagement = () => {
         
         if (updated) {
           setCourses(getAllCourses());
+          setCurrentCourse(updated); // Update the current course to reflect changes
           toast({
             title: "Course updated",
             description: `"${data.title}" has been updated successfully.`
@@ -51,12 +53,14 @@ export const useCourseManagement = () => {
         });
         
         setCourses(getAllCourses());
+        setCurrentCourse(created); // Set the new course as the current course
         toast({
           title: "Course created",
           description: `"${created.title}" has been ${data.status === 'published' ? 'published' : 'saved as draft'}.`
         });
       }
-      setIsFormOpen(false);
+      // We no longer auto-close the form dialog
+      // setIsFormOpen(false);
     } catch (error) {
       console.error("Error handling course submission:", error);
       toast({

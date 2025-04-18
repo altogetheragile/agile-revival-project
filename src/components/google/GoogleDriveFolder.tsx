@@ -32,7 +32,8 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
     setFolderName,
     handleCreateFolder,
     handleFileUpload,
-    checkAuthStatus
+    checkAuthStatus,
+    loadFolderContents
   } = useGoogleDrive({
     courseId,
     courseTitle,
@@ -67,9 +68,9 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
           folderUrl={folderUrl}
           onUpload={handleFileUpload}
           isUploading={isUploading}
+          onRefresh={loadFolderContents}
         />
       )}
     </div>
   );
 };
-

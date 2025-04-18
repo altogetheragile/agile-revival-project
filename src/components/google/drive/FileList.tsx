@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Link, Upload } from "lucide-react";
+import { FileText, Link, Upload, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface DriveFile {
@@ -19,6 +19,7 @@ interface FileListProps {
   folderUrl?: string;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isUploading: boolean;
+  onRefresh?: () => void;
 }
 
 export const FileList = ({
@@ -26,7 +27,8 @@ export const FileList = ({
   isLoading,
   folderUrl,
   onUpload,
-  isUploading
+  isUploading,
+  onRefresh
 }: FileListProps) => {
   return (
     <div className="space-y-4">
@@ -46,7 +48,19 @@ export const FileList = ({
           )}
         </div>
 
-        <div>
+        <div className="flex gap-2">
+          {onRefresh && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onRefresh}
+              disabled={isLoading || isUploading}
+              title="Refresh file list"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          )}
+
           <label htmlFor="file-upload">
             <Input
               id="file-upload"
