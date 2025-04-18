@@ -42,36 +42,40 @@ export default function AuthPage() {
     setLoading(true);
     setErrorMessage(null);
     
-    // Create an AbortController for timeout management
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
     try {
-      // Use Promise.race to handle potential timeouts
-      await Promise.race([
-        signUp(email, password, firstName, lastName),
-        new Promise((_, reject) => {
-          // This promise will reject if the controller aborts
-          controller.signal.addEventListener('abort', () => 
-            reject(new Error("The request timed out. Please try again later."))
-          );
-        })
-      ]);
+      // Create an AbortController specifically for the signup page logic
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
-      clearTimeout(timeoutId);
-      
-      toast({
-        title: "Registration successful",
-        description: "Please check your email to verify your account.",
-      });
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      
-      if (error.name === 'AbortError' || error.message?.includes('timed out')) {
-        setErrorMessage("The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later.");
-      } else {
-        handleError(error);
+      try {
+        // Use Promise.race to handle potential timeouts
+        const signupResult = await Promise.race([
+          signUp(email, password, firstName, lastName), // Already has its own timeout handling
+          new Promise((_, reject) => {
+            controller.signal.addEventListener('abort', () => 
+              reject(new Error("The request timed out. Please try again later."))
+            );
+          })
+        ]);
+        
+        clearTimeout(timeoutId);
+        
+        toast({
+          title: "Registration successful",
+          description: "Please check your email to verify your account.",
+        });
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        
+        if (err.name === 'AbortError' || err.message?.includes('timed out')) {
+          throw new Error("The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later.");
+        }
+        
+        throw err;
       }
+    } catch (error: any) {
+      console.error('Outer signup error:', error);
+      handleError(error);
     } finally {
       setLoading(false);
     }

@@ -44,7 +44,6 @@ export default function SignupForm({
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           required
-          className="w-full bg-yellow-50"
         />
       </div>
       <div>
@@ -54,7 +53,6 @@ export default function SignupForm({
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
           required
-          className="w-full bg-yellow-50"
         />
       </div>
       <div>
@@ -64,7 +62,6 @@ export default function SignupForm({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full bg-yellow-50"
         />
       </div>
       <div>
@@ -74,7 +71,6 @@ export default function SignupForm({
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full bg-yellow-50"
         />
       </div>
       

@@ -84,13 +84,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+    // Create an AbortController to handle timeouts
+    const controller = new AbortController();
+    // Set a timeout of 15 seconds - increasing from 8 to give more time
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    
     try {
-      // Add a timeout promise to handle potential network issues
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out. Please try again later.')), 8000);
-      });
-      
-      const signupPromise = supabase.auth.signUp({
+      // Use Promise.race with AbortController signal to handle timeouts
+      const signUpPromise = supabase.auth.signUp({
         email,
         password,
         options: {
@@ -98,15 +99,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             first_name: firstName,
             last_name: lastName,
           },
+          emailRedirectTo: `${window.location.origin}/auth`,
         },
       });
       
-      // Race the signup promise against the timeout
-      const result = await Promise.race([signupPromise, timeoutPromise]) as any;
+      const abortPromise = new Promise((_, reject) => {
+        controller.signal.addEventListener('abort', () => 
+          reject(new Error("The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later."))
+        );
+      });
+      
+      const result = await Promise.race([signUpPromise, abortPromise]) as any;
+      
+      // Clear the timeout as the operation completed
+      clearTimeout(timeoutId);
       
       if (result?.error) throw result.error;
+      
+      // Return the result
+      return result;
     } catch (error) {
-      console.error('Error during signup:', error);
+      // Make sure to clear timeout even if an error occurred
+      clearTimeout(timeoutId);
+      console.error('Signup error:', error);
       throw error;
     }
   };
