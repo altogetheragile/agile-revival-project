@@ -2,20 +2,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import LoginForm from '@/components/auth/LoginForm';
+import SignupForm from '@/components/auth/SignupForm';
+import ResetPasswordForm from '@/components/auth/ResetPasswordForm';
+
+type AuthMode = 'login' | 'signup' | 'reset';
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -28,281 +25,158 @@ export default function AuthPage() {
     return null;
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignIn = async (email: string, password: string) => {
     setLoading(true);
     setErrorMessage(null);
-    
     try {
-      if (mode === 'login') {
-        await signIn(email, password);
-        navigate('/admin');
-      } else if (mode === 'signup') {
-        await signUp(email, password, firstName, lastName);
-        toast({
-          title: "Registration successful",
-          description: "Please check your email to verify your account.",
-        });
-      } else if (mode === 'reset') {
-        await resetPassword(email);
-        setResetEmailSent(true);
-        toast({
-          title: "Password reset requested",
-          description: "If an account exists with this email, you'll receive password reset instructions.",
-        });
-      }
+      await signIn(email, password);
+      navigate('/admin');
     } catch (error: any) {
-      console.error('Authentication error:', error);
-      
-      if (error.status === 504 || error.message?.includes('timeout') || error.message === '{}') {
-        setErrorMessage(
-          "The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later."
-        );
-      } else {
-        setErrorMessage(error.message || "An error occurred during authentication");
-      }
-      
-      toast({
-        title: "Error",
-        description: errorMessage || "An error occurred during authentication",
-        variant: "destructive",
-      });
+      handleError(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const resetPassword = async (email: string) => {
-    if (!email || !email.includes('@')) {
-      throw new Error("Please enter a valid email address");
+  const handleSignUp = async (email: string, password: string, firstName: string, lastName: string) => {
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await signUp(email, password, firstName, lastName);
+      toast({
+        title: "Registration successful",
+        description: "Please check your email to verify your account.",
+      });
+    } catch (error: any) {
+      handleError(error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleResetPassword = async (email: string) => {
+    setLoading(true);
+    setErrorMessage(null);
     
     try {
-      console.log("Attempting password reset for:", email);
-      
-      // Use fetch directly instead of supabase client to have more control
-      // over timeouts and error handling
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       
       try {
         const redirectUrl = `${window.location.origin}/reset-password`;
-        console.log("Reset password redirect URL:", redirectUrl);
-        
-        const { error, data } = await supabase.auth.resetPasswordForEmail(email, {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: redirectUrl,
         });
         
         clearTimeout(timeoutId);
         
-        if (error) {
-          console.error('Reset password error:', error);
-          throw error;
-        }
+        if (error) throw error;
         
-        console.log("Password reset request sent successfully");
-        return data;
+        setResetEmailSent(true);
+        toast({
+          title: "Password reset requested",
+          description: "If an account exists with this email, you'll receive password reset instructions.",
+        });
       } catch (err: any) {
         clearTimeout(timeoutId);
         
         if (err.name === 'AbortError' || err.message?.includes('timeout')) {
-          console.error('Password reset timed out:', err);
           throw new Error("The request timed out. The system might be experiencing high traffic. Please try again in a few minutes.");
         }
         
         throw err;
       }
     } catch (error: any) {
-      console.error('Password reset error:', error);
-      
-      // If there's a network-related error, provide a more specific message
-      if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
-        throw new Error("Network error. Please check your internet connection and try again.");
-      }
-      
-      throw error;
+      handleError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const renderForm = () => {
-    if (mode === 'reset') {
-      if (resetEmailSent) {
-        return (
-          <Alert className="bg-green-50 border-green-200">
-            <AlertCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-700">
-              If an account exists with this email, you'll receive password reset instructions shortly.
-              <p className="mt-2">Please check your email inbox and spam folders.</p>
-              <p className="mt-2 text-sm">
-                Note: If you don't receive the email within a few minutes:
-                <ul className="list-disc pl-5 mt-1">
-                  <li>Check your spam/junk folder</li>
-                  <li>Verify you used the correct email address</li>
-                  <li>Try again in a few moments if you encounter timeout errors</li>
-                </ul>
-              </p>
-            </AlertDescription>
-          </Alert>
-        );
-      }
-      
-      return (
-        <div className="space-y-4">
-          <div className="text-sm text-gray-500 mb-4">
-            Enter your email address and we'll send you instructions to reset your password.
-          </div>
-          <div>
-            <Input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full"
-            />
-          </div>
-        </div>
-      );
+  const handleError = (error: any) => {
+    console.error('Authentication error:', error);
+    
+    let message = error.message || "An error occurred during authentication";
+    
+    if (error.status === 504 || error.message?.includes('timeout') || error.message === '{}') {
+      message = "The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later.";
+    } else if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+      message = "Network error. Please check your internet connection and try again.";
     }
+    
+    setErrorMessage(message);
+    toast({
+      title: "Error",
+      description: message,
+      variant: "destructive",
+    });
+  };
 
-    return (
-      <div className="space-y-4">
-        {mode === 'signup' && (
-          <>
-            <div>
-              <Input
-                type="text"
-                placeholder="First Name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
-            <div>
-              <Input
-                type="text"
-                placeholder="Last Name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
-          </>
-        )}
-        <div>
-          <Input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full"
-          />
-        </div>
-        <div>
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full"
-          />
-        </div>
-      </div>
-    );
+  const getTitle = () => {
+    switch (mode) {
+      case 'login': return 'Sign In';
+      case 'signup': return 'Create Account';
+      case 'reset': return 'Reset Password';
+    }
+  };
+
+  const getDescription = () => {
+    switch (mode) {
+      case 'login': return 'Sign in to access the admin dashboard';
+      case 'signup': return 'Create a new account';
+      case 'reset': return 'Enter your email to receive a password reset link';
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>{mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Reset Password'}</CardTitle>
-          <CardDescription>
-            {mode === 'login' 
-              ? 'Sign in to access the admin dashboard' 
-              : mode === 'signup'
-                ? 'Create a new account'
-                : 'Enter your email to receive a password reset link'}
-          </CardDescription>
+          <CardTitle>{getTitle()}</CardTitle>
+          <CardDescription>{getDescription()}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {errorMessage && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{errorMessage}</AlertDescription>
-              </Alert>
-            )}
-            
-            {renderForm()}
-            
-            <div>
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? 'Processing...' : mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Sign Up' : 'Send Reset Link'}
-              </Button>
-            </div>
-            
-            <div className="text-center space-y-2">
-              {mode === 'login' && (
-                <>
-                  <Button
-                    type="button"
-                    variant="link"
-                    onClick={() => {
-                      setMode('signup');
-                      setErrorMessage(null);
-                    }}
-                  >
-                    Don't have an account? Sign Up
-                  </Button>
-                  <div>
-                    <Button
-                      type="button"
-                      variant="link"
-                      onClick={() => {
-                        setMode('reset');
-                        setErrorMessage(null);
-                        setResetEmailSent(false);
-                      }}
-                    >
-                      Forgot password?
-                    </Button>
-                  </div>
-                </>
-              )}
-              {mode === 'signup' && (
-                <Button
-                  type="button"
-                  variant="link"
-                  onClick={() => {
-                    setMode('login');
-                    setErrorMessage(null);
-                  }}
-                >
-                  Already have an account? Sign In
-                </Button>
-              )}
-              {mode === 'reset' && (
-                <Button
-                  type="button"
-                  variant="link"
-                  onClick={() => {
-                    setMode('login');
-                    setErrorMessage(null);
-                  }}
-                >
-                  Back to Sign In
-                </Button>
-              )}
-            </div>
-          </form>
+          {mode === 'login' && (
+            <LoginForm
+              onSubmit={handleSignIn}
+              onSwitchToSignup={() => {
+                setMode('signup');
+                setErrorMessage(null);
+              }}
+              onSwitchToReset={() => {
+                setMode('reset');
+                setErrorMessage(null);
+                setResetEmailSent(false);
+              }}
+              loading={loading}
+              error={errorMessage}
+            />
+          )}
+          
+          {mode === 'signup' && (
+            <SignupForm
+              onSubmit={handleSignUp}
+              onSwitchToLogin={() => {
+                setMode('login');
+                setErrorMessage(null);
+              }}
+              loading={loading}
+              error={errorMessage}
+            />
+          )}
+          
+          {mode === 'reset' && (
+            <ResetPasswordForm
+              onSubmit={handleResetPassword}
+              onSwitchToLogin={() => {
+                setMode('login');
+                setErrorMessage(null);
+              }}
+              loading={loading}
+              error={errorMessage}
+              resetEmailSent={resetEmailSent}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
