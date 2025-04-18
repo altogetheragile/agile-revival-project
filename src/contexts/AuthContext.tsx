@@ -1,8 +1,8 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from "@/components/ui/use-toast";
 
 interface AuthContextType {
   user: User | null;
@@ -13,12 +13,6 @@ interface AuthContextType {
   isAdmin: boolean;
 }
 
-interface UserRole {
-  id: string;
-  user_id: string;
-  role: string;
-}
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -26,15 +20,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const MAX_RETRIES = 2;
+  const INITIAL_TIMEOUT = 10000; // 10 seconds
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch user role information
         if (session?.user) {
           setTimeout(() => {
             checkAdminStatus(session.user.id);
@@ -45,7 +40,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -58,7 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
-    // Query the user_roles table to check if the user has an admin role
     const { data, error } = await supabase
       .from('user_roles')
       .select('*')
@@ -84,46 +77,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
-    // Create an AbortController to handle timeouts
-    const controller = new AbortController();
-    // Set a timeout of 30 seconds - increasing significantly from 15 seconds
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-    
-    try {
-      // Use Promise.race with AbortController signal to handle timeouts
-      const signUpPromise = supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
+    let attempt = 0;
+    let lastError: any = null;
+
+    while (attempt <= MAX_RETRIES) {
+      const timeout = INITIAL_TIMEOUT * (attempt + 1);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const signUpPromise = supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              first_name: firstName,
+              last_name: lastName,
+            },
+            emailRedirectTo: `${window.location.origin}/auth`,
           },
-          emailRedirectTo: `${window.location.origin}/auth`,
-        },
-      });
-      
-      const abortPromise = new Promise((_, reject) => {
-        controller.signal.addEventListener('abort', () => 
-          reject(new Error("The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later."))
-        );
-      });
-      
-      const result = await Promise.race([signUpPromise, abortPromise]) as any;
-      
-      // Clear the timeout as the operation completed
-      clearTimeout(timeoutId);
-      
-      if (result?.error) throw result.error;
-      
-      // Return the result
-      return result;
-    } catch (error) {
-      // Make sure to clear timeout even if an error occurred
-      clearTimeout(timeoutId);
-      console.error('Signup error:', error);
-      throw error;
+        });
+
+        const abortPromise = new Promise((_, reject) => {
+          controller.signal.addEventListener('abort', () => {
+            reject(new Error(`Request timed out after ${timeout}ms. Attempt ${attempt + 1}/${MAX_RETRIES + 1}`));
+          });
+        });
+
+        const result = await Promise.race([signUpPromise, abortPromise]) as any;
+        clearTimeout(timeoutId);
+
+        if (result?.error) throw result.error;
+
+        toast({
+          title: "Account created",
+          description: "Please check your email to verify your account.",
+        });
+        return result;
+      } catch (error: any) {
+        lastError = error;
+        clearTimeout(timeoutId);
+
+        if (attempt < MAX_RETRIES) {
+          toast({
+            title: "Retrying...",
+            description: `Attempt ${attempt + 2} of ${MAX_RETRIES + 1}`,
+          });
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        attempt++;
+      }
     }
+
+    const errorMsg = lastError?.message || "Failed to create account after multiple attempts";
+    toast({
+      title: "Error",
+      description: errorMsg,
+      variant: "destructive",
+    });
+    throw new Error(errorMsg);
   };
 
   const signOut = async () => {

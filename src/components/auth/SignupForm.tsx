@@ -19,31 +19,42 @@ export default function SignupForm({
   loading, 
   error 
 }: SignupFormProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: ''
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [attemptCount, setAttemptCount] = useState(0);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.id]: e.target.value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Prevent double submission
     if (isSubmitting) return;
     
     setIsSubmitting(true);
-    setAttemptCount(prev => prev + 1);
-
     try {
-      await onSubmit(email, password, firstName, lastName);
+      await onSubmit(
+        formData.email,
+        formData.password,
+        formData.firstName,
+        formData.lastName
+      );
     } catch (error) {
-      console.error('Signup submission error:', error);
-      // The error will be handled by the parent component
+      console.error('Signup error:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const isLoading = loading || isSubmitting;
+  const buttonText = isLoading ? 'Creating Account...' : 'Sign Up';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -52,12 +63,14 @@ export default function SignupForm({
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {error}
-            {error.includes('too long to respond') && attemptCount > 1 && (
-              <p className="mt-2 text-sm">
-                Tip: This could be due to high traffic on Supabase's servers or email delivery delays. 
-                Your account may still be created despite this error.
-              </p>
-            )}
+            <p className="mt-2 text-sm">
+              If you continue experiencing issues:
+              <ul className="list-disc pl-5 mt-1">
+                <li>Check your internet connection</li>
+                <li>Try again in a few moments</li>
+                <li>The system will automatically retry if needed</li>
+              </ul>
+            </p>
           </AlertDescription>
         </Alert>
       )}
@@ -67,10 +80,11 @@ export default function SignupForm({
         <Input
           id="firstName"
           type="text"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
+          value={formData.firstName}
+          onChange={handleChange}
           required
           autoComplete="given-name"
+          disabled={isLoading}
         />
       </div>
       
@@ -79,10 +93,11 @@ export default function SignupForm({
         <Input
           id="lastName"
           type="text"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
+          value={formData.lastName}
+          onChange={handleChange}
           required
           autoComplete="family-name"
+          disabled={isLoading}
         />
       </div>
       
@@ -91,10 +106,11 @@ export default function SignupForm({
         <Input
           id="email"
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={formData.email}
+          onChange={handleChange}
           required
           autoComplete="email"
+          disabled={isLoading}
         />
       </div>
       
@@ -103,11 +119,12 @@ export default function SignupForm({
         <Input
           id="password"
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={formData.password}
+          onChange={handleChange}
           required
           autoComplete="new-password"
           minLength={6}
+          disabled={isLoading}
         />
       </div>
       
@@ -115,9 +132,9 @@ export default function SignupForm({
         <Button 
           type="submit" 
           className="w-full bg-green-600 hover:bg-green-700 transition-colors"
-          disabled={loading || isSubmitting}
+          disabled={isLoading}
         >
-          {loading || isSubmitting ? 'Creating Account...' : 'Sign Up'}
+          {buttonText}
         </Button>
       </div>
       
@@ -127,6 +144,7 @@ export default function SignupForm({
           variant="link"
           onClick={onSwitchToLogin}
           className="text-green-600 hover:text-green-700"
+          disabled={isLoading}
         >
           Already have an account? Sign In
         </Button>
