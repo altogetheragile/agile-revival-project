@@ -59,9 +59,6 @@ const Navbar = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // In a real application, this would come from your authentication system
-  const isAdmin = true; // Placeholder - replace with actual auth check
-
   return (
     <nav 
       className={`fixed w-full z-50 transition-all duration-300 ${
@@ -81,7 +78,6 @@ const Navbar = () => {
         <DesktopNav 
           handleHashLinkClick={handleHashLinkClick}
           handleFullPageLinkClick={handleFullPageLinkClick}
-          isAdmin={isAdmin}
         />
         
         {/* Mobile Navigation */}
@@ -91,7 +87,6 @@ const Navbar = () => {
           closeMenu={closeMenu}
           handleHashLinkClick={handleHashLinkClick}
           handleFullPageLinkClick={handleFullPageLinkClick}
-          isAdmin={isAdmin}
         />
       </div>
     </nav>

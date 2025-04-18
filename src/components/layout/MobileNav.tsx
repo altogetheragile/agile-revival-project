@@ -8,7 +8,6 @@ type MobileNavProps = {
   closeMenu: () => void;
   handleHashLinkClick: (elementId: string) => void;
   handleFullPageLinkClick: () => void;
-  isAdmin?: boolean;
 };
 
 const MobileNav = ({
@@ -17,7 +16,6 @@ const MobileNav = ({
   closeMenu,
   handleHashLinkClick,
   handleFullPageLinkClick,
-  isAdmin = true,
 }: MobileNavProps) => {
   return (
     <>
@@ -36,7 +34,6 @@ const MobileNav = ({
           <NavLinks 
             handleHashLinkClick={handleHashLinkClick}
             handleFullPageLinkClick={handleFullPageLinkClick}
-            isAdmin={isAdmin}
             closeMenu={closeMenu}
             isMobile={true}
           />

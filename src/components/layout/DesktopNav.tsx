@@ -8,13 +8,11 @@ import NavLinks from './NavLinks';
 type DesktopNavProps = {
   handleHashLinkClick: (elementId: string) => void;
   handleFullPageLinkClick: () => void;
-  isAdmin?: boolean;
 };
 
 const DesktopNav = ({
   handleHashLinkClick,
   handleFullPageLinkClick,
-  isAdmin = true,
 }: DesktopNavProps) => {
   return (
     <div className="hidden md:block">
@@ -23,7 +21,6 @@ const DesktopNav = ({
           <NavLinks 
             handleHashLinkClick={handleHashLinkClick}
             handleFullPageLinkClick={handleFullPageLinkClick}
-            isAdmin={isAdmin}
           />
         </NavigationMenuList>
       </NavigationMenu>
