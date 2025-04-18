@@ -1,8 +1,7 @@
-
 import { FolderCreationForm } from "./drive/FolderCreationForm";
 import { FileList } from "./drive/FileList";
 import { DriveError } from "./drive/DriveError";
-import { useGoogleDrive } from "@/hooks/useGoogleDrive";
+import { useGoogleDrive } from "@/hooks/google-drive/useGoogleDrive";
 
 interface GoogleDriveFolderProps {
   courseId: string;
@@ -75,4 +74,3 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
     </div>
   );
 };
-

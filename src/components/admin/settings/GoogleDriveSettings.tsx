@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GoogleAuthButton } from "@/components/google/GoogleAuthButton";
 import { DriveError } from "@/components/google/drive/DriveError";
-import { useGoogleDrive } from "@/hooks/useGoogleDrive";
+import { useGoogleDrive } from "@/hooks/google-drive/useGoogleDrive";
 
 export const GoogleDriveSettings = () => {
   const {
