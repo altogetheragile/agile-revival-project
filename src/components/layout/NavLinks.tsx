@@ -4,6 +4,7 @@ import {
   NavigationMenuItem,
   navigationMenuTriggerStyle
 } from '@/components/ui/navigation-menu';
+import { useAuth } from '@/contexts/AuthContext';
 
 type NavLinkProps = {
   name: string;
@@ -59,7 +60,6 @@ export const navLinks = [
 type NavLinksProps = {
   handleHashLinkClick: (elementId: string) => void;
   handleFullPageLinkClick: () => void;
-  isAdmin?: boolean;
   closeMenu?: () => void;
   isMobile?: boolean;
 };
@@ -67,11 +67,11 @@ type NavLinksProps = {
 const NavLinks = ({ 
   handleHashLinkClick, 
   handleFullPageLinkClick, 
-  isAdmin = true, 
   closeMenu,
   isMobile = false
 }: NavLinksProps) => {
   const location = useLocation();
+  const { isAdmin } = useAuth();
   
   // Filter navigation links based on user role
   const filteredNavLinks = navLinks.filter(link => 

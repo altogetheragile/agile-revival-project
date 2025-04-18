@@ -1,7 +1,9 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
@@ -14,8 +16,7 @@ const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("courses");
   const { toast } = useToast();
   const navigate = useNavigate();
-  
-  const isAdmin = true; // This should come from your authentication system
+  const { isAdmin } = useAuth();
   
   if (!isAdmin) {
     toast({
