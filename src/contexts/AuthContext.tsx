@@ -13,6 +13,13 @@ interface AuthContextType {
   isAdmin: boolean;
 }
 
+interface ProfileData {
+  id: string;
+  first_name: string;
+  last_name: string;
+  role?: string;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -60,7 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .maybeSingle();
 
     if (data && !error) {
-      setIsAdmin(data.role === 'admin');
+      const profileData = data as ProfileData;
+      setIsAdmin(profileData.role === 'admin');
     } else {
       console.error('Error fetching user profile:', error);
       setIsAdmin(false);
