@@ -19,6 +19,7 @@ export default function AuthPage() {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const MAX_RETRIES = 2;
 
   if (user) {
     navigate('/admin');
@@ -84,39 +85,57 @@ export default function AuthPage() {
   const handleResetPassword = async (email: string) => {
     setLoading(true);
     setErrorMessage(null);
+    let attempt = 0;
     
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+    while (attempt <= MAX_RETRIES) {
+      const timeout = 10000 * (attempt + 1); // 10s, 20s, 30s
       
       try {
-        const redirectUrl = `${window.location.origin}/reset-password`;
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: redirectUrl,
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
         
-        clearTimeout(timeoutId);
-        
-        if (error) throw error;
-        
-        setResetEmailSent(true);
-        toast({
-          title: "Password reset requested",
-          description: "If an account exists with this email, you'll receive password reset instructions.",
-        });
-      } catch (err: any) {
-        clearTimeout(timeoutId);
-        
-        if (err.name === 'AbortError' || err.message?.includes('timeout')) {
-          throw new Error("The request timed out. The system might be experiencing high traffic. Please try again in a few minutes.");
+        try {
+          const redirectUrl = `${window.location.origin}/reset-password`;
+          const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: redirectUrl,
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (error) throw error;
+          
+          setResetEmailSent(true);
+          toast({
+            title: "Password reset requested",
+            description: "If an account exists with this email, you'll receive password reset instructions.",
+          });
+          return;
+        } catch (err: any) {
+          clearTimeout(timeoutId);
+          
+          if (err.name === 'AbortError' || err.message?.includes('timeout')) {
+            console.log(`Password reset attempt ${attempt + 1} timed out after ${timeout}ms, retrying...`);
+            
+            if (attempt < MAX_RETRIES) {
+              toast({
+                title: "Retrying...",
+                description: `Attempt ${attempt + 2} of ${MAX_RETRIES + 1}`,
+              });
+              await new Promise(resolve => setTimeout(resolve, 1000)); // Brief pause before retry
+            } else {
+              throw new Error("The request timed out after multiple attempts. Please try again later.");
+            }
+          } else {
+            throw err;
+          }
         }
-        
-        throw err;
+      } catch (error: any) {
+        // Only throw if this was the last attempt or it's not a timeout error
+        if (attempt === MAX_RETRIES || (!error.name?.includes('AbortError') && !error.message?.includes('timeout'))) {
+          throw error;
+        }
       }
-    } catch (error: any) {
-      handleError(error);
-    } finally {
-      setLoading(false);
+      attempt++;
     }
   };
 
