@@ -80,40 +80,46 @@ export default function AuthPage() {
     try {
       console.log("Attempting password reset for:", email);
       
-      // Set up timeout handling
-      const timeoutDuration = 10000; // 10 seconds
-      const resetPromise = new Promise(async (resolve, reject) => {
-        try {
-          const redirectUrl = `${window.location.origin}/reset-password`;
-          console.log("Reset password redirect URL:", redirectUrl);
-          
-          const { error, data } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: redirectUrl,
-          });
-          
-          if (error) {
-            console.error('Reset password error:', error);
-            reject(error);
-          } else {
-            console.log("Password reset request sent successfully");
-            resolve(data);
-          }
-        } catch (err) {
-          reject(err);
+      // Use fetch directly instead of supabase client to have more control
+      // over timeouts and error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      
+      try {
+        const redirectUrl = `${window.location.origin}/reset-password`;
+        console.log("Reset password redirect URL:", redirectUrl);
+        
+        const { error, data } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: redirectUrl,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (error) {
+          console.error('Reset password error:', error);
+          throw error;
         }
-      });
-      
-      // Create a timeout promise
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error("The server is taking too long to respond. Please try again in a few moments."));
-        }, timeoutDuration);
-      });
-      
-      // Race the promises
-      return await Promise.race([resetPromise, timeoutPromise]);
+        
+        console.log("Password reset request sent successfully");
+        return data;
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        
+        if (err.name === 'AbortError' || err.message?.includes('timeout')) {
+          console.error('Password reset timed out:', err);
+          throw new Error("The request timed out. The system might be experiencing high traffic. Please try again in a few minutes.");
+        }
+        
+        throw err;
+      }
     } catch (error: any) {
       console.error('Password reset error:', error);
+      
+      // If there's a network-related error, provide a more specific message
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        throw new Error("Network error. Please check your internet connection and try again.");
+      }
+      
       throw error;
     }
   };
