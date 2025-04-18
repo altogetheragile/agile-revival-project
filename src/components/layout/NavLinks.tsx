@@ -54,7 +54,7 @@ export const navLinks = [
   { name: 'Blog', href: '/blog' },
   { name: 'Testimonials', href: '/#testimonials', isHash: true },
   { name: 'Contact', href: '/#contact', isHash: true },
-  { name: 'Admin', href: '/admin', isAdmin: true }
+  { name: 'Admin', href: '/admin' }  // Removed isAdmin flag to make it always visible
 ];
 
 type NavLinksProps = {
@@ -73,10 +73,8 @@ const NavLinks = ({
   const location = useLocation();
   const { isAdmin } = useAuth();
   
-  // Filter navigation links based on user role
-  const filteredNavLinks = navLinks.filter(link => 
-    !link.isAdmin || (link.isAdmin && isAdmin)
-  );
+  // Display all navigation links without filtering
+  const filteredNavLinks = navLinks;
 
   const GetStartedButton = () => {
     if (location.pathname === '/') {
