@@ -1,92 +1,6 @@
-import { Course, CourseFormData, CourseMaterial, CourseWithFormData } from "@/types/course";
 
-// Initial course data
-const initialCourses: Course[] = [
-  {
-    id: "crs-001",
-    title: "Professional Scrum Master I",
-    description: "Learn how to be an effective Scrum Master and servant-leader for your team. Understand the Scrum framework and how to apply it successfully.",
-    dates: "May 15-16, 2025",
-    location: "San Francisco, CA",
-    instructor: "Sarah Johnson",
-    price: "$1,195",
-    category: "scrum",
-    spotsAvailable: 8,
-    format: "in-person",
-    status: "published",
-    materials: []
-  },
-  {
-    id: "crs-002",
-    title: "Advanced Product Ownership",
-    description: "Deep-dive into the role of a Product Owner. Master techniques for backlog management, value maximization, and stakeholder management.",
-    dates: "May 22-23, 2025",
-    location: "Online - Virtual Classroom",
-    instructor: "Michael Chen",
-    price: "$1,295",
-    category: "scrum",
-    spotsAvailable: 12,
-    format: "online",
-    status: "published",
-    materials: []
-  },
-  {
-    id: "crs-003",
-    title: "Kanban System Design",
-    description: "Learn how to design and implement effective Kanban systems that improve flow and delivery predictability for your teams.",
-    dates: "June 5-6, 2025",
-    location: "Chicago, IL",
-    instructor: "Emily Rodriguez",
-    price: "$1,195",
-    category: "kanban",
-    spotsAvailable: 10,
-    format: "in-person",
-    status: "published",
-    materials: []
-  },
-  {
-    id: "crs-004",
-    title: "Agile Leadership Foundations",
-    description: "For managers and executives, learn how to lead and support agile transformations in your organization.",
-    dates: "June 12-13, 2025",
-    location: "Atlanta, GA",
-    instructor: "David Washington",
-    price: "$1,495",
-    category: "leadership",
-    spotsAvailable: 6,
-    format: "hybrid",
-    status: "published",
-    materials: []
-  },
-  {
-    id: "crs-005",
-    title: "Team Facilitation Masterclass",
-    description: "Enhance your facilitation skills to run more effective and engaging meetings and workshops with agile teams.",
-    dates: "June 19-20, 2025",
-    location: "Online - Virtual Classroom",
-    instructor: "Lisa Park",
-    price: "$995",
-    category: "leadership",
-    spotsAvailable: 15,
-    format: "live",
-    status: "published",
-    materials: []
-  }
-];
-
-// Storage key for courses
-const COURSES_STORAGE_KEY = 'agile-trainer-courses';
-
-// Load courses from localStorage or use initial data
-const loadCourses = (): Course[] => {
-  const storedCourses = localStorage.getItem(COURSES_STORAGE_KEY);
-  return storedCourses ? JSON.parse(storedCourses) : [...initialCourses];
-};
-
-// Save courses to localStorage
-const saveCourses = (courses: Course[]): void => {
-  localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(courses));
-};
+import { Course, CourseFormData } from "@/types/course";
+import { loadCourses, saveCourses } from "@/utils/courseStorage";
 
 // Get all courses
 export const getAllCourses = (): Course[] => {
@@ -105,18 +19,22 @@ export const getCourseById = (id: string): Course | undefined => {
   return courses.find(course => course.id === id);
 };
 
+// Get published courses only
+export const getPublishedCourses = (): Course[] => {
+  const courses = loadCourses();
+  return courses.filter(course => course.status === 'published');
+};
+
 // Create a new course
 export const createCourse = (courseData: CourseFormData): Course => {
   const courses = loadCourses();
   
-  // Generate a unique ID
   const newId = `crs-${String(Date.now()).slice(-6)}`;
   
   const newCourse: Course = {
     ...courseData,
     id: newId,
     materials: [],
-    // Ensure learningOutcomes is an array
     learningOutcomes: Array.isArray(courseData.learningOutcomes) 
       ? courseData.learningOutcomes 
       : courseData.learningOutcomes ? [courseData.learningOutcomes] : []
@@ -137,19 +55,16 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
     return null;
   }
   
-  // Keep existing materials
   const existingMaterials = courses[index].materials || [];
   
   const updatedCourse: Course = {
     ...courses[index],
     ...courseData,
-    id, // Ensure ID remains unchanged
-    materials: existingMaterials, // Keep existing materials
-    // Ensure learningOutcomes is an array
+    id,
+    materials: existingMaterials,
     learningOutcomes: Array.isArray(courseData.learningOutcomes) 
       ? courseData.learningOutcomes 
       : courseData.learningOutcomes ? [courseData.learningOutcomes] : courses[index].learningOutcomes,
-    // Update Google Drive information if provided
     googleDriveFolderId: courseData.googleDriveFolderId || courses[index].googleDriveFolderId,
     googleDriveFolderUrl: courseData.googleDriveFolderUrl || courses[index].googleDriveFolderUrl
   };
@@ -166,7 +81,6 @@ export const deleteCourse = (id: string): boolean => {
   const filteredCourses = courses.filter(course => course.id !== id);
   
   if (filteredCourses.length === courses.length) {
-    // No course was removed
     return false;
   }
   
@@ -174,54 +88,5 @@ export const deleteCourse = (id: string): boolean => {
   return true;
 };
 
-// Get published courses only
-export const getPublishedCourses = (): Course[] => {
-  const courses = loadCourses();
-  return courses.filter(course => course.status === 'published');
-};
-
-// Add a course material to a course
-export const addCourseMaterial = (courseId: string, material: CourseMaterial): Course | null => {
-  const courses = loadCourses();
-  const index = courses.findIndex(course => course.id === courseId);
-  
-  if (index === -1) {
-    return null;
-  }
-  
-  const course = courses[index];
-  const materials = [...(course.materials || []), material];
-  
-  const updatedCourse: Course = {
-    ...course,
-    materials
-  };
-  
-  courses[index] = updatedCourse;
-  saveCourses(courses);
-  
-  return updatedCourse;
-};
-
-// Remove a course material from a course
-export const removeCourseMaterial = (courseId: string, materialId: string): Course | null => {
-  const courses = loadCourses();
-  const index = courses.findIndex(course => course.id === courseId);
-  
-  if (index === -1) {
-    return null;
-  }
-  
-  const course = courses[index];
-  const materials = (course.materials || []).filter(m => m.id !== materialId);
-  
-  const updatedCourse: Course = {
-    ...course,
-    materials
-  };
-  
-  courses[index] = updatedCourse;
-  saveCourses(courses);
-  
-  return updatedCourse;
-};
+// Re-export course material operations
+export { addCourseMaterial, removeCourseMaterial } from './courseMaterialService';
