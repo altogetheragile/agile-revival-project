@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,7 +22,6 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirect if already logged in
   if (user) {
     navigate('/admin');
     return null;
@@ -55,7 +53,6 @@ export default function AuthPage() {
     } catch (error: any) {
       console.error('Authentication error:', error);
       
-      // Improve error message for timeout issues
       if (error.status === 504 || error.message?.includes('timeout') || error.message === '{}') {
         setErrorMessage(
           "The server is taking too long to respond. This could be due to high traffic or connectivity issues. Please try again later."
@@ -80,7 +77,14 @@ export default function AuthPage() {
     }
     
     try {
-      // Add more specific redirectTo URL including the origin
+      const { data: userExists } = await supabase.auth.admin
+        .getUserByEmail(email);
+
+      if (!userExists) {
+        console.log("No user found with this email:", email);
+        return;
+      }
+
       const redirectUrl = `${window.location.origin}/reset-password`;
       console.log("Reset password redirect URL:", redirectUrl);
       
@@ -88,8 +92,15 @@ export default function AuthPage() {
         redirectTo: redirectUrl,
       });
       
-      if (error) throw error;
-      console.log("Password reset request sent successfully", data);
+      if (error) {
+        console.error('Reset password error:', error);
+        if (error.status === 504) {
+          throw new Error("The server is taking too long to respond. Please try again in a few moments.");
+        }
+        throw error;
+      }
+
+      console.log("Password reset request sent successfully for:", email);
       return data;
     } catch (error: any) {
       console.error('Password reset error:', error);
@@ -106,6 +117,14 @@ export default function AuthPage() {
             <AlertDescription className="text-green-700">
               If an account exists with this email, you'll receive password reset instructions shortly.
               <p className="mt-2">Please check your email inbox and spam folders.</p>
+              <p className="mt-2 text-sm">
+                Note: If you don't receive the email within a few minutes:
+                <ul className="list-disc pl-5 mt-1">
+                  <li>Check your spam/junk folder</li>
+                  <li>Verify you used the correct email address</li>
+                  <li>Try again in a few moments if you encounter timeout errors</li>
+                </ul>
+              </p>
             </AlertDescription>
           </Alert>
         );
