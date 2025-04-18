@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,17 +19,18 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Changed this conditional to check for both user and isAdmin
-  // This way users who aren't admins can still access the auth page
-  if (user && window.location.pathname === '/auth') {
-    // Only redirect to admin if they're an admin
-    navigate('/');
-    return null;
-  }
+  // Use useEffect to handle redirects after the component mounts
+  useEffect(() => {
+    if (user && window.location.pathname === '/auth') {
+      console.log('User authenticated, redirecting', { user, isAdmin });
+      // Redirect to home page
+      navigate('/');
+    }
+  }, [user, isAdmin, navigate]);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);

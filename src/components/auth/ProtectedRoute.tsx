@@ -10,15 +10,23 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('ProtectedRoute auth check:', { user, isAdmin });
+    
     if (!user) {
+      console.log('No user, redirecting to auth');
       navigate('/auth');
-    } else if (!isAdmin) {
+      return;
+    } 
+    
+    if (!isAdmin) {
+      console.log('User not admin, showing toast and redirecting');
       toast({
         title: "Access Denied",
         description: "You don't have permission to access this page.",
         variant: "destructive",
       });
       navigate('/');
+      return;
     }
   }, [user, isAdmin, navigate, toast]);
 
