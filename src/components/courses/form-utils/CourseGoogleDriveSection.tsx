@@ -22,7 +22,7 @@ export const CourseGoogleDriveSection: React.FC<CourseGoogleDriveSectionProps> =
   
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Course Materials Storage</h3>
+      <h3 className="text-lg font-medium">Course Materials</h3>
       <Separator />
       
       <GoogleDriveFolder 
@@ -32,7 +32,6 @@ export const CourseGoogleDriveSection: React.FC<CourseGoogleDriveSectionProps> =
         folderUrl={googleDriveFolderUrl}
         onFolderCreated={handleFolderCreated}
       />
-      
     </div>
   );
 };
