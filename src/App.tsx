@@ -20,8 +20,33 @@ import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 import { AuthProvider } from "@/contexts/AuthContext";
 import AuthPage from "@/pages/auth/AuthPage";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
+
+const ResetPasswordPage = () => {
+  useEffect(() => {
+    // Handle the password reset
+    const handlePasswordReset = async () => {
+      const { error } = await supabase.auth.refreshSession();
+      // After handling the reset, we could redirect to a change password form or display a message
+    };
+    
+    handlePasswordReset();
+  }, []);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold text-center">Reset Your Password</h1>
+        <p className="text-center">
+          Please check your email for further instructions on how to reset your password.
+        </p>
+      </div>
+    </div>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -37,6 +62,7 @@ const App = () => (
             <Route path="/course/:id" element={<CourseDetails />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             
             <Route path="/admin" element={
               <ProtectedRoute>
