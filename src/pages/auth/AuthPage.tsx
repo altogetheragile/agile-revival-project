@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import LoginForm from '@/components/auth/LoginForm';
 import SignupForm from '@/components/auth/SignupForm';
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm';
+import { LogOut } from 'lucide-react';
 
 type AuthMode = 'login' | 'signup' | 'reset';
 
@@ -18,7 +19,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, signOut, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -180,6 +181,28 @@ export default function AuthPage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      console.log('Starting logout process...');
+      setLoading(true);
+      await signOut();
+      console.log('User logged out successfully');
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem logging out.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleError = (error: any) => {
     console.error('Authentication error:', error);
     
@@ -222,6 +245,30 @@ export default function AuthPage() {
       case 'reset': return 'Enter your email to receive a password reset link';
     }
   };
+
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Already logged in</CardTitle>
+            <CardDescription>You are already logged in</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center space-y-4">
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+              disabled={loading}
+            >
+              <LogOut className="h-4 w-4" />
+              {loading ? 'Logging out...' : 'Logout'}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
