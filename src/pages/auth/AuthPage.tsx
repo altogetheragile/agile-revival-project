@@ -23,8 +23,11 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  if (user) {
-    navigate('/admin');
+  // Changed this conditional to check for both user and isAdmin
+  // This way users who aren't admins can still access the auth page
+  if (user && window.location.pathname === '/auth') {
+    // Only redirect to admin if they're an admin
+    navigate('/');
     return null;
   }
 

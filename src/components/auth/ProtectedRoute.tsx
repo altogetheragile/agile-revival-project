@@ -22,6 +22,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     }
   }, [user, isAdmin, navigate, toast]);
 
+  // Only render children if user exists and is admin
   if (!user || !isAdmin) {
     return null;
   }
