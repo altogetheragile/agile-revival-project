@@ -52,14 +52,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
+    // Using maybeSingle to handle the case where no profile is found
     const { data, error } = await supabase
       .from('profiles')
-      .select('role')
+      .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (data && !error) {
       setIsAdmin(data.role === 'admin');
+    } else {
+      console.error('Error fetching user profile:', error);
+      setIsAdmin(false);
     }
   };
 
