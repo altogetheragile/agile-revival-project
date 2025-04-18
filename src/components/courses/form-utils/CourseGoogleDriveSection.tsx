@@ -35,3 +35,4 @@ export const CourseGoogleDriveSection: React.FC<CourseGoogleDriveSectionProps> =
     </div>
   );
 };
+

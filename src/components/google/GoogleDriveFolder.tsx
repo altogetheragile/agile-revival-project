@@ -1,5 +1,4 @@
 
-import { GoogleAuthButton } from "./GoogleAuthButton";
 import { FolderCreationForm } from "./drive/FolderCreationForm";
 import { FileList } from "./drive/FileList";
 import { DriveError } from "./drive/DriveError";
@@ -32,7 +31,6 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
     setFolderName,
     handleCreateFolder,
     handleFileUpload,
-    checkAuthStatus,
     loadFolderContents
   } = useGoogleDrive({
     courseId,
@@ -41,13 +39,16 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
     onFolderCreated
   });
 
+  if (!isAuthenticated) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        Please connect to Google Drive in Site Settings to manage course materials.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Google Drive Integration</h3>
-        <GoogleAuthButton onAuthStateChange={checkAuthStatus} />
-      </div>
-
       {error && (
         <DriveError error={error} apiEnableUrl={apiEnableUrl} />
       )}
@@ -59,7 +60,7 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
           onCreateFolder={handleCreateFolder}
           isAuthenticated={isAuthenticated}
           isCreating={isCreating}
-          onRefreshAuth={checkAuthStatus}
+          onRefreshAuth={() => {}}
         />
       ) : (
         <FileList
@@ -74,3 +75,4 @@ export const GoogleDriveFolder: React.FC<GoogleDriveFolderProps> = ({
     </div>
   );
 };
+
