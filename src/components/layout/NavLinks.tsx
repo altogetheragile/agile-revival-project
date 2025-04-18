@@ -54,7 +54,6 @@ export const navLinks = [
   { name: 'Blog', href: '/blog' },
   { name: 'Testimonials', href: '/#testimonials', isHash: true },
   { name: 'Contact', href: '/#contact', isHash: true },
-  { name: 'Admin', href: '/admin' }  // Removed isAdmin flag to make it always visible
 ];
 
 type NavLinksProps = {
@@ -71,7 +70,7 @@ const NavLinks = ({
   isMobile = false
 }: NavLinksProps) => {
   const location = useLocation();
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   
   // Display all navigation links without filtering
   const filteredNavLinks = navLinks;
@@ -98,6 +97,32 @@ const NavLinks = ({
         onClick={closeMenu}
       >
         Get Started
+      </Link>
+    );
+  };
+
+  const AuthButton = () => {
+    if (user) {
+      return (
+        isAdmin ? (
+          <Link 
+            to="/admin" 
+            className="text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors"
+            onClick={closeMenu}
+          >
+            Admin Dashboard
+          </Link>
+        ) : null
+      );
+    }
+
+    return (
+      <Link 
+        to="/auth" 
+        className="text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors"
+        onClick={closeMenu}
+      >
+        Login
       </Link>
     );
   };
@@ -131,6 +156,7 @@ const NavLinks = ({
             </Link>
           )
         ))}
+        <AuthButton />
         <GetStartedButton />
       </>
     );
@@ -147,6 +173,9 @@ const NavLinks = ({
           />
         </NavigationMenuItem>
       ))}
+      <NavigationMenuItem>
+        <AuthButton />
+      </NavigationMenuItem>
       <NavigationMenuItem>
         <GetStartedButton />
       </NavigationMenuItem>
