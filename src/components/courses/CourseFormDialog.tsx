@@ -22,13 +22,9 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
 }) => {
   // Convert Course to CourseFormData for the form
   const convertToFormData = (course: Course): CourseFormData => {
-    // Omit materials from course since we need to handle it differently
-    const { materials, ...courseData } = course;
-    
     return {
-      ...courseData,
-      // Files will be provided through the form's file input
-      materials: undefined,
+      ...course,
+      id: course.id,
       // Include Google Drive folder information
       googleDriveFolderId: course.googleDriveFolderId,
       googleDriveFolderUrl: course.googleDriveFolderUrl

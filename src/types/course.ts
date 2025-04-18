@@ -16,6 +16,7 @@ export interface Course {
   skillLevel?: "beginner" | "intermediate" | "advanced" | "all-levels";
   format?: "online" | "live" | "in-person" | "hybrid";
   status?: "draft" | "published";
+  materials?: CourseMaterial[];
   googleDriveFolderId?: string;
   googleDriveFolderUrl?: string;
 }
@@ -38,6 +39,6 @@ export type CourseFormData = Omit<Course, "id"> & {
 };
 
 // This type helps us bridge between Course and CourseFormData
-export interface CourseWithFormData extends Course {
+export interface CourseWithFormData extends Omit<Course, "learningOutcomes"> {
   learningOutcomes?: string[] | string;
 }

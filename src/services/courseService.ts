@@ -1,4 +1,3 @@
-
 import { Course, CourseFormData, CourseMaterial, CourseWithFormData } from "@/types/course";
 
 // Initial course data
@@ -14,7 +13,8 @@ const initialCourses: Course[] = [
     category: "scrum",
     spotsAvailable: 8,
     format: "in-person",
-    status: "published"
+    status: "published",
+    materials: []
   },
   {
     id: "crs-002",
@@ -27,7 +27,8 @@ const initialCourses: Course[] = [
     category: "scrum",
     spotsAvailable: 12,
     format: "online",
-    status: "published"
+    status: "published",
+    materials: []
   },
   {
     id: "crs-003",
@@ -40,7 +41,8 @@ const initialCourses: Course[] = [
     category: "kanban",
     spotsAvailable: 10,
     format: "in-person",
-    status: "published"
+    status: "published",
+    materials: []
   },
   {
     id: "crs-004",
@@ -53,7 +55,8 @@ const initialCourses: Course[] = [
     category: "leadership",
     spotsAvailable: 6,
     format: "hybrid",
-    status: "published"
+    status: "published",
+    materials: []
   },
   {
     id: "crs-005",
@@ -66,7 +69,8 @@ const initialCourses: Course[] = [
     category: "leadership",
     spotsAvailable: 15,
     format: "live",
-    status: "published"
+    status: "published",
+    materials: []
   }
 ];
 
@@ -108,14 +112,14 @@ export const createCourse = (courseData: CourseFormData): Course => {
   // Generate a unique ID
   const newId = `crs-${String(Date.now()).slice(-6)}`;
   
-  // Convert CourseFormData to Course (exclude materials as they need separate handling)
-  const { materials, ...restCourseData } = courseData;
-  
   const newCourse: Course = {
-    ...restCourseData,
+    ...courseData,
     id: newId,
-    // Initialize with empty materials array
-    materials: []
+    materials: [],
+    // Ensure learningOutcomes is an array
+    learningOutcomes: Array.isArray(courseData.learningOutcomes) 
+      ? courseData.learningOutcomes 
+      : courseData.learningOutcomes ? [courseData.learningOutcomes] : []
   };
   
   courses.push(newCourse);
@@ -133,15 +137,18 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
     return null;
   }
   
-  // Keep existing materials and exclude materials from formData
-  const { materials, ...restCourseData } = courseData;
+  // Keep existing materials
   const existingMaterials = courses[index].materials || [];
   
   const updatedCourse: Course = {
     ...courses[index],
-    ...restCourseData,
+    ...courseData,
     id, // Ensure ID remains unchanged
     materials: existingMaterials, // Keep existing materials
+    // Ensure learningOutcomes is an array
+    learningOutcomes: Array.isArray(courseData.learningOutcomes) 
+      ? courseData.learningOutcomes 
+      : courseData.learningOutcomes ? [courseData.learningOutcomes] : courses[index].learningOutcomes,
     // Update Google Drive information if provided
     googleDriveFolderId: courseData.googleDriveFolderId || courses[index].googleDriveFolderId,
     googleDriveFolderUrl: courseData.googleDriveFolderUrl || courses[index].googleDriveFolderUrl
