@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,21 +18,33 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { signIn, signUp, user, isAdmin } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (user && window.location.pathname === '/auth') {
-      console.log('User authenticated, redirecting', { user, isAdmin });
-      setTimeout(() => navigate('/'), 10);
+  const checkAuthAndRedirect = useCallback(() => {
+    if (user) {
+      console.log('User is authenticated, redirecting to home page', user);
+      toast({
+        title: "Already logged in",
+        description: "You are already logged in",
+      });
+      navigate('/');
     }
-  }, [user, isAdmin, navigate]);
+  }, [user, navigate, toast]);
 
-  const handleGoogleSignIn = async () => {
+  useEffect(() => {
+    console.log('Auth state changed:', { user });
+    checkAuthAndRedirect();
+  }, [user, checkAuthAndRedirect]);
+
+  const handleGoogleSignIn = async (e: React.MouseEvent) => {
+    e.preventDefault();
     try {
       setLoading(true);
       setErrorMessage(null);
+      
+      console.log('Starting Google sign in process...');
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -42,12 +54,16 @@ export default function AuthPage() {
       });
       
       if (error) {
+        console.error('Google sign in error:', error);
         if (error.message?.includes('provider is not enabled')) {
           throw new Error('Google authentication is not enabled. Please enable it in the Supabase dashboard under Authentication > Providers > Google.');
         }
         throw error;
       }
+      
+      console.log('Google sign in initiated, awaiting redirect');
     } catch (error: any) {
+      console.error('Google sign in error:', error);
       handleError(error);
     } finally {
       setLoading(false);
@@ -56,16 +72,21 @@ export default function AuthPage() {
 
   const handleSignIn = async (email: string, password: string) => {
     try {
+      console.log('Starting email sign in process...');
       setLoading(true);
       setErrorMessage(null);
       
       await signIn(email, password);
+      console.log('Sign in successful, redirecting...');
+      
       toast({
         title: "Login successful",
         description: "You have been successfully logged in.",
       });
+      
       navigate('/');
     } catch (error: any) {
+      console.error('Sign in error:', error);
       handleError(error);
     } finally {
       setLoading(false);
@@ -174,6 +195,8 @@ export default function AuthPage() {
       message = "Invalid password. Please check your password and try again.";
     } else if (error.message?.includes('provider is not enabled')) {
       message = "Google authentication is not configured. Please contact the administrator.";
+    } else if (error.message?.includes('Email not confirmed')) {
+      message = "Please confirm your email address before logging in. Check your email for a confirmation link.";
     }
     
     setErrorMessage(message);
@@ -194,7 +217,7 @@ export default function AuthPage() {
 
   const getDescription = () => {
     switch (mode) {
-      case 'login': return 'Sign in to access the admin dashboard';
+      case 'login': return 'Sign in to access your account';
       case 'signup': return 'Create a new account';
       case 'reset': return 'Enter your email to receive a password reset link';
     }
