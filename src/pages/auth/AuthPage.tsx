@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -5,12 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, LogOut, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoginForm from '@/components/auth/LoginForm';
 import SignupForm from '@/components/auth/SignupForm';
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm';
-import { LogOut } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 type AuthMode = 'login' | 'signup' | 'reset';
 
@@ -103,14 +104,14 @@ export default function AuthPage() {
       setErrorMessage(null);
       
       await signIn(email, password);
-      console.log('Sign in successful, redirecting...');
+      console.log('Sign in successful, showing success message');
       
       toast({
         title: "Login successful",
         description: "You have been successfully logged in.",
       });
       
-      navigate('/');
+      setIsAuthenticated(true);
     } catch (error: any) {
       console.error('Sign in error:', error);
       handleError(error);
@@ -284,6 +285,15 @@ export default function AuthPage() {
             <CardDescription>You are already logged in as {user?.email}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-4">
+            <Button 
+              onClick={() => navigate('/')}
+              variant="default"
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Go to Home Page
+            </Button>
+            
             <Button 
               onClick={handleLogout}
               variant="outline"
