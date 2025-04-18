@@ -8,7 +8,7 @@ interface UseGoogleDriveProps {
   courseId: string;
   courseTitle: string;
   folderId?: string;
-  onFolderCreated: (folderId: string, folderUrl: string) => void;
+  onFolderCreated?: (folderId: string, folderUrl: string) => void;
 }
 
 export const useGoogleDrive = ({ courseId, courseTitle, folderId, onFolderCreated }: UseGoogleDriveProps) => {
@@ -90,7 +90,9 @@ export const useGoogleDrive = ({ courseId, courseTitle, folderId, onFolderCreate
       const result = await createDriveFolder(folderName);
       
       if (result && result.id && result.webViewLink) {
-        onFolderCreated(result.id, result.webViewLink);
+        if (onFolderCreated) {
+          onFolderCreated(result.id, result.webViewLink);
+        }
         toast({
           title: "Folder created",
           description: "Successfully created Google Drive folder"
