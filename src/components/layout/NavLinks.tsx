@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { 
   NavigationMenuItem,
@@ -72,7 +71,6 @@ const NavLinks = ({
   const location = useLocation();
   const { user, isAdmin } = useAuth();
   
-  // Display all navigation links without filtering
   const filteredNavLinks = navLinks;
 
   const GetStartedButton = () => {
@@ -102,22 +100,20 @@ const NavLinks = ({
   };
 
   const AuthButton = () => {
-    if (user) {
+    if (user && isAdmin) {
       return (
-        isAdmin ? (
-          <Link 
-            to="/admin" 
-            className={isMobile 
-              ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors" 
-              : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
-            onClick={closeMenu}
-          >
-            Admin Dashboard
-          </Link>
-        ) : null
+        <Link 
+          to="/admin" 
+          className={isMobile 
+            ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors" 
+            : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
+          onClick={closeMenu}
+        >
+          Admin Dashboard
+        </Link>
       );
     }
-
+    
     return (
       <Link 
         to="/auth" 
