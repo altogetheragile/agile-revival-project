@@ -19,25 +19,50 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { signIn, signUp, signOut, user } = useAuth();
+  const { signIn, signUp, signOut, user, session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const checkAuthAndRedirect = useCallback(() => {
-    if (user) {
-      console.log('User is authenticated, redirecting to home page', user);
-      toast({
-        title: "Already logged in",
-        description: "You are already logged in",
-      });
-      navigate('/');
-    }
-  }, [user, navigate, toast]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    console.log('Auth state changed:', { user });
+    const checkAuthStatus = async () => {
+      try {
+        console.log('Checking authentication status:', { user, session });
+        
+        const { data } = await supabase.auth.getSession();
+        const currentSession = data?.session;
+        
+        console.log('Current session from Supabase:', currentSession);
+        
+        if (currentSession?.user) {
+          console.log('User is authenticated from session check');
+          setIsAuthenticated(true);
+        } else if (user) {
+          console.log('User is authenticated from context');
+          setIsAuthenticated(true);
+        } else {
+          console.log('User is not authenticated');
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkAuthStatus();
+  }, [user, session]);
+
+  const checkAuthAndRedirect = useCallback(() => {
+    if (isAuthenticated) {
+      console.log('User is authenticated, ready to redirect if needed');
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    console.log('Auth state changed:', { user, isAuthenticated });
     checkAuthAndRedirect();
-  }, [user, checkAuthAndRedirect]);
+  }, [user, isAuthenticated, checkAuthAndRedirect]);
 
   const handleGoogleSignIn = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -187,6 +212,7 @@ export default function AuthPage() {
       setLoading(true);
       await signOut();
       console.log('User logged out successfully');
+      setIsAuthenticated(false);
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
@@ -246,13 +272,16 @@ export default function AuthPage() {
     }
   };
 
-  if (user) {
+  console.log('Render state:', { user, isAuthenticated });
+
+  if (isAuthenticated || user) {
+    console.log('Rendering authenticated view');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Already logged in</CardTitle>
-            <CardDescription>You are already logged in</CardDescription>
+            <CardDescription>You are already logged in as {user?.email}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-4">
             <Button 
@@ -270,6 +299,7 @@ export default function AuthPage() {
     );
   }
 
+  console.log('Rendering login/signup view');
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
