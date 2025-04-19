@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,13 +9,9 @@ export function useAuthState() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdminChecked, setIsAdminChecked] = useState(false);
 
-  // Improved function to check admin status with better logging
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
-    console.log(`useAuthState - Checking admin status for user: ${userId}`);
+    console.log(`DETAILED Admin Check - Checking admin status for user: ${userId}`);
     try {
-      // Force cache refresh by adding a timestamp parameter
-      const timestamp = new Date().getTime();
-      
       const { data, error } = await supabase
         .from('user_roles')
         .select('*')
@@ -24,23 +19,28 @@ export function useAuthState() {
         .eq('role', 'admin')
         .maybeSingle();
 
+      console.log('DETAILED Admin Check - Raw query result:', { data, error });
+
       if (error) {
-        console.error('useAuthState - Error checking admin status:', error);
+        console.error('DETAILED Admin Check - Error checking admin status:', error);
         setIsAdmin(false);
         setIsAdminChecked(true);
         return false;
       }
 
       const hasAdminRole = !!data;
-      console.log(`useAuthState - Admin check result for ${userId}:`, { hasAdminRole, data });
+      console.log(`DETAILED Admin Check - Final admin status for ${userId}:`, { 
+        hasAdminRole, 
+        userEmail: userId,
+        roleData: data 
+      });
       
-      // Important: Update the state to reflect admin status
       setIsAdmin(hasAdminRole);
       setIsAdminChecked(true);
       
       return hasAdminRole;
     } catch (error) {
-      console.error('useAuthState - Exception checking admin status:', error);
+      console.error('DETAILED Admin Check - Exception checking admin status:', error);
       setIsAdmin(false);
       setIsAdminChecked(true);
       return false;
@@ -51,10 +51,8 @@ export function useAuthState() {
     console.log("Setting up auth state listener");
     let isMounted = true;
     
-    // Set loading to true at the start
     setIsLoading(true);
     
-    // Set up auth state change listener first before checking session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         console.log(`Auth state changed: ${event}`, { 
@@ -69,11 +67,9 @@ export function useAuthState() {
         
         if (currentSession?.user) {
           console.log(`User authenticated, email: ${currentSession.user.email}, id: ${currentSession.user.id}, provider: ${currentSession.user.app_metadata?.provider || 'email'}`);
-          // Reset admin check status when user changes
           setIsAdminChecked(false);
-          setIsAdmin(false); // Reset admin status until it's checked
+          setIsAdmin(false);
           
-          // Use a separate setTimeout for admin check to avoid deadlock
           setTimeout(async () => {
             if (!isMounted) return;
             try {
@@ -99,7 +95,6 @@ export function useAuthState() {
     );
 
     console.log("Initial session check on component mount");
-    // Perform initial session check
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log("Initial session check result:", { 
         email: currentSession?.user?.email,
@@ -114,13 +109,9 @@ export function useAuthState() {
       if (currentSession?.user) {
         console.log(`Found existing session for: ${currentSession.user.email}, id: ${currentSession.user.id}, provider: ${currentSession.user.app_metadata?.provider || 'email'}`);
         
-        // Force immediate admin check for Google provider
         const isGoogleAuth = currentSession.user.app_metadata?.provider === 'google';
+        const checkDelay = isGoogleAuth ? 10 : 100;
         
-        // Use different timing for different providers
-        const checkDelay = isGoogleAuth ? 10 : 100; // Shorter delay for Google auth
-        
-        // Separate setTimeout to avoid deadlock with auth state change handler
         setTimeout(async () => {
           if (!isMounted) return;
           try {

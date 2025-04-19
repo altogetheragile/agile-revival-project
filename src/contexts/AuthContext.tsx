@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useAuthState } from '@/hooks/useAuthState';
@@ -36,7 +35,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
   } = useAuthMethods();
 
-  // Add effect to check admin status when user changes or auth is ready
+  const verifyAdminStatus = async () => {
+    if (user?.id) {
+      console.log(`ADMIN VERIFICATION - Checking admin status for: ${user.email}`);
+      
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('role', 'admin');
+
+      console.log('ADMIN VERIFICATION - Detailed Role Check:', {
+        email: user.email,
+        userId: user.id,
+        googleProvider: user.app_metadata?.provider === 'google',
+        roleQueryData: data,
+        roleQueryError: error
+      });
+
+      return data && data.length > 0;
+    }
+    return false;
+  };
+
+  const refreshAdminStatus = async (): Promise<boolean> => {
+    const isAdmin = await verifyAdminStatus();
+    console.log(`ADMIN STATUS REFRESH - Final result for ${user?.email}:`, isAdmin);
+    return isAdmin;
+  };
+
   useEffect(() => {
     let isMounted = true;
     
@@ -46,10 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log(`Auth provider - Checking admin status for: ${user.email}, id: ${user.id}, provider: ${user.app_metadata?.provider || 'email'}`);
         
         try {
-          // Use different timing for different providers
-          const checkDelay = isGoogleAuth ? 10 : 100; // Shorter delay for Google auth
+          const checkDelay = isGoogleAuth ? 10 : 100;
           
-          // Use setTimeout to avoid potential deadlock
           setTimeout(async () => {
             if (isMounted && user?.id) {
               const result = await checkAdminStatus(user.id);
@@ -60,39 +85,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error("Auth provider - Error checking admin status:", error);
           if (isMounted) {
-            setHasInitialAdminCheck(true); // Mark as checked even on error
+            setHasInitialAdminCheck(true);
           }
         }
       }
     };
     
-    // Run check immediately if we have a user from Google auth
     const isGoogleAuth = user?.app_metadata?.provider === 'google';
     const shouldForceCheck = user?.id && (!hasInitialAdminCheck || isGoogleAuth);
     
     if (shouldForceCheck) {
       checkAdmin();
     } else if (!user) {
-      // Reset check state if no user
       setHasInitialAdminCheck(false);
     }
   }, [user, checkAdminStatus, hasInitialAdminCheck]);
-
-  const refreshAdminStatus = async (): Promise<boolean> => {
-    if (user?.id) {
-      console.log(`AuthContext - Manually refreshing admin status for: ${user.email}, id: ${user.id}, provider: ${user.app_metadata?.provider || 'email'}`);
-      try {
-        // Force a fresh check from the database
-        const result = await checkAdminStatus(user.id);
-        console.log(`AuthContext - Admin status after refresh: ${result ? 'admin' : 'not admin'} for ${user.email} (${user.app_metadata?.provider || 'email'})`);
-        return result;
-      } catch (error) {
-        console.error('Error refreshing admin status:', error);
-        return false;
-      }
-    }
-    return false;
-  };
 
   console.log("AuthContext state:", { 
     userEmail: user?.email, 
@@ -115,7 +122,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthReady: !isLoading
   };
 
-  // If still loading auth state, render a simple loading indicator
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -134,7 +140,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Export the useAuth hook separately to avoid circular dependencies
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
