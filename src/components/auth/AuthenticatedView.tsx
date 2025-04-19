@@ -15,31 +15,47 @@ export default function AuthenticatedView() {
   
   // Force admin status check when component mounts
   useEffect(() => {
+    let isMounted = true;
+    
     const checkAdminStatus = async () => {
       console.log("AuthenticatedView - Initial auth state:", { 
         userEmail: user?.email, 
         isAdmin, 
         userId: user?.id,
-        isAuthReady
+        isAuthReady,
+        provider: user?.app_metadata?.provider
       });
 
       if (user?.id && isAuthReady && !adminChecked) {
-        console.log(`AuthenticatedView - Checking admin status for: ${user.email}, id: ${user.id}`);
-        const result = await refreshAdminStatus();
-        console.log(`AuthenticatedView - Admin status for ${user.email}: ${result ? 'admin' : 'not admin'}`);
-        setAdminChecked(true);
+        console.log(`AuthenticatedView - Checking admin status for: ${user.email}, id: ${user.id}, provider: ${user?.app_metadata?.provider || 'email'}`);
         
-        // Notify user of their admin status
-        if (result) {
-          toast({
-            title: "Admin Access Granted",
-            description: "You have administrator privileges.",
-          });
-        }
+        // Use setTimeout to prevent potential race conditions
+        setTimeout(async () => {
+          if (!isMounted) return;
+          
+          const result = await refreshAdminStatus();
+          console.log(`AuthenticatedView - Admin status for ${user.email}: ${result ? 'admin' : 'not admin'}`);
+          
+          if (isMounted) {
+            setAdminChecked(true);
+            
+            // Notify user of their admin status
+            if (result) {
+              toast({
+                title: "Admin Access Granted",
+                description: "You have administrator privileges.",
+              });
+            }
+          }
+        }, 200);
       }
     };
     
     checkAdminStatus();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [user, refreshAdminStatus, isAuthReady, adminChecked, isAdmin, toast]);
   
   const handleLogout = async () => {
@@ -67,6 +83,9 @@ export default function AuthenticatedView() {
           </CardTitle>
           <CardDescription>
             You're now logged in as {user?.email}
+            {user?.app_metadata?.provider && (
+              <span className="ml-1">(via {user.app_metadata.provider})</span>
+            )}
             {isAdmin && <span className="ml-2 font-semibold text-purple-600">(Admin)</span>}
           </CardDescription>
         </CardHeader>

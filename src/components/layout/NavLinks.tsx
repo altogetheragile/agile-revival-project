@@ -72,7 +72,7 @@ const NavLinks = ({
 }: NavLinksProps) => {
   const location = useLocation();
   const { user, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
-  const [hasCheckedAdmin, setHasCheckedAdmin] = useState(false);
+  const [adminStatusChecked, setAdminStatusChecked] = useState(false);
   
   // Force admin status check when component mounts or auth state changes
   useEffect(() => {
@@ -80,33 +80,42 @@ const NavLinks = ({
     
     const checkAdminStatus = async () => {
       // Only check if we have a user and auth is ready
-      if (user?.id && isAuthReady) {
-        console.log(`NavLinks - Checking admin status for ${user.email}`);
+      if (user?.id && isAuthReady && !adminStatusChecked) {
+        console.log(`NavLinks - Initial check for admin status for ${user.email} (${user.app_metadata?.provider || 'email'})`);
         
         try {
-          // Always force a refresh when NavLinks mounts
-          const refreshedAdminStatus = await refreshAdminStatus();
-          if (isMounted) {
-            console.log(`NavLinks - Admin status refreshed: ${refreshedAdminStatus ? 'admin' : 'not admin'} for ${user.email}`);
-            // No need to update state since refreshAdminStatus updates the context
-          }
+          // Give a short delay to allow auth to fully initialize
+          setTimeout(async () => {
+            if (!isMounted) return;
+            
+            // Always force a refresh when NavLinks mounts
+            const refreshedAdminStatus = await refreshAdminStatus();
+            
+            if (isMounted) {
+              console.log(`NavLinks - Admin status refreshed: ${refreshedAdminStatus ? 'admin' : 'not admin'} for ${user.email}`);
+              setAdminStatusChecked(true);
+            }
+          }, 200);
         } catch (error) {
           console.error("NavLinks - Error checking admin status:", error);
+          setAdminStatusChecked(true); // Mark as checked even on error
         }
+      } else if (!user) {
+        setAdminStatusChecked(false);
       }
     };
     
-    // Use setTimeout to prevent potential deadlocks with auth state changes
-    setTimeout(() => {
-      if (isMounted) {
-        checkAdminStatus();
-      }
-    }, 100);
+    checkAdminStatus();
     
     return () => {
       isMounted = false;
     };
-  }, [user, isAuthReady, refreshAdminStatus]);
+  }, [user, isAuthReady, refreshAdminStatus, adminStatusChecked]);
+
+  // Reset admin check status on user change
+  useEffect(() => {
+    setAdminStatusChecked(false);
+  }, [user?.id]);
   
   const filteredNavLinks = navLinks;
 
@@ -140,7 +149,8 @@ const NavLinks = ({
     console.log("NavLinks - Rendering AuthButton:", { 
       userEmail: user?.email, 
       isAdmin, 
-      isAuthReady 
+      isAuthReady,
+      provider: user?.app_metadata?.provider
     });
     
     if (user && isAdmin) {
@@ -187,6 +197,13 @@ const NavLinks = ({
       </Link>
     );
   };
+
+  // For debugging admin status
+  useEffect(() => {
+    if (user?.id) {
+      console.log(`NavLinks - Admin status for ${user.email}: ${isAdmin ? 'ADMIN' : 'not admin'}`);
+    }
+  }, [isAdmin, user]);
 
   if (isMobile) {
     return (

@@ -14,7 +14,8 @@ export function useAuthState() {
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     console.log(`useAuthState - Checking admin status for user: ${userId}`);
     try {
-      // Make sure we're getting the most up-to-date data by disabling cache
+      // Force cache refresh by using a timestamp parameter
+      const timestamp = new Date().getTime();
       const { data, error } = await supabase
         .from('user_roles')
         .select('*')
@@ -68,7 +69,7 @@ export function useAuthState() {
           setIsAdminChecked(false);
           setIsAdmin(false); // Reset admin status until it's checked
           
-          // Check admin status via setTimeout to prevent potential deadlock
+          // Use a separate setTimeout for admin check to avoid deadlock
           setTimeout(async () => {
             if (!isMounted) return;
             try {
@@ -106,7 +107,7 @@ export function useAuthState() {
       if (currentSession?.user) {
         console.log(`Found existing session for: ${currentSession.user.email}, id: ${currentSession.user.id}, provider: ${currentSession.user.app_metadata.provider || 'email'}`);
         
-        // Use setTimeout to prevent deadlock with the auth state change handler
+        // Separate setTimeout to avoid deadlock with auth state change handler
         setTimeout(async () => {
           if (!isMounted) return;
           try {

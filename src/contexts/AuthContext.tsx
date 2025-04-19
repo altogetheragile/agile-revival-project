@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           // Use setTimeout to avoid potential deadlock
           setTimeout(async () => {
-            if (isMounted) {
+            if (isMounted && user?.id) {
               const result = await checkAdminStatus(user.id);
               console.log(`Auth provider - Admin check result for ${user.email}: ${result ? 'admin' : 'not admin'}`);
               setHasInitialAdminCheck(true);
@@ -65,6 +65,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Only run check if we have a user and haven't checked yet
     if (user?.id && !hasInitialAdminCheck) {
       checkAdmin();
+    } else if (!user) {
+      // Reset check state if no user
+      setHasInitialAdminCheck(false);
     }
   }, [user, checkAdminStatus, hasInitialAdminCheck]);
 
@@ -72,8 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user?.id) {
       console.log(`AuthContext - Manually refreshing admin status for: ${user.email}, id: ${user.id}`);
       try {
+        // Force a fresh check from the database
         const result = await checkAdminStatus(user.id);
-        console.log(`AuthContext - Admin status after refresh: ${result ? 'admin' : 'not admin'}`);
+        console.log(`AuthContext - Admin status after refresh: ${result ? 'admin' : 'not admin'} for ${user.email}`);
         return result;
       } catch (error) {
         console.error('Error refreshing admin status:', error);
@@ -89,7 +93,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdminChecked,
     userId: user?.id,
     isAuthReady: !isLoading,
-    isLoading
+    isLoading,
+    provider: user?.app_metadata?.provider
   });
   
   const contextValue: AuthContextType = {
