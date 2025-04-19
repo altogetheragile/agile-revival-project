@@ -23,6 +23,12 @@ export default function GoogleSignInButton({ mode, loading, onError }: GoogleSig
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth`,
+          queryParams: {
+            // Add access_type=offline to get a refresh token
+            access_type: 'offline',
+            // Force approval prompt to ensure refresh token
+            prompt: 'consent'
+          }
         }
       });
       

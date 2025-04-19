@@ -39,10 +39,21 @@ export function useAuthMethods() {
     try {
       console.log("Starting email sign in process...");
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Using AbortController to set a timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
+      const { data, error } = await Promise.race([
+        supabase.auth.signInWithPassword({
+          email,
+          password,
+        }),
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Authentication request timed out')), 15000);
+        })
+      ]);
+
+      clearTimeout(timeoutId);
 
       if (error) {
         console.error("Sign in error:", error.message);
@@ -73,7 +84,7 @@ export function useAuthMethods() {
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
       try {
-        console.log(`Sign up attempt ${attempt + 1} for: ${email}`);
+        console.log(`Sign up attempt ${attempt + 1} for: ${email} with timeout: ${timeout}ms`);
         
         const signUpPromise = supabase.auth.signUp({
           email,
@@ -109,10 +120,16 @@ export function useAuthMethods() {
         clearTimeout(timeoutId);
         console.error(`Sign up attempt ${attempt + 1} failed:`, error.message);
 
+        // Check if this is a real error or just a timeout
+        if (!error.message.includes('timeout') && !error.name?.includes('AbortError')) {
+          // Real error - no need to retry
+          break;
+        }
+
         if (attempt < MAX_RETRIES) {
           toast({
-            title: "Retrying...",
-            description: `Attempt ${attempt + 2} of ${MAX_RETRIES + 1}`,
+            title: "Connection slow",
+            description: `Retrying... attempt ${attempt + 2} of ${MAX_RETRIES + 1}`,
           });
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
