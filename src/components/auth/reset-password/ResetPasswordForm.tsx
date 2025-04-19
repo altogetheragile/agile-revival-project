@@ -55,11 +55,37 @@ export default function ResetPasswordForm({
         description: "Sending password reset email. This may take a moment...",
       });
       
+      // First try the standard Supabase method
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Password reset error from Supabase:', error);
+        
+        // If Supabase fails, try our custom edge function as backup
+        try {
+          console.log('Trying direct edge function call for password reset');
+          const edgeFunctionResponse = await supabase.functions.invoke('send-email', {
+            body: {
+              type: 'reset_password',
+              email: email,
+              recipient: email,
+              template: 'reset_password'
+            }
+          });
+          
+          if (edgeFunctionResponse.error) {
+            throw new Error(edgeFunctionResponse.error.message || 'Error sending email via edge function');
+          }
+          
+          console.log('Password reset via edge function response:', edgeFunctionResponse);
+        } catch (edgeError) {
+          console.error('Edge function password reset error:', edgeError);
+          // If both methods fail, throw the original error
+          throw error;
+        }
+      }
       
       console.log('Password reset request successful');
       toast({

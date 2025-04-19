@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { renderAsync } from 'npm:@react-email/components@0.0.22';
 import WelcomeEmail from './_templates/welcome-email.tsx';
+import ResetPasswordEmail from './_templates/reset-password-email.tsx';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
@@ -22,89 +23,152 @@ serve(async (req) => {
   }
 
   try {
-    const { firstName, email } = await req.json();
+    // First try to extract JSON body
+    let body;
+    try {
+      body = await req.json();
+      console.log('Request body:', JSON.stringify(body));
+    } catch (error) {
+      console.log('Failed to parse JSON body:', error.message);
+      body = {};
+    }
+
+    // Detect if this is a password reset request (either from our custom form or from Supabase)
+    const isPasswordReset = 
+      req.url.includes('reset-password') || 
+      body.type === 'reset_password' ||
+      (body.template && body.template === 'reset_password');
     
-    // Start email rendering early with a short timeout
-    const renderPromise = new Promise(async (resolve, reject) => {
+    // Log details to help debug
+    console.log('Request URL:', req.url);
+    console.log('Is password reset:', isPasswordReset);
+    
+    // For a password reset email
+    if (isPasswordReset) {
+      console.log('Sending password reset email');
+      
+      // Extract user email - try different possible locations
+      // For Supabase auth webhook format
+      let email = body.email || (body.user && body.user.email);
+      
+      // Fallback for direct API calls
+      if (!email && body.recipient) {
+        email = body.recipient;
+      }
+      
+      // Extract action link - if from Supabase
+      let actionLink = '';
+      if (body.action_link) {
+        actionLink = body.action_link;
+      } else if (body.link) {
+        actionLink = body.link;
+      }
+      
+      if (!email) {
+        throw new Error('No recipient email found in request');
+      }
+      
+      console.log(`Sending password reset email to ${email}`);
+      
+      let html = '';
       try {
-        const startTime = Date.now();
-        console.log(`Starting email render for ${email} at ${startTime}`);
-        
-        const html = await renderAsync(
-          WelcomeEmail({ firstName, email })
+        // Try to render the template, with a 4s timeout
+        const renderPromise = renderAsync(
+          ResetPasswordEmail({ 
+            actionLink,
+            email
+          })
         );
         
-        console.log(`Email rendered in ${Date.now() - startTime}ms`);
-        resolve(html);
-      } catch (error) {
-        console.error(`Email rendering failed: ${error.message}`);
-        reject(error);
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Email rendering timed out')), 4000);
+        });
+        
+        html = await Promise.race([renderPromise, timeoutPromise]);
+      } catch (renderError) {
+        console.error('Failed to render email template:', renderError);
+        // Fallback to plain text
+        html = `
+          <html>
+            <body>
+              <h1>Password Reset Request</h1>
+              <p>You requested a password reset for your account. Click the link below to reset your password:</p>
+              <p><a href="${actionLink}">Reset your password</a></p>
+              <p>If you didn't request this, you can safely ignore this email.</p>
+            </body>
+          </html>
+        `;
       }
-    });
-    
-    // Using a shorter separate timeout for rendering
-    const renderTimeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Email rendering timed out')), 4000);
-    });
-    
-    console.log(`Attempting to render email for ${email} using sender: ${SENDER_NAME} <${SENDER_EMAIL}>`);
-    
-    try {
-      // Race between rendering and timeout
-      const html = await Promise.race([renderPromise, renderTimeoutPromise]);
       
-      console.log(`Successfully rendered email template for ${email}`);
-      
-      // Now that we have the HTML rendered, proceed with sending
-      console.log(`Sending email to ${email} using sender: ${SENDER_NAME} <${SENDER_EMAIL}>`);
-      
-      // Set up a slightly longer timeout for the actual sending
-      const sendTimeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Email sending timed out, but it might still be processed')), 6000);
-      });
-      
-      // Attempt to send email with a timeout
+      // Send the email with a slightly longer timeout
       try {
+        const sendTimeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Email sending timed out')), 8000);
+        });
+        
         const sendPromise = resend.emails.send({
           from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
           to: [email],
-          subject: 'Welcome to Our Platform!',
+          subject: 'Reset Your Password',
           html: html,
         });
         
-        // Race between sending and timeout
         const result = await Promise.race([sendPromise, sendTimeoutPromise]);
+        console.log('Email sent successfully:', result);
         
-        console.log(`Email sent successfully to ${email}`);
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200
         });
-      } catch (error) {
-        // If it's a timeout error, we'll return a partial success
-        if (error.message.includes('timed out')) {
-          console.log(`Email sending timed out for ${email}, but might still be processed`);
-          return new Response(JSON.stringify({ 
-            status: 'processing',
-            message: 'Email is being processed but took too long to confirm. Check your inbox in a few minutes.'
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 202
-          });
-        }
-        
-        throw error;
+      } catch (sendError) {
+        console.error('Email sending error:', sendError);
+        throw sendError;
       }
-    } catch (renderError) {
-      // If rendering times out, just send plain text
-      console.log(`Using fallback plain text email for ${email} due to rendering timeout`);
+    } else {
+      // For a welcome email or other generic emails
+      const { firstName, email } = body;
+    
+      if (!email) {
+        throw new Error('No recipient email found in request');
+      }
       
+      console.log(`Sending welcome email to ${email}`);
+      
+      // Try to render the welcome template
+      let html = '';
+      try {
+        const renderPromise = renderAsync(
+          WelcomeEmail({ firstName: firstName || 'there', email })
+        );
+        
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Email rendering timed out')), 4000);
+        });
+        
+        html = await Promise.race([renderPromise, timeoutPromise]);
+      } catch (renderError) {
+        console.error('Failed to render welcome email template:', renderError);
+        // Fallback to plain text
+        html = `
+          <html>
+            <body>
+              <h1>Welcome!</h1>
+              <p>Hello ${firstName || 'there'},</p>
+              <p>Thank you for joining our platform. We're excited to have you with us!</p>
+            </body>
+          </html>
+        `;
+      }
+      
+      // Send the email
       const result = await resend.emails.send({
         from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
         to: [email],
         subject: 'Welcome to Our Platform!',
-        text: `Hello ${firstName || 'there'},\n\nWe're delighted to have you join us. If you requested a password reset, please check your inbox for instructions.\n\nBest regards,\n${SENDER_NAME}`,
+        html: html,
       });
+      
+      console.log('Email sent successfully:', result);
       
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

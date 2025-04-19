@@ -1,0 +1,117 @@
+
+import React from 'react';
+import {
+  Body,
+  Container,
+  Head,
+  Heading,
+  Html,
+  Link,
+  Preview,
+  Section,
+  Text,
+  Button,
+} from 'npm:@react-email/components@0.0.22';
+
+interface ResetPasswordEmailProps {
+  actionLink?: string;
+  email: string;
+}
+
+export default function ResetPasswordEmail({ actionLink, email }: ResetPasswordEmailProps) {
+  const baseUrl = "https://your-website.com";
+  
+  return (
+    <Html>
+      <Head />
+      <Preview>Reset your password</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Section>
+            <Heading style={h1}>Password Reset</Heading>
+            <Text style={text}>
+              Hello,
+            </Text>
+            <Text style={text}>
+              We received a request to reset the password for your account ({email}).
+              If you did not make this request, you can safely ignore this email.
+            </Text>
+            
+            {actionLink ? (
+              <Section style={btnContainer}>
+                <Button
+                  style={button}
+                  href={actionLink}
+                >
+                  Reset Your Password
+                </Button>
+              </Section>
+            ) : (
+              <Text style={text}>
+                Please use the password reset link provided in your app to complete the process.
+              </Text>
+            )}
+            
+            <Text style={text}>
+              This password reset link will expire in 24 hours. If you need to request a new password reset, please visit our website.
+            </Text>
+            
+            <Text style={footer}>
+              If you have any questions or need assistance, please contact our support team.
+            </Text>
+          </Section>
+        </Container>
+      </Body>
+    </Html>
+  );
+};
+
+const main = {
+  backgroundColor: "#f5f5f5",
+  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+};
+
+const container = {
+  margin: '0 auto',
+  padding: '20px 0 48px',
+  maxWidth: '580px',
+};
+
+const h1 = {
+  color: '#333',
+  fontSize: '24px',
+  fontWeight: 'bold',
+  margin: '30px 0',
+  padding: '0',
+  lineHeight: '1.5',
+};
+
+const text = {
+  color: '#333',
+  fontSize: '16px',
+  lineHeight: '1.6',
+  margin: '16px 0',
+};
+
+const btnContainer = {
+  textAlign: 'center' as const,
+  margin: '32px 0',
+};
+
+const button = {
+  backgroundColor: '#2563eb',
+  borderRadius: '4px',
+  color: '#fff',
+  fontSize: '16px',
+  textDecoration: 'none',
+  textAlign: 'center' as const,
+  display: 'inline-block',
+  padding: '12px 24px',
+  fontWeight: 'bold',
+};
+
+const footer = {
+  color: '#898989',
+  fontSize: '14px',
+  margin: '32px 0 0',
+};
