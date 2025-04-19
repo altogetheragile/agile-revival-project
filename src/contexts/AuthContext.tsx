@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     isAdmin,
     isLoading,
+    isAdminChecked,
     checkAdminStatus
   } = useAuthState();
 
@@ -33,15 +34,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshAdminStatus = async () => {
     if (user?.id) {
-      console.log("Manually refreshing admin status for:", user.email);
-      await checkAdminStatus(user.id);
-      console.log("Admin status after refresh:", isAdmin);
+      console.log(`Manually refreshing admin status for: ${user.email}`);
+      const result = await checkAdminStatus(user.id);
+      console.log(`Admin status after manual refresh: ${result}`);
+      return result;
     }
+    return false;
   };
 
   console.log("AuthContext state:", { 
     user: user?.email, 
     isAdmin,
+    isAdminChecked,
     userId: user?.id
   });
   

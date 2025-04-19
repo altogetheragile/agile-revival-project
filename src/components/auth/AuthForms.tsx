@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -53,7 +52,11 @@ export default function AuthForms() {
         title: "Processing",
         description: "Signing in...",
       });
+      
       await signIn(email, password);
+      
+      // Force refresh to make sure any admin status is correctly picked up
+      window.location.href = '/';
     } catch (error: any) {
       handleError(error);
     } finally {

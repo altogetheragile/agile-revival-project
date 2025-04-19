@@ -1,4 +1,5 @@
 
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,12 +7,26 @@ import { useNavigate } from 'react-router-dom';
 import { Home, LogOut, LayoutDashboard, UserCheck } from 'lucide-react';
 
 export default function AuthenticatedView() {
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, isAdmin, refreshAdminStatus } = useAuth();
   const navigate = useNavigate();
+  
+  // Force admin status check when component mounts
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user) {
+        console.log("Authenticated view - checking admin status for:", user.email);
+        await refreshAdminStatus();
+      }
+    };
+    
+    checkAdminStatus();
+  }, [user, refreshAdminStatus]);
   
   const handleLogout = async () => {
     try {
       await signOut();
+      // Force page refresh after logout
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -25,7 +40,10 @@ export default function AuthenticatedView() {
             <UserCheck className="h-6 w-6 text-green-500" />
             Welcome Back!
           </CardTitle>
-          <CardDescription>You're now logged in as {user?.email}</CardDescription>
+          <CardDescription>
+            You're now logged in as {user?.email}
+            {isAdmin && <span className="ml-2 font-semibold text-purple-600">(Admin)</span>}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center space-y-4">
           <Button 
