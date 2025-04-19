@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { z } from "zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Globe, Text } from "lucide-react";
+import { useSiteSettings, GeneralSettings as GeneralSettingsType } from "@/contexts/SiteSettingsContext";
 
 const generalFormSchema = z.object({
   siteName: z.string().min(2, {
@@ -25,16 +27,8 @@ type GeneralFormValues = z.infer<typeof generalFormSchema>;
 
 export const GeneralSettings = () => {
   const { toast } = useToast();
+  const { settings, updateSettings, isLoading } = useSiteSettings();
   
-  const defaultValues: GeneralFormValues = {
-    siteName: "AltogetherAgile",
-    contactEmail: "contact@altogetheragile.com",
-    contactPhone: "+1 (555) 123-4567",
-    defaultLanguage: "en",
-    timezone: "UTC",
-    currency: "USD",
-  };
-
   const timezones = [
     { value: "UTC", label: "UTC (Coordinated Universal Time)" },
     { value: "America/New_York", label: "Eastern Time (ET)" },
@@ -53,16 +47,24 @@ export const GeneralSettings = () => {
 
   const form = useForm<GeneralFormValues>({
     resolver: zodResolver(generalFormSchema),
-    defaultValues,
+    defaultValues: settings.general as GeneralSettingsType,
   });
 
-  const onSubmit = (data: GeneralFormValues) => {
-    console.log("General Settings saved:", data);
-    toast({
-      title: "Settings updated",
-      description: "General settings have been successfully updated.",
-    });
+  // When settings load or change, update form values
+  useEffect(() => {
+    if (!isLoading) {
+      form.reset(settings.general as GeneralSettingsType);
+    }
+  }, [isLoading, settings.general, form]);
+
+  const onSubmit = async (data: GeneralFormValues) => {
+    console.log("General Settings to save:", data);
+    await updateSettings('general', data);
   };
+
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading settings...</div>;
+  }
 
   return (
     <div className="space-y-6">

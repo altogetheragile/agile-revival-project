@@ -215,6 +215,30 @@ export type Database = {
         }
         Relationships: []
       }
+      site_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       testimonials: {
         Row: {
           company: string | null
@@ -292,6 +316,10 @@ export type Database = {
       has_role: {
         Args: { user_id: string; required_role: string }
         Returns: boolean
+      }
+      update_site_settings: {
+        Args: { setting_key: string; setting_value: Json }
+        Returns: undefined
       }
     }
     Enums: {
