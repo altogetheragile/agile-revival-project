@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -35,6 +34,22 @@ export const GeneralSettings = () => {
     timezone: "UTC",
     currency: "USD",
   };
+
+  const timezones = [
+    { value: "UTC", label: "UTC (Coordinated Universal Time)" },
+    { value: "America/New_York", label: "Eastern Time (ET)" },
+    { value: "America/Chicago", label: "Central Time (CT)" },
+    { value: "America/Denver", label: "Mountain Time (MT)" },
+    { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
+    { value: "America/Anchorage", label: "Alaska Time (AKT)" },
+    { value: "Pacific/Honolulu", label: "Hawaii Time (HT)" },
+    { value: "Europe/London", label: "British Time (GMT/BST)" },
+    { value: "Europe/Paris", label: "Central European Time (CET)" },
+    { value: "Asia/Dubai", label: "Gulf Time (GT)" },
+    { value: "Asia/Singapore", label: "Singapore Time (SGT)" },
+    { value: "Asia/Tokyo", label: "Japan Time (JST)" },
+    { value: "Australia/Sydney", label: "Australian Eastern Time (AET)" },
+  ];
 
   const form = useForm<GeneralFormValues>({
     resolver: zodResolver(generalFormSchema),
@@ -153,11 +168,11 @@ export const GeneralSettings = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="UTC">UTC</SelectItem>
-                            <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
-                            <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
-                            <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
-                            <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                            {timezones.map((tz) => (
+                              <SelectItem key={tz.value} value={tz.value}>
+                                {tz.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
