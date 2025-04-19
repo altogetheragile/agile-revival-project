@@ -6,7 +6,7 @@ import { GeneralSettings } from "./settings/GeneralSettings";
 import { InterfaceSettings } from "./settings/InterfaceSettings";
 import { SecuritySettings } from "./settings/SecuritySettings";
 import { UserSettings } from "./settings/UserSettings";
-import { SiteSettingsProvider } from "@/contexts/SiteSettingsContext";
+import { SiteSettingsProvider } from "@/contexts/site-settings/SiteSettingsContext";
 
 const SiteSettings = () => {
   const [currentTab, setCurrentTab] = useState<string>("general");

@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { UsersRound } from "lucide-react";
-import { useSiteSettings, UserSettings as UserSettingsType } from "@/contexts/site-settings";
+import { useSiteSettings } from "@/contexts/site-settings";
+import { UserSettings as UserSettingsType } from "@/contexts/site-settings/types";
 
 const userFormSchema = z.object({
   defaultRole: z.string(),

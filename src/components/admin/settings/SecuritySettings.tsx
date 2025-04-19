@@ -9,7 +9,8 @@ import { z } from "zod";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Clock } from "lucide-react";
-import { useSiteSettings, SecuritySettings as SecuritySettingsType } from "@/contexts/site-settings";
+import { useSiteSettings } from "@/contexts/site-settings";
+import { SecuritySettings as SecuritySettingsType } from "@/contexts/site-settings/types";
 
 const securityFormSchema = z.object({
   sessionTimeout: z.coerce.number().min(15, {

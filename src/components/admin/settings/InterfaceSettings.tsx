@@ -9,7 +9,8 @@ import { z } from "zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutDashboard, Navigation, Image } from "lucide-react";
-import { useSiteSettings, InterfaceSettings as InterfaceSettingsType } from "@/contexts/SiteSettingsContext";
+import { useSiteSettings } from "@/contexts/site-settings";
+import { InterfaceSettings as InterfaceSettingsType } from "@/contexts/site-settings/types";
 
 const interfaceFormSchema = z.object({
   logoUrl: z.string().optional(),

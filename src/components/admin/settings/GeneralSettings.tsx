@@ -8,8 +8,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Globe, Text } from "lucide-react";
-import { useSiteSettings, GeneralSettings as GeneralSettingsType } from "@/contexts/site-settings";
+import { Building, Globe, Mail, Phone } from "lucide-react";
+import { useSiteSettings } from "@/contexts/site-settings";
+import { GeneralSettings as GeneralSettingsType } from "@/contexts/site-settings/types";
 
 const generalFormSchema = z.object({
   siteName: z.string().min(2, {
@@ -78,7 +79,7 @@ export const GeneralSettings = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Text className="mr-2 h-5 w-5" />
+            <Building className="mr-2 h-5 w-5" />
             <span>General Information</span>
           </CardTitle>
         </CardHeader>
