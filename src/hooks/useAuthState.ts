@@ -12,12 +12,10 @@ export function useAuthState() {
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     console.log(`DETAILED Admin Check - Checking admin status for user: ${userId}`);
     try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('has_role', {
+        user_id: userId,
+        required_role: 'admin'
+      });
 
       console.log('DETAILED Admin Check - Raw query result:', { data, error });
 
@@ -32,7 +30,6 @@ export function useAuthState() {
       console.log(`DETAILED Admin Check - Final admin status for ${userId}:`, { 
         hasAdminRole, 
         userEmail: userId,
-        roleData: data 
       });
       
       setIsAdmin(hasAdminRole);
