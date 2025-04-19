@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +11,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
+  refreshAdminStatus: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,6 +92,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
     }
+  };
+  
+  const refreshAdminStatus = async () => {
+    if (user?.id) {
+      console.log("Manually refreshing admin status for:", user.email);
+      await checkAdminStatus(user.id);
+      console.log("Admin status after refresh:", isAdmin);
+      return isAdmin;
+    }
+    return false;
   };
 
   const signIn = async (email: string, password: string) => {
@@ -198,7 +208,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
-    isAdmin
+    isAdmin,
+    refreshAdminStatus
   };
   
   console.log("AuthContext state:", { 

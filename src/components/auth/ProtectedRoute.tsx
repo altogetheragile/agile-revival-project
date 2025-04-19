@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, refreshAdminStatus } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isChecking, setIsChecking] = useState(true);
@@ -28,6 +29,9 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           navigate('/auth');
           return;
         } 
+        
+        // Force a refresh of admin status
+        await refreshAdminStatus();
         
         if (!isAdmin) {
           console.log('User not admin, showing toast and redirecting');
@@ -55,11 +59,16 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     };
     
     checkAuth();
-  }, [user, isAdmin, navigate, toast]);
+  }, [user, isAdmin, navigate, toast, refreshAdminStatus]);
 
-  // Show nothing while checking auth status
+  // Show loading indicator while checking auth status
   if (isChecking) {
-    return null;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-agile-purple" />
+        <span className="ml-2 text-lg">Verifying access...</span>
+      </div>
+    );
   }
 
   // Only render children if user exists and is admin

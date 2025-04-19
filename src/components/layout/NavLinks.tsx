@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { 
   NavigationMenuItem,
@@ -71,11 +70,23 @@ const NavLinks = ({
   isMobile = false
 }: NavLinksProps) => {
   const location = useLocation();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, refreshAdminStatus } = useAuth();
   
   useEffect(() => {
-    console.log("NavLinks rendering with auth state:", { user: user?.email, isAdmin, userId: user?.id });
-  }, [user, isAdmin]);
+    const checkAuth = async () => {
+      console.log("NavLinks rendering with auth state:", { 
+        user: user?.email, 
+        isAdmin, 
+        userId: user?.id 
+      });
+      
+      if (user) {
+        await refreshAdminStatus();
+      }
+    };
+    
+    checkAuth();
+  }, [user, isAdmin, refreshAdminStatus]);
   
   const filteredNavLinks = navLinks;
 
@@ -106,7 +117,11 @@ const NavLinks = ({
   };
 
   const AuthButton = () => {
-    console.log("Rendering AuthButton with:", { user: user?.email, isAdmin, userId: user?.id });
+    console.log("Rendering AuthButton with:", { 
+      user: user?.email, 
+      isAdmin, 
+      userId: user?.id 
+    });
     
     if (user && isAdmin) {
       console.log("Should show Admin Dashboard link");
@@ -116,7 +131,10 @@ const NavLinks = ({
           className={isMobile 
             ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors" 
             : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
-          onClick={closeMenu}
+          onClick={() => {
+            console.log("Admin Dashboard link clicked");
+            closeMenu?.();
+          }}
         >
           Admin Dashboard
         </Link>
