@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, refreshAdminStatus } = useAuth();
+  const { user, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isChecking, setIsChecking] = useState(true);
@@ -16,7 +16,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       console.log('ProtectedRoute auth check started:', { 
         user: user?.email, 
         isAdmin, 
-        userId: user?.id 
+        userId: user?.id,
+        isAuthReady
       });
       
       try {
@@ -34,8 +35,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         // Force a refresh of admin status
         await refreshAdminStatus();
         
-        console.log('Admin status after refresh:', { isAdmin, user: user?.email });
-        
+        // After refreshing, check admin status again
         if (!isAdmin) {
           console.log('User not admin, showing toast and redirecting');
           toast({
@@ -61,11 +61,13 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       }
     };
     
-    checkAuth();
-  }, [user, isAdmin, navigate, toast, refreshAdminStatus]);
+    if (isAuthReady) {
+      checkAuth();
+    }
+  }, [user, isAdmin, navigate, toast, refreshAdminStatus, isAuthReady]);
 
   // Show loading indicator while checking auth status
-  if (isChecking) {
+  if (isChecking || !isAuthReady) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-agile-purple" />

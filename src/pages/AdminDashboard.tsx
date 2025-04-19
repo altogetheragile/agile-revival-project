@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -16,9 +16,22 @@ const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("courses");
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   
-  if (!isAdmin) {
+  // Add an effect to refresh admin status when the component mounts
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (isAuthReady) {
+        console.log("AdminDashboard - Refreshing admin status");
+        await refreshAdminStatus();
+      }
+    };
+    
+    checkAdmin();
+  }, [refreshAdminStatus, isAuthReady]);
+  
+  // This check serves as a backup to ProtectedRoute
+  if (isAuthReady && !isAdmin) {
     toast({
       title: "Access denied",
       description: "You don't have permission to access this page.",

@@ -7,20 +7,20 @@ import { useNavigate } from 'react-router-dom';
 import { Home, LogOut, LayoutDashboard, UserCheck } from 'lucide-react';
 
 export default function AuthenticatedView() {
-  const { user, signOut, isAdmin, refreshAdminStatus } = useAuth();
+  const { user, signOut, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   const navigate = useNavigate();
   
   // Force admin status check when component mounts
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (user) {
+      if (user && isAuthReady) {
         console.log("Authenticated view - checking admin status for:", user.email);
         await refreshAdminStatus();
       }
     };
     
     checkAdminStatus();
-  }, [user, refreshAdminStatus]);
+  }, [user, refreshAdminStatus, isAuthReady]);
   
   const handleLogout = async () => {
     try {

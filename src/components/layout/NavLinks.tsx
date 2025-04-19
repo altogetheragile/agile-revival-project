@@ -70,26 +70,21 @@ const NavLinks = ({
   isMobile = false
 }: NavLinksProps) => {
   const location = useLocation();
-  const { user, isAdmin, refreshAdminStatus } = useAuth();
-  const [adminChecked, setAdminChecked] = useState(false);
+  const { user, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   
   useEffect(() => {
-    const checkAuth = async () => {
-      console.log("NavLinks rendering with auth state:", { 
-        user: user?.email, 
-        isAdmin, 
-        userId: user?.id 
-      });
-      
-      if (user && !adminChecked) {
-        console.log("Refreshing admin status in NavLinks");
-        await refreshAdminStatus();
-        setAdminChecked(true);
-      }
-    };
+    console.log("NavLinks render - Auth state:", { 
+      user: user?.email, 
+      isAdmin, 
+      userId: user?.id,
+      isAuthReady
+    });
     
-    checkAuth();
-  }, [user, refreshAdminStatus, adminChecked, isAdmin]);
+    if (user && isAuthReady) {
+      console.log("NavLinks - Refreshing admin status");
+      refreshAdminStatus();
+    }
+  }, [user, refreshAdminStatus, isAuthReady, isAdmin]);
   
   const filteredNavLinks = navLinks;
 
@@ -123,8 +118,8 @@ const NavLinks = ({
     console.log("Rendering AuthButton with:", { 
       user: user?.email, 
       isAdmin, 
-      adminChecked,
-      userId: user?.id 
+      userId: user?.id,
+      isAuthReady 
     });
     
     if (user && isAdmin) {

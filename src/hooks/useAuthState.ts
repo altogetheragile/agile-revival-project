@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,7 +11,7 @@ export function useAuthState() {
   const [isAdminChecked, setIsAdminChecked] = useState(false);
 
   // Improved function to check admin status with better logging
-  const checkAdminStatus = async (userId: string) => {
+  const checkAdminStatus = useCallback(async (userId: string) => {
     console.log(`Checking admin status for user: ${userId}`);
     try {
       const { data, error } = await supabase
@@ -37,7 +37,7 @@ export function useAuthState() {
       setIsAdmin(false);
       return false;
     }
-  };
+  }, []);
 
   useEffect(() => {
     console.log("Setting up auth state listener");
@@ -45,7 +45,7 @@ export function useAuthState() {
     
     // Set up auth state change listener first before checking session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         console.log(`Auth state changed: ${event}`, currentSession?.user?.email);
         
         if (!isMounted) return;
@@ -94,7 +94,7 @@ export function useAuthState() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [checkAdminStatus]);
 
   return {
     user,

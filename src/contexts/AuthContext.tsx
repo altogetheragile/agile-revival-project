@@ -1,5 +1,5 @@
 
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
@@ -12,6 +12,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   isAdmin: boolean;
   refreshAdminStatus: () => Promise<void>;
+  isAuthReady: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +33,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
   } = useAuthMethods();
 
+  // Add effect to check admin status when user changes
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user?.id && !isAdminChecked) {
+        console.log(`Initial admin status check for user: ${user.email}`);
+        await checkAdminStatus(user.id);
+      }
+    };
+    
+    checkAdmin();
+  }, [user, checkAdminStatus, isAdminChecked]);
+
   const refreshAdminStatus = async () => {
     if (user?.id) {
       console.log(`Manually refreshing admin status for: ${user.email}`);
@@ -43,7 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: user?.email, 
     isAdmin,
     isAdminChecked,
-    userId: user?.id
+    userId: user?.id,
+    isAuthReady: !isLoading
   });
   
   if (isLoading) {
@@ -57,7 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     isAdmin,
-    refreshAdminStatus
+    refreshAdminStatus,
+    isAuthReady: !isLoading
   };
 
   return (
