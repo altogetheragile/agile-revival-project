@@ -12,7 +12,11 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   useEffect(() => {
     const checkAuth = async () => {
-      console.log('ProtectedRoute auth check started:', { user, isAdmin });
+      console.log('ProtectedRoute auth check started:', { 
+        user: user?.email, 
+        isAdmin, 
+        userId: user?.id 
+      });
       
       try {
         if (!user) {

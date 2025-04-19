@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,32 +26,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const INITIAL_TIMEOUT = 10000; // 10 seconds
 
   useEffect(() => {
+    console.log("Setting up auth state change listener");
+    
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
+      (event, currentSession) => {
+        console.log("Auth state changed:", event, currentSession?.user?.email);
         
-        if (session?.user) {
+        // Update session and user state synchronously
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        // Defer Supabase calls using setTimeout to prevent deadlocks
+        if (currentSession?.user) {
+          console.log("User authenticated, checking admin status");
           setTimeout(() => {
-            checkAdminStatus(session.user.id);
+            checkAdminStatus(currentSession.user.id);
           }, 0);
         } else {
+          console.log("User not authenticated, setting isAdmin to false");
           setIsAdmin(false);
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminStatus(session.user.id);
+    // THEN check for existing session
+    console.log("Checking for existing session");
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Initial session check:", currentSession?.user?.email);
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      
+      if (currentSession?.user) {
+        console.log("Found existing session, checking admin status");
+        checkAdminStatus(currentSession.user.id);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log("Cleaning up auth subscription");
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
@@ -63,13 +79,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('role', 'admin')
         .maybeSingle();
 
-      if (data && !error) {
-        console.log("User is admin:", data);
-        setIsAdmin(true);
-      } else {
-        console.log("User is not admin or error:", error);
+      if (error) {
+        console.error('Error checking admin status:', error);
         setIsAdmin(false);
+        return;
       }
+
+      const hasAdminRole = !!data;
+      console.log("Admin check result:", { hasAdminRole, data });
+      setIsAdmin(hasAdminRole);
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
@@ -77,12 +95,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      console.log("Attempting sign in for:", email);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) throw error;
+      if (error) throw error;
+      
+      console.log("Sign in successful:", data.user?.email);
+      // Auth state change listener will handle updating the user state
+    } catch (error: any) {
+      console.error("Sign in error:", error.message);
+      throw error;
+    }
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
@@ -95,6 +122,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
       try {
+        console.log(`Sign up attempt ${attempt + 1} for: ${email}`);
+        
         const signUpPromise = supabase.auth.signUp({
           email,
           password,
@@ -118,6 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (result?.error) throw result.error;
 
+        console.log("Sign up successful:", result.data.user?.email);
         toast({
           title: "Account created",
           description: "Please check your email to verify your account.",
@@ -126,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error: any) {
         lastError = error;
         clearTimeout(timeoutId);
+        console.error(`Sign up attempt ${attempt + 1} failed:`, error.message);
 
         if (attempt < MAX_RETRIES) {
           toast({
@@ -139,6 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const errorMsg = lastError?.message || "Failed to create account after multiple attempts";
+    console.error("Sign up failed after all attempts:", errorMsg);
     toast({
       title: "Error",
       description: errorMsg,
@@ -148,9 +180,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    navigate('/auth');
+    try {
+      console.log("Signing out user");
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      console.log("Sign out successful");
+      navigate('/auth');
+    } catch (error: any) {
+      console.error("Sign out error:", error.message);
+      throw error;
+    }
   };
 
   const contextValue = {
@@ -162,7 +201,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin
   };
   
-  console.log("AuthContext state:", { user: user?.email, isAdmin });
+  console.log("AuthContext state:", { 
+    user: user?.email, 
+    isAdmin,
+    userId: user?.id
+  });
   
   return (
     <AuthContext.Provider value={contextValue}>

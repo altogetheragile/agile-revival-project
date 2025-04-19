@@ -72,11 +72,9 @@ const NavLinks = ({
 }: NavLinksProps) => {
   const location = useLocation();
   const { user, isAdmin } = useAuth();
-  const [authState, setAuthState] = useState({ user: null, isAdmin: false });
   
   useEffect(() => {
-    console.log("NavLinks auth state:", { user, isAdmin });
-    setAuthState({ user, isAdmin });
+    console.log("NavLinks rendering with auth state:", { user: user?.email, isAdmin, userId: user?.id });
   }, [user, isAdmin]);
   
   const filteredNavLinks = navLinks;
@@ -108,9 +106,9 @@ const NavLinks = ({
   };
 
   const AuthButton = () => {
-    console.log("Rendering AuthButton with:", { user: authState.user, isAdmin: authState.isAdmin });
+    console.log("Rendering AuthButton with:", { user: user?.email, isAdmin, userId: user?.id });
     
-    if (authState.user && authState.isAdmin) {
+    if (user && isAdmin) {
       console.log("Should show Admin Dashboard link");
       return (
         <Link 
@@ -125,7 +123,7 @@ const NavLinks = ({
       );
     }
     
-    if (authState.user) {
+    if (user) {
       console.log("Should show Profile link for regular user");
       return (
         <Link 
