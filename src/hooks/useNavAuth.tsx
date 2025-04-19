@@ -6,6 +6,7 @@ export const useNavAuth = () => {
   const { user, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   const [adminStatusChecked, setAdminStatusChecked] = useState(false);
   
+  // Primary effect for checking admin status when user changes or auth is ready
   useEffect(() => {
     let isMounted = true;
     
@@ -15,6 +16,7 @@ export const useNavAuth = () => {
         console.log(`NavAuth - Checking admin status for ${user.email} (${user.app_metadata?.provider || 'email'})`);
         
         try {
+          // For Google auth, we need to check immediately without delay
           const checkDelay = isGoogleAuth ? 0 : 100;
           
           setTimeout(async () => {
@@ -32,6 +34,7 @@ export const useNavAuth = () => {
           if (isMounted) setAdminStatusChecked(true);
         }
       } else if (!user) {
+        // Reset state when user is null
         setAdminStatusChecked(false);
       }
     };
@@ -43,7 +46,10 @@ export const useNavAuth = () => {
     };
   }, [user, isAuthReady, refreshAdminStatus]);
 
+  // Special effect specifically for Google authentication
   useEffect(() => {
+    // If we detect Google auth, let's double-check admin status
+    // This helps handle cases where the database updates might be delayed
     if (user?.app_metadata?.provider === 'google' && isAuthReady) {
       console.log('NavAuth - Detected Google auth, force-checking admin status');
       refreshAdminStatus();
