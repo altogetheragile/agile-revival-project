@@ -54,7 +54,7 @@ export function useAuthState() {
     
     // Set up auth state change listener first before checking session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         console.log(`Auth state changed: ${event}`, currentSession?.user?.email);
         
         if (!isMounted) return;
@@ -68,19 +68,22 @@ export function useAuthState() {
           setIsAdminChecked(false);
           setIsAdmin(false); // Reset admin status until it's checked
           
-          // Important: Check admin status immediately but don't block UI
-          try {
-            const adminStatus = await checkAdminStatus(currentSession.user.id);
-            console.log(`Admin status for ${currentSession.user.email}: ${adminStatus}`);
-            if (isMounted) {
-              setIsLoading(false);
+          // Check admin status via setTimeout to prevent potential deadlock
+          setTimeout(async () => {
+            if (!isMounted) return;
+            try {
+              const adminStatus = await checkAdminStatus(currentSession.user.id);
+              console.log(`Admin status for ${currentSession.user.email}: ${adminStatus}`);
+              if (isMounted) {
+                setIsLoading(false);
+              }
+            } catch (error) {
+              console.error('Error checking admin status during auth change:', error);
+              if (isMounted) {
+                setIsLoading(false);
+              }
             }
-          } catch (error) {
-            console.error('Error checking admin status during auth change:', error);
-            if (isMounted) {
-              setIsLoading(false);
-            }
-          }
+          }, 0);
         } else {
           console.log("No authenticated user, clearing admin status");
           setIsAdmin(false);
@@ -102,19 +105,23 @@ export function useAuthState() {
       
       if (currentSession?.user) {
         console.log(`Found existing session for: ${currentSession.user.email}, id: ${currentSession.user.id}`);
-        checkAdminStatus(currentSession.user.id)
-          .then(adminStatus => {
+        
+        // Use setTimeout to prevent deadlock with the auth state change handler
+        setTimeout(async () => {
+          if (!isMounted) return;
+          try {
+            const adminStatus = await checkAdminStatus(currentSession.user.id);
             console.log(`Initial admin status set to ${adminStatus} for ${currentSession.user?.email}`);
             if (isMounted) {
               setIsLoading(false);
             }
-          })
-          .catch(error => {
+          } catch (error) {
             console.error('Error during initial admin check:', error);
             if (isMounted) {
               setIsLoading(false);
             }
-          });
+          }
+        }, 0);
       } else {
         if (isMounted) setIsLoading(false);
       }

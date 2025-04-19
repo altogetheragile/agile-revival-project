@@ -42,7 +42,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (user?.id && !hasInitialAdminCheck) {
         console.log(`Initial admin status check for user: ${user.email}, id: ${user.id}`);
         setHasInitialAdminCheck(true);
-        await checkAdminStatus(user.id);
+        // Use setTimeout to avoid potential deadlock
+        setTimeout(async () => {
+          await checkAdminStatus(user.id);
+        }, 0);
       }
     };
     
@@ -54,9 +57,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshAdminStatus = async (): Promise<boolean> => {
     if (user?.id) {
       console.log(`Manually refreshing admin status for: ${user.email}, id: ${user.id}`);
-      const result = await checkAdminStatus(user.id);
-      console.log(`Admin status after refresh: ${result}`);
-      return result;
+      try {
+        const result = await checkAdminStatus(user.id);
+        console.log(`Admin status after refresh: ${result}`);
+        return result;
+      } catch (error) {
+        console.error('Error refreshing admin status:', error);
+        return false;
+      }
     }
     return false;
   };

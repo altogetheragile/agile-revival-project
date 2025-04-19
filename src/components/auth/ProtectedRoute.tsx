@@ -40,33 +40,38 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         } 
         
         console.log('ProtectedRoute - User found, refreshing admin status');
-        // Force a refresh of admin status
-        const isUserAdmin = await refreshAdminStatus();
-        console.log('ProtectedRoute - Admin status refresh result:', isUserAdmin);
-        
-        // After refreshing, check admin status
-        if (!isUserAdmin) {
-          console.log('ProtectedRoute - User not admin after refresh, redirecting');
-          toast({
-            title: "Access Denied",
-            description: "You don't have permission to access this page.",
-            variant: "destructive",
-          });
-          navigate('/');
-          return;
-        }
-        
-        console.log('ProtectedRoute - Auth check passed, user is admin');
+        // Force a refresh of admin status with setTimeout to prevent deadlock
+        let isUserAdmin = false;
+        setTimeout(async () => {
+          isUserAdmin = await refreshAdminStatus();
+          console.log('ProtectedRoute - Admin status refresh result:', isUserAdmin);
+          
+          if (!isMounted) return;
+          
+          // After refreshing, check admin status
+          if (!isUserAdmin) {
+            console.log('ProtectedRoute - User not admin after refresh, redirecting');
+            toast({
+              title: "Access Denied",
+              description: "You don't have permission to access this page.",
+              variant: "destructive",
+            });
+            navigate('/');
+          } else {
+            console.log('ProtectedRoute - Auth check passed, user is admin');
+          }
+          
+          setIsChecking(false);
+        }, 0);
       } catch (error) {
         console.error('Auth check error:', error);
-        toast({
-          title: "Authentication Error",
-          description: "There was a problem verifying your access.",
-          variant: "destructive",
-        });
-        navigate('/auth');
-      } finally {
         if (isMounted) {
+          toast({
+            title: "Authentication Error",
+            description: "There was a problem verifying your access.",
+            variant: "destructive",
+          });
+          navigate('/auth');
           setIsChecking(false);
         }
       }
