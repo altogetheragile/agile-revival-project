@@ -74,19 +74,39 @@ const NavLinks = ({
   const { user, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   const [hasCheckedAdmin, setHasCheckedAdmin] = useState(false);
   
-  // Immediate admin status check when component mounts or user changes
+  // Force admin status check when component mounts or auth state changes
   useEffect(() => {
+    let isMounted = true;
+    
     const checkAdminStatus = async () => {
-      if (user?.id && isAuthReady && !hasCheckedAdmin) {
-        console.log(`NavLinks - Checking admin status for ${user.email}, current status: ${isAdmin ? 'admin' : 'not admin'}`);
-        const refreshedAdminStatus = await refreshAdminStatus();
-        console.log(`NavLinks - Admin refresh result: ${refreshedAdminStatus ? 'admin' : 'not admin'} for user ${user.email}`);
-        setHasCheckedAdmin(true);
+      // Only check if we have a user and auth is ready
+      if (user?.id && isAuthReady) {
+        console.log(`NavLinks - Checking admin status for ${user.email}`);
+        
+        try {
+          // Always force a refresh when NavLinks mounts
+          const refreshedAdminStatus = await refreshAdminStatus();
+          if (isMounted) {
+            console.log(`NavLinks - Admin status refreshed: ${refreshedAdminStatus ? 'admin' : 'not admin'} for ${user.email}`);
+            // No need to update state since refreshAdminStatus updates the context
+          }
+        } catch (error) {
+          console.error("NavLinks - Error checking admin status:", error);
+        }
       }
     };
     
-    checkAdminStatus();
-  }, [user, isAuthReady, refreshAdminStatus, hasCheckedAdmin, isAdmin]);
+    // Use setTimeout to prevent potential deadlocks with auth state changes
+    setTimeout(() => {
+      if (isMounted) {
+        checkAdminStatus();
+      }
+    }, 100);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [user, isAuthReady, refreshAdminStatus]);
   
   const filteredNavLinks = navLinks;
 
@@ -118,7 +138,7 @@ const NavLinks = ({
 
   const AuthButton = () => {
     console.log("NavLinks - Rendering AuthButton:", { 
-      user: user?.email, 
+      userEmail: user?.email, 
       isAdmin, 
       isAuthReady 
     });
@@ -129,7 +149,7 @@ const NavLinks = ({
         <Link 
           to="/admin" 
           className={isMobile 
-            ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors" 
+            ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors bg-yellow-100" 
             : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple bg-yellow-100"}
           onClick={() => {
             console.log("Admin Dashboard link clicked");

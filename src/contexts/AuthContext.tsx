@@ -36,30 +36,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
   } = useAuthMethods();
 
-  // Add effect to check admin status when user changes
+  // Add effect to check admin status when user changes or auth is ready
   useEffect(() => {
+    let isMounted = true;
+    
     const checkAdmin = async () => {
-      if (user?.id && !hasInitialAdminCheck) {
-        console.log(`Initial admin status check for user: ${user.email}, id: ${user.id}`);
-        setHasInitialAdminCheck(true);
-        // Use setTimeout to avoid potential deadlock
-        setTimeout(async () => {
-          await checkAdminStatus(user.id);
-        }, 0);
+      if (user?.id) {
+        console.log(`Auth provider - Checking admin status for: ${user.email}, id: ${user.id}`);
+        
+        try {
+          // Use setTimeout to avoid potential deadlock
+          setTimeout(async () => {
+            if (isMounted) {
+              const result = await checkAdminStatus(user.id);
+              console.log(`Auth provider - Admin check result for ${user.email}: ${result ? 'admin' : 'not admin'}`);
+              setHasInitialAdminCheck(true);
+            }
+          }, 100);
+        } catch (error) {
+          console.error("Auth provider - Error checking admin status:", error);
+          if (isMounted) {
+            setHasInitialAdminCheck(true); // Mark as checked even on error
+          }
+        }
       }
     };
     
-    if (user?.id) {
+    // Only run check if we have a user and haven't checked yet
+    if (user?.id && !hasInitialAdminCheck) {
       checkAdmin();
     }
   }, [user, checkAdminStatus, hasInitialAdminCheck]);
 
   const refreshAdminStatus = async (): Promise<boolean> => {
     if (user?.id) {
-      console.log(`Manually refreshing admin status for: ${user.email}, id: ${user.id}`);
+      console.log(`AuthContext - Manually refreshing admin status for: ${user.email}, id: ${user.id}`);
       try {
         const result = await checkAdminStatus(user.id);
-        console.log(`Admin status after refresh: ${result}`);
+        console.log(`AuthContext - Admin status after refresh: ${result ? 'admin' : 'not admin'}`);
         return result;
       } catch (error) {
         console.error('Error refreshing admin status:', error);
@@ -70,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   console.log("AuthContext state:", { 
-    user: user?.email, 
+    userEmail: user?.email, 
     isAdmin,
     isAdminChecked,
     userId: user?.id,
