@@ -11,24 +11,56 @@ import CourseManagement from "@/components/admin/CourseManagement";
 import BlogManagement from "@/components/admin/BlogManagement";
 import UserManagement from "@/components/admin/UserManagement";
 import SiteSettings from "@/components/admin/SiteSettings";
+import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("courses");
+  const [isChecking, setIsChecking] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
+  const { isAdmin, refreshAdminStatus, isAuthReady, user } = useAuth();
   
   // Add an effect to refresh admin status when the component mounts
   useEffect(() => {
     const checkAdmin = async () => {
+      console.log("AdminDashboard - Initial auth state:", { 
+        userEmail: user?.email, 
+        isAdmin,
+        userId: user?.id,  
+        isAuthReady 
+      });
+      
       if (isAuthReady) {
         console.log("AdminDashboard - Refreshing admin status");
-        await refreshAdminStatus();
+        setIsChecking(true);
+        const adminResult = await refreshAdminStatus();
+        console.log("AdminDashboard - Admin status after refresh:", adminResult);
+        
+        if (!adminResult) {
+          toast({
+            title: "Access denied",
+            description: "You don't have permission to access this page.",
+            variant: "destructive"
+          });
+          navigate("/");
+        }
+        
+        setIsChecking(false);
       }
     };
     
     checkAdmin();
-  }, [refreshAdminStatus, isAuthReady]);
+  }, [refreshAdminStatus, isAuthReady, isAdmin, navigate, toast, user]);
+  
+  // Show loading while checking admin status
+  if (isChecking || !isAuthReady) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-agile-purple" />
+        <span className="ml-2 text-lg">Verifying admin access...</span>
+      </div>
+    );
+  }
   
   // This check serves as a backup to ProtectedRoute
   if (isAuthReady && !isAdmin) {

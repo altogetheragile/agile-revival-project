@@ -48,8 +48,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshAdminStatus = async () => {
     if (user?.id) {
       console.log(`Manually refreshing admin status for: ${user.email}`);
-      await checkAdminStatus(user.id);
+      return await checkAdminStatus(user.id);
     }
+    return false;
   };
 
   console.log("AuthContext state:", { 

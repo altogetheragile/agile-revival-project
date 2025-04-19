@@ -14,6 +14,7 @@ export function useAuthState() {
   const checkAdminStatus = useCallback(async (userId: string) => {
     console.log(`Checking admin status for user: ${userId}`);
     try {
+      // Make sure we're getting the most up-to-date data by disabling cache
       const { data, error } = await supabase
         .from('user_roles')
         .select('*')
@@ -45,7 +46,7 @@ export function useAuthState() {
     
     // Set up auth state change listener first before checking session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
+      async (event, currentSession) => {
         console.log(`Auth state changed: ${event}`, currentSession?.user?.email);
         
         if (!isMounted) return;

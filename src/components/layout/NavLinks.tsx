@@ -1,10 +1,11 @@
+
 import { Link, useLocation } from 'react-router-dom';
 import { 
   NavigationMenuItem,
   navigationMenuTriggerStyle
 } from '@/components/ui/navigation-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 type NavLinkProps = {
   name: string;
@@ -73,18 +74,23 @@ const NavLinks = ({
   const { user, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   
   useEffect(() => {
-    console.log("NavLinks render - Auth state:", { 
-      user: user?.email, 
-      isAdmin, 
-      userId: user?.id,
-      isAuthReady
-    });
+    const checkAdminStatus = async () => {
+      console.log("NavLinks - Auth state initially:", { 
+        user: user?.email, 
+        isAdmin, 
+        userId: user?.id,
+        isAuthReady
+      });
+      
+      if (user && isAuthReady) {
+        console.log("NavLinks - Refreshing admin status");
+        const adminStatus = await refreshAdminStatus();
+        console.log("NavLinks - Admin status after refresh:", adminStatus);
+      }
+    };
     
-    if (user && isAuthReady) {
-      console.log("NavLinks - Refreshing admin status");
-      refreshAdminStatus();
-    }
-  }, [user, refreshAdminStatus, isAuthReady, isAdmin]);
+    checkAdminStatus();
+  }, [user, refreshAdminStatus, isAuthReady]);
   
   const filteredNavLinks = navLinks;
 

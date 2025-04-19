@@ -5,22 +5,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Home, LogOut, LayoutDashboard, UserCheck } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function AuthenticatedView() {
   const { user, signOut, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   // Force admin status check when component mounts
   useEffect(() => {
     const checkAdminStatus = async () => {
+      console.log("Authenticated view - initial auth state:", { 
+        userEmail: user?.email, 
+        isAdmin, 
+        userId: user?.id,
+        isAuthReady
+      });
+
       if (user && isAuthReady) {
         console.log("Authenticated view - checking admin status for:", user.email);
-        await refreshAdminStatus();
+        const adminStatus = await refreshAdminStatus();
+        console.log("Authenticated view - admin status after refresh:", adminStatus);
+        
+        // Notify user of their admin status
+        if (adminStatus) {
+          toast({
+            title: "Admin Access Granted",
+            description: "You have administrator privileges.",
+          });
+        }
       }
     };
     
     checkAdminStatus();
-  }, [user, refreshAdminStatus, isAuthReady]);
+  }, [user, refreshAdminStatus, isAuthReady, toast]);
   
   const handleLogout = async () => {
     try {
@@ -30,6 +48,11 @@ export default function AuthenticatedView() {
     } catch (error) {
       console.error('Logout error:', error);
     }
+  };
+
+  const handleAdminDashboard = () => {
+    console.log("Admin dashboard button clicked, current admin status:", isAdmin);
+    navigate('/admin');
   };
 
   return (
@@ -57,7 +80,7 @@ export default function AuthenticatedView() {
           
           {isAdmin && (
             <Button 
-              onClick={() => navigate('/admin')}
+              onClick={handleAdminDashboard}
               variant="default"
               className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700"
             >
