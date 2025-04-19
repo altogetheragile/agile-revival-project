@@ -26,15 +26,19 @@ export default function AuthenticatedView() {
         provider: user?.app_metadata?.provider
       });
 
-      if (user?.id && isAuthReady && !adminChecked) {
+      if (user?.id && isAuthReady) {
+        const isGoogleAuth = user?.app_metadata?.provider === 'google';
         console.log(`AuthenticatedView - Checking admin status for: ${user.email}, id: ${user.id}, provider: ${user?.app_metadata?.provider || 'email'}`);
+        
+        // Use shorter timeout for Google auth
+        const checkDelay = isGoogleAuth ? 0 : 200;
         
         // Use setTimeout to prevent potential race conditions
         setTimeout(async () => {
           if (!isMounted) return;
           
           const result = await refreshAdminStatus();
-          console.log(`AuthenticatedView - Admin status for ${user.email}: ${result ? 'admin' : 'not admin'}`);
+          console.log(`AuthenticatedView - Admin status for ${user.email} (${user?.app_metadata?.provider || 'email'}): ${result ? 'admin' : 'not admin'}`);
           
           if (isMounted) {
             setAdminChecked(true);
@@ -47,7 +51,7 @@ export default function AuthenticatedView() {
               });
             }
           }
-        }, 200);
+        }, checkDelay);
       }
     };
     
@@ -56,7 +60,15 @@ export default function AuthenticatedView() {
     return () => {
       isMounted = false;
     };
-  }, [user, refreshAdminStatus, isAuthReady, adminChecked, isAdmin, toast]);
+  }, [user, refreshAdminStatus, isAuthReady, isAdmin, toast]);
+  
+  // Additional check specifically for Google login
+  useEffect(() => {
+    if (user?.app_metadata?.provider === 'google' && isAuthReady && !adminChecked) {
+      console.log('AuthenticatedView - Detected Google login, running extra admin check');
+      refreshAdminStatus();
+    }
+  }, [user?.app_metadata?.provider, isAuthReady, adminChecked, refreshAdminStatus]);
   
   const handleLogout = async () => {
     try {

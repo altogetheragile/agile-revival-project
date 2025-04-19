@@ -80,37 +80,49 @@ const NavLinks = ({
     
     const checkAdminStatus = async () => {
       // Only check if we have a user and auth is ready
-      if (user?.id && isAuthReady && !adminStatusChecked) {
-        console.log(`NavLinks - Initial check for admin status for ${user.email} (${user.app_metadata?.provider || 'email'})`);
+      if (user?.id && isAuthReady) {
+        const isGoogleAuth = user.app_metadata?.provider === 'google';
+        console.log(`NavLinks - Checking admin status for ${user.email} (${user.app_metadata?.provider || 'email'})`);
         
         try {
-          // Give a short delay to allow auth to fully initialize
+          // Give a shorter delay for Google auth
+          const checkDelay = isGoogleAuth ? 0 : 100;
+          
           setTimeout(async () => {
             if (!isMounted) return;
             
-            // Always force a refresh when NavLinks mounts
+            // Always force a refresh of admin status
             const refreshedAdminStatus = await refreshAdminStatus();
             
             if (isMounted) {
-              console.log(`NavLinks - Admin status refreshed: ${refreshedAdminStatus ? 'admin' : 'not admin'} for ${user.email}`);
+              console.log(`NavLinks - Admin status refreshed: ${refreshedAdminStatus ? 'admin' : 'not admin'} for ${user.email} (${user.app_metadata?.provider || 'email'})`);
               setAdminStatusChecked(true);
             }
-          }, 200);
+          }, checkDelay);
         } catch (error) {
           console.error("NavLinks - Error checking admin status:", error);
-          setAdminStatusChecked(true); // Mark as checked even on error
+          if (isMounted) setAdminStatusChecked(true); // Mark as checked even on error
         }
       } else if (!user) {
         setAdminStatusChecked(false);
       }
     };
     
+    // Always run the check when component mounts if there's a user
     checkAdminStatus();
     
     return () => {
       isMounted = false;
     };
-  }, [user, isAuthReady, refreshAdminStatus, adminStatusChecked]);
+  }, [user, isAuthReady, refreshAdminStatus]);
+
+  // Additionally check admin status when the provider might be 'google'
+  useEffect(() => {
+    if (user?.app_metadata?.provider === 'google' && isAuthReady) {
+      console.log('NavLinks - Detected Google auth, force-checking admin status');
+      refreshAdminStatus();
+    }
+  }, [user?.app_metadata?.provider, isAuthReady, refreshAdminStatus]);
 
   // Reset admin check status on user change
   useEffect(() => {
@@ -154,7 +166,7 @@ const NavLinks = ({
     });
     
     if (user && isAdmin) {
-      console.log(`NavLinks - Showing Admin link for admin user: ${user.email}`);
+      console.log(`NavLinks - Showing Admin link for admin user: ${user.email} (${user.app_metadata?.provider || 'email'})`);
       return (
         <Link 
           to="/admin" 
@@ -201,7 +213,7 @@ const NavLinks = ({
   // For debugging admin status
   useEffect(() => {
     if (user?.id) {
-      console.log(`NavLinks - Admin status for ${user.email}: ${isAdmin ? 'ADMIN' : 'not admin'}`);
+      console.log(`NavLinks - Admin status for ${user.email}: ${isAdmin ? 'ADMIN' : 'not admin'}, provider: ${user.app_metadata?.provider || 'email'}`);
     }
   }, [isAdmin, user]);
 

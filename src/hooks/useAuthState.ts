@@ -14,8 +14,9 @@ export function useAuthState() {
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     console.log(`useAuthState - Checking admin status for user: ${userId}`);
     try {
-      // Force cache refresh by using a timestamp parameter
+      // Force cache refresh by adding a timestamp parameter
       const timestamp = new Date().getTime();
+      
       const { data, error } = await supabase
         .from('user_roles')
         .select('*')
@@ -56,7 +57,10 @@ export function useAuthState() {
     // Set up auth state change listener first before checking session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        console.log(`Auth state changed: ${event}`, currentSession?.user?.email);
+        console.log(`Auth state changed: ${event}`, { 
+          email: currentSession?.user?.email,
+          provider: currentSession?.user?.app_metadata?.provider
+        });
         
         if (!isMounted) return;
         
@@ -64,7 +68,7 @@ export function useAuthState() {
         setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
-          console.log(`User authenticated, email: ${currentSession.user.email}, id: ${currentSession.user.id}, provider: ${currentSession.user.app_metadata.provider || 'email'}`);
+          console.log(`User authenticated, email: ${currentSession.user.email}, id: ${currentSession.user.id}, provider: ${currentSession.user.app_metadata?.provider || 'email'}`);
           // Reset admin check status when user changes
           setIsAdminChecked(false);
           setIsAdmin(false); // Reset admin status until it's checked
@@ -74,7 +78,7 @@ export function useAuthState() {
             if (!isMounted) return;
             try {
               const adminStatus = await checkAdminStatus(currentSession.user.id);
-              console.log(`Admin status for ${currentSession.user.email}: ${adminStatus ? 'admin' : 'not admin'}`);
+              console.log(`Admin status for ${currentSession.user.email} (${currentSession.user.app_metadata?.provider || 'email'}): ${adminStatus ? 'admin' : 'not admin'}`);
               if (isMounted) {
                 setIsLoading(false);
               }
@@ -97,7 +101,10 @@ export function useAuthState() {
     console.log("Initial session check on component mount");
     // Perform initial session check
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log("Initial session check result:", currentSession?.user?.email);
+      console.log("Initial session check result:", { 
+        email: currentSession?.user?.email,
+        provider: currentSession?.user?.app_metadata?.provider
+      });
       
       if (!isMounted) return;
       
@@ -105,14 +112,21 @@ export function useAuthState() {
       setUser(currentSession?.user ?? null);
       
       if (currentSession?.user) {
-        console.log(`Found existing session for: ${currentSession.user.email}, id: ${currentSession.user.id}, provider: ${currentSession.user.app_metadata.provider || 'email'}`);
+        console.log(`Found existing session for: ${currentSession.user.email}, id: ${currentSession.user.id}, provider: ${currentSession.user.app_metadata?.provider || 'email'}`);
+        
+        // Force immediate admin check for Google provider
+        const isGoogleAuth = currentSession.user.app_metadata?.provider === 'google';
+        
+        // Use different timing for different providers
+        const checkDelay = isGoogleAuth ? 10 : 100; // Shorter delay for Google auth
         
         // Separate setTimeout to avoid deadlock with auth state change handler
         setTimeout(async () => {
           if (!isMounted) return;
           try {
+            console.log(`Checking admin status with ${checkDelay}ms delay for provider: ${currentSession.user.app_metadata?.provider || 'email'}`);
             const adminStatus = await checkAdminStatus(currentSession.user.id);
-            console.log(`Initial admin status set to ${adminStatus ? 'admin' : 'not admin'} for ${currentSession.user?.email}`);
+            console.log(`Initial admin status set to ${adminStatus ? 'admin' : 'not admin'} for ${currentSession.user?.email} (${currentSession.user.app_metadata?.provider || 'email'})`);
             if (isMounted) {
               setIsLoading(false);
             }
@@ -122,7 +136,7 @@ export function useAuthState() {
               setIsLoading(false);
             }
           }
-        }, 100);
+        }, checkDelay);
       } else {
         if (isMounted) setIsLoading(false);
       }

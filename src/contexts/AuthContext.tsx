@@ -42,17 +42,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     const checkAdmin = async () => {
       if (user?.id) {
-        console.log(`Auth provider - Checking admin status for: ${user.email}, id: ${user.id}`);
+        const isGoogleAuth = user.app_metadata?.provider === 'google';
+        console.log(`Auth provider - Checking admin status for: ${user.email}, id: ${user.id}, provider: ${user.app_metadata?.provider || 'email'}`);
         
         try {
+          // Use different timing for different providers
+          const checkDelay = isGoogleAuth ? 10 : 100; // Shorter delay for Google auth
+          
           // Use setTimeout to avoid potential deadlock
           setTimeout(async () => {
             if (isMounted && user?.id) {
               const result = await checkAdminStatus(user.id);
-              console.log(`Auth provider - Admin check result for ${user.email}: ${result ? 'admin' : 'not admin'}`);
+              console.log(`Auth provider - Admin check result for ${user.email} (${user.app_metadata?.provider || 'email'}): ${result ? 'admin' : 'not admin'}`);
               setHasInitialAdminCheck(true);
             }
-          }, 100);
+          }, checkDelay);
         } catch (error) {
           console.error("Auth provider - Error checking admin status:", error);
           if (isMounted) {
@@ -62,8 +66,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
     
-    // Only run check if we have a user and haven't checked yet
-    if (user?.id && !hasInitialAdminCheck) {
+    // Run check immediately if we have a user from Google auth
+    const isGoogleAuth = user?.app_metadata?.provider === 'google';
+    const shouldForceCheck = user?.id && (!hasInitialAdminCheck || isGoogleAuth);
+    
+    if (shouldForceCheck) {
       checkAdmin();
     } else if (!user) {
       // Reset check state if no user
@@ -73,11 +80,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshAdminStatus = async (): Promise<boolean> => {
     if (user?.id) {
-      console.log(`AuthContext - Manually refreshing admin status for: ${user.email}, id: ${user.id}`);
+      console.log(`AuthContext - Manually refreshing admin status for: ${user.email}, id: ${user.id}, provider: ${user.app_metadata?.provider || 'email'}`);
       try {
         // Force a fresh check from the database
         const result = await checkAdminStatus(user.id);
-        console.log(`AuthContext - Admin status after refresh: ${result ? 'admin' : 'not admin'} for ${user.email}`);
+        console.log(`AuthContext - Admin status after refresh: ${result ? 'admin' : 'not admin'} for ${user.email} (${user.app_metadata?.provider || 'email'})`);
         return result;
       } catch (error) {
         console.error('Error refreshing admin status:', error);
