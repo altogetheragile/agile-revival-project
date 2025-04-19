@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Loader2, XCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { supabase } from '@/integrations/supabase/client';
 
 interface ResetPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
@@ -15,18 +16,21 @@ interface ResetPasswordFormProps {
 }
 
 export default function ResetPasswordForm({ 
-  onSubmit, 
   onSwitchToLogin, 
-  loading, 
-  error,
+  loading: externalLoading, 
+  error: externalError,
   resetEmailSent 
 }: ResetPasswordFormProps) {
   const [email, setEmail] = useState('');
   const [retryCount, setRetryCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
+  const [localResetEmailSent, setLocalResetEmailSent] = useState(resetEmailSent);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   
+  // Maximum timeout reduced to 6 seconds for faster feedback
+  const REQUEST_TIMEOUT = 6000;
+
   // Clear timeout error when email changes
   useEffect(() => {
     if (timeoutError) {
@@ -43,9 +47,24 @@ export default function ResetPasswordForm({
     };
   }, [abortController]);
 
+  const handleResetPassword = async () => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) throw error;
+      setLocalResetEmailSent(true);
+      return { success: true };
+    } catch (error: any) {
+      console.error('Password reset API error:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || externalLoading) return;
     
     setIsSubmitting(true);
     setTimeoutError(null);
@@ -54,28 +73,33 @@ export default function ResetPasswordForm({
     const controller = new AbortController();
     setAbortController(controller);
     
-    // Set a timeout to abort the request after 10 seconds instead of 15
-    // This provides quicker feedback to the user
+    // Set a timeout to abort the request after specified timeout
     const timeoutId = setTimeout(() => {
       controller.abort('timeout');
-      setTimeoutError("Request timed out. Please try again later.");
+      setTimeoutError("Request timed out. The server might be busy. Please try again in a moment.");
       setIsSubmitting(false);
-    }, 10000);
+    }, REQUEST_TIMEOUT);
     
     try {
-      await onSubmit(email);
-      // Reset retry count on successful submission
+      const result = await Promise.race([
+        handleResetPassword(),
+        new Promise((_, reject) => {
+          controller.signal.addEventListener('abort', () => {
+            reject(new Error('Request aborted'));
+          });
+        })
+      ]);
+      
+      clearTimeout(timeoutId);
       setRetryCount(0);
+      return result;
     } catch (error: any) {
       console.log('Error in ResetPasswordForm:', error);
-      if (error.name === 'AbortError' || error.message?.includes('abort')) {
-        // No need to set the error message here as it's already handled by the timeout or cancel
-        console.log('Request was aborted:', error.message);
-      } else {
-        // Increment retry count for other errors
+      
+      if (!controller.signal.aborted) {
         setRetryCount(prev => prev + 1);
-        console.error('Password reset error:', error);
       }
+      
     } finally {
       clearTimeout(timeoutId);
       setIsSubmitting(false);
@@ -87,17 +111,20 @@ export default function ResetPasswordForm({
   const handleCancel = () => {
     if (abortController) {
       abortController.abort('canceled by user');
-      setTimeoutError("Request canceled by user.");
+      setTimeoutError("Request canceled");
     }
     setIsSubmitting(false);
     setAbortController(null);
   };
 
-  const isLoading = loading || isSubmitting;
-  const displayError = timeoutError || error;
+  const isLoading = externalLoading || isSubmitting;
+  const displayError = timeoutError || externalError;
   const buttonText = isLoading ? 'Processing...' : 'Send Reset Link';
+  
+  // Use either the prop value or local state
+  const showSuccess = resetEmailSent || localResetEmailSent;
 
-  if (resetEmailSent) {
+  if (showSuccess) {
     return (
       <Alert className="bg-green-50 border-green-200">
         <CheckCircle className="h-4 w-4 text-green-600" />
@@ -181,7 +208,7 @@ export default function ResetPasswordForm({
         ) : (
           <Button 
             type="submit" 
-            className="w-full"
+            className="w-full bg-green-600 hover:bg-green-700 transition-colors"
           >
             {buttonText}
           </Button>

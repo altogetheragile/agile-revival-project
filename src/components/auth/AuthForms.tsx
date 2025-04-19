@@ -87,27 +87,14 @@ export default function AuthForms() {
     setErrorMessage(null);
     
     try {
-      // Using AbortController to set a timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-      
-      const resetPromise = supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      
-      const abortPromise = new Promise((_, reject) => {
-        controller.signal.addEventListener('abort', () => {
-          reject(new Error('Password reset request timed out'));
-        });
-      });
-      
       toast({
         title: "Processing",
         description: "Sending password reset email...",
       });
       
-      const { error } = await Promise.race([resetPromise, abortPromise]) as any;
-      clearTimeout(timeoutId);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
       
       if (error) throw error;
       
