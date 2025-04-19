@@ -1,13 +1,12 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
 import ResetPasswordForm from './ResetPasswordForm';
+import GoogleSignInButton from './GoogleSignInButton';
+import AuthDivider from './AuthDivider';
 import { AuthMode } from './AuthContainer';
 
 export default function AuthForms() {
@@ -35,28 +34,6 @@ export default function AuthForms() {
       description: message,
       variant: "destructive",
     });
-  };
-
-  const handleGoogleSignIn = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      setErrorMessage(null);
-      
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth`,
-        }
-      });
-      
-      if (error) throw error;
-      
-    } catch (error: any) {
-      handleError(error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleSignIn = async (email: string, password: string) => {
@@ -93,11 +70,11 @@ export default function AuthForms() {
     setErrorMessage(null);
     
     try {
-      const response = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       
-      if (response.error) throw response.error;
+      if (error) throw error;
       
       setResetEmailSent(true);
       toast({
@@ -111,81 +88,61 @@ export default function AuthForms() {
     }
   };
 
-  if (mode === 'login') {
-    return (
-      <div className="space-y-4">
-        <Button 
-          onClick={handleGoogleSignIn}
-          className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2"
-          disabled={loading}
-          type="button"
-        >
-          <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
-          Sign in with Google
-        </Button>
-        
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <Separator />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-gray-500">Or continue with</span>
-          </div>
+  const renderForm = () => {
+    const commonProps = {
+      loading,
+      error: errorMessage,
+    };
+
+    if (mode === 'login') {
+      return (
+        <div className="space-y-4">
+          <GoogleSignInButton 
+            mode="login"
+            loading={loading}
+            onError={handleError}
+          />
+          <AuthDivider />
+          <LoginForm
+            onSubmit={handleSignIn}
+            onSwitchToSignup={() => setMode('signup')}
+            onSwitchToReset={() => {
+              setMode('reset');
+              setResetEmailSent(false);
+            }}
+            {...commonProps}
+          />
         </div>
+      );
+    }
 
-        <LoginForm
-          onSubmit={handleSignIn}
-          onSwitchToSignup={() => setMode('signup')}
-          onSwitchToReset={() => {
-            setMode('reset');
-            setResetEmailSent(false);
-          }}
-          loading={loading}
-          error={errorMessage}
-        />
-      </div>
-    );
-  }
-
-  if (mode === 'signup') {
-    return (
-      <div className="space-y-4">
-        <Button 
-          onClick={handleGoogleSignIn}
-          className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2"
-          disabled={loading}
-          type="button"
-        >
-          <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
-          Sign up with Google
-        </Button>
-        
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <Separator />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-gray-500">Or continue with</span>
-          </div>
+    if (mode === 'signup') {
+      return (
+        <div className="space-y-4">
+          <GoogleSignInButton 
+            mode="signup"
+            loading={loading}
+            onError={handleError}
+          />
+          <AuthDivider />
+          <SignupForm
+            onSubmit={handleSignUp}
+            onSwitchToLogin={() => setMode('login')}
+            {...commonProps}
+          />
         </div>
+      );
+    }
 
-        <SignupForm
-          onSubmit={handleSignUp}
-          onSwitchToLogin={() => setMode('login')}
-          loading={loading}
-          error={errorMessage}
-        />
-      </div>
+    return (
+      <ResetPasswordForm
+        onSubmit={handleResetPassword}
+        onSwitchToLogin={() => setMode('login')}
+        resetEmailSent={resetEmailSent}
+        {...commonProps}
+      />
     );
-  }
+  };
 
-  return (
-    <ResetPasswordForm
-      onSubmit={handleResetPassword}
-      onSwitchToLogin={() => setMode('login')}
-      loading={loading}
-      error={errorMessage}
-      resetEmailSent={resetEmailSent}
-    />
-  );
+  return renderForm();
 }
