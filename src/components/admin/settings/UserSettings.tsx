@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { UsersRound } from "lucide-react";
+import { useSiteSettings, UserSettings as UserSettingsType } from "@/contexts/SiteSettingsContext";
 
 const userFormSchema = z.object({
   defaultRole: z.string(),
@@ -23,27 +24,29 @@ type UserFormValues = z.infer<typeof userFormSchema>;
 
 export const UserSettings = () => {
   const { toast } = useToast();
-
-  const defaultValues: UserFormValues = {
-    defaultRole: "user",
-    allowSocialSignIn: true,
-    requireEmailVerification: true,
-    allowUserRegistration: true,
-    autoApproveUsers: false,
-  };
+  const { settings, updateSettings, isLoading } = useSiteSettings();
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
-    defaultValues,
+    defaultValues: settings.user as UserSettingsType,
   });
 
-  const onSubmit = (data: UserFormValues) => {
-    console.log("User Settings saved:", data);
-    toast({
-      title: "Settings updated",
-      description: "User settings have been successfully updated.",
-    });
+  // When settings load or change, update form values
+  useEffect(() => {
+    console.log("UserSettings received settings:", settings.user);
+    if (!isLoading) {
+      form.reset(settings.user as UserSettingsType);
+    }
+  }, [isLoading, settings.user, form]);
+
+  const onSubmit = async (data: UserFormValues) => {
+    console.log("Submitting User Settings:", data);
+    await updateSettings('user', data);
   };
+
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading settings...</div>;
+  }
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { z } from "zod";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Clock } from "lucide-react";
+import { useSiteSettings, SecuritySettings as SecuritySettingsType } from "@/contexts/SiteSettingsContext";
 
 const securityFormSchema = z.object({
   sessionTimeout: z.coerce.number().min(15, {
@@ -27,29 +28,31 @@ type SecurityFormValues = z.infer<typeof securityFormSchema>;
 
 export const SecuritySettings = () => {
   const { toast } = useToast();
-
-  const defaultValues: SecurityFormValues = {
-    sessionTimeout: 60,
-    requirePasswordReset: false,
-    passwordResetDays: 90,
-    twoFactorAuth: false,
-    strongPasswords: true,
-  };
+  const { settings, updateSettings, isLoading } = useSiteSettings();
 
   const form = useForm<SecurityFormValues>({
     resolver: zodResolver(securityFormSchema),
-    defaultValues,
+    defaultValues: settings.security as SecuritySettingsType,
   });
+
+  // When settings load or change, update form values
+  useEffect(() => {
+    console.log("SecuritySettings received settings:", settings.security);
+    if (!isLoading) {
+      form.reset(settings.security as SecuritySettingsType);
+    }
+  }, [isLoading, settings.security, form]);
 
   const watchRequirePasswordReset = form.watch("requirePasswordReset");
 
-  const onSubmit = (data: SecurityFormValues) => {
-    console.log("Security Settings saved:", data);
-    toast({
-      title: "Settings updated",
-      description: "Security settings have been successfully updated.",
-    });
+  const onSubmit = async (data: SecurityFormValues) => {
+    console.log("Submitting Security Settings:", data);
+    await updateSettings('security', data);
   };
+
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading settings...</div>;
+  }
 
   return (
     <div className="space-y-6">

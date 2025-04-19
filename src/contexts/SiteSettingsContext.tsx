@@ -127,8 +127,12 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       if (data && data.length > 0) {
         const newSettings = { ...defaultSettings };
         data.forEach(setting => {
-          newSettings[setting.key] = setting.value;
+          // Make sure the key exists in our settings object
+          if (setting.key in newSettings) {
+            newSettings[setting.key] = setting.value;
+          }
         });
+        console.log("Fetched settings:", newSettings);
         setSettings(newSettings);
       }
     } catch (error) {
@@ -141,6 +145,9 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
   // Function to update a setting category
   const updateSettings = async (key: string, values: any) => {
     try {
+      console.log(`Updating ${key} settings:`, values);
+      
+      // First update the database
       const { error } = await supabase.rpc('update_site_settings', {
         setting_key: key,
         setting_value: values,
@@ -150,13 +157,13 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         console.error("Error updating settings:", error);
         toast({
           title: "Error",
-          description: "Failed to update settings",
+          description: `Failed to update ${key} settings: ${error.message}`,
           variant: "destructive",
         });
         return;
       }
 
-      // Update local state
+      // If the database update was successful, update local state
       setSettings(prev => ({
         ...prev,
         [key]: values

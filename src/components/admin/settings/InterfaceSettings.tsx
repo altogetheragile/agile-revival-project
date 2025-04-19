@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { z } from "zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutDashboard, Navigation, Image } from "lucide-react";
+import { useSiteSettings, InterfaceSettings as InterfaceSettingsType } from "@/contexts/SiteSettingsContext";
 
 const interfaceFormSchema = z.object({
   logoUrl: z.string().optional(),
@@ -24,28 +25,29 @@ type InterfaceFormValues = z.infer<typeof interfaceFormSchema>;
 
 export const InterfaceSettings = () => {
   const { toast } = useToast();
-
-  const defaultValues: InterfaceFormValues = {
-    logoUrl: "",
-    faviconUrl: "",
-    primaryColor: "#8B5CF6",
-    secondaryColor: "#F3E8FF",
-    homepageLayout: "featured",
-    navigationStyle: "standard",
-  };
+  const { settings, updateSettings, isLoading } = useSiteSettings();
 
   const form = useForm<InterfaceFormValues>({
     resolver: zodResolver(interfaceFormSchema),
-    defaultValues,
+    defaultValues: settings.interface as InterfaceSettingsType,
   });
 
-  const onSubmit = (data: InterfaceFormValues) => {
-    console.log("Interface Settings saved:", data);
-    toast({
-      title: "Settings updated",
-      description: "Interface settings have been successfully updated.",
-    });
+  // When settings load or change, update form values
+  useEffect(() => {
+    console.log("InterfaceSettings received settings:", settings.interface);
+    if (!isLoading) {
+      form.reset(settings.interface as InterfaceSettingsType);
+    }
+  }, [isLoading, settings.interface, form]);
+
+  const onSubmit = async (data: InterfaceFormValues) => {
+    console.log("Submitting Interface Settings:", data);
+    await updateSettings('interface', data);
   };
+
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading settings...</div>;
+  }
 
   return (
     <div className="space-y-6">

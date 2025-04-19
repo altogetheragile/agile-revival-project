@@ -36,13 +36,21 @@ export const GeneralSettings = () => {
     { value: "America/Denver", label: "Mountain Time (MT)" },
     { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
     { value: "America/Anchorage", label: "Alaska Time (AKT)" },
-    { value: "Pacific/Honolulu", label: "Hawaii Time (HT)" },
+    { value: "America/Hawaii", label: "Hawaii Time (HT)" },
+    { value: "Pacific/Honolulu", label: "Hawaii-Aleutian Time (HAT)" },
+    { value: "America/Phoenix", label: "Arizona (MST)" },
     { value: "Europe/London", label: "British Time (GMT/BST)" },
     { value: "Europe/Paris", label: "Central European Time (CET)" },
+    { value: "Europe/Athens", label: "Eastern European Time (EET)" },
+    { value: "Europe/Moscow", label: "Moscow Time (MSK)" },
     { value: "Asia/Dubai", label: "Gulf Time (GT)" },
+    { value: "Asia/Shanghai", label: "China Time (CST)" },
     { value: "Asia/Singapore", label: "Singapore Time (SGT)" },
     { value: "Asia/Tokyo", label: "Japan Time (JST)" },
+    { value: "Asia/Seoul", label: "Korea Time (KST)" },
     { value: "Australia/Sydney", label: "Australian Eastern Time (AET)" },
+    { value: "Australia/Perth", label: "Australian Western Time (AWT)" },
+    { value: "Pacific/Auckland", label: "New Zealand Time (NZT)" },
   ];
 
   const form = useForm<GeneralFormValues>({
@@ -52,13 +60,14 @@ export const GeneralSettings = () => {
 
   // When settings load or change, update form values
   useEffect(() => {
+    console.log("GeneralSettings received settings:", settings.general);
     if (!isLoading) {
       form.reset(settings.general as GeneralSettingsType);
     }
   }, [isLoading, settings.general, form]);
 
   const onSubmit = async (data: GeneralFormValues) => {
-    console.log("General Settings to save:", data);
+    console.log("Submitting General Settings:", data);
     await updateSettings('general', data);
   };
 
