@@ -53,6 +53,7 @@ export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
   }
   
   // Default case - show Login link for unauthenticated users
+  // This should always render when user is null
   return (
     <Link 
       to="/auth" 

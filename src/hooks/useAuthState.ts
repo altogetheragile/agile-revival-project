@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,6 +60,7 @@ export function useAuthState() {
         
         if (!isMounted) return;
         
+        // Always update session and user state
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
@@ -100,6 +102,7 @@ export function useAuthState() {
       
       if (!isMounted) return;
       
+      // Always update session and user state
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       
