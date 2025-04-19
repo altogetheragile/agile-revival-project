@@ -28,8 +28,8 @@ export default function ResetPasswordForm({
   const [localResetEmailSent, setLocalResetEmailSent] = useState(resetEmailSent);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   
-  // Maximum timeout reduced to 6 seconds for faster feedback
-  const REQUEST_TIMEOUT = 6000;
+  // Maximum timeout increased to 15 seconds for better chances of success
+  const REQUEST_TIMEOUT = 15000;
 
   // Clear timeout error when email changes
   useEffect(() => {
@@ -49,17 +49,29 @@ export default function ResetPasswordForm({
 
   const handleResetPassword = async () => {
     try {
+      console.log(`Initiating password reset for: ${email}`);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Password reset error:', error);
+        throw error;
+      }
+      
+      console.log('Password reset request successful');
       setLocalResetEmailSent(true);
       return { success: true };
     } catch (error: any) {
       console.error('Password reset API error:', error);
       throw error;
     }
+  };
+
+  const handleRetry = async () => {
+    setRetryCount(prev => prev + 1);
+    return handleSubmit(new Event('retry') as any);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,30 +88,27 @@ export default function ResetPasswordForm({
     // Set a timeout to abort the request after specified timeout
     const timeoutId = setTimeout(() => {
       controller.abort('timeout');
-      setTimeoutError("Request timed out. The server might be busy. Please try again in a moment.");
+      setTimeoutError("Request timed out. The server might be busy. Please try again.");
       setIsSubmitting(false);
     }, REQUEST_TIMEOUT);
     
     try {
-      const result = await Promise.race([
-        handleResetPassword(),
-        new Promise((_, reject) => {
-          controller.signal.addEventListener('abort', () => {
-            reject(new Error('Request aborted'));
-          });
-        })
-      ]);
+      console.log(`Attempting password reset for ${email} (attempt ${retryCount + 1})`);
+      await handleResetPassword();
       
       clearTimeout(timeoutId);
       setRetryCount(0);
-      return result;
+      
+      // Show success even if the parent component hasn't updated
+      setLocalResetEmailSent(true);
     } catch (error: any) {
       console.log('Error in ResetPasswordForm:', error);
       
-      if (!controller.signal.aborted) {
-        setRetryCount(prev => prev + 1);
+      if (error.message?.includes('Network') || error.message?.includes('time') || error.message === '{}') {
+        setTimeoutError("The request timed out. The server might be busy, but your request may still be processed. Please check your email or try again.");
+      } else {
+        setTimeoutError(error.message || "An unexpected error occurred");
       }
-      
     } finally {
       clearTimeout(timeoutId);
       setIsSubmitting(false);
@@ -136,7 +145,7 @@ export default function ResetPasswordForm({
             <ul className="list-disc pl-5 mt-1">
               <li>Check your spam/junk folder</li>
               <li>Verify you used the correct email address</li>
-              <li>Try again in a few moments if you encounter timeout errors</li>
+              <li>Try again in a few moments if necessary</li>
             </ul>
           </p>
         </AlertDescription>
@@ -157,10 +166,19 @@ export default function ResetPasswordForm({
                 <ul className="list-disc pl-5 mt-1">
                   <li>Wait a few moments and try again</li>
                   <li>Check your internet connection</li>
-                  <li>Try using a different browser</li>
                   <li>If the issue persists, please contact support</li>
                 </ul>
               </p>
+            )}
+            {(displayError.includes('timeout') || displayError.includes('busy')) && (
+              <Button 
+                type="button" 
+                onClick={handleRetry} 
+                className="mt-2 bg-amber-500 hover:bg-amber-600 text-white"
+                size="sm"
+              >
+                Try Again
+              </Button>
             )}
           </AlertDescription>
         </Alert>

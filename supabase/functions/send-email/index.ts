@@ -24,18 +24,34 @@ serve(async (req) => {
   try {
     const { firstName, email } = await req.json();
 
-    const html = await renderAsync(
+    // Set a timeout limit for the email rendering
+    const renderPromise = renderAsync(
       WelcomeEmail({ firstName, email })
     );
+    
+    const renderTimeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Email rendering timed out')), 5000);
+    });
+    
+    // Race between rendering and timeout
+    const html = await Promise.race([renderPromise, renderTimeoutPromise]);
 
     console.log(`Sending welcome email to ${email} using sender: ${SENDER_NAME} <${SENDER_EMAIL}>`);
 
-    const result = await resend.emails.send({
+    // Set a timeout limit for the email sending
+    const sendPromise = resend.emails.send({
       from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
       to: [email],
       subject: 'Welcome to Our Platform!',
       html: html,
     });
+    
+    const sendTimeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Email sending timed out')), 8000);
+    });
+    
+    // Race between sending and timeout
+    const result = await Promise.race([sendPromise, sendTimeoutPromise]);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
