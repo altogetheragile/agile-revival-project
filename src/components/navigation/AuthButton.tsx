@@ -9,13 +9,14 @@ interface AuthButtonProps {
 }
 
 export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
-  const { user, isAdmin } = useNavAuth();
+  const { user, isAdmin, isAuthReady } = useNavAuth();
   
   console.log("AuthButton - Rendering:", { 
     userEmail: user?.email, 
     isAdmin,
     provider: user?.app_metadata?.provider,
-    isUserDefined: !!user
+    isUserDefined: !!user,
+    isAuthReady
   });
   
   // Always render the Admin Dashboard link if user is admin

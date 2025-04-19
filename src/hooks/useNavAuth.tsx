@@ -72,6 +72,7 @@ export const useNavAuth = () => {
   return {
     user: user || null,
     isAdmin: !!isAdmin,
-    adminStatusChecked
+    adminStatusChecked,
+    isAuthReady
   };
 };
