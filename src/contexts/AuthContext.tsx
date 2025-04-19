@@ -11,7 +11,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
-  refreshAdminStatus: () => Promise<boolean>; // Fixed return type to boolean
+  refreshAdminStatus: () => Promise<boolean>;
   isAuthReady: boolean;
 }
 
@@ -58,13 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     isAdminChecked,
     userId: user?.id,
-    isAuthReady: !isLoading
+    isAuthReady: !isLoading,
+    isLoading
   });
-  
-  // If still loading auth state, show loading indicator
-  if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading authentication...</div>;
-  }
   
   const contextValue: AuthContextType = {
     user,
@@ -77,6 +73,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthReady: !isLoading
   };
 
+  // If still loading auth state, render a simple loading indicator
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-8 border-4 border-agile-purple border-t-transparent rounded-full animate-spin mb-2"></div>
+          <p>Loading authentication...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <AuthContext.Provider value={contextValue}>
       {children}

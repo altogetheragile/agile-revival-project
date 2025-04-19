@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from 'react-router-dom';
 import { 
   NavigationMenuItem,
@@ -72,25 +73,30 @@ const NavLinks = ({
   const location = useLocation();
   const { user, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   
+  // Only refresh admin status once when component mounts
   useEffect(() => {
+    let isMounted = true;
+    
     const checkAdminStatus = async () => {
-      if (user && isAuthReady) {
-        console.log("NavLinks - Auth state initially:", { 
+      if (user && isAuthReady && isMounted) {
+        console.log("NavLinks - Initial auth state:", { 
           user: user.email, 
           isAdmin, 
           userId: user.id,
           isAuthReady
         });
         
-        if (user) {
-          console.log("NavLinks - Refreshing admin status");
-          await refreshAdminStatus();
-        }
+        await refreshAdminStatus();
+        console.log("NavLinks - Admin status after refresh:", isAdmin);
       }
     };
     
     checkAdminStatus();
-  }, [user, refreshAdminStatus, isAuthReady, isAdmin]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [user, isAuthReady]);
   
   const filteredNavLinks = navLinks;
 

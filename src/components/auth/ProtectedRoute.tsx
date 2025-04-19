@@ -12,6 +12,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const checkAuth = async () => {
       console.log('ProtectedRoute auth check started:', { 
         user: user?.email, 
@@ -19,6 +21,12 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         userId: user?.id,
         isAuthReady
       });
+      
+      // Only proceed if authentication is ready
+      if (!isAuthReady) {
+        console.log('Auth not ready yet, waiting...');
+        return;
+      }
       
       try {
         if (!user) {
@@ -58,13 +66,17 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         });
         navigate('/auth');
       } finally {
-        setIsChecking(false);
+        if (isMounted) {
+          setIsChecking(false);
+        }
       }
     };
     
-    if (isAuthReady) {
-      checkAuth();
-    }
+    checkAuth();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [user, isAdmin, navigate, toast, refreshAdminStatus, isAuthReady]);
 
   // Show loading indicator while checking auth status

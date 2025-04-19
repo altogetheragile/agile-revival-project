@@ -22,6 +22,8 @@ const AdminDashboard = () => {
   
   // Add an effect to refresh admin status when the component mounts
   useEffect(() => {
+    let isMounted = true;
+    
     const checkAdmin = async () => {
       console.log("AdminDashboard - Initial auth state:", { 
         userEmail: user?.email, 
@@ -30,13 +32,16 @@ const AdminDashboard = () => {
         isAuthReady 
       });
       
-      if (isAuthReady) {
-        console.log("AdminDashboard - Refreshing admin status");
-        setIsChecking(true);
+      if (!isAuthReady) return;
+      
+      console.log("AdminDashboard - Refreshing admin status");
+      setIsChecking(true);
+      
+      try {
         const isUserAdmin = await refreshAdminStatus(); // Store the boolean result
         console.log("AdminDashboard - Admin status after refresh:", isUserAdmin);
         
-        if (!isUserAdmin) {
+        if (isMounted && !isUserAdmin) {
           toast({
             title: "Access denied",
             description: "You don't have permission to access this page.",
@@ -44,13 +49,29 @@ const AdminDashboard = () => {
           });
           navigate("/");
         }
-        
-        setIsChecking(false);
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        if (isMounted) {
+          toast({
+            title: "Error",
+            description: "Failed to verify admin privileges",
+            variant: "destructive"
+          });
+          navigate("/");
+        }
+      } finally {
+        if (isMounted) {
+          setIsChecking(false);
+        }
       }
     };
     
     checkAdmin();
-  }, [refreshAdminStatus, isAuthReady, isAdmin, navigate, toast, user]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [refreshAdminStatus, isAuthReady, navigate, toast, user]);
   
   // Show loading while checking admin status
   if (isChecking || !isAuthReady) {
