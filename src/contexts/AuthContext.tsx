@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAdmin();
   }, [user, checkAdminStatus, isAdminChecked]);
 
-  const refreshAdminStatus = async () => {
+  const refreshAdminStatus = async (): Promise<boolean> => {
     if (user?.id) {
       console.log(`Manually refreshing admin status for: ${user.email}`);
       return await checkAdminStatus(user.id);
@@ -61,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthReady: !isLoading
   });
   
+  // If still loading auth state, show loading indicator
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading authentication...</div>;
   }
@@ -83,7 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useAuth = () => {
+// Export the useAuth hook separately to avoid circular dependencies
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');

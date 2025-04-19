@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { 
   NavigationMenuItem,
@@ -75,22 +74,23 @@ const NavLinks = ({
   
   useEffect(() => {
     const checkAdminStatus = async () => {
-      console.log("NavLinks - Auth state initially:", { 
-        user: user?.email, 
-        isAdmin, 
-        userId: user?.id,
-        isAuthReady
-      });
-      
       if (user && isAuthReady) {
-        console.log("NavLinks - Refreshing admin status");
-        const adminStatus = await refreshAdminStatus();
-        console.log("NavLinks - Admin status after refresh:", adminStatus);
+        console.log("NavLinks - Auth state initially:", { 
+          user: user.email, 
+          isAdmin, 
+          userId: user.id,
+          isAuthReady
+        });
+        
+        if (user) {
+          console.log("NavLinks - Refreshing admin status");
+          await refreshAdminStatus();
+        }
       }
     };
     
     checkAdminStatus();
-  }, [user, refreshAdminStatus, isAuthReady]);
+  }, [user, refreshAdminStatus, isAuthReady, isAdmin]);
   
   const filteredNavLinks = navLinks;
 

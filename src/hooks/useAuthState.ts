@@ -11,7 +11,7 @@ export function useAuthState() {
   const [isAdminChecked, setIsAdminChecked] = useState(false);
 
   // Improved function to check admin status with better logging
-  const checkAdminStatus = useCallback(async (userId: string) => {
+  const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     console.log(`Checking admin status for user: ${userId}`);
     try {
       // Make sure we're getting the most up-to-date data by disabling cache
@@ -25,6 +25,7 @@ export function useAuthState() {
       if (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
+        setIsAdminChecked(true);
         return false;
       }
 
@@ -36,6 +37,7 @@ export function useAuthState() {
     } catch (error) {
       console.error('Exception checking admin status:', error);
       setIsAdmin(false);
+      setIsAdminChecked(true);
       return false;
     }
   }, []);
@@ -56,6 +58,8 @@ export function useAuthState() {
         
         if (currentSession?.user) {
           console.log(`User authenticated, checking admin status for: ${currentSession.user.email}`);
+          // Reset admin check status when user changes
+          setIsAdminChecked(false);
           // Use setTimeout to avoid potential recursive issues with Supabase client
           setTimeout(async () => {
             if (isMounted) {
@@ -83,11 +87,14 @@ export function useAuthState() {
         console.log(`Found existing session for: ${currentSession.user.email}`);
         // Directly check admin status here for initial load
         await checkAdminStatus(currentSession.user.id);
+      } else {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }).catch(error => {
       console.error("Error checking initial session:", error);
-      setIsLoading(false);
+      if (isMounted) {
+        setIsLoading(false);
+      }
     });
 
     return () => {
