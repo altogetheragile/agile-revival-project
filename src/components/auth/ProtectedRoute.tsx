@@ -15,7 +15,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     let isMounted = true;
     
     const checkAuth = async () => {
-      console.log('ProtectedRoute auth check started:', { 
+      console.log('ProtectedRoute - Auth check started:', { 
         user: user?.email, 
         isAdmin, 
         userId: user?.id,
@@ -24,13 +24,13 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       
       // Only proceed if authentication is ready
       if (!isAuthReady) {
-        console.log('Auth not ready yet, waiting...');
+        console.log('ProtectedRoute - Auth not ready yet, waiting...');
         return;
       }
       
       try {
         if (!user) {
-          console.log('No user, redirecting to auth');
+          console.log('ProtectedRoute - No user, redirecting to auth');
           toast({
             title: "Authentication required",
             description: "Please login to continue.",
@@ -39,14 +39,14 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           return;
         } 
         
-        console.log('User found, refreshing admin status');
+        console.log('ProtectedRoute - User found, refreshing admin status');
         // Force a refresh of admin status
-        const isUserAdmin = await refreshAdminStatus(); // Store the boolean result
-        console.log('Admin status refresh result:', isUserAdmin);
+        const isUserAdmin = await refreshAdminStatus();
+        console.log('ProtectedRoute - Admin status refresh result:', isUserAdmin);
         
         // After refreshing, check admin status
         if (!isUserAdmin) {
-          console.log('User not admin after refresh, showing toast and redirecting');
+          console.log('ProtectedRoute - User not admin after refresh, redirecting');
           toast({
             title: "Access Denied",
             description: "You don't have permission to access this page.",
@@ -56,7 +56,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           return;
         }
         
-        console.log('Auth check passed, user is admin');
+        console.log('ProtectedRoute - Auth check passed, user is admin');
       } catch (error) {
         console.error('Auth check error:', error);
         toast({

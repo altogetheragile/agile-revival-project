@@ -11,26 +11,26 @@ export default function AuthenticatedView() {
   const { user, signOut, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [adminCheckDone, setAdminCheckDone] = useState(false);
+  const [adminChecked, setAdminChecked] = useState(false);
   
   // Force admin status check when component mounts
   useEffect(() => {
     const checkAdminStatus = async () => {
-      console.log("Authenticated view - initial auth state:", { 
+      console.log("AuthenticatedView - Initial auth state:", { 
         userEmail: user?.email, 
         isAdmin, 
         userId: user?.id,
         isAuthReady
       });
 
-      if (user && isAuthReady && !adminCheckDone) {
-        console.log("Authenticated view - checking admin status for:", user.email);
-        const isUserAdmin = await refreshAdminStatus();
-        console.log("Authenticated view - admin status after refresh:", isUserAdmin);
-        setAdminCheckDone(true);
+      if (user?.id && isAuthReady && !adminChecked) {
+        console.log(`AuthenticatedView - Checking admin status for: ${user.email}, id: ${user.id}`);
+        const result = await refreshAdminStatus();
+        console.log(`AuthenticatedView - Admin status for ${user.email}: ${result ? 'admin' : 'not admin'}`);
+        setAdminChecked(true);
         
         // Notify user of their admin status
-        if (isUserAdmin) {
+        if (result) {
           toast({
             title: "Admin Access Granted",
             description: "You have administrator privileges.",
@@ -40,7 +40,7 @@ export default function AuthenticatedView() {
     };
     
     checkAdminStatus();
-  }, [user, refreshAdminStatus, isAuthReady, adminCheckDone, isAdmin, toast]);
+  }, [user, refreshAdminStatus, isAuthReady, adminChecked, isAdmin, toast]);
   
   const handleLogout = async () => {
     try {

@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from 'react-router-dom';
 import { 
   NavigationMenuItem,
@@ -73,30 +74,18 @@ const NavLinks = ({
   const { user, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   const [hasCheckedAdmin, setHasCheckedAdmin] = useState(false);
   
-  // Only refresh admin status once when component mounts
+  // Immediate admin status check when component mounts or user changes
   useEffect(() => {
-    let isMounted = true;
-    
     const checkAdminStatus = async () => {
-      if (user && isAuthReady && isMounted && !hasCheckedAdmin) {
-        console.log("NavLinks - Initial auth state:", { 
-          user: user.email, 
-          isAdmin, 
-          userId: user.id,
-          isAuthReady
-        });
-        
-        const result = await refreshAdminStatus();
-        console.log("NavLinks - Admin status after refresh:", result);
+      if (user?.id && isAuthReady && !hasCheckedAdmin) {
+        console.log(`NavLinks - Checking admin status for ${user.email}, current status: ${isAdmin ? 'admin' : 'not admin'}`);
+        const refreshedAdminStatus = await refreshAdminStatus();
+        console.log(`NavLinks - Admin refresh result: ${refreshedAdminStatus ? 'admin' : 'not admin'} for user ${user.email}`);
         setHasCheckedAdmin(true);
       }
     };
     
     checkAdminStatus();
-    
-    return () => {
-      isMounted = false;
-    };
   }, [user, isAuthReady, refreshAdminStatus, hasCheckedAdmin, isAdmin]);
   
   const filteredNavLinks = navLinks;
@@ -128,21 +117,20 @@ const NavLinks = ({
   };
 
   const AuthButton = () => {
-    console.log("Rendering AuthButton with:", { 
+    console.log("NavLinks - Rendering AuthButton:", { 
       user: user?.email, 
       isAdmin, 
-      userId: user?.id,
       isAuthReady 
     });
     
     if (user && isAdmin) {
-      console.log("Should show Admin Dashboard link for admin user");
+      console.log(`NavLinks - Showing Admin link for admin user: ${user.email}`);
       return (
         <Link 
           to="/admin" 
           className={isMobile 
             ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors" 
-            : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
+            : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple bg-yellow-100"}
           onClick={() => {
             console.log("Admin Dashboard link clicked");
             closeMenu?.();
@@ -154,7 +142,6 @@ const NavLinks = ({
     }
     
     if (user) {
-      console.log("Should show Profile link for regular user");
       return (
         <Link 
           to="/auth" 
@@ -211,6 +198,15 @@ const NavLinks = ({
           )
         ))}
         <AuthButton />
+        {user && isAdmin && (
+          <Link 
+            to="/admin"
+            className="text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors bg-yellow-100"
+            onClick={closeMenu}
+          >
+            Admin Dashboard
+          </Link>
+        )}
         <GetStartedButton />
       </>
     );

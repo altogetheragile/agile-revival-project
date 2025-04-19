@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
+import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
   user: User | null;
@@ -38,19 +39,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Add effect to check admin status when user changes
   useEffect(() => {
     const checkAdmin = async () => {
-      if (user?.id && !isAdminChecked && !hasInitialAdminCheck) {
-        console.log(`Initial admin status check for user: ${user.email}`);
+      if (user?.id && !hasInitialAdminCheck) {
+        console.log(`Initial admin status check for user: ${user.email}, id: ${user.id}`);
         setHasInitialAdminCheck(true);
         await checkAdminStatus(user.id);
       }
     };
     
-    checkAdmin();
-  }, [user, checkAdminStatus, isAdminChecked, hasInitialAdminCheck]);
+    if (user?.id) {
+      checkAdmin();
+    }
+  }, [user, checkAdminStatus, hasInitialAdminCheck]);
 
   const refreshAdminStatus = async (): Promise<boolean> => {
     if (user?.id) {
-      console.log(`Manually refreshing admin status for: ${user.email}`);
+      console.log(`Manually refreshing admin status for: ${user.email}, id: ${user.id}`);
       const result = await checkAdminStatus(user.id);
       console.log(`Admin status after refresh: ${result}`);
       return result;
@@ -83,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center">
-          <div className="w-8 h-8 border-4 border-agile-purple border-t-transparent rounded-full animate-spin mb-2"></div>
+          <Loader2 className="w-8 h-8 text-agile-purple animate-spin mb-2" />
           <p>Loading authentication...</p>
         </div>
       </div>

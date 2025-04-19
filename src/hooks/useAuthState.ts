@@ -54,7 +54,7 @@ export function useAuthState() {
     
     // Set up auth state change listener first before checking session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
+      async (event, currentSession) => {
         console.log(`Auth state changed: ${event}`, currentSession?.user?.email);
         
         if (!isMounted) return;
@@ -63,23 +63,24 @@ export function useAuthState() {
         setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
-          console.log(`User authenticated, checking admin status for: ${currentSession.user.email}`);
+          console.log(`User authenticated, email: ${currentSession.user.email}, id: ${currentSession.user.id}`);
           // Reset admin check status when user changes
           setIsAdminChecked(false);
+          setIsAdmin(false); // Reset admin status until it's checked
           
-          // Important: Don't block UI while checking admin status
-          checkAdminStatus(currentSession.user.id)
-            .then(adminStatus => {
-              console.log(`Admin status set to ${adminStatus} for ${currentSession.user?.email}`);
-              if (isMounted) {
-                setIsLoading(false);
-              }
-            })
-            .catch(() => {
-              if (isMounted) {
-                setIsLoading(false);
-              }
-            });
+          // Important: Check admin status immediately but don't block UI
+          try {
+            const adminStatus = await checkAdminStatus(currentSession.user.id);
+            console.log(`Admin status for ${currentSession.user.email}: ${adminStatus}`);
+            if (isMounted) {
+              setIsLoading(false);
+            }
+          } catch (error) {
+            console.error('Error checking admin status during auth change:', error);
+            if (isMounted) {
+              setIsLoading(false);
+            }
+          }
         } else {
           console.log("No authenticated user, clearing admin status");
           setIsAdmin(false);
@@ -92,7 +93,7 @@ export function useAuthState() {
     console.log("Initial session check on component mount");
     // Perform initial session check
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log("Session check result:", currentSession?.user?.email);
+      console.log("Initial session check result:", currentSession?.user?.email);
       
       if (!isMounted) return;
       
@@ -100,7 +101,7 @@ export function useAuthState() {
       setUser(currentSession?.user ?? null);
       
       if (currentSession?.user) {
-        console.log(`Found existing session for: ${currentSession.user.email}`);
+        console.log(`Found existing session for: ${currentSession.user.email}, id: ${currentSession.user.id}`);
         checkAdminStatus(currentSession.user.id)
           .then(adminStatus => {
             console.log(`Initial admin status set to ${adminStatus} for ${currentSession.user?.email}`);
@@ -108,7 +109,8 @@ export function useAuthState() {
               setIsLoading(false);
             }
           })
-          .catch(() => {
+          .catch(error => {
+            console.error('Error during initial admin check:', error);
             if (isMounted) {
               setIsLoading(false);
             }
