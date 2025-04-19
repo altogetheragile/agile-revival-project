@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -52,17 +54,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
+    console.log("Checking admin status for user:", userId);
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
 
-    if (data && !error) {
-      setIsAdmin(true);
-    } else {
-      console.error('Error fetching user role or user is not admin:', error);
+      if (data && !error) {
+        console.log("User is admin:", data);
+        setIsAdmin(true);
+      } else {
+        console.log("User is not admin or error:", error);
+        setIsAdmin(false);
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
       setIsAdmin(false);
     }
   };
@@ -144,8 +153,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     navigate('/auth');
   };
 
+  const contextValue = {
+    user,
+    session,
+    signIn,
+    signUp,
+    signOut,
+    isAdmin
+  };
+  
+  console.log("AuthContext state:", { user: user?.email, isAdmin });
+  
   return (
-    <AuthContext.Provider value={{ user, session, signIn, signUp, signOut, isAdmin }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

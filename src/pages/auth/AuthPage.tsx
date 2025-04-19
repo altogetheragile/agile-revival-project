@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle, LogOut, Home, UserCheck } from 'lucide-react';
+import { AlertCircle, LogOut, Home, UserCheck, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoginForm from '@/components/auth/LoginForm';
 import SignupForm from '@/components/auth/SignupForm';
@@ -273,10 +272,10 @@ export default function AuthPage() {
     }
   };
 
-  console.log('Render state:', { user, isAuthenticated });
+  console.log('Render state:', { user, isAuthenticated, isAdmin: useAuth().isAdmin });
 
   if (isAuthenticated || user) {
-    console.log('Rendering authenticated view');
+    console.log('Rendering authenticated view, isAdmin:', useAuth().isAdmin);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md">
@@ -296,6 +295,17 @@ export default function AuthPage() {
               <Home className="h-4 w-4" />
               Go to Home Page
             </Button>
+            
+            {useAuth().isAdmin && (
+              <Button 
+                onClick={() => navigate('/admin')}
+                variant="default"
+                className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                Admin Dashboard
+              </Button>
+            )}
             
             <Button 
               onClick={handleLogout}

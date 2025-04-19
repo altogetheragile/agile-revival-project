@@ -1,9 +1,11 @@
+
 import { Link, useLocation } from 'react-router-dom';
 import { 
   NavigationMenuItem,
   navigationMenuTriggerStyle
 } from '@/components/ui/navigation-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
 
 type NavLinkProps = {
   name: string;
@@ -70,6 +72,12 @@ const NavLinks = ({
 }: NavLinksProps) => {
   const location = useLocation();
   const { user, isAdmin } = useAuth();
+  const [authState, setAuthState] = useState({ user: null, isAdmin: false });
+  
+  useEffect(() => {
+    console.log("NavLinks auth state:", { user, isAdmin });
+    setAuthState({ user, isAdmin });
+  }, [user, isAdmin]);
   
   const filteredNavLinks = navLinks;
 
@@ -100,7 +108,10 @@ const NavLinks = ({
   };
 
   const AuthButton = () => {
-    if (user && isAdmin) {
+    console.log("Rendering AuthButton with:", { user: authState.user, isAdmin: authState.isAdmin });
+    
+    if (authState.user && authState.isAdmin) {
+      console.log("Should show Admin Dashboard link");
       return (
         <Link 
           to="/admin" 
@@ -110,6 +121,21 @@ const NavLinks = ({
           onClick={closeMenu}
         >
           Admin Dashboard
+        </Link>
+      );
+    }
+    
+    if (authState.user) {
+      console.log("Should show Profile link for regular user");
+      return (
+        <Link 
+          to="/auth" 
+          className={isMobile 
+            ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors" 
+            : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
+          onClick={closeMenu}
+        >
+          My Account
         </Link>
       );
     }
