@@ -31,8 +31,11 @@ export function useAuthState() {
 
       const hasAdminRole = !!data;
       console.log(`Admin check result for ${userId}:`, { hasAdminRole, data });
+      
+      // Important: Update the state to reflect admin status
       setIsAdmin(hasAdminRole);
       setIsAdminChecked(true);
+      
       return hasAdminRole;
     } catch (error) {
       console.error('Exception checking admin status:', error);
@@ -65,20 +68,22 @@ export function useAuthState() {
           setIsAdminChecked(false);
           
           // Important: Don't block UI while checking admin status
-          Promise.resolve().then(async () => {
-            if (isMounted) {
-              try {
-                await checkAdminStatus(currentSession.user.id);
-              } finally {
-                // Always make sure to set loading to false
-                if (isMounted) setIsLoading(false);
+          checkAdminStatus(currentSession.user.id)
+            .then(adminStatus => {
+              console.log(`Admin status set to ${adminStatus} for ${currentSession.user?.email}`);
+              if (isMounted) {
+                setIsLoading(false);
               }
-            }
-          });
+            })
+            .catch(() => {
+              if (isMounted) {
+                setIsLoading(false);
+              }
+            });
         } else {
           console.log("No authenticated user, clearing admin status");
           setIsAdmin(false);
-          setIsAdminChecked(false);
+          setIsAdminChecked(true);
           setIsLoading(false);
         }
       }
@@ -86,7 +91,7 @@ export function useAuthState() {
 
     console.log("Initial session check on component mount");
     // Perform initial session check
-    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log("Session check result:", currentSession?.user?.email);
       
       if (!isMounted) return;
@@ -96,15 +101,18 @@ export function useAuthState() {
       
       if (currentSession?.user) {
         console.log(`Found existing session for: ${currentSession.user.email}`);
-        try {
-          // Directly check admin status here for initial load
-          await checkAdminStatus(currentSession.user.id);
-        } catch (error) {
-          console.error("Error during admin status check:", error);
-        } finally {
-          // Always make sure to set loading to false
-          if (isMounted) setIsLoading(false);
-        }
+        checkAdminStatus(currentSession.user.id)
+          .then(adminStatus => {
+            console.log(`Initial admin status set to ${adminStatus} for ${currentSession.user?.email}`);
+            if (isMounted) {
+              setIsLoading(false);
+            }
+          })
+          .catch(() => {
+            if (isMounted) {
+              setIsLoading(false);
+            }
+          });
       } else {
         if (isMounted) setIsLoading(false);
       }

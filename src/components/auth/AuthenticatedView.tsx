@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ export default function AuthenticatedView() {
   const { user, signOut, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [adminCheckDone, setAdminCheckDone] = useState(false);
   
   // Force admin status check when component mounts
   useEffect(() => {
@@ -22,10 +23,11 @@ export default function AuthenticatedView() {
         isAuthReady
       });
 
-      if (user && isAuthReady) {
+      if (user && isAuthReady && !adminCheckDone) {
         console.log("Authenticated view - checking admin status for:", user.email);
-        const isUserAdmin = await refreshAdminStatus(); // Store the boolean result
+        const isUserAdmin = await refreshAdminStatus();
         console.log("Authenticated view - admin status after refresh:", isUserAdmin);
+        setAdminCheckDone(true);
         
         // Notify user of their admin status
         if (isUserAdmin) {
@@ -38,7 +40,7 @@ export default function AuthenticatedView() {
     };
     
     checkAdminStatus();
-  }, [user, refreshAdminStatus, isAuthReady, toast]);
+  }, [user, refreshAdminStatus, isAuthReady, adminCheckDone, isAdmin, toast]);
   
   const handleLogout = async () => {
     try {

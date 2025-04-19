@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
@@ -26,6 +26,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdminChecked,
     checkAdminStatus
   } = useAuthState();
+  
+  const [hasInitialAdminCheck, setHasInitialAdminCheck] = useState(false);
 
   const {
     signIn,
@@ -36,19 +38,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Add effect to check admin status when user changes
   useEffect(() => {
     const checkAdmin = async () => {
-      if (user?.id && !isAdminChecked) {
+      if (user?.id && !isAdminChecked && !hasInitialAdminCheck) {
         console.log(`Initial admin status check for user: ${user.email}`);
+        setHasInitialAdminCheck(true);
         await checkAdminStatus(user.id);
       }
     };
     
     checkAdmin();
-  }, [user, checkAdminStatus, isAdminChecked]);
+  }, [user, checkAdminStatus, isAdminChecked, hasInitialAdminCheck]);
 
   const refreshAdminStatus = async (): Promise<boolean> => {
     if (user?.id) {
       console.log(`Manually refreshing admin status for: ${user.email}`);
-      return await checkAdminStatus(user.id);
+      const result = await checkAdminStatus(user.id);
+      console.log(`Admin status after refresh: ${result}`);
+      return result;
     }
     return false;
   };

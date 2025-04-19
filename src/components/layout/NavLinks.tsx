@@ -1,11 +1,10 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { 
   NavigationMenuItem,
   navigationMenuTriggerStyle
 } from '@/components/ui/navigation-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 type NavLinkProps = {
   name: string;
@@ -72,13 +71,14 @@ const NavLinks = ({
 }: NavLinksProps) => {
   const location = useLocation();
   const { user, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
+  const [hasCheckedAdmin, setHasCheckedAdmin] = useState(false);
   
   // Only refresh admin status once when component mounts
   useEffect(() => {
     let isMounted = true;
     
     const checkAdminStatus = async () => {
-      if (user && isAuthReady && isMounted) {
+      if (user && isAuthReady && isMounted && !hasCheckedAdmin) {
         console.log("NavLinks - Initial auth state:", { 
           user: user.email, 
           isAdmin, 
@@ -86,8 +86,9 @@ const NavLinks = ({
           isAuthReady
         });
         
-        await refreshAdminStatus();
-        console.log("NavLinks - Admin status after refresh:", isAdmin);
+        const result = await refreshAdminStatus();
+        console.log("NavLinks - Admin status after refresh:", result);
+        setHasCheckedAdmin(true);
       }
     };
     
@@ -96,7 +97,7 @@ const NavLinks = ({
     return () => {
       isMounted = false;
     };
-  }, [user, isAuthReady]);
+  }, [user, isAuthReady, refreshAdminStatus, hasCheckedAdmin, isAdmin]);
   
   const filteredNavLinks = navLinks;
 
@@ -135,7 +136,7 @@ const NavLinks = ({
     });
     
     if (user && isAdmin) {
-      console.log("Should show Admin Dashboard link");
+      console.log("Should show Admin Dashboard link for admin user");
       return (
         <Link 
           to="/admin" 
