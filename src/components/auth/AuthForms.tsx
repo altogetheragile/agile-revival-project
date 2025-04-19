@@ -31,6 +31,10 @@ export default function AuthForms() {
       message = "Google authentication is not properly configured. Please check your Supabase settings.";
     } else if (error.message?.includes('popup blocked')) {
       message = "Pop-up blocked. Please allow pop-ups for this website and try again.";
+    } else if (error.message?.includes('already registered')) {
+      message = "Email already registered. Please use another email or try logging in.";
+    } else if (error.message?.includes('invalid')) {
+      message = "Invalid email or password. Please check your credentials and try again.";
     }
     
     setErrorMessage(message);
@@ -45,6 +49,10 @@ export default function AuthForms() {
     try {
       setLoading(true);
       setErrorMessage(null);
+      toast({
+        title: "Processing",
+        description: "Signing in...",
+      });
       await signIn(email, password);
     } catch (error: any) {
       handleError(error);
@@ -56,6 +64,10 @@ export default function AuthForms() {
   const handleSignUp = async (email: string, password: string, firstName: string, lastName: string) => {
     setLoading(true);
     setErrorMessage(null);
+    toast({
+      title: "Processing",
+      description: "Creating your account...",
+    });
     
     try {
       await signUp(email, password, firstName, lastName);
@@ -87,6 +99,11 @@ export default function AuthForms() {
         controller.signal.addEventListener('abort', () => {
           reject(new Error('Password reset request timed out'));
         });
+      });
+      
+      toast({
+        title: "Processing",
+        description: "Sending password reset email...",
       });
       
       const { error } = await Promise.race([resetPromise, abortPromise]) as any;

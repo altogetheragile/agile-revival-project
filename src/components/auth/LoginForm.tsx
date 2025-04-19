@@ -27,7 +27,7 @@ export default function LoginForm({
     e.preventDefault();
     console.log("Login form submitted with:", { email });
     try {
-      await onSubmit(email.trim(), password);
+      await onSubmit(email.trim(), password); // Trim whitespace from email
     } catch (error) {
       console.error("Login form submission error:", error);
     }
@@ -38,7 +38,17 @@ export default function LoginForm({
       {error && (
         <Alert variant="destructive" className="animate-in fade-in-50">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>
+            {error}
+            <p className="mt-2 text-sm">
+              If you continue experiencing issues:
+              <ul className="list-disc pl-5 mt-1">
+                <li>Check your internet connection</li>
+                <li>Verify your email and password are correct</li>
+                <li>Try again in a few moments if there are server issues</li>
+              </ul>
+            </p>
+          </AlertDescription>
         </Alert>
       )}
       
@@ -50,6 +60,8 @@ export default function LoginForm({
           onChange={(e) => setEmail(e.target.value)}
           required
           className="w-full"
+          disabled={loading}
+          autoComplete="email"
         />
       </div>
       <div>
@@ -60,6 +72,8 @@ export default function LoginForm({
           onChange={(e) => setPassword(e.target.value)}
           required
           className="w-full"
+          disabled={loading}
+          autoComplete="current-password"
         />
       </div>
       
@@ -79,6 +93,7 @@ export default function LoginForm({
           variant="link"
           onClick={onSwitchToSignup}
           className="text-green-600 hover:text-green-700"
+          disabled={loading}
         >
           Don't have an account? Sign Up
         </Button>
@@ -87,6 +102,7 @@ export default function LoginForm({
             type="button"
             variant="link"
             onClick={onSwitchToReset}
+            disabled={loading}
           >
             Forgot password?
           </Button>

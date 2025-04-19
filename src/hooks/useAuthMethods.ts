@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 
 export function useAuthMethods() {
@@ -26,6 +26,10 @@ export function useAuthMethods() {
       message = "Google authentication is not configured. Please check your Supabase settings.";
     } else if (error.message?.includes('Email not confirmed')) {
       message = "Please confirm your email address before logging in. Check your email for a confirmation link.";
+    } else if (error.message?.includes('invalid')) {
+      message = "Invalid email or password. Please check your credentials and try again.";
+    } else if (error.message?.includes('auth rate limit')) {
+      message = "Too many attempts. Please try again later.";
     }
     
     toast({
@@ -36,42 +40,76 @@ export function useAuthMethods() {
   };
 
   const signIn = async (email: string, password: string) => {
-    try {
-      console.log("Starting email sign in process...");
-      
-      // Using AbortController to set a timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-      
-      const { data, error } = await Promise.race([
-        supabase.auth.signInWithPassword({
-          email,
-          password,
-        }),
-        new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('Authentication request timed out')), 15000);
-        })
-      ]);
+    let attempt = 0;
+    let lastError: any = null;
 
-      clearTimeout(timeoutId);
+    while (attempt <= MAX_RETRIES) {
+      try {
+        console.log(`Sign in attempt ${attempt + 1} for: ${email}`);
+        toast({
+          title: "Processing",
+          description: `Authenticating${attempt > 0 ? ` (attempt ${attempt + 1})` : ''}...`,
+        });
+        
+        // Using AbortController to set a timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        
+        const { data, error } = await Promise.race([
+          supabase.auth.signInWithPassword({
+            email,
+            password,
+          }),
+          new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Authentication request timed out')), 15000);
+          })
+        ]);
 
-      if (error) {
-        console.error("Sign in error:", error.message);
-        throw error;
+        clearTimeout(timeoutId);
+
+        if (error) {
+          console.error("Sign in error:", error.message);
+          
+          // Don't retry for invalid credentials
+          if (error.message?.includes('Invalid')) {
+            throw error;
+          }
+          
+          if (attempt < MAX_RETRIES) {
+            attempt++;
+            continue;
+          }
+          throw error;
+        }
+        
+        console.log("Sign in successful:", data.user?.email);
+        
+        toast({
+          title: "Login successful",
+          description: "You have been successfully logged in.",
+        });
+        return;
+      } catch (error: any) {
+        console.error(`Sign in attempt ${attempt + 1} failed:`, error);
+        lastError = error;
+        
+        // Check if this is a real error or just a timeout
+        if (!error.message?.includes('timeout') && !error.name?.includes('AbortError')) {
+          // Real error - no need to retry
+          break;
+        }
+        
+        if (attempt < MAX_RETRIES) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          attempt++;
+        } else {
+          break;
+        }
       }
-      
-      console.log("Sign in successful:", data.user?.email);
-      
-      toast({
-        title: "Login successful",
-        description: "You have been successfully logged in.",
-      });
-
-    } catch (error: any) {
-      console.error('Sign in error:', error);
-      handleError(error);
-      throw error;
     }
+    
+    handleError(lastError || new Error("Failed to sign in after multiple attempts"));
+    throw lastError || new Error("Failed to sign in after multiple attempts");
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
@@ -85,6 +123,11 @@ export function useAuthMethods() {
 
       try {
         console.log(`Sign up attempt ${attempt + 1} for: ${email} with timeout: ${timeout}ms`);
+        
+        toast({
+          title: "Creating Account",
+          description: `Processing${attempt > 0 ? ` (attempt ${attempt + 1})` : ''}...`,
+        });
         
         const signUpPromise = supabase.auth.signUp({
           email,
@@ -107,7 +150,18 @@ export function useAuthMethods() {
         const result = await Promise.race([signUpPromise, abortPromise]) as any;
         clearTimeout(timeoutId);
 
-        if (result?.error) throw result.error;
+        if (result?.error) {
+          // Check for duplicate email error
+          if (result.error.message?.includes('already registered')) {
+            throw result.error;
+          }
+          
+          if (attempt < MAX_RETRIES) {
+            attempt++;
+            continue;
+          }
+          throw result.error;
+        }
 
         console.log("Sign up successful:", result.data.user?.email);
         toast({
@@ -120,8 +174,14 @@ export function useAuthMethods() {
         clearTimeout(timeoutId);
         console.error(`Sign up attempt ${attempt + 1} failed:`, error.message);
 
+        // Check if we should retry
+        if (error.message?.includes('already registered')) {
+          // Don't retry for already registered emails
+          break;
+        }
+
         // Check if this is a real error or just a timeout
-        if (!error.message.includes('timeout') && !error.name?.includes('AbortError')) {
+        if (!error.message?.includes('timeout') && !error.name?.includes('AbortError')) {
           // Real error - no need to retry
           break;
         }
@@ -139,11 +199,7 @@ export function useAuthMethods() {
 
     const errorMsg = lastError?.message || "Failed to create account after multiple attempts";
     console.error("Sign up failed after all attempts:", errorMsg);
-    toast({
-      title: "Error",
-      description: errorMsg,
-      variant: "destructive",
-    });
+    handleError(lastError || new Error(errorMsg));
     throw new Error(errorMsg);
   };
 

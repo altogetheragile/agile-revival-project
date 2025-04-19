@@ -36,15 +36,15 @@ export default function SignupForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || loading) return;
     
     setIsSubmitting(true);
     try {
       await onSubmit(
-        formData.email,
+        formData.email.trim(), // Trim whitespace
         formData.password,
-        formData.firstName,
-        formData.lastName
+        formData.firstName.trim(), // Trim whitespace
+        formData.lastName.trim() // Trim whitespace
       );
     } catch (error) {
       console.error('Signup error:', error);
@@ -68,7 +68,8 @@ export default function SignupForm({
               <ul className="list-disc pl-5 mt-1">
                 <li>Check your internet connection</li>
                 <li>Try again in a few moments</li>
-                <li>The system will automatically retry if needed</li>
+                <li>Verify your email address is correct</li>
+                <li>Use a password with at least 6 characters</li>
               </ul>
             </p>
           </AlertDescription>
