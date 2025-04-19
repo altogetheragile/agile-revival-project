@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
+      async (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession?.user?.email);
         
         // Update session and user state synchronously
@@ -40,8 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Defer Supabase calls using setTimeout to prevent deadlocks
         if (currentSession?.user) {
           console.log("User authenticated, checking admin status");
-          setTimeout(() => {
-            checkAdminStatus(currentSession.user.id);
+          setTimeout(async () => {
+            await checkAdminStatus(currentSession.user.id);
           }, 0);
         } else {
           console.log("User not authenticated, setting isAdmin to false");
@@ -52,14 +53,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // THEN check for existing session
     console.log("Checking for existing session");
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       console.log("Initial session check:", currentSession?.user?.email);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       
       if (currentSession?.user) {
         console.log("Found existing session, checking admin status");
-        checkAdminStatus(currentSession.user.id);
+        await checkAdminStatus(currentSession.user.id);
       }
     });
 

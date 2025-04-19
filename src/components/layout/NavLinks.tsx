@@ -86,7 +86,7 @@ const NavLinks = ({
     };
     
     checkAuth();
-  }, [user, isAdmin, refreshAdminStatus]);
+  }, [user, refreshAdminStatus]);
   
   const filteredNavLinks = navLinks;
 
