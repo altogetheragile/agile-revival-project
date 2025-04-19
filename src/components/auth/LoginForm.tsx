@@ -25,8 +25,12 @@ export default function LoginForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login form submitted:", { email });
-    await onSubmit(email, password);
+    console.log("Login form submitted with:", { email });
+    try {
+      await onSubmit(email.trim(), password);
+    } catch (error) {
+      console.error("Login form submission error:", error);
+    }
   };
 
   return (

@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
   const MAX_RETRIES = 2;
@@ -28,11 +29,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     console.log("Setting up auth state change listener");
+    let isMounted = true;
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession?.user?.email);
+        
+        if (!isMounted) return;
         
         // Update session and user state synchronously
         setSession(currentSession);
@@ -42,7 +46,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (currentSession?.user) {
           console.log("User authenticated, checking admin status");
           setTimeout(async () => {
-            await checkAdminStatus(currentSession.user.id);
+            if (isMounted) {
+              await checkAdminStatus(currentSession.user.id);
+            }
           }, 0);
         } else {
           console.log("User not authenticated, setting isAdmin to false");
@@ -55,6 +61,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("Checking for existing session");
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       console.log("Initial session check:", currentSession?.user?.email);
+      
+      if (!isMounted) return;
+      
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       
@@ -62,10 +71,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log("Found existing session, checking admin status");
         await checkAdminStatus(currentSession.user.id);
       }
+      setIsLoading(false);
+    }).catch(error => {
+      console.error("Error checking session:", error);
+      setIsLoading(false);
     });
 
     return () => {
       console.log("Cleaning up auth subscription");
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -87,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const hasAdminRole = !!data;
-      console.log("Admin check result:", { hasAdminRole, data });
+      console.log("Admin check result:", { hasAdminRole, data, userId });
       setIsAdmin(hasAdminRole);
     } catch (error) {
       console.error('Error checking admin status:', error);
@@ -111,10 +125,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Sign in error:", error.message);
+        throw error;
+      }
       
       console.log("Sign in successful:", data.user?.email);
+      
       // Auth state change listener will handle updating the user state
+      // But let's force a refresh of admin status
+      if (data.user) {
+        setTimeout(async () => {
+          await checkAdminStatus(data.user.id);
+        }, 100);
+      }
     } catch (error: any) {
       console.error("Sign in error:", error.message);
       throw error;
@@ -216,6 +240,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     userId: user?.id
   });
+  
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading authentication...</div>;
+  }
   
   return (
     <AuthContext.Provider value={contextValue}>

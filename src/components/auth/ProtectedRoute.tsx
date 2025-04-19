@@ -30,8 +30,11 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           return;
         } 
         
+        console.log('User found, refreshing admin status');
         // Force a refresh of admin status
         await refreshAdminStatus();
+        
+        console.log('Admin status after refresh:', { isAdmin, user: user?.email });
         
         if (!isAdmin) {
           console.log('User not admin, showing toast and redirecting');
