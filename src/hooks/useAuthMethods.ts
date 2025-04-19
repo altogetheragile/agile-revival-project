@@ -23,7 +23,7 @@ export function useAuthMethods() {
     } else if (error.message?.includes('password')) {
       message = "Invalid password. Please check your password and try again.";
     } else if (error.message?.includes('provider is not enabled')) {
-      message = "Google authentication is not configured. Please contact the administrator.";
+      message = "Google authentication is not configured. Please check your Supabase settings.";
     } else if (error.message?.includes('Email not confirmed')) {
       message = "Please confirm your email address before logging in. Check your email for a confirmation link.";
     }

@@ -27,6 +27,10 @@ export default function AuthForms() {
       message = "The server is taking too long to respond. Please try again later.";
     } else if (error.message?.includes('Failed to fetch')) {
       message = "Network error. Please check your internet connection.";
+    } else if (error.message?.includes('provider is not enabled')) {
+      message = "Google authentication is not properly configured. Please check your Supabase settings.";
+    } else if (error.message?.includes('popup blocked')) {
+      message = "Pop-up blocked. Please allow pop-ups for this website and try again.";
     }
     
     setErrorMessage(message);
