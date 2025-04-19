@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -10,7 +9,7 @@ import { z } from "zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Globe, Text } from "lucide-react";
-import { useSiteSettings, GeneralSettings as GeneralSettingsType } from "@/contexts/SiteSettingsContext";
+import { useSiteSettings, GeneralSettings as GeneralSettingsType } from "@/contexts/site-settings";
 
 const generalFormSchema = z.object({
   siteName: z.string().min(2, {
@@ -58,7 +57,6 @@ export const GeneralSettings = () => {
     defaultValues: settings.general as GeneralSettingsType,
   });
 
-  // When settings load or change, update form values
   useEffect(() => {
     console.log("GeneralSettings received settings:", settings.general);
     if (!isLoading) {

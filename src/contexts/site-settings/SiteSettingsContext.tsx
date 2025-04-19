@@ -1,100 +1,16 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { defaultSettings } from "./defaultSettings";
+import { AllSettings, SiteSettingsContextType } from "./types";
 
-// Types for our various settings
-export type GeneralSettings = {
-  siteName: string;
-  contactEmail: string;
-  contactPhone?: string;
-  defaultLanguage: string;
-  timezone: string;
-  currency: string;
-};
-
-export type InterfaceSettings = {
-  logoUrl?: string;
-  faviconUrl?: string;
-  primaryColor?: string;
-  secondaryColor?: string;
-  homepageLayout: string;
-  navigationStyle: string;
-};
-
-export type UserSettings = {
-  defaultRole: string;
-  allowSocialSignIn: boolean;
-  requireEmailVerification: boolean;
-  allowUserRegistration: boolean;
-  autoApproveUsers: boolean;
-};
-
-export type SecuritySettings = {
-  sessionTimeout: number;
-  requirePasswordReset: boolean;
-  passwordResetDays?: number;
-  twoFactorAuth: boolean;
-  strongPasswords: boolean;
-};
-
-// Combined settings types
-export type AllSettings = {
-  general: GeneralSettings;
-  interface: InterfaceSettings;
-  user: UserSettings;
-  security: SecuritySettings;
-  [key: string]: any;
-};
-
-interface SiteSettingsContextType {
-  settings: AllSettings;
-  isLoading: boolean;
-  updateSettings: (key: string, values: any) => Promise<void>;
-  refreshSettings: () => Promise<void>;
-}
-
-const defaultSettings: AllSettings = {
-  general: {
-    siteName: "AltogetherAgile",
-    contactEmail: "contact@altogetheragile.com",
-    contactPhone: "+1 (555) 123-4567",
-    defaultLanguage: "en",
-    timezone: "UTC",
-    currency: "USD",
-  },
-  interface: {
-    logoUrl: "",
-    faviconUrl: "",
-    primaryColor: "#8B5CF6",
-    secondaryColor: "#F3E8FF",
-    homepageLayout: "featured",
-    navigationStyle: "standard",
-  },
-  user: {
-    defaultRole: "user",
-    allowSocialSignIn: true,
-    requireEmailVerification: true,
-    allowUserRegistration: true,
-    autoApproveUsers: false,
-  },
-  security: {
-    sessionTimeout: 60,
-    requirePasswordReset: false,
-    passwordResetDays: 90,
-    twoFactorAuth: false,
-    strongPasswords: true,
-  }
-};
-
-const SiteSettingsContext = createContext<SiteSettingsContextType>({
+export const SiteSettingsContext = createContext<SiteSettingsContextType>({
   settings: defaultSettings,
   isLoading: true,
   updateSettings: async () => {},
   refreshSettings: async () => {},
 });
-
-export const useSiteSettings = () => useContext(SiteSettingsContext);
 
 interface SiteSettingsProviderProps {
   children: ReactNode;
@@ -105,7 +21,6 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Function to fetch settings from Supabase
   const fetchSettings = async () => {
     try {
       setIsLoading(true);
@@ -123,11 +38,9 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         return;
       }
 
-      // If we have data, update our local state
       if (data && data.length > 0) {
         const newSettings = { ...defaultSettings };
         data.forEach(setting => {
-          // Make sure the key exists in our settings object
           if (setting.key in newSettings) {
             newSettings[setting.key] = setting.value;
           }
@@ -142,12 +55,10 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
     }
   };
 
-  // Function to update a setting category
   const updateSettings = async (key: string, values: any) => {
     try {
       console.log(`Updating ${key} settings:`, values);
       
-      // First update the database
       const { error } = await supabase.rpc('update_site_settings', {
         setting_key: key,
         setting_value: values,
@@ -163,7 +74,6 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         return;
       }
 
-      // If the database update was successful, update local state
       setSettings(prev => ({
         ...prev,
         [key]: values
@@ -183,12 +93,10 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
     }
   };
 
-  // Function to refresh settings
   const refreshSettings = async () => {
     await fetchSettings();
   };
 
-  // Load settings on component mount
   useEffect(() => {
     fetchSettings();
   }, []);

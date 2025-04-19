@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -10,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { UsersRound } from "lucide-react";
-import { useSiteSettings, UserSettings as UserSettingsType } from "@/contexts/SiteSettingsContext";
+import { useSiteSettings, UserSettings as UserSettingsType } from "@/contexts/site-settings";
 
 const userFormSchema = z.object({
   defaultRole: z.string(),
@@ -31,7 +30,6 @@ export const UserSettings = () => {
     defaultValues: settings.user as UserSettingsType,
   });
 
-  // When settings load or change, update form values
   useEffect(() => {
     console.log("UserSettings received settings:", settings.user);
     if (!isLoading) {

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -10,7 +9,7 @@ import { z } from "zod";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Clock } from "lucide-react";
-import { useSiteSettings, SecuritySettings as SecuritySettingsType } from "@/contexts/SiteSettingsContext";
+import { useSiteSettings, SecuritySettings as SecuritySettingsType } from "@/contexts/site-settings";
 
 const securityFormSchema = z.object({
   sessionTimeout: z.coerce.number().min(15, {
@@ -35,7 +34,6 @@ export const SecuritySettings = () => {
     defaultValues: settings.security as SecuritySettingsType,
   });
 
-  // When settings load or change, update form values
   useEffect(() => {
     console.log("SecuritySettings received settings:", settings.security);
     if (!isLoading) {

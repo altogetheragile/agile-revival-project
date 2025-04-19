@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -32,7 +31,6 @@ export const InterfaceSettings = () => {
     defaultValues: settings.interface as InterfaceSettingsType,
   });
 
-  // When settings load or change, update form values
   useEffect(() => {
     console.log("InterfaceSettings received settings:", settings.interface);
     if (!isLoading) {
