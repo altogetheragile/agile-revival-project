@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { useAuthState } from '@/hooks/useAuthState';
@@ -40,21 +41,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user?.id) {
       console.log(`ADMIN VERIFICATION - Checking admin status for: ${user.email}`);
       
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('role', 'admin');
-
-      console.log('ADMIN VERIFICATION - Detailed Role Check:', {
-        email: user.email,
-        userId: user.id,
-        googleProvider: user.app_metadata?.provider === 'google',
-        roleQueryData: data,
-        roleQueryError: error
-      });
-
-      return data && data.length > 0;
+      try {
+        const { data, error } = await supabase.rpc('has_role', {
+          user_id: user.id,
+          required_role: 'admin'
+        });
+  
+        console.log('ADMIN VERIFICATION - Detailed Role Check:', {
+          email: user.email,
+          userId: user.id,
+          googleProvider: user.app_metadata?.provider === 'google',
+          roleQueryResult: data,
+          roleQueryError: error
+        });
+  
+        return !!data;
+      } catch (err) {
+        console.error('ADMIN VERIFICATION - Error checking role:', err);
+        return false;
+      }
     }
     return false;
   };
@@ -123,16 +128,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthReady: !isLoading
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center">
-          <Loader2 className="w-8 h-8 text-agile-purple animate-spin mb-2" />
-          <p>Loading authentication...</p>
-        </div>
-      </div>
-    );
-  }
+  // Removed the loading screen to prevent blocking the UI
+  // This ensures navigation items are always visible
   
   return (
     <AuthContext.Provider value={contextValue}>

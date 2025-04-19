@@ -14,9 +14,11 @@ export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
   console.log("AuthButton - Rendering:", { 
     userEmail: user?.email, 
     isAdmin,
-    provider: user?.app_metadata?.provider
+    provider: user?.app_metadata?.provider,
+    isUserDefined: !!user
   });
   
+  // Always render the Admin Dashboard link if user is admin
   if (user && isAdmin) {
     console.log(`AuthButton - Showing Admin link for admin user: ${user.email} (${user.app_metadata?.provider || 'email'})`);
     return (
@@ -35,6 +37,7 @@ export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
     );
   }
   
+  // Render My Account link for authenticated users (who are not admins)
   if (user) {
     return (
       <Link 
@@ -49,6 +52,7 @@ export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
     );
   }
   
+  // Default case - show Login link for unauthenticated users
   return (
     <Link 
       to="/auth" 

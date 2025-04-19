@@ -56,9 +56,11 @@ export const useNavAuth = () => {
     }
   }, [user?.app_metadata?.provider, isAuthReady, refreshAdminStatus]);
 
+  // Always return a value for user (null if not authenticated)
+  // This ensures the AuthButton always has a definite value to work with
   return {
-    user,
-    isAdmin,
+    user: user || null,
+    isAdmin: !!isAdmin,
     adminStatusChecked
   };
 };
