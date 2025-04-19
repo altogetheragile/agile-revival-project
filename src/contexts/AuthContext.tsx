@@ -94,14 +94,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
   
-  const refreshAdminStatus = async () => {
+  const refreshAdminStatus = async (): Promise<void> => {
     if (user?.id) {
       console.log("Manually refreshing admin status for:", user.email);
       await checkAdminStatus(user.id);
       console.log("Admin status after refresh:", isAdmin);
-      return isAdmin;
     }
-    return false;
   };
 
   const signIn = async (email: string, password: string) => {
@@ -202,7 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const contextValue = {
+  const contextValue: AuthContextType = {
     user,
     session,
     signIn,
