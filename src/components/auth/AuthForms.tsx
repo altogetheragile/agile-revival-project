@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
-import ResetPasswordForm from './ResetPasswordForm';
+import ResetPasswordForm from './reset-password/ResetPasswordForm';
 import GoogleSignInButton from './GoogleSignInButton';
 import AuthDivider from './AuthDivider';
 import { AuthMode } from './AuthContainer';
