@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Loader2, XCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface ResetPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
@@ -27,9 +28,10 @@ export default function ResetPasswordForm({
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
   const [localResetEmailSent, setLocalResetEmailSent] = useState(resetEmailSent);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const { toast } = useToast();
   
-  // Maximum timeout increased to 15 seconds for better chances of success
-  const REQUEST_TIMEOUT = 15000;
+  // Maximum timeout increased to 20 seconds for better chances of success
+  const REQUEST_TIMEOUT = 20000;
 
   // Clear timeout error when email changes
   useEffect(() => {
@@ -51,6 +53,12 @@ export default function ResetPasswordForm({
     try {
       console.log(`Initiating password reset for: ${email}`);
       
+      // Show an immediate toast to let the user know the process has started
+      toast({
+        title: "Processing",
+        description: "Sending password reset email. This may take a moment...",
+      });
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
@@ -61,10 +69,27 @@ export default function ResetPasswordForm({
       }
       
       console.log('Password reset request successful');
+      toast({
+        title: "Email Sent",
+        description: "If an account exists with this email, you'll receive reset instructions shortly.",
+      });
+      
       setLocalResetEmailSent(true);
       return { success: true };
     } catch (error: any) {
       console.error('Password reset API error:', error);
+      
+      // Special case for timeout errors
+      if (error.message?.includes('timeout') || error.message === '{}') {
+        toast({
+          title: "Request Processing",
+          description: "Your request is being processed but is taking longer than expected. Please check your email in a few minutes.",
+        });
+        // We'll consider this a success even though it timed out
+        setLocalResetEmailSent(true);
+        return { success: true, timeout: true };
+      }
+      
       throw error;
     }
   };
@@ -88,8 +113,18 @@ export default function ResetPasswordForm({
     // Set a timeout to abort the request after specified timeout
     const timeoutId = setTimeout(() => {
       controller.abort('timeout');
-      setTimeoutError("Request timed out. The server might be busy. Please try again.");
+      setTimeoutError("Request timed out. The server might be busy but your request may still be processed. Please check your email in a few minutes.");
       setIsSubmitting(false);
+      
+      // Even though it timed out, we'll show a toast suggesting to check email
+      toast({
+        title: "Request Processing",
+        description: "Your request is being processed but is taking longer than expected. Please check your email in a few minutes.",
+        duration: 6000,
+      });
+      
+      // Assume it might have worked despite the timeout
+      setLocalResetEmailSent(true);
     }, REQUEST_TIMEOUT);
     
     try {
@@ -103,6 +138,8 @@ export default function ResetPasswordForm({
       setLocalResetEmailSent(true);
     } catch (error: any) {
       console.log('Error in ResetPasswordForm:', error);
+      
+      clearTimeout(timeoutId);
       
       if (error.message?.includes('Network') || error.message?.includes('time') || error.message === '{}') {
         setTimeoutError("The request timed out. The server might be busy, but your request may still be processed. Please check your email or try again.");
@@ -148,6 +185,16 @@ export default function ResetPasswordForm({
               <li>Try again in a few moments if necessary</li>
             </ul>
           </p>
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onSwitchToLogin}
+              className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
+            >
+              Back to Sign In
+            </Button>
+          </div>
         </AlertDescription>
       </Alert>
     );

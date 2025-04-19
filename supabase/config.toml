@@ -2,4 +2,3 @@
 [functions.send-email]
 verify_jwt = true
 timeout_seconds = 30
-
