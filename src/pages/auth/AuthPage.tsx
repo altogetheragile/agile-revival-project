@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle, LogOut, Home } from 'lucide-react';
+import { AlertCircle, LogOut, Home, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoginForm from '@/components/auth/LoginForm';
 import SignupForm from '@/components/auth/SignupForm';
@@ -281,8 +281,11 @@ export default function AuthPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Already logged in</CardTitle>
-            <CardDescription>You are already logged in as {user?.email}</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <UserCheck className="h-6 w-6 text-green-500" />
+              Welcome Back!
+            </CardTitle>
+            <CardDescription>You're now logged in as {user?.email}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-4">
             <Button 
