@@ -18,19 +18,40 @@ export const InterfaceSettings = () => {
 
   const form = useForm<InterfaceFormValues>({
     resolver: zodResolver(interfaceFormSchema),
-    defaultValues: settings.interface as InterfaceSettingsType,
+    defaultValues: {
+      ...settings.interface as InterfaceSettingsType,
+      primaryColor: settings.interface?.primaryColor || "",
+      secondaryColor: settings.interface?.secondaryColor || "",
+    },
   });
 
   useEffect(() => {
     console.log("InterfaceSettings received settings:", settings.interface);
     if (!isLoading) {
-      form.reset(settings.interface as InterfaceSettingsType);
+      form.reset({
+        ...settings.interface as InterfaceSettingsType,
+        primaryColor: settings.interface?.primaryColor || "",
+        secondaryColor: settings.interface?.secondaryColor || "",
+      });
     }
   }, [isLoading, settings.interface, form]);
 
   const onSubmit = async (data: InterfaceFormValues) => {
     console.log("Submitting Interface Settings:", data);
-    await updateSettings('interface', data);
+    try {
+      await updateSettings('interface', data);
+      toast({
+        title: "Settings saved",
+        description: "Interface settings have been updated successfully",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -46,7 +67,12 @@ export const InterfaceSettings = () => {
           <LayoutSettings form={form} />
           
           <div className="flex justify-end">
-            <Button type="submit">Save Interface Settings</Button>
+            <Button 
+              type="submit" 
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? "Saving..." : "Save Interface Settings"}
+            </Button>
           </div>
         </form>
       </Form>
