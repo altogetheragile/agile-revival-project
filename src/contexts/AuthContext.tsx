@@ -11,7 +11,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
-  refreshAdminStatus: () => Promise<void>;
+  refreshAdminStatus: () => Promise<boolean>; // Fixed return type to boolean
   isAuthReady: boolean;
 }
 

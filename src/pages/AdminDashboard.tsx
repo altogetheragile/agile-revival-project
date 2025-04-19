@@ -33,10 +33,10 @@ const AdminDashboard = () => {
       if (isAuthReady) {
         console.log("AdminDashboard - Refreshing admin status");
         setIsChecking(true);
-        const adminResult = await refreshAdminStatus();
-        console.log("AdminDashboard - Admin status after refresh:", adminResult);
+        const isUserAdmin = await refreshAdminStatus(); // Store the boolean result
+        console.log("AdminDashboard - Admin status after refresh:", isUserAdmin);
         
-        if (!adminResult) {
+        if (!isUserAdmin) {
           toast({
             title: "Access denied",
             description: "You don't have permission to access this page.",

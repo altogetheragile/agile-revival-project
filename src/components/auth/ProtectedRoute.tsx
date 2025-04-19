@@ -33,11 +33,11 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         
         console.log('User found, refreshing admin status');
         // Force a refresh of admin status
-        const adminResult = await refreshAdminStatus();
-        console.log('Admin status refresh result:', adminResult);
+        const isUserAdmin = await refreshAdminStatus(); // Store the boolean result
+        console.log('Admin status refresh result:', isUserAdmin);
         
-        // After refreshing, check admin status again
-        if (!adminResult) {
+        // After refreshing, check admin status
+        if (!isUserAdmin) {
           console.log('User not admin after refresh, showing toast and redirecting');
           toast({
             title: "Access Denied",

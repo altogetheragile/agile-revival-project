@@ -24,11 +24,11 @@ export default function AuthenticatedView() {
 
       if (user && isAuthReady) {
         console.log("Authenticated view - checking admin status for:", user.email);
-        const adminStatus = await refreshAdminStatus();
-        console.log("Authenticated view - admin status after refresh:", adminStatus);
+        const isUserAdmin = await refreshAdminStatus(); // Store the boolean result
+        console.log("Authenticated view - admin status after refresh:", isUserAdmin);
         
         // Notify user of their admin status
-        if (adminStatus) {
+        if (isUserAdmin) {
           toast({
             title: "Admin Access Granted",
             description: "You have administrator privileges.",
