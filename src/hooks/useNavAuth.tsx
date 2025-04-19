@@ -36,6 +36,7 @@ export const useNavAuth = () => {
       } else if (!user) {
         // Reset state when user is null
         setAdminStatusChecked(false);
+        console.log("NavAuth - No authenticated user, resetting admin status");
       }
     };
     
@@ -55,6 +56,15 @@ export const useNavAuth = () => {
       refreshAdminStatus();
     }
   }, [user?.app_metadata?.provider, isAuthReady, refreshAdminStatus]);
+
+  // For debugging purposes - log the current state
+  console.log("useNavAuth returning:", { 
+    userEmail: user?.email, 
+    isAdmin: !!isAdmin,
+    adminStatusChecked, 
+    isAuthReady,
+    userDefined: !!user
+  });
 
   // Always return consistent values
   // user should be null (not undefined) when not authenticated

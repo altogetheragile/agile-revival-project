@@ -39,6 +39,7 @@ export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
   
   // Render My Account link for authenticated users (who are not admins)
   if (user) {
+    console.log(`AuthButton - Showing My Account link for user: ${user.email}`);
     return (
       <Link 
         to="/auth" 
@@ -54,6 +55,7 @@ export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
   
   // Default case - show Login link for unauthenticated users
   // This should always render when user is null
+  console.log("AuthButton - Showing Login link for unauthenticated user");
   return (
     <Link 
       to="/auth" 
