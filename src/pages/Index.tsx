@@ -1,4 +1,5 @@
 
+import React, { useEffect } from 'react';
 import Navbar from "@/components/layout/Navbar";
 import HeroSection from "@/components/sections/HeroSection";
 import ServicesSection from "@/components/sections/ServicesSection";
@@ -10,6 +11,15 @@ import { Toaster } from '@/components/ui/toaster';
 import PageTitle from "@/components/layout/PageTitle";
 
 const Index = () => {
+  useEffect(() => {
+    console.log("Index component mounted");
+    return () => {
+      console.log("Index component unmounted");
+    };
+  }, []);
+
+  console.log("Index component rendering");
+
   return (
     <div className="min-h-screen bg-white">
       <PageTitle />
