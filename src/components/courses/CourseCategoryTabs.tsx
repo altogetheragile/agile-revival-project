@@ -1,6 +1,7 @@
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Course } from "@/types/course";
+import { COURSE_CATEGORIES } from "@/constants/courseCategories";
 
 export type CourseCategory = "all" | "scrum" | "kanban" | "leadership";
 
@@ -15,13 +16,7 @@ const CourseCategoryTabs = ({
   onTabChange, 
   filteredCourses 
 }: CourseCategoryTabsProps) => {
-  const categories: { value: CourseCategory; label: string }[] = [
-    { value: "all", label: "All Courses" },
-    { value: "scrum", label: "Scrum" },
-    { value: "kanban", label: "Kanban" },
-    { value: "leadership", label: "Leadership" }
-  ];
-
+  // Use centralized categories (including "all")
   return (
     <Tabs 
       value={selectedTab} 
@@ -29,7 +24,7 @@ const CourseCategoryTabs = ({
       className="w-full"
     >
       <TabsList className="grid w-full grid-cols-4">
-        {categories.map((category) => (
+        {COURSE_CATEGORIES.map((category) => (
           <TabsTrigger 
             key={category.value} 
             value={category.value}

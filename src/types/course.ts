@@ -1,4 +1,3 @@
-
 export interface Course {
   id: string;
   title: string;
@@ -38,7 +37,6 @@ export type CourseFormData = Omit<Course, "id"> & {
   googleDriveFolderUrl?: string;
 };
 
-// This type helps us bridge between Course and CourseFormData
 export interface CourseWithFormData extends Omit<Course, "learningOutcomes"> {
   learningOutcomes?: string[] | string;
 }

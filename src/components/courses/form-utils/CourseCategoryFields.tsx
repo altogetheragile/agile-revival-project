@@ -17,12 +17,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
+import { COURSE_CATEGORIES } from "@/constants/courseCategories";
 
 interface CourseCategoryFieldsProps {
   form: UseFormReturn<CourseFormData>;
 }
 
 export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form }) => {
+  // We typically do not want "all" as an option when creating a course.
+  const categoryOptions = COURSE_CATEGORIES.filter(cat => cat.value !== "all");
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <FormField
@@ -41,9 +44,11 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="scrum">Scrum</SelectItem>
-                <SelectItem value="kanban">Kanban</SelectItem>
-                <SelectItem value="leadership">Leadership</SelectItem>
+                {categoryOptions.map(category => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <FormMessage />
