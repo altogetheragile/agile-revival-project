@@ -39,21 +39,26 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       }
 
       if (data && data.length > 0) {
-        // Start with the default settings to ensure all fields exist
         const newSettings = { ...defaultSettings };
         
-        // Update with values from the database
         data.forEach(setting => {
           if (setting.key in newSettings) {
-            // Merge objects instead of replacing to preserve default values
-            if (typeof setting.value === 'object' && setting.value !== null && 
-                typeof newSettings[setting.key] === 'object' && newSettings[setting.key] !== null) {
+            const currentValue = newSettings[setting.key];
+            const newValue = setting.value;
+            
+            // Handle merging of nested objects
+            if (
+              typeof currentValue === 'object' && 
+              currentValue !== null &&
+              typeof newValue === 'object' &&
+              newValue !== null
+            ) {
               newSettings[setting.key] = {
-                ...newSettings[setting.key],
-                ...setting.value
+                ...currentValue,
+                ...newValue
               };
             } else {
-              newSettings[setting.key] = setting.value;
+              newSettings[setting.key] = newValue;
             }
           }
         });

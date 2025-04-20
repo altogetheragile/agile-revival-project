@@ -17,7 +17,7 @@ export const SiteInformationSection = ({ form }: SiteInformationSectionProps) =>
       <CardHeader>
         <CardTitle className="flex items-center">
           <Building className="mr-2 h-5 w-5" />
-          <span>General Information</span>
+          <span>Site Information</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -69,7 +69,6 @@ export const SiteInformationSection = ({ form }: SiteInformationSectionProps) =>
             />
           </div>
           
-          {/* Location Fields */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Location</h3>
             <div className="grid grid-cols-1 gap-4">
@@ -116,6 +115,67 @@ export const SiteInformationSection = ({ form }: SiteInformationSectionProps) =>
                   )}
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium">Social Media</h3>
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="socialMedia.linkedin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>LinkedIn URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="url" placeholder="https://linkedin.com/..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="socialMedia.twitter"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Twitter URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="url" placeholder="https://twitter.com/..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="socialMedia.facebook"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Facebook URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="url" placeholder="https://facebook.com/..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="socialMedia.instagram"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instagram URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="url" placeholder="https://instagram.com/..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
         </div>

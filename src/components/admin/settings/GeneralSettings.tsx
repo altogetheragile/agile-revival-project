@@ -25,11 +25,24 @@ export const GeneralSettings = () => {
       defaultLanguage: "en",
       timezone: "UTC",
       currency: "USD",
+      location: {
+        address: "",
+        city: "",
+        country: "",
+      },
+      socialMedia: {
+        twitter: "",
+        linkedin: "",
+        facebook: "",
+        instagram: "",
+      },
     },
   });
 
   useEffect(() => {
     if (!isLoading && settings.general) {
+      const { location = {}, socialMedia = {} } = settings.general;
+      
       form.reset({
         siteName: settings.general.siteName || "",
         contactEmail: settings.general.contactEmail || "",
@@ -37,6 +50,17 @@ export const GeneralSettings = () => {
         defaultLanguage: settings.general.defaultLanguage || "en",
         timezone: settings.general.timezone || "UTC",
         currency: settings.general.currency || "USD",
+        location: {
+          address: location.address || "",
+          city: location.city || "",
+          country: location.country || "",
+        },
+        socialMedia: {
+          twitter: socialMedia.twitter || "",
+          linkedin: socialMedia.linkedin || "",
+          facebook: socialMedia.facebook || "",
+          instagram: socialMedia.instagram || "",
+        },
       });
     }
   }, [isLoading, settings.general, form]);

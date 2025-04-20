@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 // Define nested schemas for location and social media
@@ -9,10 +8,10 @@ const locationSchema = z.object({
 });
 
 const socialMediaSchema = z.object({
-  twitter: z.string().optional(),
-  linkedin: z.string().optional(),
-  facebook: z.string().optional(),
-  instagram: z.string().optional(),
+  twitter: z.string().url().optional().or(z.literal('')),
+  linkedin: z.string().url().optional().or(z.literal('')),
+  facebook: z.string().url().optional().or(z.literal('')),
+  instagram: z.string().url().optional().or(z.literal('')),
 });
 
 export const generalFormSchema = z.object({
@@ -24,12 +23,8 @@ export const generalFormSchema = z.object({
   defaultLanguage: z.string(),
   timezone: z.string(),
   currency: z.string(),
-  location: locationSchema.optional().default({
-    address: "",
-    city: "",
-    country: "",
-  }),
-  socialMedia: socialMediaSchema.optional().default({}),
+  location: locationSchema,
+  socialMedia: socialMediaSchema,
 });
 
 export type GeneralFormValues = z.infer<typeof generalFormSchema>;
