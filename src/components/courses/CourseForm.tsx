@@ -25,11 +25,11 @@ const CourseForm: React.FC<CourseFormProps> = ({
     title: "",
     description: "",
     dates: "",
-    location: "",
-    instructor: "",
-    price: "",
+    location: "London", // Default to London
+    instructor: "Alun Davies-Baker", // Default instructor
+    price: "£", // Default price currency symbol
     category: "scrum",
-    spotsAvailable: 10,
+    spotsAvailable: 12, // Default available spots
     learningOutcomes: [],
     prerequisites: "",
     targetAudience: "",
