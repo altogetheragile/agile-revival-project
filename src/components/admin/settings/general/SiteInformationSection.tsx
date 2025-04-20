@@ -120,7 +120,7 @@ export const SiteInformationSection = ({ form }: SiteInformationSectionProps) =>
 
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Social Media</h3>
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="socialMedia.linkedin"
@@ -171,6 +171,32 @@ export const SiteInformationSection = ({ form }: SiteInformationSectionProps) =>
                     <FormLabel>Instagram URL</FormLabel>
                     <FormControl>
                       <Input {...field} type="url" placeholder="https://instagram.com/..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="socialMedia.tiktok"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>TikTok URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="url" placeholder="https://tiktok.com/..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="socialMedia.bluesky"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bluesky URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="url" placeholder="https://bsky.app/profile/..." />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

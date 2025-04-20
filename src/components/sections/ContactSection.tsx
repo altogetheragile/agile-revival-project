@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mail, MapPin, Send, Phone, Twitter, Linkedin, Instagram, Facebook } from 'lucide-react';
+import { Mail, MapPin, Send, Phone, Twitter, Linkedin, Instagram, Facebook, Tiktok, Bluesky } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useContactInfo } from '@/hooks/useContactInfo';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,7 +15,6 @@ const ContactSection = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Debug logging
   useEffect(() => {
     console.log("Contact section received email:", email);
     console.log("Contact section received phone:", phone);
@@ -31,15 +30,13 @@ const ContactSection = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Include recipient email from site settings
     const submissionData = {
       ...formData,
-      recipientEmail: email, // Send to the contact email from site settings
+      recipientEmail: email
     };
     
     console.log("Sending contact form to:", email);
     
-    // Simulate form submission
     setTimeout(() => {
       setIsSubmitting(false);
       toast({
@@ -83,9 +80,7 @@ const ContactSection = () => {
     );
   };
   
-  // Only show social media icons if they have values
   const renderSocialMedia = () => {
-    // If socialMedia is undefined or no social media links are set
     if (!socialMedia || !Object.values(socialMedia).some(link => !!link)) {
       return null;
     }
@@ -118,12 +113,23 @@ const ContactSection = () => {
               <Instagram className="w-5 h-5" />
             </a>
           )}
+          {socialMedia.tiktok && (
+            <a href={socialMedia.tiktok} className="bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors" target="_blank" rel="noopener noreferrer">
+              <span className="sr-only">TikTok</span>
+              <Tiktok className="w-5 h-5" />
+            </a>
+          )}
+          {socialMedia.bluesky && (
+            <a href={socialMedia.bluesky} className="bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors" target="_blank" rel="noopener noreferrer">
+              <span className="sr-only">Bluesky</span>
+              <Bluesky className="w-5 h-5" />
+            </a>
+          )}
         </div>
       </div>
     );
   };
   
-  // Only show location if there's data available
   const renderLocation = () => {
     if (!location || (!location.city && !location.country)) {
       return null;
@@ -148,7 +154,6 @@ const ContactSection = () => {
     );
   };
   
-  // Render phone contact info
   const renderPhoneContact = () => {
     if (!phone) {
       return null;

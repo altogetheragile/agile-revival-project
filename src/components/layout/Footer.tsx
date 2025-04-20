@@ -1,5 +1,6 @@
+
 import React, { useEffect } from "react";
-import { ChevronRight, Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
+import { ChevronRight, Facebook, Twitter, Linkedin, Instagram, Tiktok, Bluesky } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,6 +74,18 @@ const Footer = () => {
           <a href={socialMedia.instagram} className="text-gray-400 hover:text-agile-purple" target="_blank" rel="noopener noreferrer">
             <span className="sr-only">Instagram</span>
             <Instagram className="h-6 w-6" />
+          </a>
+        )}
+        {socialMedia.tiktok && (
+          <a href={socialMedia.tiktok} className="text-gray-400 hover:text-agile-purple" target="_blank" rel="noopener noreferrer">
+            <span className="sr-only">TikTok</span>
+            <Tiktok className="h-6 w-6" />
+          </a>
+        )}
+        {socialMedia.bluesky && (
+          <a href={socialMedia.bluesky} className="text-gray-400 hover:text-agile-purple" target="_blank" rel="noopener noreferrer">
+            <span className="sr-only">Bluesky</span>
+            <Bluesky className="h-6 w-6" />
           </a>
         )}
       </div>

@@ -15,6 +15,8 @@ type ContactInfo = {
     linkedin?: string;
     facebook?: string;
     instagram?: string;
+    tiktok?: string;
+    bluesky?: string;
   };
 };
 
@@ -33,7 +35,9 @@ export const useContactInfo = () => {
       twitter: '',
       linkedin: '',
       facebook: '',
-      instagram: ''
+      instagram: '',
+      tiktok: '',
+      bluesky: ''
     }
   });
 
@@ -43,7 +47,7 @@ export const useContactInfo = () => {
       
       // Create default empty objects if location or socialMedia are undefined
       const location = settings.general.location || { address: '', city: '', country: '' };
-      const socialMedia = settings.general.socialMedia || { twitter: '', linkedin: '', facebook: '', instagram: '' };
+      const socialMedia = settings.general.socialMedia || { twitter: '', linkedin: '', facebook: '', instagram: '', tiktok: '', bluesky: '' };
       
       console.log("useContactInfo updating with:", { 
         contactEmail, 
@@ -64,7 +68,9 @@ export const useContactInfo = () => {
           twitter: socialMedia.twitter || '',
           linkedin: socialMedia.linkedin || '',
           facebook: socialMedia.facebook || '',
-          instagram: socialMedia.instagram || ''
+          instagram: socialMedia.instagram || '',
+          tiktok: socialMedia.tiktok || '',
+          bluesky: socialMedia.bluesky || ''
         }
       });
     }

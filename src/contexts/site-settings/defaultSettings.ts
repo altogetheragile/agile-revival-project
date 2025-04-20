@@ -18,7 +18,9 @@ export const defaultSettings: AllSettings = {
       twitter: "",
       linkedin: "",
       facebook: "",
-      instagram: ""
+      instagram: "",
+      tiktok: "",
+      bluesky: ""
     }
   },
   interface: {

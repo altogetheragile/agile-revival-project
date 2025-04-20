@@ -1,3 +1,4 @@
+
 // Types for our various settings
 export type GeneralSettings = {
   siteName: string;
@@ -16,6 +17,8 @@ export type GeneralSettings = {
     linkedin?: string;
     facebook?: string;
     instagram?: string;
+    tiktok?: string;
+    bluesky?: string;
   };
 };
 
