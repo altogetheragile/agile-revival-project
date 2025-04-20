@@ -68,6 +68,56 @@ export const SiteInformationSection = ({ form }: SiteInformationSectionProps) =>
               )}
             />
           </div>
+          
+          {/* Location Fields */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium">Location</h3>
+            <div className="grid grid-cols-1 gap-4">
+              <FormField
+                control={form.control}
+                name="location.address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="location.city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="location.country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

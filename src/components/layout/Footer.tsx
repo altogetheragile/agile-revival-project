@@ -1,3 +1,4 @@
+
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useContactInfo } from "@/hooks/useContactInfo";
@@ -12,8 +13,9 @@ const Footer = () => {
     console.log("Footer received contact info:", { email, phone, location, socialMedia });
   }, [email, phone, location, socialMedia]);
   
+  // Improved rendering for email with better loading state handling
   const renderEmail = () => {
-    if (!email) {
+    if (email === '') {
       return (
         <div className="flex items-center gap-2">
           <span>Email: </span>
@@ -32,10 +34,14 @@ const Footer = () => {
   const renderLocation = () => {
     if (!location) return null;
     const { address, city, country } = location;
+    
+    // Only show location if we have at least one field filled
+    if (!address && !city && !country) return null;
+    
     return (
       <>
         {address && <p>{address}</p>}
-        <p>{[city, country].filter(Boolean).join(", ")}</p>
+        {(city || country) && <p>{[city, country].filter(Boolean).join(", ")}</p>}
       </>
     );
   };
