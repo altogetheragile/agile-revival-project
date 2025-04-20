@@ -13,15 +13,55 @@ import { CourseFormData } from "@/types/course";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, isSameDay, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface CourseScheduleFieldsProps {
   form: UseFormReturn<CourseFormData>;
 }
 
+const DATE_FORMAT = "PPP";
+
 export const CourseScheduleFields: React.FC<CourseScheduleFieldsProps> = ({ form }) => {
   const [calendarDate, setCalendarDate] = useState<Date | undefined>(undefined);
+
+  const getSelectedDates = () => {
+    const value = (form.getValues("dates") || "");
+    return value
+      .split(",")
+      .map(str => str.trim())
+      .filter(str => str.length > 0)
+      .map(str => {
+        const d = parse(str, DATE_FORMAT, new Date());
+        if (isNaN(d.getTime())) return null;
+        return d;
+      })
+      .filter(Boolean) as Date[];
+  };
+
+  const setDates = (dates: Date[]) => {
+    const uniques = dates
+      .map(date => format(date, DATE_FORMAT))
+      .filter((item, idx, arr) => arr.indexOf(item) === idx);
+    form.setValue("dates", uniques.join(", "));
+  };
+
+  const handleCalendarSelect = (date: Date | undefined) => {
+    setCalendarDate(date);
+
+    if (!date) return;
+
+    const currentDates = getSelectedDates();
+    const index = currentDates.findIndex(d => isSameDay(d, date));
+
+    let newDates: Date[];
+    if (index === -1) {
+      newDates = [...currentDates, date];
+    } else {
+      newDates = [...currentDates.slice(0, index), ...currentDates.slice(index + 1)];
+    }
+    setDates(newDates);
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -37,6 +77,10 @@ export const CourseScheduleFields: React.FC<CourseScheduleFieldsProps> = ({ form
                   placeholder="e.g. May 15-16, 2025"
                   {...field}
                   className="flex-1"
+                  onChange={e => {
+                    field.onChange(e);
+                    setCalendarDate(undefined);
+                  }}
                 />
               </FormControl>
               <Popover>
@@ -55,22 +99,13 @@ export const CourseScheduleFields: React.FC<CourseScheduleFieldsProps> = ({ form
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={calendarDate}
-                    onSelect={(date) => {
-                      setCalendarDate(date);
-                      if (date) {
-                        const formatted = format(date, "PPP");
-                        let existing = (field.value || "").trim();
-                        let segments = existing.length > 0 ? existing.split(",").map(s => s.trim()) : [];
-                        if (!segments.includes(formatted)) {
-                          segments.push(formatted);
-                        }
-                        const unique = Array.from(new Set(segments)).filter(Boolean);
-                        field.onChange(unique.join(", "));
-                      }
+                    selected={undefined}
+                    onSelect={handleCalendarSelect}
+                    modifiers={{
+                      selected: getSelectedDates()
                     }}
-                    initialFocus
                     className={cn("p-3 pointer-events-auto")}
+                    initialFocus
                   />
                 </PopoverContent>
               </Popover>
