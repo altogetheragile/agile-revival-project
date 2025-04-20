@@ -8,7 +8,7 @@ const locationSchema = z.object({
   country: z.string().optional(),
 });
 
-const socialMediaSchema = z.object({
+export const socialMediaSchema = z.object({
   twitter: z.string().url().optional().or(z.literal('')),
   linkedin: z.string().url().optional().or(z.literal('')),
   facebook: z.string().url().optional().or(z.literal('')),
