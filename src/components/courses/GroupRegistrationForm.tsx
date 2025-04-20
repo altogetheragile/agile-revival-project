@@ -32,7 +32,7 @@ const GroupRegistrationForm: React.FC<GroupRegistrationFormProps> = ({ course, o
     spotsLeft: number;
   }>({ isFull: false, spotsLeft: course.spotsAvailable });
 
-  // Log when contactEmail changes
+  // Debug logging
   useEffect(() => {
     console.log("Group registration form using contact email:", contactEmail);
   }, [contactEmail]);

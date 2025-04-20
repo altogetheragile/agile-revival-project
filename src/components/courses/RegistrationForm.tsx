@@ -41,7 +41,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
     spotsLeft: number;
   }>({ isFull: false, spotsLeft: course.spotsAvailable });
 
-  // Log when contactEmail changes
+  // Debug logging
   useEffect(() => {
     console.log("Registration form using contact email:", contactEmail);
   }, [contactEmail]);

@@ -7,7 +7,7 @@ import { useEffect } from "react";
 const Footer = () => {
   const { email, phone } = useContactInfo();
   
-  // For debugging
+  // Debug logging
   useEffect(() => {
     console.log("Footer received email:", email);
     console.log("Footer received phone:", phone);
@@ -122,7 +122,7 @@ const Footer = () => {
             <h4 className="text-lg font-semibold mb-6">Contact</h4>
             <address className="not-italic text-gray-400 space-y-3">
               <p>London, United Kingdom</p>
-              <p>Email: {email}</p>
+              <p>Email: {email || 'contact@altogetheragile.com'}</p>
               {phone && <p>Phone: {phone}</p>}
             </address>
           </div>

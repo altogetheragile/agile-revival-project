@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -9,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Building, Globe, Mail, Phone } from "lucide-react";
+import { Building, Globe } from "lucide-react";
 import { useSiteSettings } from "@/contexts/site-settings";
 import { GeneralSettings as GeneralSettingsType } from "@/contexts/site-settings/types";
 
@@ -77,6 +76,9 @@ export const GeneralSettings = () => {
   const onSubmit = async (data: GeneralFormValues) => {
     console.log("Submitting General Settings:", data);
     await updateSettings('general', data);
+    
+    console.log("After update - contactEmail:", data.contactEmail);
+    console.log("After update - contactPhone:", data.contactPhone);
   };
 
   if (isLoading) {

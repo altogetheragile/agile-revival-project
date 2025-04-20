@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Mail, MapPin, Send, Phone } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -14,6 +13,12 @@ const ContactSection = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Debug logging
+  useEffect(() => {
+    console.log("Contact section received email:", email);
+    console.log("Contact section received phone:", phone);
+  }, [email, phone]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,12 +52,6 @@ const ContactSection = () => {
       });
     }, 1000);
   };
-
-  // For debugging
-  useEffect(() => {
-    console.log("Contact section received email:", email);
-    console.log("Contact section received phone:", phone);
-  }, [email, phone]);
 
   return (
     <section id="contact" className="section-container">

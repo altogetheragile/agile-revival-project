@@ -74,10 +74,14 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         return;
       }
 
+      // Update state with the new values
       setSettings(prev => ({
         ...prev,
         [key]: values
       }));
+      
+      // Log the updated state for debugging
+      console.log("Settings state after update:", key, values);
 
       toast({
         title: "Settings updated",
