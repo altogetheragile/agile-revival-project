@@ -1,13 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { Mail, MapPin, Send, Phone } from 'lucide-react';
+import { Mail, MapPin, Send, Phone, Twitter, Linkedin } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useContactInfo } from '@/hooks/useContactInfo';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const ContactSection = () => {
   const { toast } = useToast();
-  const { email, phone } = useContactInfo();
+  const { email, phone, location, socialMedia } = useContactInfo();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -78,6 +78,59 @@ const ContactSection = () => {
           <a href={`mailto:${email}`} className="text-white/90 hover:text-white">
             {email}
           </a>
+        </div>
+      </div>
+    );
+  };
+  
+  // Only show social media icons if they have values
+  const renderSocialMedia = () => {
+    // If socialMedia is undefined or no social media links are set
+    if (!socialMedia || !Object.values(socialMedia).some(link => !!link)) {
+      return null;
+    }
+    
+    return (
+      <div className="mt-12">
+        <h4 className="font-medium mb-4">Follow Us</h4>
+        <div className="flex gap-4">
+          {socialMedia.twitter && (
+            <a href={socialMedia.twitter} className="bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors" target="_blank" rel="noopener noreferrer">
+              <span className="sr-only">Twitter</span>
+              <Twitter className="w-5 h-5" />
+            </a>
+          )}
+          {socialMedia.linkedin && (
+            <a href={socialMedia.linkedin} className="bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors" target="_blank" rel="noopener noreferrer">
+              <span className="sr-only">LinkedIn</span>
+              <Linkedin className="w-5 h-5" />
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  };
+  
+  // Only show location if there's data available
+  const renderLocation = () => {
+    if (!location || (!location.city && !location.country)) {
+      return null;
+    }
+    
+    const locationDisplay = [location.city, location.country]
+      .filter(Boolean)
+      .join(", ");
+      
+    if (!locationDisplay) return null;
+    
+    return (
+      <div className="flex items-start gap-4">
+        <MapPin className="mt-1" />
+        <div>
+          <h4 className="font-medium">Location</h4>
+          <p className="text-white/90">
+            {locationDisplay}
+          </p>
         </div>
       </div>
     );
@@ -175,32 +228,10 @@ const ContactSection = () => {
                     </div>
                   </div>
                 )}
-                <div className="flex items-start gap-4">
-                  <MapPin className="mt-1" />
-                  <div>
-                    <h4 className="font-medium">Location</h4>
-                    <p className="text-white/90">
-                      London, United Kingdom
-                    </p>
-                  </div>
-                </div>
+                {renderLocation()}
               </div>
               
-              <div className="mt-12">
-                <h4 className="font-medium mb-4">Follow Us</h4>
-                <div className="flex gap-4">
-                  <a href="#" className="bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors">
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
-                    </svg>
-                  </a>
-                  <a href="#" className="bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors">
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                    </svg>
-                  </a>
-                </div>
-              </div>
+              {renderSocialMedia()}
             </div>
           </div>
         </div>
