@@ -26,14 +26,7 @@ const Footer = () => {
   };
 
   const renderPhone = () => {
-    if (!phone) {
-      return (
-        <div className="flex items-center gap-2">
-          <span>Phone: </span>
-          <Skeleton className="h-4 w-40" />
-        </div>
-      );
-    }
+    if (!phone) return null;
     return <p>Phone: {phone}</p>;
   };
   
