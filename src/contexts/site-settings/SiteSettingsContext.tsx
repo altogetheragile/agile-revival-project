@@ -39,12 +39,24 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       }
 
       if (data && data.length > 0) {
+        // Start with the default settings to ensure all fields exist
         const newSettings = { ...defaultSettings };
+        
+        // Update with values from the database
         data.forEach(setting => {
           if (setting.key in newSettings) {
-            newSettings[setting.key] = setting.value;
+            // Merge objects instead of replacing to preserve default values
+            if (typeof newSettings[setting.key] === 'object' && newSettings[setting.key] !== null) {
+              newSettings[setting.key] = {
+                ...newSettings[setting.key],
+                ...setting.value
+              };
+            } else {
+              newSettings[setting.key] = setting.value;
+            }
           }
         });
+        
         console.log("Fetched settings:", newSettings);
         setSettings(newSettings);
       } else {

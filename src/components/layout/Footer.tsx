@@ -1,4 +1,3 @@
-
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useContactInfo } from "@/hooks/useContactInfo";
@@ -15,7 +14,8 @@ const Footer = () => {
   
   // Improved rendering for email with better loading state handling
   const renderEmail = () => {
-    if (email === '') {
+    // Always display the email section, even if it's loading or empty
+    if (email === undefined || email === null || email === '') {
       return (
         <div className="flex items-center gap-2">
           <span>Email: </span>

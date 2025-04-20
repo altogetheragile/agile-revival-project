@@ -20,6 +20,7 @@ type ContactInfo = {
 
 export const useContactInfo = () => {
   const { settings, isLoading } = useSiteSettings();
+  // Initialize with proper empty values to avoid undefined issues
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     email: '',
     phone: '',
@@ -32,7 +33,7 @@ export const useContactInfo = () => {
   });
 
   useEffect(() => {
-    if (!isLoading && settings?.general) {
+    if (settings?.general) {
       const { contactEmail, contactPhone, location, socialMedia } = settings.general;
       
       // Create default empty objects if location or socialMedia are undefined
@@ -53,7 +54,7 @@ export const useContactInfo = () => {
         socialMedia: safeSocialMedia
       });
     }
-  }, [settings?.general, isLoading]);
+  }, [settings?.general]);
 
   return contactInfo;
 };
