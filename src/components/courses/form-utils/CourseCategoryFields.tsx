@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
 import { COURSE_CATEGORIES } from "@/constants/courseCategories";
+import { X } from "lucide-react";
 
 interface CourseCategoryFieldsProps {
   form: UseFormReturn<CourseFormData>;
@@ -48,6 +49,15 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
       form.setValue("category", newCat.value); // Set this value on the form
       setAddMode(false);
       setNewCategory("");
+    }
+  };
+
+  const handleDeleteCategory = (value: string) => {
+    setCustomCategories(customCategories.filter(cat => cat.value !== value));
+
+    // If the deleted category was selected, reset to empty or first default
+    if (form.getValues("category") === value) {
+      form.setValue("category", defaultCategoryOptions[0]?.value ?? "");
     }
   };
 
@@ -117,11 +127,42 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {allCategoryOptions.map(category => (
+                    {defaultCategoryOptions.map(category => (
                       <SelectItem key={category.value} value={category.value}>
                         {category.label}
                       </SelectItem>
                     ))}
+                    {customCategories.length > 0 && (
+                      <>
+                        {customCategories.map(category => (
+                          <div
+                            key={category.value}
+                            className="flex items-center justify-between pr-2 pl-2"
+                          >
+                            <SelectItem
+                              value={category.value}
+                              className="flex-1 cursor-pointer min-w-0 truncate"
+                            >
+                              <span className="truncate">{category.label}</span>
+                            </SelectItem>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="ml-1 h-5 w-5 px-0 py-0 text-muted-foreground hover:text-destructive"
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleDeleteCategory(category.value);
+                              }}
+                              tabIndex={-1}
+                              aria-label={`Delete category ${category.label}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </>
+                    )}
                     <SelectItem
                       key="add-category"
                       value="__add_category__"
