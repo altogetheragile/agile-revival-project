@@ -1,4 +1,3 @@
-
 import { Course, CourseFormData, ScheduleCourseFormData } from "@/types/course";
 import { loadCourses, saveCourses } from "@/utils/courseStorage";
 
@@ -19,6 +18,13 @@ export const getCoursesByCategory = (category: string): Course[] => {
 export const getCourseById = (id: string): Course | undefined => {
   const courses = loadCourses();
   return courses.find(course => course.id === id);
+};
+
+// Get all scheduled (non-template) courses, regardless of status
+export const getScheduledCourses = (): Course[] => {
+  const courses = loadCourses();
+  // Filter out templates and include all courses with status 'published' or 'draft'
+  return courses.filter(course => !course.isTemplate && (course.status === 'published' || course.status === 'draft'));
 };
 
 // Get published courses only

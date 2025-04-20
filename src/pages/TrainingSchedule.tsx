@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { Course, CourseFormData } from "@/types/course";
-import { getPublishedCourses, updateCourse, deleteCourse } from "@/services/courseService";
+import { getScheduledCourses, updateCourse, deleteCourse } from "@/services/courseService";
 import { CourseCategory } from "@/components/courses/CourseCategoryTabs";
 import TrainingHeader from "@/components/courses/TrainingHeader";
 import CourseFilters from "@/components/courses/CourseFilters";
@@ -17,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const TrainingSchedule = () => {
   const [selectedTab, setSelectedTab] = useState<CourseCategory>("all");
-  const [courses, setCourses] = useState<Course[]>(getPublishedCourses());
+  const [courses, setCourses] = useState<Course[]>(getScheduledCourses());
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
@@ -30,7 +29,7 @@ const TrainingSchedule = () => {
     : courses.filter(course => course.category === selectedTab);
 
   const refreshCourses = () => {
-    setCourses(getPublishedCourses());
+    setCourses(getScheduledCourses());
   };
 
   const handleEditCourse = (course: Course) => {
@@ -52,7 +51,7 @@ const TrainingSchedule = () => {
         refreshCourses();
         toast({
           title: "Course updated",
-          description: `"${data.title}" has been updated successfully.`
+          description: `"${data.title}" has been updated successfully."
         });
       }
       setIsFormOpen(false);
