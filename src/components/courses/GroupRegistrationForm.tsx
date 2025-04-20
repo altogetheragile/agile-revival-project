@@ -15,6 +15,7 @@ import {
   GroupRegistrationFormValues 
 } from "./group-registration/types";
 import { submitGroupRegistration } from "./group-registration/groupRegistrationService";
+import { useContactInfo } from "@/hooks/useContactInfo";
 
 interface GroupRegistrationFormProps {
   course: Course;
@@ -23,6 +24,7 @@ interface GroupRegistrationFormProps {
 
 const GroupRegistrationForm: React.FC<GroupRegistrationFormProps> = ({ course, onComplete }) => {
   const { toast } = useToast();
+  const { email: contactEmail } = useContactInfo();
   const [submitting, setSubmitting] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [courseAvailability, setCourseAvailability] = useState<{
@@ -74,7 +76,13 @@ const GroupRegistrationForm: React.FC<GroupRegistrationFormProps> = ({ course, o
     try {
       setSubmitting(true);
       
-      const result = await submitGroupRegistration(values, course);
+      // Add the site contact email to the submission
+      const enrichedValues = {
+        ...values,
+        siteContactEmail: contactEmail
+      };
+      
+      const result = await submitGroupRegistration(enrichedValues, course);
       
       setRegistrationSuccess(true);
       

@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Mail, MapPin, Send } from 'lucide-react';
+
+import { useState, useEffect } from 'react';
+import { Mail, MapPin, Send, Phone } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useContactInfo } from '@/hooks/useContactInfo';
 
@@ -22,6 +23,12 @@ const ContactSection = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    
+    // Include recipient email from site settings
+    const submissionData = {
+      ...formData,
+      recipientEmail: email, // Send to the contact email from site settings
+    };
     
     // Simulate form submission
     setTimeout(() => {
@@ -130,7 +137,7 @@ const ContactSection = () => {
                 </div>
                 {phone && (
                   <div className="flex items-start gap-4">
-                    <Mail className="mt-1" />
+                    <Phone className="mt-1" />
                     <div>
                       <h4 className="font-medium">Phone</h4>
                       <a href={`tel:${phone}`} className="text-white/90 hover:text-white">

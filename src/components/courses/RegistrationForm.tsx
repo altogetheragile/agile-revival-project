@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkCourseAvailability } from "@/utils/courseUtils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { useContactInfo } from "@/hooks/useContactInfo";
 
 const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -32,6 +33,7 @@ interface RegistrationFormProps {
 
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete }) => {
   const { toast } = useToast();
+  const { email: contactEmail } = useContactInfo();
   const [submitting, setSubmitting] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [courseAvailability, setCourseAvailability] = useState<{
@@ -97,6 +99,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
         company: values.company || null,
         additional_notes: values.additionalNotes || null,
         status: 'pending',
+        contact_email: contactEmail, // Store the current contact email
       };
       
       console.log("Submitting registration data:", registrationData);
