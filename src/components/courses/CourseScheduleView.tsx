@@ -3,7 +3,7 @@ import React from "react";
 import { Course } from "@/types/course";
 import CourseList from "./CourseList";
 import CourseGrid from "./CourseGrid";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CourseScheduleViewProps {
   courses: Course[];
@@ -18,7 +18,7 @@ const CourseScheduleView: React.FC<CourseScheduleViewProps> = ({
   onEdit,
   onDelete
 }) => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   if (courses.length === 0) {
     return (
