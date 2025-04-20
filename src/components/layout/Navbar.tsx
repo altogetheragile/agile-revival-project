@@ -64,10 +64,32 @@ const Navbar = () => {
   // Use siteName from settings, or fall back to the default if not loaded yet
   const siteName = settings.general?.siteName || "AltogetherAgile";
   
-  // Split the site name for styling if it contains two words
-  const nameParts = siteName.split(/\s+/);
-  const firstPart = nameParts[0] || "";
-  const remainingParts = nameParts.slice(1).join(" ");
+  // Custom logic to color the site name:
+  let siteNameContent = null;
+  if (siteName.includes(' ')) {
+    // Two word mode (use mid-light green for second word)
+    const [firstPart, ...rest] = siteName.split(' ');
+    siteNameContent = (
+      <>
+        {firstPart}
+        <span className="text-agile-mid-light"> {rest.join(' ')}</span>
+      </>
+    );
+  } else {
+    // No space: split camel case like "AltogetherAgile"
+    const match = siteName.match(/^([A-Z][a-z]+)([A-Z].+)$/);
+    if (match) {
+      siteNameContent = (
+        <>
+          {match[1]}
+          <span className="text-agile-purple-dark">{match[2]}</span>
+        </>
+      );
+    } else {
+      // Fallback to base color
+      siteNameContent = siteName;
+    }
+  }
 
   return (
     <nav 
@@ -81,10 +103,7 @@ const Navbar = () => {
           className="font-bold text-2xl text-agile-purple"
           onClick={handleFullPageLinkClick}
         >
-          {firstPart}
-          {remainingParts && (
-            <span className="text-agile-purple-light"> {remainingParts}</span>
-          )}
+          {siteNameContent}
         </Link>
         
         {/* Desktop Navigation */}

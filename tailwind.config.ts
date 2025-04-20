@@ -66,7 +66,8 @@ export default {
 				agile: {
 					purple: '#4CAF50', // Changed to green
 					'purple-dark': '#2E7D32', // Darker green
-					'purple-light': '#E8F5E9', // Light green
+					'purple-light': '#E8F5E9', // Light green (keep for reference)
+					'mid-light': '#BBFFC3', // Slightly darker light green
 				}
 			},
 			borderRadius: {
