@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -51,6 +52,14 @@ export const GeneralSettings = () => {
     { value: "Australia/Sydney", label: "Australian Eastern Time (AET)" },
     { value: "Australia/Perth", label: "Australian Western Time (AWT)" },
     { value: "Pacific/Auckland", label: "New Zealand Time (NZT)" },
+  ];
+
+  const currencies = [
+    { value: "USD", label: "US Dollar ($)" },
+    { value: "EUR", label: "Euro (€)" },
+    { value: "GBP", label: "British Pound (£)" },
+    { value: "CAD", label: "Canadian Dollar (CAD)" },
+    { value: "AUD", label: "Australian Dollar (AUD)" },
   ];
 
   const form = useForm<GeneralFormValues>({
@@ -147,7 +156,10 @@ export const GeneralSettings = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Default Language</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          value={field.value} 
+                          onValueChange={field.onChange}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a language" />
@@ -171,7 +183,10 @@ export const GeneralSettings = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Time Zone</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          value={field.value} 
+                          onValueChange={field.onChange}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select time zone" />
@@ -196,18 +211,21 @@ export const GeneralSettings = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Default Currency</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          value={field.value} 
+                          onValueChange={field.onChange}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select currency" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="USD">US Dollar ($)</SelectItem>
-                            <SelectItem value="EUR">Euro (€)</SelectItem>
-                            <SelectItem value="GBP">British Pound (£)</SelectItem>
-                            <SelectItem value="CAD">Canadian Dollar (CAD)</SelectItem>
-                            <SelectItem value="AUD">Australian Dollar (AUD)</SelectItem>
+                            {currencies.map((currency) => (
+                              <SelectItem key={currency.value} value={currency.value}>
+                                {currency.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
