@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -51,7 +52,7 @@ const TrainingSchedule = () => {
         refreshCourses();
         toast({
           title: "Course updated",
-          description: `"${data.title}" has been updated successfully."
+          description: `"${data.title}" has been updated successfully.`
         });
       }
       setIsFormOpen(false);
