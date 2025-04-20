@@ -29,23 +29,16 @@ const CourseScheduleView: React.FC<CourseScheduleViewProps> = ({
     );
   }
 
-  // Mark each course with a visible property for admins to indicate if it's a draft
-  const enhancedCourses = courses.map(course => ({
-    ...course,
-    // Add an isDraft flag that can be used in the UI
-    isDraft: course.status === 'draft'
-  }));
-
   return isMobile ? (
     <CourseList 
-      courses={enhancedCourses} 
+      courses={courses} 
       isMobile={true}
       onEdit={isAdmin ? onEdit : undefined}
       onDelete={isAdmin ? onDelete : undefined}
     />
   ) : (
     <CourseGrid 
-      courses={enhancedCourses}
+      courses={courses}
       onEdit={isAdmin ? onEdit : undefined}
       onDelete={isAdmin ? onDelete : undefined}
     />

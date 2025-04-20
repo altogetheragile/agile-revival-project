@@ -52,7 +52,7 @@ const CourseGrid: React.FC<CourseGridProps> = ({ courses, onEdit, onDelete }) =>
                 <div>
                   <CardTitle className="text-agile-purple-dark flex items-center gap-2">
                     {course.title}
-                    {course.isDraft && (
+                    {course.status === 'draft' && (
                       <Badge variant="outline" className="ml-2 text-amber-600 border-amber-600">
                         Draft
                       </Badge>
