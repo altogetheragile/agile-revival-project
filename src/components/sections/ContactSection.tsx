@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Mail, MapPin, Send, Phone, Twitter, Linkedin } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -135,6 +134,25 @@ const ContactSection = () => {
       </div>
     );
   };
+  
+  // Render phone contact info
+  const renderPhoneContact = () => {
+    if (!phone) {
+      return null;
+    }
+    
+    return (
+      <div className="flex items-start gap-4">
+        <Phone className="mt-1" />
+        <div>
+          <h4 className="font-medium">Phone</h4>
+          <a href={`tel:${phone}`} className="text-white/90 hover:text-white">
+            {phone}
+          </a>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <section id="contact" className="section-container">
@@ -217,17 +235,7 @@ const ContactSection = () => {
               <h3 className="text-2xl font-bold mb-6">Contact Information</h3>
               <div className="space-y-6">
                 {renderEmailContact()}
-                {phone && (
-                  <div className="flex items-start gap-4">
-                    <Phone className="mt-1" />
-                    <div>
-                      <h4 className="font-medium">Phone</h4>
-                      <a href={`tel:${phone}`} className="text-white/90 hover:text-white">
-                        {phone}
-                      </a>
-                    </div>
-                  </div>
-                )}
+                {renderPhoneContact()}
                 {renderLocation()}
               </div>
               

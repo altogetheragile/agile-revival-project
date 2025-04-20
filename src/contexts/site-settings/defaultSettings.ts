@@ -1,10 +1,11 @@
+
 import { AllSettings } from './types';
 
 export const defaultSettings: AllSettings = {
   general: {
     siteName: "AltogetherAgile",
-    contactEmail: "contact@altogetheragile.com",
-    contactPhone: "+1 (555) 123-4567",
+    contactEmail: "al@altogetherAgile.com",
+    contactPhone: "07957557549",
     defaultLanguage: "en",
     timezone: "UTC",
     currency: "USD",
