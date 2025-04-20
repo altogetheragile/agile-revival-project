@@ -13,9 +13,9 @@ export const CourseManagementHeader = ({ searchTerm, onSearchChange, onAddNew }:
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Course Management</h2>
+        <h2 className="text-xl font-semibold">Course Templates</h2>
         <Button onClick={onAddNew} className="flex items-center gap-2">
-          <PlusCircle size={16} /> Add New Course
+          <PlusCircle size={16} /> Add New Template
         </Button>
       </div>
 
@@ -23,7 +23,7 @@ export const CourseManagementHeader = ({ searchTerm, onSearchChange, onAddNew }:
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <Input
-            placeholder="Search courses..."
+            placeholder="Search templates..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}

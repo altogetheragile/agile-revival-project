@@ -1,26 +1,43 @@
 
-import React from 'react';
-import { Course } from '@/types/course';
-import { Separator } from '@/components/ui/separator';
-import CourseTable from './CourseTable';
-import CourseGrid from './CourseGrid';
+import React from "react";
+import { Course } from "@/types/course";
+import CourseList from "./CourseList";
+import CourseGrid from "./CourseGrid";
+import { useMobile } from "@/hooks/use-mobile";
 
 interface CourseScheduleViewProps {
   courses: Course[];
+  isAdmin?: boolean;
+  onEdit?: (course: Course) => void;
+  onDelete?: (course: Course) => void;
 }
 
-const CourseScheduleView = ({ courses }: CourseScheduleViewProps) => {
-  return (
-    <>
-      <Separator className="my-12" />
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold text-agile-purple-dark mb-6">Course Schedule At-a-Glance</h2>
-        <CourseTable courses={courses} />
-        
-        <h3 className="text-xl font-bold text-agile-purple-dark mt-12 mb-6">Upcoming Courses</h3>
-        <CourseGrid courses={courses} />
+const CourseScheduleView: React.FC<CourseScheduleViewProps> = ({ 
+  courses,
+  isAdmin,
+  onEdit,
+  onDelete
+}) => {
+  const isMobile = useMobile();
+
+  if (courses.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <h3 className="text-xl font-medium text-gray-600">No courses available in this category.</h3>
+        <p className="text-gray-500 mt-2">Please check back later or try another category.</p>
       </div>
-    </>
+    );
+  }
+
+  return isMobile ? (
+    <CourseList 
+      courses={courses} 
+      isMobile={true}
+      onEdit={isAdmin ? onEdit : undefined}
+      onDelete={isAdmin ? onDelete : undefined}
+    />
+  ) : (
+    <CourseGrid courses={courses} />
   );
 };
 

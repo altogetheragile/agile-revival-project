@@ -1,12 +1,15 @@
 
-import React from "react";
-import { Course } from "@/types/course";
+import React, { useState } from "react";
+import { Course, ScheduleCourseFormData } from "@/types/course";
 import { CourseManagementHeader } from "./CourseManagementHeader";
 import { CourseTable } from "./CourseTable";
 import CourseFormDialog from "@/components/courses/CourseFormDialog";
 import { DeleteConfirmationDialog } from "../users/DeleteConfirmationDialog";
 import CourseRegistrations from "./CourseRegistrations";
 import { useCourseManagement } from "@/hooks/useCourseManagement";
+import ScheduleCourseDialog from "@/components/courses/ScheduleCourseDialog";
+import { useToast } from "@/components/ui/use-toast";
+import { createCourseFromTemplate } from "@/services/courseService";
 
 export const CourseManagementContainer: React.FC = () => {
   const {
@@ -26,6 +29,13 @@ export const CourseManagementContainer: React.FC = () => {
     handleFormSubmit,
     handleDelete
   } = useCourseManagement();
+
+  const { toast } = useToast();
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<Course | null>(null);
+
+  // Filter to only show template courses
+  const templateCourses = courses.filter(course => course.isTemplate === true);
 
   const handleAddCourse = () => {
     setCurrentCourse(null);
@@ -47,6 +57,33 @@ export const CourseManagementContainer: React.FC = () => {
     setViewingRegistrations(true);
   };
 
+  const handleScheduleCourse = (template: Course) => {
+    setSelectedTemplate(template);
+    setScheduleDialogOpen(true);
+  };
+
+  const handleScheduleSubmit = (data: ScheduleCourseFormData) => {
+    if (!selectedTemplate) return;
+
+    try {
+      const scheduledCourse = createCourseFromTemplate(selectedTemplate.id, data);
+      
+      toast({
+        title: "Course scheduled",
+        description: `${scheduledCourse.title} has been scheduled for ${data.dates}.`,
+      });
+      
+      setScheduleDialogOpen(false);
+    } catch (error) {
+      console.error("Error scheduling course:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem scheduling the course.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (viewingRegistrations && currentCourse) {
     return (
       <CourseRegistrations 
@@ -65,10 +102,11 @@ export const CourseManagementContainer: React.FC = () => {
       />
       
       <CourseTable 
-        courses={courses} 
+        courses={templateCourses}
         onEdit={handleEditCourse} 
         onDelete={handleDeleteConfirm}
         onViewRegistrations={handleViewRegistrations}
+        onScheduleCourse={handleScheduleCourse}
       />
       
       <CourseFormDialog
@@ -83,6 +121,14 @@ export const CourseManagementContainer: React.FC = () => {
         open={isConfirmDialogOpen}
         onOpenChange={setIsConfirmDialogOpen}
         onConfirm={handleDelete}
+      />
+
+      <ScheduleCourseDialog
+        open={scheduleDialogOpen}
+        onOpenChange={setScheduleDialogOpen}
+        template={selectedTemplate}
+        onSubmit={handleScheduleSubmit}
+        onCancel={() => setScheduleDialogOpen(false)}
       />
     </div>
   );

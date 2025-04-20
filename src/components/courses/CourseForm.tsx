@@ -4,20 +4,21 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { CourseFormData } from "@/types/course";
 import { BasicCourseFields } from "./form-utils/BasicCourseFields";
-import { CourseScheduleFields } from "./form-utils/CourseScheduleFields";
-import { CourseInstructorPriceFields } from "./form-utils/CourseInstructorPriceFields";
 import { CourseCategoryFields } from "./form-utils/CourseCategoryFields";
 import { CourseDetailsFields } from "./form-utils/CourseDetailsFields";
 import { LearningOutcomeField } from "./form-utils/LearningOutcomeField";
 import { CourseFormActions } from "./form-utils/CourseFormActions";
 import { CourseFormatFields } from "./form-utils/CourseFormatFields";
 import { CourseGoogleDriveSection } from "./form-utils/CourseGoogleDriveSection";
+import { CourseInstructorPriceFields } from "./form-utils/CourseInstructorPriceFields";
+import { CourseScheduleFields } from "./form-utils/CourseScheduleFields";
 
 interface CourseFormProps {
   initialData?: CourseFormData;
   onSubmit: (data: CourseFormData) => void;
   onCancel: () => void;
   stayOpenOnSubmit?: boolean;
+  isTemplate?: boolean;
 }
 
 const CourseForm: React.FC<CourseFormProps> = ({
@@ -36,11 +37,13 @@ const CourseForm: React.FC<CourseFormProps> = ({
     duration: "",
     skillLevel: "all-levels",
     format: "in-person",
-    status: "draft"
+    status: "draft",
+    isTemplate: true
   },
   onSubmit,
   onCancel,
-  stayOpenOnSubmit = false
+  stayOpenOnSubmit = false,
+  isTemplate = true
 }) => {
   const form = useForm<CourseFormData>({
     defaultValues: initialData
@@ -57,7 +60,8 @@ const CourseForm: React.FC<CourseFormProps> = ({
     
     onSubmit({
       ...data,
-      spotsAvailable: Number(data.spotsAvailable)
+      spotsAvailable: Number(data.spotsAvailable),
+      isTemplate: isTemplate
     });
   };
 
@@ -65,8 +69,18 @@ const CourseForm: React.FC<CourseFormProps> = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <BasicCourseFields form={form} />
-        <CourseScheduleFields form={form} />
-        <CourseInstructorPriceFields form={form} />
+        
+        {!isTemplate && (
+          <>
+            <CourseScheduleFields form={form} />
+            <CourseInstructorPriceFields form={form} />
+          </>
+        )}
+        
+        {isTemplate && (
+          <CourseInstructorPriceFields form={form} />
+        )}
+        
         <CourseCategoryFields form={form} />
         <CourseDetailsFields form={form} />
         <CourseFormatFields form={form} />

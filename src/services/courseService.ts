@@ -1,5 +1,5 @@
 
-import { Course, CourseFormData } from "@/types/course";
+import { Course, CourseFormData, ScheduleCourseFormData } from "@/types/course";
 import { loadCourses, saveCourses } from "@/utils/courseStorage";
 
 // Get all courses
@@ -10,7 +10,9 @@ export const getAllCourses = (): Course[] => {
 // Get courses by category
 export const getCoursesByCategory = (category: string): Course[] => {
   const courses = loadCourses();
-  return category === 'all' ? courses : courses.filter(course => course.category === category);
+  // Only return non-template courses for the public view
+  const nonTemplates = courses.filter(course => !course.isTemplate);
+  return category === 'all' ? nonTemplates : nonTemplates.filter(course => course.category === category);
 };
 
 // Get a course by ID
@@ -22,7 +24,8 @@ export const getCourseById = (id: string): Course | undefined => {
 // Get published courses only
 export const getPublishedCourses = (): Course[] => {
   const courses = loadCourses();
-  return courses.filter(course => course.status === 'published');
+  // Filter out templates and only include published courses
+  return courses.filter(course => course.status === 'published' && !course.isTemplate);
 };
 
 // Get course templates
@@ -50,6 +53,37 @@ export const createCourse = (courseData: CourseFormData): Course => {
     learningOutcomes: Array.isArray(courseData.learningOutcomes) 
       ? courseData.learningOutcomes 
       : courseData.learningOutcomes ? [courseData.learningOutcomes] : []
+  };
+  
+  courses.push(newCourse);
+  saveCourses(courses);
+  
+  return newCourse;
+};
+
+// Create a course from a template
+export const createCourseFromTemplate = (templateId: string, scheduleData: ScheduleCourseFormData): Course => {
+  const courses = loadCourses();
+  const template = courses.find(course => course.id === templateId);
+  
+  if (!template) {
+    throw new Error("Template not found");
+  }
+  
+  const newId = `crs-${String(Date.now()).slice(-6)}`;
+  
+  // Create a new course based on the template, but with scheduled details
+  const newCourse: Course = {
+    ...template,
+    id: newId,
+    dates: scheduleData.dates,
+    location: scheduleData.location,
+    instructor: scheduleData.instructor,
+    spotsAvailable: scheduleData.spotsAvailable,
+    status: scheduleData.status,
+    isTemplate: false, // This is now a scheduled course, not a template
+    templateId: templateId, // Reference back to the template it was created from
+    materials: []
   };
   
   courses.push(newCourse);

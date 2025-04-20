@@ -1,9 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { Course, CourseFormData, CourseMaterial } from "@/types/course";
-import { getAllCourses, createCourse, updateCourse, deleteCourse, addCourseMaterial } from "@/services/courseService";
-import { supabase } from "@/integrations/supabase/client";
+import { Course, CourseFormData } from "@/types/course";
+import { getAllCourses, createCourse, updateCourse, deleteCourse } from "@/services/courseService";
 
 export const useCourseManagement = () => {
   const [courses, setCourses] = useState<Course[]>(getAllCourses());
@@ -15,12 +14,17 @@ export const useCourseManagement = () => {
   const [viewingRegistrations, setViewingRegistrations] = useState(false);
   const { toast } = useToast();
 
+  // Refresh courses list when something changes
+  useEffect(() => {
+    setCourses(getAllCourses());
+  }, [isFormOpen, isConfirmDialogOpen]);
+
   const filteredCourses = courses.filter(course => {
     const searchLower = searchTerm.toLowerCase();
     return (
       course.title.toLowerCase().includes(searchLower) ||
       course.category.toLowerCase().includes(searchLower) ||
-      course.instructor.toLowerCase().includes(searchLower)
+      (course.instructor && course.instructor.toLowerCase().includes(searchLower))
     );
   });
 
@@ -31,10 +35,16 @@ export const useCourseManagement = () => {
         googleDriveFolderId: data.googleDriveFolderId,
         googleDriveFolderUrl: data.googleDriveFolderUrl
       };
+
+      // Set isTemplate to true for courses managed in Course Management
+      const templateData = {
+        ...data,
+        isTemplate: true
+      };
       
       if (currentCourse) {
         const updated = updateCourse(currentCourse.id, {
-          ...data,
+          ...templateData,
           ...googleDriveData
         });
         
@@ -42,30 +52,28 @@ export const useCourseManagement = () => {
           setCourses(getAllCourses());
           setCurrentCourse(updated); // Update the current course to reflect changes
           toast({
-            title: "Course updated",
+            title: "Template updated",
             description: `"${data.title}" has been updated successfully.`
           });
         }
       } else {
         const created = createCourse({
-          ...data,
+          ...templateData,
           ...googleDriveData
         });
         
         setCourses(getAllCourses());
         setCurrentCourse(created); // Set the new course as the current course
         toast({
-          title: "Course created",
+          title: "Template created",
           description: `"${created.title}" has been ${data.status === 'published' ? 'published' : 'saved as draft'}.`
         });
       }
-      // We no longer auto-close the form dialog
-      // setIsFormOpen(false);
     } catch (error) {
       console.error("Error handling course submission:", error);
       toast({
         title: "Error",
-        description: "There was a problem saving the course.",
+        description: "There was a problem saving the course template.",
         variant: "destructive"
       });
     }
@@ -76,8 +84,8 @@ export const useCourseManagement = () => {
       if (deleteCourse(deleteCourseId)) {
         setCourses(getAllCourses());
         toast({
-          title: "Course deleted",
-          description: "The course has been removed successfully."
+          title: "Template deleted",
+          description: "The course template has been removed successfully."
         });
       }
       setIsConfirmDialogOpen(false);

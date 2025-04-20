@@ -60,3 +60,13 @@ export interface CourseTemplate {
   format?: "online" | "live" | "in-person" | "hybrid";
   status?: "draft" | "published";
 }
+
+// New interface for scheduling a course from a template
+export interface ScheduleCourseFormData {
+  templateId: string;
+  dates: string;
+  location: string;
+  instructor: string;
+  spotsAvailable: number;
+  status?: "draft" | "published";
+}
