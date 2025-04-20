@@ -50,7 +50,7 @@ export interface CourseTemplate {
   id: string;
   title: string;
   description: string;
-  category: "scrum" | "kanban" | "leadership" | "all";
+  category: string; // Changed from string literal union type to accept any string
   price: string;
   learningOutcomes?: string[];
   prerequisites?: string;

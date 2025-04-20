@@ -15,6 +15,7 @@ import { DeleteConfirmationDialog } from "@/components/admin/users/DeleteConfirm
 import { useToast } from "@/hooks/use-toast";
 
 const TrainingSchedule = () => {
+  // Updated to use string type for CourseCategory
   const [selectedTab, setSelectedTab] = useState<CourseCategory>("all");
   const [courses, setCourses] = useState<Course[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);

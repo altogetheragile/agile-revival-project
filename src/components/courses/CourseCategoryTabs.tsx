@@ -3,7 +3,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Course } from "@/types/course";
 import { COURSE_CATEGORIES } from "@/constants/courseCategories";
 
-export type CourseCategory = "all" | "scrum" | "kanban" | "leadership";
+// Use string instead of string literal union type
+export type CourseCategory = string;
 
 interface CourseCategoryTabsProps {
   selectedTab: CourseCategory;
