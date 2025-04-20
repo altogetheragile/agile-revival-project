@@ -1,4 +1,3 @@
-
 // Types for our various settings
 export type GeneralSettings = {
   siteName: string;
@@ -7,6 +6,17 @@ export type GeneralSettings = {
   defaultLanguage: string;
   timezone: string;
   currency: string;
+  location: {
+    address: string;
+    city: string;
+    country: string;
+  };
+  socialMedia: {
+    twitter?: string;
+    linkedin?: string;
+    facebook?: string;
+    instagram?: string;
+  };
 };
 
 export type InterfaceSettings = {

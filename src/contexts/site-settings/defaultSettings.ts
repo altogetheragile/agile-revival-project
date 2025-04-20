@@ -1,4 +1,3 @@
-
 import { AllSettings } from './types';
 
 export const defaultSettings: AllSettings = {
@@ -9,6 +8,17 @@ export const defaultSettings: AllSettings = {
     defaultLanguage: "en",
     timezone: "UTC",
     currency: "USD",
+    location: {
+      address: "",
+      city: "London",
+      country: "United Kingdom"
+    },
+    socialMedia: {
+      twitter: "",
+      linkedin: "",
+      facebook: "",
+      instagram: ""
+    }
   },
   interface: {
     logoUrl: "",
