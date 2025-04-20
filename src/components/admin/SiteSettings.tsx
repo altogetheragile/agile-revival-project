@@ -7,6 +7,7 @@ import { InterfaceSettings } from "./settings/InterfaceSettings";
 import { SecuritySettings } from "./settings/SecuritySettings";
 import { UserSettings } from "./settings/UserSettings";
 import { SocialMediaSettings } from "./settings/SocialMediaSettings";
+import { CourseTemplatesSettings } from "./settings/CourseTemplatesSettings";
 import { SiteSettingsProvider } from "@/contexts/site-settings/SiteSettingsContext";
 import { SettingsHeader } from "./settings/SettingsHeader";
 import { SettingsSync } from "./settings/SettingsSync";
@@ -19,11 +20,12 @@ const SiteSettings = () => {
         <SettingsSync />
         
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="mb-6 grid grid-cols-2 md:grid-cols-6 gap-2">
+          <TabsList className="mb-6 grid grid-cols-2 md:grid-cols-7 gap-2">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="interface">Interface</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="courses">Courses</TabsTrigger>
             <TabsTrigger value="integrations">Integrations</TabsTrigger>
             <TabsTrigger value="socials">Social Media</TabsTrigger>
           </TabsList>
@@ -42,6 +44,10 @@ const SiteSettings = () => {
           
           <TabsContent value="security" className="space-y-6">
             <SecuritySettings />
+          </TabsContent>
+          
+          <TabsContent value="courses" className="space-y-6">
+            <CourseTemplatesSettings />
           </TabsContent>
           
           <TabsContent value="integrations" className="space-y-6">

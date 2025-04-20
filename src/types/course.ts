@@ -1,3 +1,4 @@
+
 export interface Course {
   id: string;
   title: string;
@@ -18,6 +19,8 @@ export interface Course {
   materials?: CourseMaterial[];
   googleDriveFolderId?: string;
   googleDriveFolderUrl?: string;
+  isTemplate?: boolean;
+  templateId?: string;
 }
 
 export interface CourseMaterial {
@@ -35,8 +38,25 @@ export type CourseFormData = Omit<Course, "id"> & {
   learningOutcomes?: string[] | string;
   googleDriveFolderId?: string;
   googleDriveFolderUrl?: string;
+  isTemplate?: boolean;
+  templateId?: string;
 };
 
 export interface CourseWithFormData extends Omit<Course, "learningOutcomes"> {
   learningOutcomes?: string[] | string;
+}
+
+export interface CourseTemplate {
+  id: string;
+  title: string;
+  description: string;
+  category: "scrum" | "kanban" | "leadership" | "all";
+  price: string;
+  learningOutcomes?: string[];
+  prerequisites?: string;
+  targetAudience?: string;
+  duration?: string;
+  skillLevel?: "beginner" | "intermediate" | "advanced" | "all-levels";
+  format?: "online" | "live" | "in-person" | "hybrid";
+  status?: "draft" | "published";
 }

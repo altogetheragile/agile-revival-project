@@ -25,6 +25,18 @@ export const getPublishedCourses = (): Course[] => {
   return courses.filter(course => course.status === 'published');
 };
 
+// Get course templates
+export const getCourseTemplates = (): Course[] => {
+  const courses = loadCourses();
+  return courses.filter(course => course.isTemplate === true);
+};
+
+// Get courses by template ID
+export const getCoursesByTemplateId = (templateId: string): Course[] => {
+  const courses = loadCourses();
+  return courses.filter(course => course.templateId === templateId);
+};
+
 // Create a new course
 export const createCourse = (courseData: CourseFormData): Course => {
   const courses = loadCourses();

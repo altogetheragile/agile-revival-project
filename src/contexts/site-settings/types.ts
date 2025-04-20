@@ -1,5 +1,7 @@
 
 // Types for our various settings
+import { CourseTemplate } from "@/types/course";
+
 export type GeneralSettings = {
   siteName: string;
   contactEmail: string;
@@ -47,12 +49,18 @@ export type SecuritySettings = {
   strongPasswords: boolean;
 };
 
+// Course related settings
+export type CourseSettings = {
+  courseTemplates: CourseTemplate[];
+};
+
 // Combined settings types
 export type AllSettings = {
   general: GeneralSettings;
   interface: InterfaceSettings;
   user: UserSettings;
   security: SecuritySettings;
+  courseTemplates?: CourseTemplate[];
   [key: string]: any;
 };
 
