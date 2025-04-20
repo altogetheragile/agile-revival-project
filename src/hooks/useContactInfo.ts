@@ -29,29 +29,43 @@ export const useContactInfo = () => {
       city: '',
       country: '',
     },
-    socialMedia: {}
+    socialMedia: {
+      twitter: '',
+      linkedin: '',
+      facebook: '',
+      instagram: ''
+    }
   });
 
   useEffect(() => {
     if (settings?.general) {
-      const { contactEmail, contactPhone, location, socialMedia } = settings.general;
+      const { contactEmail, contactPhone } = settings.general;
       
       // Create default empty objects if location or socialMedia are undefined
-      const safeLocation = location || { address: '', city: '', country: '' };
-      const safeSocialMedia = socialMedia || {};
+      const location = settings.general.location || { address: '', city: '', country: '' };
+      const socialMedia = settings.general.socialMedia || { twitter: '', linkedin: '', facebook: '', instagram: '' };
       
       console.log("useContactInfo updating with:", { 
         contactEmail, 
         contactPhone, 
-        location: safeLocation, 
-        socialMedia: safeSocialMedia 
+        location, 
+        socialMedia 
       });
       
       setContactInfo({
         email: contactEmail || '',
         phone: contactPhone || '',
-        location: safeLocation,
-        socialMedia: safeSocialMedia
+        location: {
+          address: location.address || '',
+          city: location.city || '',
+          country: location.country || ''
+        },
+        socialMedia: {
+          twitter: socialMedia.twitter || '',
+          linkedin: socialMedia.linkedin || '',
+          facebook: socialMedia.facebook || '',
+          instagram: socialMedia.instagram || ''
+        }
       });
     }
   }, [settings?.general]);

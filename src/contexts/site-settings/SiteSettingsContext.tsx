@@ -46,17 +46,17 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
             const currentValue = newSettings[setting.key];
             const newValue = setting.value;
             
-            // Handle merging of nested objects
+            // Handle merging of nested objects - ensure both are objects before spreading
             if (
               typeof currentValue === 'object' && 
               currentValue !== null &&
+              !Array.isArray(currentValue) &&
               typeof newValue === 'object' &&
-              newValue !== null
+              newValue !== null &&
+              !Array.isArray(newValue)
             ) {
-              newSettings[setting.key] = {
-                ...currentValue,
-                ...newValue
-              };
+              // Deep merge for nested objects like location and socialMedia
+              newSettings[setting.key] = deepMergeObjects(currentValue, newValue);
             } else {
               newSettings[setting.key] = newValue;
             }
@@ -73,6 +73,28 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Helper function to deep merge objects
+  const deepMergeObjects = (target: Record<string, any>, source: Record<string, any>): Record<string, any> => {
+    const output = { ...target };
+    
+    for (const key in source) {
+      if (
+        typeof source[key] === 'object' && 
+        source[key] !== null && 
+        !Array.isArray(source[key]) &&
+        typeof target[key] === 'object' && 
+        target[key] !== null &&
+        !Array.isArray(target[key])
+      ) {
+        output[key] = deepMergeObjects(target[key], source[key]);
+      } else {
+        output[key] = source[key];
+      }
+    }
+    
+    return output;
   };
 
   const updateSettings = async (key: string, values: any) => {
