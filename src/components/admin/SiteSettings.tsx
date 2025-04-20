@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GoogleDriveSettings } from "./settings/GoogleDriveSettings";
 import { GeneralSettings } from "./settings/GeneralSettings";
@@ -7,16 +7,17 @@ import { InterfaceSettings } from "./settings/InterfaceSettings";
 import { SecuritySettings } from "./settings/SecuritySettings";
 import { UserSettings } from "./settings/UserSettings";
 import { SiteSettingsProvider } from "@/contexts/site-settings/SiteSettingsContext";
+import { SettingsHeader } from "./settings/SettingsHeader";
+import { SettingsSync } from "./settings/SettingsSync";
 
 const SiteSettings = () => {
-  const [currentTab, setCurrentTab] = useState<string>("general");
-
   return (
     <SiteSettingsProvider>
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold">Site Settings</h2>
+        <SettingsHeader />
+        <SettingsSync />
         
-        <Tabs defaultValue="general" value={currentTab} onValueChange={setCurrentTab} className="w-full">
+        <Tabs defaultValue="general" className="w-full">
           <TabsList className="mb-6 grid grid-cols-2 md:grid-cols-5 gap-2">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="interface">Interface</TabsTrigger>
