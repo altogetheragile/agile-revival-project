@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { ChevronRight, Facebook, Twitter, Linkedin, Instagram, Tiktok, Bluesky } from "lucide-react";
+import { ChevronRight, Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -79,13 +79,23 @@ const Footer = () => {
         {socialMedia.tiktok && (
           <a href={socialMedia.tiktok} className="text-gray-400 hover:text-agile-purple" target="_blank" rel="noopener noreferrer">
             <span className="sr-only">TikTok</span>
-            <Tiktok className="h-6 w-6" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 12a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
+              <path d="M15 8h.01"/>
+              <path d="M11 16c-3 0-4-3-4-3"/>
+              <path d="M13 16c2.5 0 4-3 4-3"/>
+              <path d="M16 8c.2 0 .402.034.593.082.981.245 1.7 1.106 1.7 2.118L18 15.5c-.001 2.485-2.015 4.5-4.5 4.5-1.863 0-3.466-1.128-4.153-2.738A4.454 4.454 0 0 1 9 15.5c0-2.485 2.015-4.5 4.5-4.5.164 0 .326.009.484.026.658.07 1.209.558 1.302 1.192M16 8V4"/>
+            </svg>
           </a>
         )}
         {socialMedia.bluesky && (
           <a href={socialMedia.bluesky} className="text-gray-400 hover:text-agile-purple" target="_blank" rel="noopener noreferrer">
             <span className="sr-only">Bluesky</span>
-            <Bluesky className="h-6 w-6" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 19.7778h20L12 2Z"/>
+              <path d="M12 6.77783L7 15.5557h10L12 6.77783Z"/>
+              <path d="M12 11.5557L9.5 15.5557h5l-2.5-4Z"/>
+            </svg>
           </a>
         )}
       </div>
