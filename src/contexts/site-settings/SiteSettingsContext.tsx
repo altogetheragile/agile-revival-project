@@ -80,8 +80,8 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         [key]: values
       }));
       
-      // Log the updated state for debugging
-      console.log("Settings state after update:", key, values);
+      // Log the updated settings
+      console.log(`Settings updated for ${key}:`, values);
 
       toast({
         title: "Settings updated",

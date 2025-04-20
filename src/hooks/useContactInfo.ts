@@ -5,24 +5,24 @@ import { useEffect, useState } from "react";
 export const useContactInfo = () => {
   const { settings, isLoading } = useSiteSettings();
   const [contactInfo, setContactInfo] = useState({
-    email: '',  // Initialize with empty values
-    phone: '',  // to avoid showing stale data
+    email: '',
+    phone: '',
   });
   
-  // Update local state whenever settings change or when loading completes
   useEffect(() => {
     if (!isLoading) {
-      console.log("useContactInfo updating with:", 
-        settings.general.contactEmail, 
-        settings.general.contactPhone
-      );
+      // Get the latest values directly from settings
+      const email = settings?.general?.contactEmail || '';
+      const phone = settings?.general?.contactPhone || '';
+      
+      console.log("useContactInfo updating with new values:", email, phone);
       
       setContactInfo({
-        email: settings.general.contactEmail || '',
-        phone: settings.general.contactPhone || '',
+        email,
+        phone,
       });
     }
-  }, [settings.general.contactEmail, settings.general.contactPhone, isLoading]);
+  }, [settings.general, isLoading]);
 
   return contactInfo;
 };

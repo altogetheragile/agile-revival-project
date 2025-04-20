@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Mail, MapPin, Send, Phone } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -138,7 +139,7 @@ const ContactSection = () => {
                   <div>
                     <h4 className="font-medium">Email</h4>
                     <a href={`mailto:${email}`} className="text-white/90 hover:text-white">
-                      {email}
+                      {email || 'Loading...'}
                     </a>
                   </div>
                 </div>
