@@ -10,15 +10,18 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, Users, Eye } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RegistrationDialog from "./RegistrationDialog";
+import { Badge } from "@/components/ui/badge";
 
 interface CourseGridProps {
   courses: Course[];
+  onEdit?: (course: Course) => void;
+  onDelete?: (course: Course) => void;
 }
 
-const CourseGrid: React.FC<CourseGridProps> = ({ courses }) => {
+const CourseGrid: React.FC<CourseGridProps> = ({ courses, onEdit, onDelete }) => {
   const navigate = useNavigate();
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [registrationOpen, setRegistrationOpen] = useState(false);
@@ -46,7 +49,16 @@ const CourseGrid: React.FC<CourseGridProps> = ({ courses }) => {
           <Card key={course.id} className="h-full flex flex-col">
             <CardHeader>
               <div className="flex justify-between items-start">
-                <CardTitle className="text-agile-purple-dark">{course.title}</CardTitle>
+                <div>
+                  <CardTitle className="text-agile-purple-dark flex items-center gap-2">
+                    {course.title}
+                    {course.isDraft && (
+                      <Badge variant="outline" className="ml-2 text-amber-600 border-amber-600">
+                        Draft
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </div>
                 <div className="font-bold text-lg">{formatPrice(course.price)}</div>
               </div>
               <CardDescription className="font-medium flex items-center gap-2">
@@ -71,13 +83,35 @@ const CourseGrid: React.FC<CourseGridProps> = ({ courses }) => {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between items-center">
-              <Button 
-                variant="outline" 
-                className="flex gap-2"
-                onClick={() => handleViewDetails(course.id)}
-              >
-                <Eye className="h-4 w-4" /> Details
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex gap-2"
+                  onClick={() => handleViewDetails(course.id)}
+                >
+                  <Eye className="h-4 w-4" /> Details
+                </Button>
+                
+                {onEdit && (
+                  <Button 
+                    variant="outline" 
+                    className="flex gap-2"
+                    onClick={() => onEdit(course)}
+                  >
+                    <Edit className="h-4 w-4" /> Edit
+                  </Button>
+                )}
+                
+                {onDelete && (
+                  <Button 
+                    variant="outline" 
+                    className="flex gap-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => onDelete(course)}
+                  >
+                    <Trash2 className="h-4 w-4" /> Delete
+                  </Button>
+                )}
+              </div>
               <Button onClick={() => handleReserveClick(course)}>Reserve Spot</Button>
             </CardFooter>
           </Card>
