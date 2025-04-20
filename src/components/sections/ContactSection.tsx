@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mail, MapPin, Send, Phone, Twitter, Linkedin } from 'lucide-react';
+import { Mail, MapPin, Send, Phone, Twitter, Linkedin, Instagram, Facebook } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useContactInfo } from '@/hooks/useContactInfo';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,7 +19,8 @@ const ContactSection = () => {
   useEffect(() => {
     console.log("Contact section received email:", email);
     console.log("Contact section received phone:", phone);
-  }, [email, phone]);
+    console.log("Contact section received socialMedia:", socialMedia);
+  }, [email, phone, socialMedia]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -103,6 +104,18 @@ const ContactSection = () => {
             <a href={socialMedia.linkedin} className="bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors" target="_blank" rel="noopener noreferrer">
               <span className="sr-only">LinkedIn</span>
               <Linkedin className="w-5 h-5" />
+            </a>
+          )}
+          {socialMedia.facebook && (
+            <a href={socialMedia.facebook} className="bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors" target="_blank" rel="noopener noreferrer">
+              <span className="sr-only">Facebook</span>
+              <Facebook className="w-5 h-5" />
+            </a>
+          )}
+          {socialMedia.instagram && (
+            <a href={socialMedia.instagram} className="bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors" target="_blank" rel="noopener noreferrer">
+              <span className="sr-only">Instagram</span>
+              <Instagram className="w-5 h-5" />
             </a>
           )}
         </div>
