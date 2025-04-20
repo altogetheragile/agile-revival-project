@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import DesktopNav from './DesktopNav';
 import MobileNav from './MobileNav';
+import { useSiteSettings } from '@/contexts/site-settings';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { settings, isLoading } = useSiteSettings();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -59,6 +61,14 @@ const Navbar = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Use siteName from settings, or fall back to the default if not loaded yet
+  const siteName = settings.general?.siteName || "AltogetherAgile";
+  
+  // Split the site name for styling if it contains two words
+  const nameParts = siteName.split(/\s+/);
+  const firstPart = nameParts[0] || "";
+  const remainingParts = nameParts.slice(1).join(" ");
+
   return (
     <nav 
       className={`fixed w-full z-50 transition-all duration-300 ${
@@ -71,7 +81,7 @@ const Navbar = () => {
           className="font-bold text-2xl text-agile-purple"
           onClick={handleFullPageLinkClick}
         >
-          Altogether<span className="text-agile-purple-dark">Agile</span>
+          {firstPart}<span className="text-agile-purple-dark">{remainingParts && remainingParts}</span>
         </Link>
         
         {/* Desktop Navigation */}
