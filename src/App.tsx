@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { SiteSettingsProvider } from "@/contexts/site-settings";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import TrainingSchedule from "./pages/TrainingSchedule";
@@ -37,34 +38,36 @@ const ResetPasswordPage = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/training-schedule" element={<TrainingSchedule />} />
-            <Route path="/course/:id" element={<CourseDetails />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            
-            {/* Admin route now accessible without protection */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            
-            <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
-            
-            <Route path="/services/leadership-coaching" element={<LeadershipCoaching />} />
-            <Route path="/services/team-coaching" element={<TeamCoaching />} />
-            <Route path="/services/agile-facilitation" element={<AgileFacilitation />} />
-            <Route path="/services/performance-metrics" element={<PerformanceMetrics />} />
-            <Route path="/services/custom-coaching" element={<CustomCoaching />} />
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
+      <SiteSettingsProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/training-schedule" element={<TrainingSchedule />} />
+              <Route path="/course/:id" element={<CourseDetails />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              
+              {/* Admin route now accessible without protection */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              
+              <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+              
+              <Route path="/services/leadership-coaching" element={<LeadershipCoaching />} />
+              <Route path="/services/team-coaching" element={<TeamCoaching />} />
+              <Route path="/services/agile-facilitation" element={<AgileFacilitation />} />
+              <Route path="/services/performance-metrics" element={<PerformanceMetrics />} />
+              <Route path="/services/custom-coaching" element={<CustomCoaching />} />
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </SiteSettingsProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
