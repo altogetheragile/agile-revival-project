@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Mail, MapPin, Send, Phone } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useContactInfo } from '@/hooks/useContactInfo';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ContactSection = () => {
   const { toast } = useToast();
@@ -52,6 +53,34 @@ const ContactSection = () => {
         message: ''
       });
     }, 1000);
+  };
+
+  const renderEmailContact = () => {
+    if (!email) {
+      return (
+        <div className="flex items-start gap-4">
+          <Mail className="mt-1" />
+          <div>
+            <h4 className="font-medium">Email</h4>
+            <div className="flex mt-1">
+              <Skeleton className="h-5 w-40" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex items-start gap-4">
+        <Mail className="mt-1" />
+        <div>
+          <h4 className="font-medium">Email</h4>
+          <a href={`mailto:${email}`} className="text-white/90 hover:text-white">
+            {email}
+          </a>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -134,15 +163,7 @@ const ContactSection = () => {
             <div className="bg-gradient-to-br from-agile-purple to-agile-purple-dark text-white p-8 rounded-lg shadow-md h-full">
               <h3 className="text-2xl font-bold mb-6">Contact Information</h3>
               <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <Mail className="mt-1" />
-                  <div>
-                    <h4 className="font-medium">Email</h4>
-                    <a href={`mailto:${email}`} className="text-white/90 hover:text-white">
-                      {email || 'Loading...'}
-                    </a>
-                  </div>
-                </div>
+                {renderEmailContact()}
                 {phone && (
                   <div className="flex items-start gap-4">
                     <Phone className="mt-1" />

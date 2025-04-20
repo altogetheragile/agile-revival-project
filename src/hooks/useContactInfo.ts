@@ -1,28 +1,32 @@
 
+import { useState, useEffect, useCallback } from "react";
 import { useSiteSettings } from "@/contexts/site-settings";
-import { useEffect, useState } from "react";
 
 export const useContactInfo = () => {
   const { settings, isLoading } = useSiteSettings();
   const [contactInfo, setContactInfo] = useState({
-    email: '',
-    phone: '',
+    email: settings?.general?.contactEmail || '',
+    phone: settings?.general?.contactPhone || '',
   });
-  
-  useEffect(() => {
-    if (!isLoading) {
-      // Get the latest values directly from settings
-      const email = settings?.general?.contactEmail || '';
-      const phone = settings?.general?.contactPhone || '';
+
+  // Use a callback to update the contact info whenever settings change
+  const updateContactInfo = useCallback(() => {
+    if (settings?.general) {
+      const email = settings.general.contactEmail || '';
+      const phone = settings.general.contactPhone || '';
       
-      console.log("useContactInfo updating with new values:", email, phone);
+      console.log("useContactInfo updating with:", email, phone);
       
-      setContactInfo({
-        email,
-        phone,
-      });
+      if (email !== contactInfo.email || phone !== contactInfo.phone) {
+        setContactInfo({ email, phone });
+      }
     }
-  }, [settings.general, isLoading]);
+  }, [settings?.general, contactInfo.email, contactInfo.phone]);
+  
+  // Update contact info when settings change or component mounts
+  useEffect(() => {
+    updateContactInfo();
+  }, [updateContactInfo]);
 
   return contactInfo;
 };

@@ -47,6 +47,8 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         });
         console.log("Fetched settings:", newSettings);
         setSettings(newSettings);
+      } else {
+        console.log("No settings found, using defaults:", defaultSettings);
       }
     } catch (error) {
       console.error("Exception fetching settings:", error);
@@ -74,14 +76,14 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         return;
       }
 
-      // Update state with the new values
+      // Immediately update state with the new values for real-time feedback
       setSettings(prev => ({
         ...prev,
         [key]: values
       }));
       
-      // Log the updated settings
       console.log(`Settings updated for ${key}:`, values);
+      console.log("Full settings after update:", {...settings, [key]: values});
 
       toast({
         title: "Settings updated",
@@ -98,6 +100,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
   };
 
   const refreshSettings = async () => {
+    console.log("Refreshing settings...");
     await fetchSettings();
   };
 

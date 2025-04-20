@@ -1,7 +1,9 @@
+
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Footer = () => {
   const { email, phone } = useContactInfo();
@@ -11,6 +13,23 @@ const Footer = () => {
     console.log("Footer received email:", email);
     console.log("Footer received phone:", phone);
   }, [email, phone]);
+  
+  const renderEmail = () => {
+    if (!email) {
+      return (
+        <div className="flex items-center gap-2">
+          <span>Email: </span>
+          <Skeleton className="h-4 w-40" />
+        </div>
+      );
+    }
+    return <p>Email: {email}</p>;
+  };
+
+  const renderPhone = () => {
+    if (!phone) return null;
+    return <p>Phone: {phone}</p>;
+  };
   
   return (
     <footer className="bg-gray-900 text-white pt-16 pb-8">
@@ -121,8 +140,8 @@ const Footer = () => {
             <h4 className="text-lg font-semibold mb-6">Contact</h4>
             <address className="not-italic text-gray-400 space-y-3">
               <p>London, United Kingdom</p>
-              <p>Email: {email || 'Loading...'}</p>
-              {phone && <p>Phone: {phone}</p>}
+              {renderEmail()}
+              {renderPhone()}
             </address>
           </div>
         </div>

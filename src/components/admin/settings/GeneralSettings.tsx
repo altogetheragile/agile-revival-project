@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -8,9 +9,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Building, Globe } from "lucide-react";
+import { Building, Globe, Save } from "lucide-react";
 import { useSiteSettings } from "@/contexts/site-settings";
 import { GeneralSettings as GeneralSettingsType } from "@/contexts/site-settings/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const generalFormSchema = z.object({
   siteName: z.string().min(2, {
@@ -27,7 +29,7 @@ type GeneralFormValues = z.infer<typeof generalFormSchema>;
 
 export const GeneralSettings = () => {
   const { toast } = useToast();
-  const { settings, updateSettings, isLoading } = useSiteSettings();
+  const { settings, updateSettings, isLoading, refreshSettings } = useSiteSettings();
   
   const timezones = [
     { value: "UTC", label: "UTC (Coordinated Universal Time)" },
@@ -63,26 +65,74 @@ export const GeneralSettings = () => {
 
   const form = useForm<GeneralFormValues>({
     resolver: zodResolver(generalFormSchema),
-    defaultValues: settings.general as GeneralSettingsType,
+    defaultValues: {
+      siteName: "",
+      contactEmail: "",
+      contactPhone: "",
+      defaultLanguage: "en",
+      timezone: "UTC",
+      currency: "USD",
+    },
   });
 
   useEffect(() => {
     console.log("GeneralSettings received settings:", settings.general);
-    if (!isLoading) {
-      form.reset(settings.general as GeneralSettingsType);
+    if (!isLoading && settings.general) {
+      form.reset({
+        siteName: settings.general.siteName || "",
+        contactEmail: settings.general.contactEmail || "",
+        contactPhone: settings.general.contactPhone || "",
+        defaultLanguage: settings.general.defaultLanguage || "en",
+        timezone: settings.general.timezone || "UTC",
+        currency: settings.general.currency || "USD",
+      });
     }
   }, [isLoading, settings.general, form]);
 
   const onSubmit = async (data: GeneralFormValues) => {
-    console.log("Submitting General Settings:", data);
-    await updateSettings('general', data);
-    
-    console.log("After update - contactEmail:", data.contactEmail);
-    console.log("After update - contactPhone:", data.contactPhone);
+    try {
+      console.log("Submitting General Settings:", data);
+      await updateSettings('general', data);
+      
+      // Force a refresh of the settings to ensure everything is up to date
+      await refreshSettings();
+      
+      console.log("After update - contactEmail:", data.contactEmail);
+      console.log("After update - contactPhone:", data.contactPhone);
+      
+      // Show success message
+      toast({
+        title: "Settings updated",
+        description: "General settings have been saved and will be reflected across the site.",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+    }
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center">Loading settings...</div>;
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Building className="mr-2 h-5 w-5" />
+              <span>General Information</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <Skeleton className="h-40 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -238,7 +288,10 @@ export const GeneralSettings = () => {
               </Card>
 
               <div className="flex justify-end">
-                <Button type="submit">Save General Settings</Button>
+                <Button type="submit" className="flex items-center gap-2">
+                  <Save size={16} />
+                  Save General Settings
+                </Button>
               </div>
             </form>
           </Form>
