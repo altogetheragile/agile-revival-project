@@ -1,7 +1,11 @@
+
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useContactInfo } from "@/hooks/useContactInfo";
 
 const Footer = () => {
+  const { email, phone } = useContactInfo();
+  
   return (
     <footer className="bg-gray-900 text-white pt-16 pb-8">
       <div className="container mx-auto px-4">
@@ -111,7 +115,8 @@ const Footer = () => {
             <h4 className="text-lg font-semibold mb-6">Contact</h4>
             <address className="not-italic text-gray-400 space-y-3">
               <p>London, United Kingdom</p>
-              <p>Email: info@altogetheragile.com</p>
+              <p>Email: {email}</p>
+              {phone && <p>Phone: {phone}</p>}
             </address>
           </div>
         </div>

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Mail, MapPin, Send } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useContactInfo } from '@/hooks/useContactInfo';
 
 const ContactSection = () => {
   const { toast } = useToast();
+  const { email, phone } = useContactInfo();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -121,11 +123,22 @@ const ContactSection = () => {
                   <Mail className="mt-1" />
                   <div>
                     <h4 className="font-medium">Email</h4>
-                    <a href="mailto:info@altogetheragile.com" className="text-white/90 hover:text-white">
-                      info@altogetheragile.com
+                    <a href={`mailto:${email}`} className="text-white/90 hover:text-white">
+                      {email}
                     </a>
                   </div>
                 </div>
+                {phone && (
+                  <div className="flex items-start gap-4">
+                    <Mail className="mt-1" />
+                    <div>
+                      <h4 className="font-medium">Phone</h4>
+                      <a href={`tel:${phone}`} className="text-white/90 hover:text-white">
+                        {phone}
+                      </a>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-start gap-4">
                   <MapPin className="mt-1" />
                   <div>
