@@ -81,7 +81,10 @@ const Navbar = () => {
           className="font-bold text-2xl text-agile-purple"
           onClick={handleFullPageLinkClick}
         >
-          {firstPart}<span className="text-agile-purple-dark">{remainingParts && remainingParts}</span>
+          {firstPart}
+          {remainingParts && (
+            <span className="text-agile-purple-light"> {remainingParts}</span>
+          )}
         </Link>
         
         {/* Desktop Navigation */}
