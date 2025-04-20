@@ -42,8 +42,8 @@ export const GeneralSettings = () => {
   useEffect(() => {
     if (!isLoading && settings.general) {
       // Create safe objects with default values for nested properties
-      const location = settings.general.location || {};
-      const socialMedia = settings.general.socialMedia || {};
+      const location = settings.general.location || { address: "", city: "", country: "" };
+      const socialMedia = settings.general.socialMedia || { twitter: "", linkedin: "", facebook: "", instagram: "" };
       
       form.reset({
         siteName: settings.general.siteName || "",
