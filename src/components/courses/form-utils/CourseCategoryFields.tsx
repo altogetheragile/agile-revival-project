@@ -112,14 +112,12 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                   onValueChange={val => {
                     if (val === "__add_category__") {
                       setAddMode(true);
-                      setTimeout(() => {
-                        // Focus is handled automatically by Input
-                      }, 0);
                     } else {
                       field.onChange(val);
                     }
                   }}
                   value={field.value}
+                  defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -132,29 +130,35 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                         {category.label}
                       </SelectItem>
                     ))}
+                    
                     {customCategories.length > 0 && (
                       <>
+                        {/* Add a visual separator before custom categories */}
+                        <div className="py-1.5 px-2 text-xs font-semibold text-muted-foreground border-t">
+                          Custom Categories
+                        </div>
                         {customCategories.map(category => (
                           <div
                             key={category.value}
-                            className="flex items-center justify-between pr-2 pl-2"
+                            className="flex items-center justify-between px-2"
                           >
                             <SelectItem
                               value={category.value}
-                              className="flex-1 cursor-pointer min-w-0 truncate"
+                              className="flex-1 min-w-0"
                             >
                               <span className="truncate">{category.label}</span>
                             </SelectItem>
                             <Button
                               type="button"
-                              size="icon"
+                              size="sm"
                               variant="ghost"
-                              className="ml-1 h-5 w-5 px-0 py-0 text-muted-foreground hover:text-destructive"
+                              className="h-6 w-6 p-0 ml-1 text-muted-foreground hover:text-destructive"
                               onClick={e => {
+                                e.preventDefault();
                                 e.stopPropagation();
                                 handleDeleteCategory(category.value);
                               }}
-                              tabIndex={-1}
+                              tabIndex={0} 
                               aria-label={`Delete category ${category.label}`}
                             >
                               <X className="h-4 w-4" />
@@ -163,10 +167,12 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                         ))}
                       </>
                     )}
+                    
+                    {/* Add New Category Option */}
                     <SelectItem
                       key="add-category"
                       value="__add_category__"
-                      className="text-agile-purple cursor-pointer border-t border-muted"
+                      className="text-blue-600 cursor-pointer border-t border-muted"
                     >
                       + Add new category
                     </SelectItem>
