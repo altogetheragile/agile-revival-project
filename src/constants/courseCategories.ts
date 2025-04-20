@@ -2,7 +2,7 @@
 // Centralized categories configuration
 
 export interface CourseCategoryConfig {
-  value: "scrum" | "kanban" | "leadership" | "all";
+  value: string; // Changed from string literal union type to accept any string
   label: string;
 }
 
@@ -14,4 +14,4 @@ export const COURSE_CATEGORIES: CourseCategoryConfig[] = [
 ];
 
 // For type inference of just category values (excluding 'all' if ever needed)
-export const CATEGORY_VALUES = COURSE_CATEGORIES.map(cat => cat.value) as Array<CourseCategoryConfig["value"]>;
+export const CATEGORY_VALUES = COURSE_CATEGORIES.map(cat => cat.value);

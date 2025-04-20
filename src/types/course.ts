@@ -7,7 +7,7 @@ export interface Course {
   location: string;
   instructor: string;
   price: string;
-  category: "scrum" | "kanban" | "leadership" | "all";
+  category: string; // Changed from string literal union type to accept any string
   spotsAvailable: number;
   learningOutcomes?: string[];
   prerequisites?: string;
