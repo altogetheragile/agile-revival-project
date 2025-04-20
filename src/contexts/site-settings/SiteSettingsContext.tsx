@@ -46,7 +46,8 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         data.forEach(setting => {
           if (setting.key in newSettings) {
             // Merge objects instead of replacing to preserve default values
-            if (typeof newSettings[setting.key] === 'object' && newSettings[setting.key] !== null) {
+            if (typeof setting.value === 'object' && setting.value !== null && 
+                typeof newSettings[setting.key] === 'object' && newSettings[setting.key] !== null) {
               newSettings[setting.key] = {
                 ...newSettings[setting.key],
                 ...setting.value
