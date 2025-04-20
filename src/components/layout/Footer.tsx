@@ -1,4 +1,3 @@
-
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useContactInfo } from "@/hooks/useContactInfo";
@@ -27,7 +26,14 @@ const Footer = () => {
   };
 
   const renderPhone = () => {
-    if (!phone) return null;
+    if (!phone) {
+      return (
+        <div className="flex items-center gap-2">
+          <span>Phone: </span>
+          <Skeleton className="h-4 w-40" />
+        </div>
+      );
+    }
     return <p>Phone: {phone}</p>;
   };
   

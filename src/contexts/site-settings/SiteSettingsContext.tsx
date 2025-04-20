@@ -76,15 +76,14 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         return;
       }
 
-      // Immediately update state with the new values for real-time feedback
+      // Update state with the new values for real-time feedback
       setSettings(prev => ({
         ...prev,
         [key]: values
       }));
       
-      console.log(`Settings updated for ${key}:`, values);
-      console.log("Full settings after update:", {...settings, [key]: values});
-
+      await refreshSettings(); // Fetch updated settings to ensure consistency
+      
       toast({
         title: "Settings updated",
         description: `${key.charAt(0).toUpperCase() + key.slice(1)} settings have been saved`,
