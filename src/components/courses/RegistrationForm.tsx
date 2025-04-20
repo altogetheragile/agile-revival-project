@@ -41,6 +41,11 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
     spotsLeft: number;
   }>({ isFull: false, spotsLeft: course.spotsAvailable });
 
+  // Log when contactEmail changes
+  useEffect(() => {
+    console.log("Registration form using contact email:", contactEmail);
+  }, [contactEmail]);
+
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -99,10 +104,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
         company: values.company || null,
         additional_notes: values.additionalNotes || null,
         status: 'pending',
-        contact_email: contactEmail, // Store the current contact email
+        contact_email: contactEmail, // Store the current contact email from site settings
       };
       
-      console.log("Submitting registration data:", registrationData);
+      console.log("Submitting registration data with contact email:", contactEmail);
       
       const { error, data } = await supabase
         .from('course_registrations')

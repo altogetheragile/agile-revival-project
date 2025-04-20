@@ -30,6 +30,8 @@ const ContactSection = () => {
       recipientEmail: email, // Send to the contact email from site settings
     };
     
+    console.log("Sending contact form to:", email);
+    
     // Simulate form submission
     setTimeout(() => {
       setIsSubmitting(false);
@@ -45,6 +47,12 @@ const ContactSection = () => {
       });
     }, 1000);
   };
+
+  // For debugging
+  useEffect(() => {
+    console.log("Contact section received email:", email);
+    console.log("Contact section received phone:", phone);
+  }, [email, phone]);
 
   return (
     <section id="contact" className="section-container">

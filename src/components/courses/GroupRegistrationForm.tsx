@@ -32,6 +32,11 @@ const GroupRegistrationForm: React.FC<GroupRegistrationFormProps> = ({ course, o
     spotsLeft: number;
   }>({ isFull: false, spotsLeft: course.spotsAvailable });
 
+  // Log when contactEmail changes
+  useEffect(() => {
+    console.log("Group registration form using contact email:", contactEmail);
+  }, [contactEmail]);
+
   const form = useForm<GroupRegistrationFormValues>({
     resolver: zodResolver(groupRegistrationSchema),
     defaultValues: {
@@ -79,8 +84,10 @@ const GroupRegistrationForm: React.FC<GroupRegistrationFormProps> = ({ course, o
       // Add the site contact email to the submission
       const enrichedValues = {
         ...values,
-        siteContactEmail: contactEmail
+        siteContactEmail: contactEmail // Use the current contact email from site settings
       };
+      
+      console.log("Submitting group registration with contact email:", contactEmail);
       
       const result = await submitGroupRegistration(enrichedValues, course);
       

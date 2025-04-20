@@ -2,9 +2,16 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import { useEffect } from "react";
 
 const Footer = () => {
   const { email, phone } = useContactInfo();
+  
+  // For debugging
+  useEffect(() => {
+    console.log("Footer received email:", email);
+    console.log("Footer received phone:", phone);
+  }, [email, phone]);
   
   return (
     <footer className="bg-gray-900 text-white pt-16 pb-8">
