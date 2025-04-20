@@ -35,13 +35,22 @@ export const useContactInfo = () => {
     if (!isLoading && settings?.general) {
       const { contactEmail, contactPhone, location, socialMedia } = settings.general;
       
-      console.log("useContactInfo updating with:", { contactEmail, contactPhone, location, socialMedia });
+      // Create default empty objects if location or socialMedia are undefined
+      const safeLocation = location || { address: '', city: '', country: '' };
+      const safeSocialMedia = socialMedia || {};
+      
+      console.log("useContactInfo updating with:", { 
+        contactEmail, 
+        contactPhone, 
+        location: safeLocation, 
+        socialMedia: safeSocialMedia 
+      });
       
       setContactInfo({
         email: contactEmail || '',
         phone: contactPhone || '',
-        location: location || { address: '', city: '', country: '' },
-        socialMedia: socialMedia || {}
+        location: safeLocation,
+        socialMedia: safeSocialMedia
       });
     }
   }, [settings?.general, isLoading]);

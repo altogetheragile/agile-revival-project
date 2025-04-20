@@ -1,6 +1,20 @@
 
 import { z } from "zod";
 
+// Define nested schemas for location and social media
+const locationSchema = z.object({
+  address: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+});
+
+const socialMediaSchema = z.object({
+  twitter: z.string().optional(),
+  linkedin: z.string().optional(),
+  facebook: z.string().optional(),
+  instagram: z.string().optional(),
+});
+
 export const generalFormSchema = z.object({
   siteName: z.string().min(2, {
     message: "Site name must be at least 2 characters.",
@@ -10,6 +24,12 @@ export const generalFormSchema = z.object({
   defaultLanguage: z.string(),
   timezone: z.string(),
   currency: z.string(),
+  location: locationSchema.optional().default({
+    address: "",
+    city: "",
+    country: "",
+  }),
+  socialMedia: socialMediaSchema.optional().default({}),
 });
 
 export type GeneralFormValues = z.infer<typeof generalFormSchema>;
