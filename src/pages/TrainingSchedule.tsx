@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
@@ -13,17 +13,22 @@ import CustomTrainingCTA from "@/components/courses/CustomTrainingCTA";
 import CourseFormDialog from "@/components/courses/CourseFormDialog";
 import { DeleteConfirmationDialog } from "@/components/admin/users/DeleteConfirmationDialog";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 
 const TrainingSchedule = () => {
   const [selectedTab, setSelectedTab] = useState<CourseCategory>("all");
-  const [courses, setCourses] = useState<Course[]>(getScheduledCourses());
+  const [courses, setCourses] = useState<Course[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
   const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
   const { toast } = useToast();
-  const { isAdmin } = useAuth();
+  
+  // Simplified admin check - always true for demo purposes
+  const isAdmin = true;
+
+  useEffect(() => {
+    refreshCourses();
+  }, []);
 
   const filteredCourses = selectedTab === "all" 
     ? courses 
@@ -56,6 +61,7 @@ const TrainingSchedule = () => {
         });
       }
       setIsFormOpen(false);
+      setCurrentCourse(null);
     } catch (error) {
       console.error("Error updating course:", error);
       toast({
@@ -95,30 +101,29 @@ const TrainingSchedule = () => {
           
           <CourseScheduleView 
             courses={filteredCourses} 
-            isAdmin={isAdmin}
-            onEdit={isAdmin ? handleEditCourse : undefined}
-            onDelete={isAdmin ? handleDeleteCourse : undefined}
+            isAdmin={isAdmin} // Always pass true to enable editing
+            onEdit={handleEditCourse}
+            onDelete={handleDeleteCourse}
           />
           
           <CustomTrainingCTA />
 
-          {isAdmin && (
-            <>
-              <CourseFormDialog
-                open={isFormOpen}
-                onOpenChange={setIsFormOpen}
-                currentCourse={currentCourse}
-                onSubmit={handleFormSubmit}
-                onCancel={() => setIsFormOpen(false)}
-              />
+          <CourseFormDialog
+            open={isFormOpen}
+            onOpenChange={setIsFormOpen}
+            currentCourse={currentCourse}
+            onSubmit={handleFormSubmit}
+            onCancel={() => {
+              setIsFormOpen(false);
+              setCurrentCourse(null);
+            }}
+          />
 
-              <DeleteConfirmationDialog 
-                open={isConfirmDialogOpen}
-                onOpenChange={setIsConfirmDialogOpen}
-                onConfirm={handleDelete}
-              />
-            </>
-          )}
+          <DeleteConfirmationDialog 
+            open={isConfirmDialogOpen}
+            onOpenChange={setIsConfirmDialogOpen}
+            onConfirm={handleDelete}
+          />
         </section>
       </main>
 

@@ -12,6 +12,15 @@ import { CourseFormatFields } from "./form-utils/CourseFormatFields";
 import { CourseGoogleDriveSection } from "./form-utils/CourseGoogleDriveSection";
 import { CourseInstructorPriceFields } from "./form-utils/CourseInstructorPriceFields";
 import { CourseScheduleFields } from "./form-utils/CourseScheduleFields";
+import { 
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription
+} from "@/components/ui/form";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface CourseFormProps {
   initialData?: CourseFormData;
@@ -38,12 +47,12 @@ const CourseForm: React.FC<CourseFormProps> = ({
     skillLevel: "all-levels",
     format: "in-person",
     status: "draft",
-    isTemplate: true
+    isTemplate: false
   },
   onSubmit,
   onCancel,
   stayOpenOnSubmit = false,
-  isTemplate = true
+  isTemplate = false
 }) => {
   const form = useForm<CourseFormData>({
     defaultValues: initialData
@@ -65,23 +74,50 @@ const CourseForm: React.FC<CourseFormProps> = ({
     });
   };
 
+  // Add status field explicitly
+  const CourseStatusField = () => (
+    <FormField
+      control={form.control}
+      name="status"
+      render={({ field }) => (
+        <FormItem className="space-y-3">
+          <FormLabel>Course Status</FormLabel>
+          <FormControl>
+            <RadioGroup
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              className="flex flex-col space-y-1"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="draft" id="status-draft" />
+                <Label htmlFor="status-draft" className="font-medium">Draft</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="published" id="status-published" />
+                <Label htmlFor="status-published" className="font-medium">Published</Label>
+              </div>
+            </RadioGroup>
+          </FormControl>
+          <FormDescription>
+            Draft courses are only visible to administrators and can be edited. Published courses are visible to everyone.
+          </FormDescription>
+        </FormItem>
+      )}
+    />
+  );
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <BasicCourseFields form={form} />
         
-        {!isTemplate && (
-          <>
-            <CourseScheduleFields form={form} />
-            <CourseInstructorPriceFields form={form} />
-          </>
-        )}
-        
-        {isTemplate && (
-          <CourseInstructorPriceFields form={form} />
-        )}
-        
+        <CourseScheduleFields form={form} />
+        <CourseInstructorPriceFields form={form} />
         <CourseCategoryFields form={form} />
+        
+        {/* Add explicit status field */}
+        <CourseStatusField />
+        
         <CourseDetailsFields form={form} />
         <CourseFormatFields form={form} />
         <LearningOutcomeField form={form} />

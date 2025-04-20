@@ -18,21 +18,6 @@ export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
   stayOpenOnSubmit = false,
   isTemplate = false,
 }) => {
-  const SaveButton = () => (
-    <Button type="submit" className="ml-auto bg-green-600 hover:bg-green-700 text-white">
-      <Save className="mr-2 h-4 w-4" />
-      {isEditing ? "Save Draft" : "Save Draft"}
-      {isTemplate ? " Template" : " Course"}
-    </Button>
-  );
-
-  const PublishButton = () => (
-    <Button type="submit" variant="secondary" className="ml-2 bg-green-600 hover:bg-green-700 text-white">
-      <Send className="mr-2 h-4 w-4" />
-      {isEditing && !isDraft ? "Update Published Course" : "Publish Course"}
-    </Button>
-  );
-
   return (
     <div className="flex justify-end space-x-2 pt-4">
       <DialogClose asChild>
@@ -41,24 +26,26 @@ export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
         </Button>
       </DialogClose>
 
-      {/* Use DialogClose conditionally based on stayOpenOnSubmit */}
       {stayOpenOnSubmit ? (
-        <>
-          <SaveButton />
-          {isDraft && <PublishButton />}
-        </>
+        // If we're staying open, use regular buttons
+        <Button 
+          type="submit" 
+          className="ml-auto bg-green-600 hover:bg-green-700 text-white"
+        >
+          <Save className="mr-2 h-4 w-4" />
+          {isEditing ? "Save Changes" : "Save"}
+        </Button>
       ) : (
-        <>
-          <DialogClose asChild>
-            <SaveButton />
-          </DialogClose>
-
-          {isDraft && (
-            <DialogClose asChild>
-              <PublishButton />
-            </DialogClose>
-          )}
-        </>
+        // If we're closing on submit, use DialogClose
+        <DialogClose asChild>
+          <Button 
+            type="submit" 
+            className="ml-auto bg-green-600 hover:bg-green-700 text-white"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {isEditing ? "Save Changes" : "Save"}
+          </Button>
+        </DialogClose>
       )}
     </div>
   );

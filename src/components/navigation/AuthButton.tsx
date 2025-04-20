@@ -8,7 +8,7 @@ interface AuthButtonProps {
 }
 
 export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
-  // Simplified version with no authentication checks
+  // Simplified version with admin access for demo
   return (
     <Link 
       to="/admin" 
@@ -17,7 +17,7 @@ export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
         : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple"}
       onClick={closeMenu}
     >
-      Dashboard
+      Admin Dashboard (Demo)
     </Link>
   );
 };
