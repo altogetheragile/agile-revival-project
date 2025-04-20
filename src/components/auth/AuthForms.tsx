@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -53,7 +54,7 @@ export default function AuthForms() {
         description: "Signing in...",
       });
       
-      await signIn(email, password);
+      await signIn();
       
       // Force refresh to make sure any admin status is correctly picked up
       window.location.href = '/';
@@ -73,7 +74,7 @@ export default function AuthForms() {
     });
     
     try {
-      await signUp(email, password, firstName, lastName);
+      await signUp();
       toast({
         title: "Registration successful",
         description: "Please check your email to verify your account.",

@@ -1,74 +1,15 @@
 
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 import { Home, LogOut, LayoutDashboard, UserCheck } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AuthenticatedView() {
-  const { user, signOut, isAdmin, refreshAdminStatus, isAuthReady } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [adminChecked, setAdminChecked] = useState(false);
-  
-  // Force admin status check when component mounts
-  useEffect(() => {
-    let isMounted = true;
-    
-    const checkAdminStatus = async () => {
-      console.log("AuthenticatedView - Initial auth state:", { 
-        userEmail: user?.email, 
-        isAdmin, 
-        userId: user?.id,
-        isAuthReady,
-        provider: user?.app_metadata?.provider
-      });
-
-      if (user?.id && isAuthReady) {
-        const isGoogleAuth = user?.app_metadata?.provider === 'google';
-        console.log(`AuthenticatedView - Checking admin status for: ${user.email}, id: ${user.id}, provider: ${user?.app_metadata?.provider || 'email'}`);
-        
-        // Use shorter timeout for Google auth
-        const checkDelay = isGoogleAuth ? 0 : 200;
-        
-        // Use setTimeout to prevent potential race conditions
-        setTimeout(async () => {
-          if (!isMounted) return;
-          
-          const result = await refreshAdminStatus();
-          console.log(`AuthenticatedView - Admin status for ${user.email} (${user?.app_metadata?.provider || 'email'}): ${result ? 'admin' : 'not admin'}`);
-          
-          if (isMounted) {
-            setAdminChecked(true);
-            
-            // Notify user of their admin status
-            if (result) {
-              toast({
-                title: "Admin Access Granted",
-                description: "You have administrator privileges.",
-              });
-            }
-          }
-        }, checkDelay);
-      }
-    };
-    
-    checkAdminStatus();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [user, refreshAdminStatus, isAuthReady, isAdmin, toast]);
-  
-  // Additional check specifically for Google login
-  useEffect(() => {
-    if (user?.app_metadata?.provider === 'google' && isAuthReady && !adminChecked) {
-      console.log('AuthenticatedView - Detected Google login, running extra admin check');
-      refreshAdminStatus();
-    }
-  }, [user?.app_metadata?.provider, isAuthReady, adminChecked, refreshAdminStatus]);
   
   const handleLogout = async () => {
     try {
@@ -81,7 +22,6 @@ export default function AuthenticatedView() {
   };
 
   const handleAdminDashboard = () => {
-    console.log("Admin dashboard button clicked, current admin status:", isAdmin);
     navigate('/admin');
   };
 
@@ -91,13 +31,10 @@ export default function AuthenticatedView() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserCheck className="h-6 w-6 text-green-500" />
-            Welcome Back!
+            Welcome
           </CardTitle>
           <CardDescription>
-            You're now logged in as {user?.email}
-            {user?.app_metadata?.provider && (
-              <span className="ml-1">(via {user.app_metadata.provider})</span>
-            )}
+            You're now viewing a simplified page without authentication.
             {isAdmin && <span className="ml-2 font-semibold text-purple-600">(Admin)</span>}
           </CardDescription>
         </CardHeader>
@@ -111,16 +48,14 @@ export default function AuthenticatedView() {
             Go to Home Page
           </Button>
           
-          {isAdmin && (
-            <Button 
-              onClick={handleAdminDashboard}
-              variant="default"
-              className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              Admin Dashboard
-            </Button>
-          )}
+          <Button 
+            onClick={handleAdminDashboard}
+            variant="default"
+            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Admin Dashboard
+          </Button>
           
           <Button 
             onClick={handleLogout}

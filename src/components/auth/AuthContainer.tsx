@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+// Adding the missing export for AuthMode
+export type AuthMode = 'login' | 'signup' | 'reset';
+
 export default function AuthContainer() {
   const navigate = useNavigate();
 

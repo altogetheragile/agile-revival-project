@@ -11,88 +11,18 @@ import CourseManagement from "@/components/admin/CourseManagement";
 import BlogManagement from "@/components/admin/BlogManagement";
 import UserManagement from "@/components/admin/UserManagement";
 import SiteSettings from "@/components/admin/SiteSettings";
-import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("courses");
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isAdmin, refreshAdminStatus, isAuthReady, user } = useAuth();
+  const { isAdmin, isAuthReady } = useAuth();
   
-  // Add an effect to refresh admin status when the component mounts
+  // No longer needed to check admin status in a restricted application
   useEffect(() => {
-    let isMounted = true;
-    
-    const checkAdmin = async () => {
-      console.log("AdminDashboard - Initial auth state:", { 
-        userEmail: user?.email, 
-        isAdmin,
-        userId: user?.id,  
-        isAuthReady 
-      });
-      
-      if (!isAuthReady) return;
-      
-      console.log("AdminDashboard - Refreshing admin status");
-      setIsChecking(true);
-      
-      try {
-        const isUserAdmin = await refreshAdminStatus(); // Store the boolean result
-        console.log("AdminDashboard - Admin status after refresh:", isUserAdmin);
-        
-        if (isMounted && !isUserAdmin) {
-          toast({
-            title: "Access denied",
-            description: "You don't have permission to access this page.",
-            variant: "destructive"
-          });
-          navigate("/");
-        }
-      } catch (error) {
-        console.error("Error checking admin status:", error);
-        if (isMounted) {
-          toast({
-            title: "Error",
-            description: "Failed to verify admin privileges",
-            variant: "destructive"
-          });
-          navigate("/");
-        }
-      } finally {
-        if (isMounted) {
-          setIsChecking(false);
-        }
-      }
-    };
-    
-    checkAdmin();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [refreshAdminStatus, isAuthReady, navigate, toast, user]);
-  
-  // Show loading while checking admin status
-  if (isChecking || !isAuthReady) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-agile-purple" />
-        <span className="ml-2 text-lg">Verifying admin access...</span>
-      </div>
-    );
-  }
-  
-  // This check serves as a backup to ProtectedRoute
-  if (isAuthReady && !isAdmin) {
-    toast({
-      title: "Access denied",
-      description: "You don't have permission to access this page.",
-      variant: "destructive"
-    });
-    navigate("/");
-    return null;
-  }
+    setIsChecking(false);
+  }, []);
   
   return (
     <div className="min-h-screen flex flex-col">
