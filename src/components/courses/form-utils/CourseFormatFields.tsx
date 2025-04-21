@@ -67,10 +67,11 @@ export const CourseFormatFields: React.FC<CourseFormatFieldsProps> = ({ form }) 
                       field.onChange(value);
                     }
                   }}
-                  onDelete={(value, e) => {
+                  onDelete={(formatValue, e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    handleDeleteFormat(value, () => {
-                      if (field.value === value) {
+                    handleDeleteFormat(formatValue, () => {
+                      if (field.value === formatValue) {
                         field.onChange("");
                       }
                     });
