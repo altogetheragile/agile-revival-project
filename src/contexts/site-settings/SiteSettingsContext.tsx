@@ -32,39 +32,44 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         console.error("Error fetching settings:", error);
         toast({
           title: "Error",
-          description: "Failed to load site settings",
+          description: "Failed to load site settings, using defaults",
           variant: "destructive",
         });
-        return;
+        // Continue with default settings
       }
 
       if (data && data.length > 0) {
         const newSettings = { ...defaultSettings };
         
-        data.forEach(setting => {
-          if (setting.key in newSettings) {
-            const currentValue = newSettings[setting.key];
-            const newValue = setting.value;
-            
-            // Handle merging of nested objects - ensure both are objects before spreading
-            if (
-              typeof currentValue === 'object' && 
-              currentValue !== null &&
-              !Array.isArray(currentValue) &&
-              typeof newValue === 'object' &&
-              newValue !== null &&
-              !Array.isArray(newValue)
-            ) {
-              // Deep merge for nested objects like location and socialMedia
-              newSettings[setting.key] = deepMergeObjects(currentValue, newValue);
-            } else {
-              newSettings[setting.key] = newValue;
+        try {
+          data.forEach(setting => {
+            if (setting.key in newSettings) {
+              const currentValue = newSettings[setting.key];
+              const newValue = setting.value;
+              
+              // Handle merging of nested objects - ensure both are objects before spreading
+              if (
+                typeof currentValue === 'object' && 
+                currentValue !== null &&
+                !Array.isArray(currentValue) &&
+                typeof newValue === 'object' &&
+                newValue !== null &&
+                !Array.isArray(newValue)
+              ) {
+                // Deep merge for nested objects like location and socialMedia
+                newSettings[setting.key] = deepMergeObjects(currentValue, newValue);
+              } else {
+                newSettings[setting.key] = newValue;
+              }
             }
-          }
-        });
-        
-        console.log("Fetched settings:", newSettings);
-        setSettings(newSettings);
+          });
+          
+          console.log("Fetched settings:", newSettings);
+          setSettings(newSettings);
+        } catch (parseError) {
+          console.error("Error processing settings:", parseError);
+          // Continue with defaults if there's an error parsing the settings
+        }
       } else {
         console.log("No settings found, using defaults:", defaultSettings);
       }
@@ -78,6 +83,10 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
   // Helper function to deep merge objects
   const deepMergeObjects = (target: Record<string, any>, source: Record<string, any>): Record<string, any> => {
     const output = { ...target };
+    
+    if (!source || typeof source !== 'object') {
+      return output;
+    }
     
     for (const key in source) {
       if (
@@ -122,7 +131,11 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         [key]: values
       }));
       
-      await refreshSettings(); // Fetch updated settings to ensure consistency
+      try {
+        await refreshSettings(); // Fetch updated settings to ensure consistency
+      } catch (refreshError) {
+        console.error("Error refreshing settings after update:", refreshError);
+      }
       
       toast({
         title: "Settings updated",
@@ -140,7 +153,12 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
 
   const refreshSettings = async () => {
     console.log("Refreshing settings...");
-    await fetchSettings();
+    try {
+      await fetchSettings();
+    } catch (error) {
+      console.error("Error during settings refresh:", error);
+      throw error; // Re-throw to allow callers to handle
+    }
   };
 
   useEffect(() => {

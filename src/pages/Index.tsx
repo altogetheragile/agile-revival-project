@@ -18,8 +18,6 @@ const Index = () => {
     };
   }, []);
 
-  console.log("Index component rendering");
-
   return (
     <div className="min-h-screen bg-white">
       <PageTitle />

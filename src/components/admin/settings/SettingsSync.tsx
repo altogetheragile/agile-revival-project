@@ -20,11 +20,15 @@ export const SettingsSync = () => {
         },
         async (payload) => {
           console.log('Settings changed:', payload);
-          await refreshSettings();
-          toast({
-            title: "Settings Updated",
-            description: "Settings have been updated from another session",
-          });
+          try {
+            await refreshSettings();
+            toast({
+              title: "Settings Updated",
+              description: "Settings have been updated from another session",
+            });
+          } catch (error) {
+            console.error("Error refreshing settings:", error);
+          }
         }
       )
       .subscribe();
