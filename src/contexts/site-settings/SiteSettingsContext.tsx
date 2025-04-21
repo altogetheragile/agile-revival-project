@@ -24,6 +24,10 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
   const fetchSettings = async () => {
     try {
       setIsLoading(true);
+      
+      // Add a small delay to ensure component is fully mounted
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const { data, error } = await supabase
         .from('site_settings')
         .select('key, value');
@@ -36,6 +40,9 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
           variant: "destructive",
         });
         // Continue with default settings
+        setSettings(defaultSettings);
+        setIsLoading(false);
+        return;
       }
 
       if (data && data.length > 0) {
@@ -75,6 +82,8 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       }
     } catch (error) {
       console.error("Exception fetching settings:", error);
+      // Make sure we set something to avoid undefined errors
+      setSettings(defaultSettings);
     } finally {
       setIsLoading(false);
     }
@@ -82,28 +91,33 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
 
   // Helper function to deep merge objects
   const deepMergeObjects = (target: Record<string, any>, source: Record<string, any>): Record<string, any> => {
-    const output = { ...target };
-    
-    if (!source || typeof source !== 'object') {
-      return output;
-    }
-    
-    for (const key in source) {
-      if (
-        typeof source[key] === 'object' && 
-        source[key] !== null && 
-        !Array.isArray(source[key]) &&
-        typeof target[key] === 'object' && 
-        target[key] !== null &&
-        !Array.isArray(target[key])
-      ) {
-        output[key] = deepMergeObjects(target[key], source[key]);
-      } else {
-        output[key] = source[key];
+    try {
+      const output = { ...target };
+      
+      if (!source || typeof source !== 'object') {
+        return output;
       }
+      
+      for (const key in source) {
+        if (
+          typeof source[key] === 'object' && 
+          source[key] !== null && 
+          !Array.isArray(source[key]) &&
+          typeof target[key] === 'object' && 
+          target[key] !== null &&
+          !Array.isArray(target[key])
+        ) {
+          output[key] = deepMergeObjects(target[key], source[key]);
+        } else {
+          output[key] = source[key];
+        }
+      }
+      
+      return output;
+    } catch (error) {
+      console.error("Error in deepMergeObjects:", error);
+      return target; // Return the original object if there's an error
     }
-    
-    return output;
   };
 
   const updateSettings = async (key: string, values: any) => {
@@ -157,12 +171,17 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       await fetchSettings();
     } catch (error) {
       console.error("Error during settings refresh:", error);
-      throw error; // Re-throw to allow callers to handle
+      // Don't rethrow to prevent unhandled promise rejection
     }
   };
 
   useEffect(() => {
-    fetchSettings();
+    try {
+      fetchSettings();
+    } catch (error) {
+      console.error("Error in settings provider useEffect:", error);
+      setIsLoading(false);
+    }
   }, []);
 
   const value = {

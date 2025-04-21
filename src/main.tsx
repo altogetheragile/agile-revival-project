@@ -12,18 +12,49 @@ if (!rootElement) {
 
 const root = createRoot(rootElement);
 
-// Error handling for unhandled errors
+// More comprehensive error handling for unhandled errors
 window.addEventListener('error', (event) => {
   console.error('Global error caught:', event.error);
+  
+  // Prevent the error from crashing the entire app if possible
+  event.preventDefault();
+  
+  // You could also show a toast notification or other UI feedback here
 });
 
-// Error handling for unhandled promise rejections
+// More robust error handling for unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
+  
+  // Prevent the error from crashing the entire app if possible
+  event.preventDefault();
 });
 
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Add additional safety wrapper around the render
+try {
+  root.render(
+    <React.StrictMode>
+      <React.Suspense fallback={<div>Loading...</div>}>
+        <App />
+      </React.Suspense>
+    </React.StrictMode>
+  );
+} catch (error) {
+  console.error('Fatal error rendering application:', error);
+  
+  // Render a simple error page instead of crashing completely
+  root.render(
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white shadow-xl rounded-lg p-6 max-w-md w-full text-center">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Critical Error</h2>
+        <p className="mb-4 text-gray-700">The application failed to initialize properly.</p>
+        <button
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          onClick={() => window.location.reload()}
+        >
+          Try reloading
+        </button>
+      </div>
+    </div>
+  );
+}

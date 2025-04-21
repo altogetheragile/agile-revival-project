@@ -42,7 +42,12 @@ export const useContactInfo = () => {
   });
 
   useEffect(() => {
-    if (settings?.general) {
+    if (!settings || !settings.general) {
+      console.log("Settings or general settings not available yet");
+      return;
+    }
+
+    try {
       const { contactEmail, contactPhone } = settings.general;
       
       // Create default empty objects if location or socialMedia are undefined
@@ -73,6 +78,9 @@ export const useContactInfo = () => {
           bluesky: socialMedia.bluesky || ''
         }
       });
+    } catch (error) {
+      console.error("Error in useContactInfo:", error);
+      // Maintain the default state if there's an error
     }
   }, [settings?.general]);
 
