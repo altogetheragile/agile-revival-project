@@ -58,13 +58,19 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
 
   const handleDeleteCategory = (value: string) => {
     console.log("Deleting category:", value);
-    setCategories(categories.filter(cat => cat.value !== value));
+    
+    // Filter out the category to be deleted
+    const updatedCategories = categories.filter(cat => cat.value !== value);
+    setCategories(updatedCategories);
 
     // If the deleted category was selected, reset to empty or first available
     if (form.getValues("category") === value) {
-      const remainingCategories = categories.filter(cat => cat.value !== value);
-      form.setValue("category", remainingCategories[0]?.value ?? "");
+      form.setValue("category", updatedCategories[0]?.value ?? "");
     }
+    
+    // Stop event propagation
+    event?.stopPropagation();
+    event?.preventDefault();
   };
 
   return (
@@ -131,7 +137,7 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent className="min-w-[200px] z-[100] bg-white">
-                    {/* All Categories */}
+                    {/* All Categories - Both default and custom */}
                     {categories.map(category => (
                       <SelectItem 
                         key={category.value} 
@@ -141,10 +147,10 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                         <span className="truncate">{category.label}</span>
                         <button
                           type="button"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600"
-                          onClick={e => {
-                            e.preventDefault();
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600 z-50"
+                          onClick={(e) => {
                             e.stopPropagation();
+                            e.preventDefault();
                             handleDeleteCategory(category.value);
                           }}
                           aria-label={`Delete category ${category.label}`}
