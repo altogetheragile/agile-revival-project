@@ -7,21 +7,27 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
+import { useCourseFormatManagement } from "@/hooks/useCourseFormatManagement";
+import { FormatSelect } from "./FormatSelect";
+import { FormatInput } from "./FormatInput";
 
 interface CourseFormatFieldsProps {
   form: UseFormReturn<CourseFormData>;
 }
 
 export const CourseFormatFields: React.FC<CourseFormatFieldsProps> = ({ form }) => {
+  const {
+    formats,
+    addMode,
+    setAddMode,
+    newFormat,
+    setNewFormat,
+    handleAddFormat,
+    handleDeleteFormat
+  } = useCourseFormatManagement();
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <FormField
@@ -30,22 +36,41 @@ export const CourseFormatFields: React.FC<CourseFormatFieldsProps> = ({ form }) 
         render={({ field }) => (
           <FormItem>
             <FormLabel>Course Format</FormLabel>
-            <Select
-              onValueChange={field.onChange}
-              defaultValue={field.value}
-            >
+            {addMode ? (
               <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a course format" />
-                </SelectTrigger>
+                <FormatInput
+                  value={newFormat}
+                  onChange={setNewFormat}
+                  onAdd={() => handleAddFormat(field.onChange)}
+                  onCancel={() => {
+                    setAddMode(false);
+                    setNewFormat("");
+                  }}
+                />
               </FormControl>
-              <SelectContent>
-                <SelectItem value="in-person">In-Person</SelectItem>
-                <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="live">Live Virtual</SelectItem>
-                <SelectItem value="hybrid">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
+            ) : (
+              <FormControl>
+                <FormatSelect
+                  formats={formats}
+                  value={field.value || ""}
+                  onValueChange={(value) => {
+                    if (value === "__add_format__") {
+                      setAddMode(true);
+                    } else {
+                      field.onChange(value);
+                    }
+                  }}
+                  onDelete={(value, e) => {
+                    e.stopPropagation();
+                    handleDeleteFormat(value, () => {
+                      if (field.value === value) {
+                        field.onChange("");
+                      }
+                    });
+                  }}
+                />
+              </FormControl>
+            )}
             <FormMessage />
           </FormItem>
         )}
