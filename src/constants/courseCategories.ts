@@ -2,16 +2,17 @@
 // Centralized categories configuration
 
 export interface CourseCategoryConfig {
-  value: string; // Changed from string literal union type to accept any string
+  value: string;
   label: string;
 }
 
+// Initial categories - these can be added to or removed by users
 export const COURSE_CATEGORIES: CourseCategoryConfig[] = [
-  { value: "all", label: "All Courses" },
+  { value: "all", label: "All Courses" }, // Keep "all" as a special filter value
   { value: "scrum", label: "Scrum" },
   { value: "kanban", label: "Kanban" },
   { value: "leadership", label: "Leadership" },
 ];
 
-// For type inference of just category values (excluding 'all' if ever needed)
+// For type inference of just category values
 export const CATEGORY_VALUES = COURSE_CATEGORIES.map(cat => cat.value);

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FormControl,
   FormField,
@@ -26,53 +26,46 @@ interface CourseCategoryFieldsProps {
 }
 
 export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form }) => {
-  // Track custom categories in state (session-local)
-  const [customCategories, setCustomCategories] = useState<{ value: string, label: string }[]>([]);
-  const [defaultCategories, setDefaultCategories] = useState(COURSE_CATEGORIES.filter(cat => cat.value !== "all").map(cat => ({
-    value: cat.value,
-    label: cat.label
-  })));
+  // Track all categories in a single state array
+  const [categories, setCategories] = useState<{ value: string, label: string }[]>([]);
   const [addMode, setAddMode] = useState(false);
   const [newCategory, setNewCategory] = useState("");
 
-  // Warning: Deleting default categories is only for session/visual effect.
-  // To persist this, more logic is needed elsewhere! For now, it's in-memory only.
-
-  const allCategoryOptions = [...defaultCategories, ...customCategories];
+  // Initialize categories from COURSE_CATEGORIES (excluding "all")
+  useEffect(() => {
+    setCategories(
+      COURSE_CATEGORIES
+        .filter(cat => cat.value !== "all")
+        .map(cat => ({
+          value: cat.value,
+          label: cat.label
+        }))
+    );
+  }, []);
 
   const handleAddCategory = () => {
     if (
       newCategory.trim() &&
-      !allCategoryOptions.some(opt => opt.value.toLowerCase() === newCategory.trim().toLowerCase())
+      !categories.some(opt => opt.value.toLowerCase() === newCategory.trim().toLowerCase())
     ) {
       const newCat = { value: newCategory.trim().toLowerCase(), label: newCategory.trim() };
-      setCustomCategories([...customCategories, newCat]);
+      setCategories([...categories, newCat]);
       form.setValue("category", newCat.value);
       setAddMode(false);
       setNewCategory("");
     }
   };
 
-  const handleDeleteCategory = (value: string, from: "default" | "custom") => {
-    if (from === "default") {
-      setDefaultCategories(defaultCategories.filter(cat => cat.value !== value));
-    } else {
-      setCustomCategories(customCategories.filter(cat => cat.value !== value));
-    }
+  const handleDeleteCategory = (value: string) => {
+    console.log("Deleting category:", value);
+    setCategories(categories.filter(cat => cat.value !== value));
 
     // If the deleted category was selected, reset to empty or first available
     if (form.getValues("category") === value) {
-      const newFirst = [...defaultCategories.filter(cat => cat.value !== value), ...customCategories.filter(cat => cat.value !== value)][0];
-      form.setValue("category", newFirst?.value ?? "");
+      const remainingCategories = categories.filter(cat => cat.value !== value);
+      form.setValue("category", remainingCategories[0]?.value ?? "");
     }
   };
-
-  // Add a custom category for testing (remove in production)
-  React.useEffect(() => {
-    if (customCategories.length === 0) {
-      setCustomCategories([{ value: "test-category", label: "Test Category" }]);
-    }
-  }, []);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -137,62 +130,29 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                       <SelectValue placeholder="Select or create a category" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="min-w-[200px] z-[100] bg-white"> {/* z-[100]/bg-white for dropdown visibility */}
-                    {/* Default Categories */}
-                    {defaultCategories.map(category => (
+                  <SelectContent className="min-w-[200px] z-[100] bg-white">
+                    {/* All Categories */}
+                    {categories.map(category => (
                       <SelectItem 
                         key={category.value} 
                         value={category.value} 
-                        className="flex justify-between items-center group pr-2 relative"
-                        // Do not forward unneeded props to SelectItem
+                        className="flex justify-between items-center group pr-8 relative"
                       >
                         <span className="truncate">{category.label}</span>
                         <button
                           type="button"
-                          className="ml-3 h-5 w-5 flex items-center justify-center rounded-full group-hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors absolute right-1 top-1/2 -translate-y-1/2"
-                          tabIndex={0}
-                          aria-label={`Delete category ${category.label}`}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600"
                           onClick={e => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleDeleteCategory(category.value, "default");
+                            handleDeleteCategory(category.value);
                           }}
+                          aria-label={`Delete category ${category.label}`}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </button>
                       </SelectItem>
                     ))}
-
-                    {/* Custom Categories Section */}
-                    {customCategories.length > 0 && (
-                      <>
-                        <div className="py-1.5 px-2 text-xs font-semibold text-muted-foreground border-t">
-                          Custom Categories
-                        </div>
-                        {customCategories.map(category => (
-                          <SelectItem
-                            key={category.value}
-                            value={category.value}
-                            className="flex justify-between items-center group pr-2 relative"
-                          >
-                            <span className="truncate">{category.label}</span>
-                            <button
-                              type="button"
-                              className="ml-3 h-5 w-5 flex items-center justify-center rounded-full group-hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors absolute right-1 top-1/2 -translate-y-1/2"
-                              tabIndex={0}
-                              aria-label={`Delete category ${category.label}`}
-                              onClick={e => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleDeleteCategory(category.value, "custom");
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </SelectItem>
-                        ))}
-                      </>
-                    )}
 
                     {/* Add New Category Option */}
                     <SelectItem
