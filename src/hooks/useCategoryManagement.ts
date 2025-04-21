@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { COURSE_CATEGORIES } from "@/constants/courseCategories";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/contexts/site-settings";
 
 export const useCategoryManagement = () => {
@@ -10,13 +9,13 @@ export const useCategoryManagement = () => {
   const [addMode, setAddMode] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const { toast } = useToast();
-  const { settings, updateSettings, refreshSettings } = useSiteSettings();
+  const { settings, updateSettings } = useSiteSettings();
 
   // Initialize categories from site settings if available, otherwise use COURSE_CATEGORIES
   useEffect(() => {
     const initCategories = () => {
       if (settings.courseCategories && Array.isArray(settings.courseCategories)) {
-        // Ensure we have the default "all" filter category excluded for editing purposes
+        // Ensure we exclude the "all" category from editing
         setCategories(
           settings.courseCategories
             .filter(cat => cat.value !== "all")
@@ -50,8 +49,7 @@ export const useCategoryManagement = () => {
       // Save to site settings
       await updateSettings('courseCategories', categoriesForSaving);
       
-      // Update local state
-      setCategories(updatedCategories);
+      console.log("Categories saved successfully:", categoriesForSaving);
       return true;
     } catch (error) {
       console.error("Error saving categories:", error);
@@ -70,6 +68,7 @@ export const useCategoryManagement = () => {
       const success = await saveCategoriesToSettings(updatedCategories);
       
       if (success) {
+        setCategories(updatedCategories);
         onAdd(newCat.value);
         setAddMode(false);
         setNewCategory("");
@@ -90,12 +89,14 @@ export const useCategoryManagement = () => {
 
   const handleDeleteCategory = async (value: string, onDelete: (value: string) => void) => {
     try {
+      console.log("Deleting category:", value);
       const updatedCategories = categories.filter(cat => cat.value !== value);
       const deletedCategory = categories.find(cat => cat.value === value);
       
       const success = await saveCategoriesToSettings(updatedCategories);
       
       if (success) {
+        setCategories(updatedCategories); // Update local state
         onDelete(value);
         
         toast({

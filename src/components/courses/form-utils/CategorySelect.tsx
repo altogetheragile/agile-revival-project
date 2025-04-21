@@ -27,13 +27,6 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   onValueChange,
   onDelete
 }) => {
-  // Handle delete without event bubbling issues
-  const handleDelete = (categoryValue: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onDelete(categoryValue, e);
-  };
-
   return (
     <Select
       onValueChange={val => {
@@ -48,23 +41,31 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
       <SelectTrigger>
         <SelectValue placeholder="Select or create a category" />
       </SelectTrigger>
-      <SelectContent className="min-w-[200px] z-[100] bg-white">
+      <SelectContent className="min-w-[200px] z-[100]">
         {categories.map(category => (
-          <SelectItem 
+          <div 
             key={category.value} 
-            value={category.value} 
-            className="flex justify-between items-center group pr-8 relative"
+            className="flex items-center justify-between px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer group relative"
           >
-            <span className="truncate">{category.label}</span>
+            <SelectItem 
+              value={category.value} 
+              className="flex-1 cursor-pointer"
+            >
+              {category.label}
+            </SelectItem>
             <button
               type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600 z-[200]"
-              onClick={(e) => handleDelete(category.value, e)}
+              className="ml-2 h-5 w-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete(category.value, e);
+              }}
               aria-label={`Delete category ${category.label}`}
             >
               <X className="h-3 w-3" />
             </button>
-          </SelectItem>
+          </div>
         ))}
 
         <SelectItem
