@@ -125,6 +125,7 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    {/* Default Categories */}
                     {defaultCategoryOptions.map(category => (
                       <SelectItem key={category.value} value={category.value}>
                         {category.label}
@@ -137,28 +138,29 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                         <div className="py-1.5 px-2 text-xs font-semibold text-muted-foreground border-t">
                           Custom Categories
                         </div>
+                        {/* Custom Categories with Delete Buttons */}
                         {customCategories.map(category => (
                           <div
                             key={category.value}
-                            className="flex items-center justify-between px-2"
+                            className="flex items-center justify-between px-2 py-1 hover:bg-accent rounded-sm"
                           >
-                            <SelectItem
-                              value={category.value}
-                              className="flex-1 min-w-0"
+                            <div 
+                              className="flex-1 cursor-pointer min-w-0 px-2 py-1.5"
+                              onClick={() => field.onChange(category.value)}
                             >
-                              <span className="truncate">{category.label}</span>
-                            </SelectItem>
+                              {category.label}
+                            </div>
                             <Button
                               type="button"
                               size="sm"
                               variant="ghost"
-                              className="h-6 w-6 p-0 ml-1 text-muted-foreground hover:text-destructive"
+                              className="h-8 w-8 p-0 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                               onClick={e => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 handleDeleteCategory(category.value);
                               }}
-                              tabIndex={0} 
+                              tabIndex={0}
                               aria-label={`Delete category ${category.label}`}
                             >
                               <X className="h-4 w-4" />
