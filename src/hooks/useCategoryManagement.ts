@@ -58,16 +58,34 @@ export const useCategoryManagement = () => {
   };
 
   const handleAddCategory = async (onAdd: (value: string) => void) => {
-    if (
-      newCategory.trim() &&
-      !categories.some(opt => opt.value.toLowerCase() === newCategory.trim().toLowerCase())
-    ) {
+    console.log("Adding category:", newCategory);
+    
+    if (!newCategory.trim()) {
+      toast({
+        title: "Error",
+        description: "Category name cannot be empty",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (categories.some(opt => opt.value.toLowerCase() === newCategory.trim().toLowerCase())) {
+      toast({
+        title: "Error",
+        description: `"${newCategory.trim()}" already exists as a category`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
       const newCat = { value: newCategory.trim().toLowerCase(), label: newCategory.trim() };
       const updatedCategories = [...categories, newCat];
       
       const success = await saveCategoriesToSettings(updatedCategories);
       
       if (success) {
+        console.log("Category added successfully:", newCat);
         setCategories(updatedCategories);
         onAdd(newCat.value);
         setAddMode(false);
@@ -84,6 +102,13 @@ export const useCategoryManagement = () => {
           variant: "destructive"
         });
       }
+    } catch (error) {
+      console.error("Error in handleAddCategory:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -92,6 +117,11 @@ export const useCategoryManagement = () => {
       console.log("Deleting category:", value);
       const updatedCategories = categories.filter(cat => cat.value !== value);
       const deletedCategory = categories.find(cat => cat.value === value);
+      
+      if (!deletedCategory) {
+        console.error("Could not find category to delete:", value);
+        return;
+      }
       
       const success = await saveCategoriesToSettings(updatedCategories);
       

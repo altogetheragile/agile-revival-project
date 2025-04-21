@@ -27,11 +27,14 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   onValueChange,
   onDelete
 }) => {
+  const handleSelectChange = (val: string) => {
+    // Only update if it's not the add category option
+    onValueChange(val);
+  };
+
   return (
     <Select
-      onValueChange={val => {
-        onValueChange(val);
-      }}
+      onValueChange={handleSelectChange}
       value={value}
       defaultValue={value}
     >

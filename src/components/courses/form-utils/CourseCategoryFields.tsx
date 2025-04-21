@@ -42,8 +42,8 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                 value={newCategory}
                 onChange={setNewCategory}
                 onAdd={() => {
-                  handleAddCategory((value) => {
-                    field.onChange(value);
+                  handleAddCategory((newCategoryValue) => {
+                    field.onChange(newCategoryValue);
                   });
                 }}
                 onCancel={() => {
