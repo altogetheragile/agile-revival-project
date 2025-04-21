@@ -26,18 +26,19 @@ interface CourseCategoryFieldsProps {
 }
 
 export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form }) => {
-  // Do not show 'all' in the options
-  const defaultCategoryOptions = COURSE_CATEGORIES.filter(cat => cat.value !== "all").map(cat => ({
-    value: cat.value,
-    label: cat.label
-  }));
-
   // Track custom categories in state (session-local)
   const [customCategories, setCustomCategories] = useState<{ value: string, label: string }[]>([]);
+  const [defaultCategories, setDefaultCategories] = useState(COURSE_CATEGORIES.filter(cat => cat.value !== "all").map(cat => ({
+    value: cat.value,
+    label: cat.label
+  })));
   const [addMode, setAddMode] = useState(false);
   const [newCategory, setNewCategory] = useState("");
 
-  const allCategoryOptions = [...defaultCategoryOptions, ...customCategories];
+  // Warning: Deleting default categories is only for session/visual effect.
+  // To persist this, more logic is needed elsewhere! For now, it's in-memory only.
+
+  const allCategoryOptions = [...defaultCategories, ...customCategories];
 
   const handleAddCategory = () => {
     if (
@@ -46,18 +47,23 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
     ) {
       const newCat = { value: newCategory.trim().toLowerCase(), label: newCategory.trim() };
       setCustomCategories([...customCategories, newCat]);
-      form.setValue("category", newCat.value); // Set this value on the form
+      form.setValue("category", newCat.value);
       setAddMode(false);
       setNewCategory("");
     }
   };
 
-  const handleDeleteCategory = (value: string) => {
-    setCustomCategories(customCategories.filter(cat => cat.value !== value));
+  const handleDeleteCategory = (value: string, from: "default" | "custom") => {
+    if (from === "default") {
+      setDefaultCategories(defaultCategories.filter(cat => cat.value !== value));
+    } else {
+      setCustomCategories(customCategories.filter(cat => cat.value !== value));
+    }
 
-    // If the deleted category was selected, reset to empty or first default
+    // If the deleted category was selected, reset to empty or first available
     if (form.getValues("category") === value) {
-      form.setValue("category", defaultCategoryOptions[0]?.value ?? "");
+      const newFirst = [...defaultCategories.filter(cat => cat.value !== value), ...customCategories.filter(cat => cat.value !== value)][0];
+      form.setValue("category", newFirst?.value ?? "");
     }
   };
 
@@ -131,51 +137,63 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                       <SelectValue placeholder="Select or create a category" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="min-w-[200px]">
+                  <SelectContent className="min-w-[200px] z-[100] bg-white"> {/* z-[100]/bg-white for dropdown visibility */}
                     {/* Default Categories */}
-                    {defaultCategoryOptions.map(category => (
-                      <SelectItem key={category.value} value={category.value}>
-                        {category.label}
+                    {defaultCategories.map(category => (
+                      <SelectItem 
+                        key={category.value} 
+                        value={category.value} 
+                        className="flex justify-between items-center group pr-2 relative"
+                        // Do not forward unneeded props to SelectItem
+                      >
+                        <span className="truncate">{category.label}</span>
+                        <button
+                          type="button"
+                          className="ml-3 h-5 w-5 flex items-center justify-center rounded-full group-hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors absolute right-1 top-1/2 -translate-y-1/2"
+                          tabIndex={0}
+                          aria-label={`Delete category ${category.label}`}
+                          onClick={e => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeleteCategory(category.value, "default");
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </SelectItem>
                     ))}
-                    
+
                     {/* Custom Categories Section */}
                     {customCategories.length > 0 && (
                       <>
-                        {/* Add a visual separator before custom categories */}
                         <div className="py-1.5 px-2 text-xs font-semibold text-muted-foreground border-t">
                           Custom Categories
                         </div>
-                        
-                        {/* Custom Categories with Delete Buttons */}
                         {customCategories.map(category => (
-                          <div
+                          <SelectItem
                             key={category.value}
-                            className="flex items-center justify-between px-2 py-1 hover:bg-accent cursor-pointer"
-                            onClick={() => field.onChange(category.value)}
+                            value={category.value}
+                            className="flex justify-between items-center group pr-2 relative"
                           >
-                            <span className="px-2 py-1.5">{category.label}</span>
-                            <Button
+                            <span className="truncate">{category.label}</span>
+                            <button
                               type="button"
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              className="ml-3 h-5 w-5 flex items-center justify-center rounded-full group-hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors absolute right-1 top-1/2 -translate-y-1/2"
+                              tabIndex={0}
+                              aria-label={`Delete category ${category.label}`}
                               onClick={e => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleDeleteCategory(category.value);
-                                console.log("Delete button clicked for", category.label);
+                                handleDeleteCategory(category.value, "custom");
                               }}
-                              tabIndex={0}
-                              aria-label={`Delete category ${category.label}`}
                             >
                               <X className="h-4 w-4" />
-                            </Button>
-                          </div>
+                            </button>
+                          </SelectItem>
                         ))}
                       </>
                     )}
-                    
+
                     {/* Add New Category Option */}
                     <SelectItem
                       key="add-category"
