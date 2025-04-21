@@ -24,14 +24,16 @@ export const useCourseFormatManagement = () => {
 
   useEffect(() => {
     const initFormats = () => {
-      // Check if courseFormats exists in settings and is an array
       if (settings.courseFormats && Array.isArray(settings.courseFormats)) {
+        console.log("Loading formats from settings:", settings.courseFormats);
         setFormats(settings.courseFormats);
-        console.log("Loaded formats from settings:", settings.courseFormats);
       } else {
-        // Fall back to default formats if not available
+        console.log("No courseFormats in settings, using defaults:", defaultFormats);
         setFormats(defaultFormats);
-        console.log("Using default formats:", defaultFormats);
+        // Save default formats to settings
+        saveFormatsToSettings(defaultFormats).catch(err => 
+          console.error("Failed to save default formats:", err)
+        );
       }
     };
     
@@ -70,9 +72,13 @@ export const useCourseFormatManagement = () => {
       return;
     }
 
-    const newFmt = { value: newFormat.trim().toLowerCase(), label: newFormat.trim() };
+    const newFmt = { 
+      value: newFormat.trim().toLowerCase().replace(/\s+/g, '-'), 
+      label: newFormat.trim() 
+    };
     const updatedFormats = [...formats, newFmt];
     
+    console.log("Adding new format:", newFmt);
     const success = await saveFormatsToSettings(updatedFormats);
     
     if (success) {
@@ -96,12 +102,11 @@ export const useCourseFormatManagement = () => {
 
   const handleDeleteFormat = async (value: string, onDelete: () => void) => {
     try {
-      console.log("Deleting format:", value);
-      const updatedFormats = formats.filter(fmt => fmt.value !== value);
-      const deletedFormat = formats.find(fmt => fmt.value === value);
+      console.log("Attempting to delete format:", value);
+      const formatToDelete = formats.find(fmt => fmt.value === value);
       
-      if (!deletedFormat) {
-        console.error("Format not found:", value);
+      if (!formatToDelete) {
+        console.error("Format not found for deletion:", value);
         toast({
           title: "Error",
           description: "Format not found.",
@@ -110,17 +115,22 @@ export const useCourseFormatManagement = () => {
         return;
       }
       
+      const updatedFormats = formats.filter(fmt => fmt.value !== value);
+      console.log("Formats after deletion:", updatedFormats);
+      
       const success = await saveFormatsToSettings(updatedFormats);
       
       if (success) {
+        console.log("Format deleted successfully, updating state");
         setFormats(updatedFormats);
         onDelete();
         
         toast({
           title: "Format deleted",
-          description: `"${deletedFormat?.label || value}" has been removed from formats.`
+          description: `"${formatToDelete?.label || value}" has been removed from formats.`
         });
       } else {
+        console.error("Failed to save updated formats after deletion");
         toast({
           title: "Error",
           description: "There was a problem deleting the format.",
@@ -128,7 +138,7 @@ export const useCourseFormatManagement = () => {
         });
       }
     } catch (error) {
-      console.error("Error deleting format:", error);
+      console.error("Error during format deletion:", error);
       toast({
         title: "Error",
         description: "There was a problem deleting the format.",

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -16,27 +16,41 @@ export const FormatInput: React.FC<FormatInputProps> = ({
   onAdd,
   onCancel
 }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus the input when component mounts
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
   return (
     <div className="flex gap-2">
       <Input
+        ref={inputRef}
         placeholder="Type new format"
         value={value}
         onChange={e => onChange(e.target.value)}
         onKeyDown={e => {
           if (e.key === "Enter") {
             e.preventDefault();
-            onAdd();
+            if (value.trim()) {
+              onAdd();
+            }
           } else if (e.key === "Escape") {
             onCancel();
           }
         }}
         className="flex-1"
-        autoFocus
       />
       <Button
         type="button"
         variant="outline"
-        onClick={onAdd}
+        onClick={(e) => {
+          e.preventDefault();
+          onAdd();
+        }}
         disabled={!value.trim()}
       >
         Add
@@ -44,7 +58,10 @@ export const FormatInput: React.FC<FormatInputProps> = ({
       <Button
         type="button"
         variant="ghost"
-        onClick={onCancel}
+        onClick={(e) => {
+          e.preventDefault();
+          onCancel();
+        }}
       >
         Cancel
       </Button>
