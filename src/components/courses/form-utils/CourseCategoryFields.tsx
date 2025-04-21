@@ -40,12 +40,17 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
             {addMode ? (
               <CategoryInput
                 value={newCategory}
-                onChange={setNewCategory}
+                onChange={(val) => {
+                  console.log("CategoryInput - onChange called with:", val);
+                  setNewCategory(val);
+                }}
                 onAdd={() => {
                   console.log("CategoryInput - onAdd called");
                   handleAddCategory((newCategoryValue) => {
                     console.log("Setting form field value to:", newCategoryValue);
-                    field.onChange(newCategoryValue);
+                    if (newCategoryValue) {
+                      field.onChange(newCategoryValue);
+                    }
                   });
                 }}
                 onCancel={() => {
@@ -57,26 +62,28 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
             ) : (
               <FormControl>
                 <CategorySelect
-                  categories={categories}
-                  value={field.value}
+                  categories={categories || []}
+                  value={field.value || ""}
                   onValueChange={(val) => {
                     console.log("CategorySelect - onValueChange called with:", val);
                     if (val === "__add_category__") {
                       setAddMode(true);
-                    } else {
+                    } else if (val) {
                       field.onChange(val);
                     }
                   }}
                   onDelete={(value, e) => {
                     console.log("CategorySelect - onDelete called for:", value);
-                    handleDeleteCategory(value, (deletedValue) => {
-                      // If currently selected category was deleted, select the first available category or empty string
-                      if (field.value === deletedValue) {
-                        const newValue = categories.length > 0 ? categories[0].value : "";
-                        console.log("Deleted selected category, setting new value:", newValue);
-                        field.onChange(newValue);
-                      }
-                    });
+                    if (value) {
+                      handleDeleteCategory(value, (deletedValue) => {
+                        // If currently selected category was deleted, select the first available category or empty string
+                        if (field.value === deletedValue) {
+                          const newValue = categories.length > 0 ? categories[0].value : "";
+                          console.log("Deleted selected category, setting new value:", newValue);
+                          field.onChange(newValue);
+                        }
+                      });
+                    }
                   }}
                 />
               </FormControl>

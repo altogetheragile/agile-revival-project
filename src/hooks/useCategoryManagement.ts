@@ -14,28 +14,34 @@ export const useCategoryManagement = () => {
   // Initialize categories from site settings if available, otherwise use COURSE_CATEGORIES
   useEffect(() => {
     const initCategories = () => {
-      if (settings.courseCategories && Array.isArray(settings.courseCategories)) {
-        // Ensure we exclude the "all" category from editing
-        const editableCategories = settings.courseCategories
-          .filter(cat => cat.value !== "all")
-          .map(cat => ({
-            value: cat.value,
-            label: cat.label
-          }));
-        
-        console.log("Setting categories from settings:", editableCategories);
-        setCategories(editableCategories);
-      } else {
-        // Fallback to default categories
-        const defaultCategories = COURSE_CATEGORIES
-          .filter(cat => cat.value !== "all")
-          .map(cat => ({
-            value: cat.value,
-            label: cat.label
-          }));
-        
-        console.log("Setting default categories:", defaultCategories);
-        setCategories(defaultCategories);
+      try {
+        if (settings?.courseCategories && Array.isArray(settings.courseCategories)) {
+          // Ensure we exclude the "all" category from editing
+          const editableCategories = settings.courseCategories
+            .filter(cat => cat.value !== "all")
+            .map(cat => ({
+              value: cat.value,
+              label: cat.label
+            }));
+          
+          console.log("Setting categories from settings:", editableCategories);
+          setCategories(editableCategories);
+        } else {
+          // Fallback to default categories
+          const defaultCategories = COURSE_CATEGORIES
+            .filter(cat => cat.value !== "all")
+            .map(cat => ({
+              value: cat.value,
+              label: cat.label
+            }));
+          
+          console.log("Setting default categories:", defaultCategories);
+          setCategories(defaultCategories);
+        }
+      } catch (error) {
+        console.error("Error initializing categories:", error);
+        // Fallback to an empty array if there's an error
+        setCategories([]);
       }
     };
     
@@ -64,7 +70,7 @@ export const useCategoryManagement = () => {
   const handleAddCategory = async (onAdd: (value: string) => void) => {
     console.log("Adding category:", newCategory);
     
-    if (!newCategory.trim()) {
+    if (!newCategory || !newCategory.trim()) {
       toast({
         title: "Error",
         description: "Category name cannot be empty",
@@ -73,20 +79,24 @@ export const useCategoryManagement = () => {
       return;
     }
 
-    if (categories.some(opt => opt.value.toLowerCase() === newCategory.trim().toLowerCase())) {
+    const trimmedCategory = newCategory.trim();
+    
+    if (categories.some(opt => opt.value.toLowerCase() === trimmedCategory.toLowerCase() || 
+                              opt.label.toLowerCase() === trimmedCategory.toLowerCase())) {
       toast({
         title: "Error",
-        description: `"${newCategory.trim()}" already exists as a category`,
+        description: `"${trimmedCategory}" already exists as a category`,
         variant: "destructive"
       });
       return;
     }
 
     try {
-      const newCategoryValue = newCategory.trim();
+      // Create a value that's URL-friendly (lowercase, hyphens instead of spaces)
+      const newCatValue = trimmedCategory.toLowerCase().replace(/\s+/g, '-');
       const newCat = { 
-        value: newCategoryValue.toLowerCase().replace(/\s+/g, '-'), 
-        label: newCategoryValue 
+        value: newCatValue, 
+        label: trimmedCategory 
       };
       
       console.log("New category object:", newCat);
@@ -97,7 +107,11 @@ export const useCategoryManagement = () => {
       if (success) {
         console.log("Category added successfully:", newCat);
         setCategories(updatedCategories);
-        onAdd(newCat.value); // Pass the value to callback
+        
+        // Call the callback with the new category value
+        onAdd(newCat.value);
+        
+        // Reset state
         setAddMode(false);
         setNewCategory("");
         
@@ -125,13 +139,20 @@ export const useCategoryManagement = () => {
   const handleDeleteCategory = async (value: string, onDelete: (value: string) => void) => {
     try {
       console.log("Deleting category:", value);
-      const updatedCategories = categories.filter(cat => cat.value !== value);
+      
+      if (!value) {
+        console.error("Invalid category value:", value);
+        return;
+      }
+      
       const deletedCategory = categories.find(cat => cat.value === value);
       
       if (!deletedCategory) {
         console.error("Could not find category to delete:", value);
         return;
       }
+      
+      const updatedCategories = categories.filter(cat => cat.value !== value);
       
       const success = await saveCategoriesToSettings(updatedCategories);
       

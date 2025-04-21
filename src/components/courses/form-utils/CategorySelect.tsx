@@ -27,22 +27,22 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   onValueChange,
   onDelete
 }) => {
-  const handleSelectChange = (val: string) => {
-    console.log("CategorySelect - handleSelectChange called with:", val);
-    onValueChange(val);
-  };
-
+  // Safe handling of categories to prevent rendering issues
+  const safeCategories = Array.isArray(categories) ? categories : [];
+  
   return (
     <Select
-      onValueChange={handleSelectChange}
       value={value}
-      defaultValue={value}
+      onValueChange={(val) => {
+        console.log("CategorySelect - onValueChange with:", val);
+        onValueChange(val);
+      }}
     >
-      <SelectTrigger>
+      <SelectTrigger className="w-full">
         <SelectValue placeholder="Select or create a category" />
       </SelectTrigger>
       <SelectContent className="min-w-[200px] z-[100]">
-        {categories.map(category => (
+        {safeCategories.map(category => (
           <div 
             key={category.value} 
             className="flex items-center justify-between px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer"
