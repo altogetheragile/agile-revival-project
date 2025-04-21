@@ -30,9 +30,6 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   return (
     <Select
       onValueChange={val => {
-        if (val === "__add_category__") {
-          return;
-        }
         onValueChange(val);
       }}
       value={value}
