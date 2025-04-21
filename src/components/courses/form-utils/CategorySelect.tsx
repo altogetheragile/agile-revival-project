@@ -52,7 +52,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             <button
               type="button"
               className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600 z-[200]"
-              onClick={(e) => onDelete(category.value, e)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete(category.value, e);
+              }}
               aria-label={`Delete category ${category.label}`}
             >
               <X className="h-3 w-3" />
