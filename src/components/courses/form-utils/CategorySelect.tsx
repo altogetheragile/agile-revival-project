@@ -27,25 +27,22 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   onValueChange,
   onDelete
 }) => {
-  // Safe handling of categories to prevent rendering issues
-  const safeCategories = Array.isArray(categories) ? categories : [];
-  
   return (
     <Select
-      value={value}
-      onValueChange={(val) => {
-        console.log("CategorySelect - onValueChange with:", val);
+      onValueChange={val => {
         onValueChange(val);
       }}
+      value={value}
+      defaultValue={value}
     >
-      <SelectTrigger className="w-full">
+      <SelectTrigger>
         <SelectValue placeholder="Select or create a category" />
       </SelectTrigger>
       <SelectContent className="min-w-[200px] z-[100]">
-        {safeCategories.map(category => (
+        {categories.map(category => (
           <div 
             key={category.value} 
-            className="flex items-center justify-between px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            className="flex items-center justify-between px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer group relative"
           >
             <SelectItem 
               value={category.value} 
@@ -61,6 +58,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                 e.stopPropagation();
                 onDelete(category.value, e);
               }}
+              aria-label={`Delete category ${category.label}`}
             >
               <X className="h-3 w-3" />
             </button>
@@ -68,7 +66,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         ))}
 
         <SelectItem
-          key="__add_category__"
+          key="add-category"
           value="__add_category__"
           className="text-blue-600 cursor-pointer border-t border-muted"
         >
