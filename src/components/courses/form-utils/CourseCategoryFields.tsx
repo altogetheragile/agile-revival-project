@@ -61,6 +61,13 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
     }
   };
 
+  // Add a custom category for testing (remove in production)
+  React.useEffect(() => {
+    if (customCategories.length === 0) {
+      setCustomCategories([{ value: "test-category", label: "Test Category" }]);
+    }
+  }, []);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <FormField
@@ -124,7 +131,7 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                       <SelectValue placeholder="Select or create a category" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="min-w-[200px]">
                     {/* Default Categories */}
                     {defaultCategoryOptions.map(category => (
                       <SelectItem key={category.value} value={category.value}>
@@ -132,24 +139,22 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                       </SelectItem>
                     ))}
                     
+                    {/* Custom Categories Section */}
                     {customCategories.length > 0 && (
                       <>
                         {/* Add a visual separator before custom categories */}
                         <div className="py-1.5 px-2 text-xs font-semibold text-muted-foreground border-t">
                           Custom Categories
                         </div>
+                        
                         {/* Custom Categories with Delete Buttons */}
                         {customCategories.map(category => (
                           <div
                             key={category.value}
-                            className="flex items-center justify-between px-2 py-1 hover:bg-accent rounded-sm"
+                            className="flex items-center justify-between px-2 py-1 hover:bg-accent cursor-pointer"
+                            onClick={() => field.onChange(category.value)}
                           >
-                            <div 
-                              className="flex-1 cursor-pointer min-w-0 px-2 py-1.5"
-                              onClick={() => field.onChange(category.value)}
-                            >
-                              {category.label}
-                            </div>
+                            <span className="px-2 py-1.5">{category.label}</span>
                             <Button
                               type="button"
                               size="sm"
@@ -159,6 +164,7 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                                 e.preventDefault();
                                 e.stopPropagation();
                                 handleDeleteCategory(category.value);
+                                console.log("Delete button clicked for", category.label);
                               }}
                               tabIndex={0}
                               aria-label={`Delete category ${category.label}`}
