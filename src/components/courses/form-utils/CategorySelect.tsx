@@ -28,7 +28,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   onDelete
 }) => {
   const handleSelectChange = (val: string) => {
-    // Only update if it's not the add category option
+    console.log("CategorySelect - handleSelectChange called with:", val);
     onValueChange(val);
   };
 
@@ -45,7 +45,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         {categories.map(category => (
           <div 
             key={category.value} 
-            className="flex items-center justify-between px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer group relative"
+            className="flex items-center justify-between px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer"
           >
             <SelectItem 
               value={category.value} 
@@ -61,7 +61,6 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                 e.stopPropagation();
                 onDelete(category.value, e);
               }}
-              aria-label={`Delete category ${category.label}`}
             >
               <X className="h-3 w-3" />
             </button>
@@ -69,7 +68,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         ))}
 
         <SelectItem
-          key="add-category"
+          key="__add_category__"
           value="__add_category__"
           className="text-blue-600 cursor-pointer border-t border-muted"
         >

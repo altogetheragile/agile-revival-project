@@ -42,11 +42,14 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                 value={newCategory}
                 onChange={setNewCategory}
                 onAdd={() => {
+                  console.log("CategoryInput - onAdd called");
                   handleAddCategory((newCategoryValue) => {
+                    console.log("Setting form field value to:", newCategoryValue);
                     field.onChange(newCategoryValue);
                   });
                 }}
                 onCancel={() => {
+                  console.log("CategoryInput - onCancel called");
                   setAddMode(false);
                   setNewCategory("");
                 }}
@@ -57,6 +60,7 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                   categories={categories}
                   value={field.value}
                   onValueChange={(val) => {
+                    console.log("CategorySelect - onValueChange called with:", val);
                     if (val === "__add_category__") {
                       setAddMode(true);
                     } else {
@@ -64,10 +68,13 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                     }
                   }}
                   onDelete={(value, e) => {
+                    console.log("CategorySelect - onDelete called for:", value);
                     handleDeleteCategory(value, (deletedValue) => {
                       // If currently selected category was deleted, select the first available category or empty string
                       if (field.value === deletedValue) {
-                        field.onChange(categories[0]?.value ?? "");
+                        const newValue = categories.length > 0 ? categories[0].value : "";
+                        console.log("Deleted selected category, setting new value:", newValue);
+                        field.onChange(newValue);
                       }
                     });
                   }}

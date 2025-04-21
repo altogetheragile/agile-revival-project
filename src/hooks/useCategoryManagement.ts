@@ -16,24 +16,26 @@ export const useCategoryManagement = () => {
     const initCategories = () => {
       if (settings.courseCategories && Array.isArray(settings.courseCategories)) {
         // Ensure we exclude the "all" category from editing
-        setCategories(
-          settings.courseCategories
-            .filter(cat => cat.value !== "all")
-            .map(cat => ({
-              value: cat.value,
-              label: cat.label
-            }))
-        );
+        const editableCategories = settings.courseCategories
+          .filter(cat => cat.value !== "all")
+          .map(cat => ({
+            value: cat.value,
+            label: cat.label
+          }));
+        
+        console.log("Setting categories from settings:", editableCategories);
+        setCategories(editableCategories);
       } else {
         // Fallback to default categories
-        setCategories(
-          COURSE_CATEGORIES
-            .filter(cat => cat.value !== "all")
-            .map(cat => ({
-              value: cat.value,
-              label: cat.label
-            }))
-        );
+        const defaultCategories = COURSE_CATEGORIES
+          .filter(cat => cat.value !== "all")
+          .map(cat => ({
+            value: cat.value,
+            label: cat.label
+          }));
+        
+        console.log("Setting default categories:", defaultCategories);
+        setCategories(defaultCategories);
       }
     };
     
@@ -46,10 +48,12 @@ export const useCategoryManagement = () => {
       const allCategory = { value: "all", label: "All Courses" };
       const categoriesForSaving = [allCategory, ...updatedCategories];
       
+      console.log("Saving categories to settings:", categoriesForSaving);
+      
       // Save to site settings
       await updateSettings('courseCategories', categoriesForSaving);
       
-      console.log("Categories saved successfully:", categoriesForSaving);
+      console.log("Categories saved successfully");
       return true;
     } catch (error) {
       console.error("Error saving categories:", error);
@@ -79,7 +83,13 @@ export const useCategoryManagement = () => {
     }
 
     try {
-      const newCat = { value: newCategory.trim().toLowerCase(), label: newCategory.trim() };
+      const newCategoryValue = newCategory.trim();
+      const newCat = { 
+        value: newCategoryValue.toLowerCase().replace(/\s+/g, '-'), 
+        label: newCategoryValue 
+      };
+      
+      console.log("New category object:", newCat);
       const updatedCategories = [...categories, newCat];
       
       const success = await saveCategoriesToSettings(updatedCategories);
@@ -87,7 +97,7 @@ export const useCategoryManagement = () => {
       if (success) {
         console.log("Category added successfully:", newCat);
         setCategories(updatedCategories);
-        onAdd(newCat.value);
+        onAdd(newCat.value); // Pass the value to callback
         setAddMode(false);
         setNewCategory("");
         
@@ -126,6 +136,7 @@ export const useCategoryManagement = () => {
       const success = await saveCategoriesToSettings(updatedCategories);
       
       if (success) {
+        console.log("Category deleted successfully");
         setCategories(updatedCategories); // Update local state
         onDelete(value);
         
