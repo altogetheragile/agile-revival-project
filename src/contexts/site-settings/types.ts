@@ -1,6 +1,7 @@
 
 // Types for our various settings
 import { CourseTemplate } from "@/types/course";
+import { CourseCategoryConfig } from "@/constants/courseCategories";
 
 export type GeneralSettings = {
   siteName: string;
@@ -61,6 +62,7 @@ export type AllSettings = {
   user: UserSettings;
   security: SecuritySettings;
   courseTemplates?: CourseTemplate[];
+  courseCategories?: CourseCategoryConfig[];
   [key: string]: any;
 };
 

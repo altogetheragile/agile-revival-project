@@ -62,6 +62,7 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
                   onDelete={(value, e) => {
                     handleDeleteCategory(value, (deletedValue) => {
                       if (field.value === deletedValue) {
+                        // If currently selected category was deleted, select the first available category or empty string
                         field.onChange(categories[0]?.value ?? "");
                       }
                     });

@@ -6,7 +6,7 @@ export interface CourseCategoryConfig {
   label: string;
 }
 
-// Initial categories - these can all be deleted or modified by users
+// Initial categories - these can all be deleted or modified by users through the site settings
 export const COURSE_CATEGORIES: CourseCategoryConfig[] = [
   { value: "all", label: "All Courses" }, // Keep "all" as a special filter value
   { value: "scrum", label: "Scrum" },

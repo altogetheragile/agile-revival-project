@@ -1,5 +1,6 @@
 
 import { AllSettings } from './types';
+import { COURSE_CATEGORIES } from '@/constants/courseCategories';
 
 export const defaultSettings: AllSettings = {
   general: {
@@ -44,5 +45,6 @@ export const defaultSettings: AllSettings = {
     passwordResetDays: 90,
     twoFactorAuth: false,
     strongPasswords: true,
-  }
+  },
+  courseCategories: COURSE_CATEGORIES,
 };
