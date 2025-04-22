@@ -25,8 +25,16 @@ export const FormatInput: React.FC<FormatInputProps> = ({
     }
   }, []);
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (value.trim()) {
+      onAdd();
+    }
+  };
+
   return (
-    <div className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex gap-2">
       <Input
         ref={inputRef}
         placeholder="Type new format"
@@ -45,12 +53,8 @@ export const FormatInput: React.FC<FormatInputProps> = ({
         className="flex-1"
       />
       <Button
-        type="button"
+        type="submit"
         variant="outline"
-        onClick={(e) => {
-          e.preventDefault();
-          onAdd();
-        }}
         disabled={!value.trim()}
       >
         Add
@@ -65,6 +69,6 @@ export const FormatInput: React.FC<FormatInputProps> = ({
       >
         Cancel
       </Button>
-    </div>
+    </form>
   );
 };

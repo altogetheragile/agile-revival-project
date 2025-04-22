@@ -40,7 +40,7 @@ export const FormatSelect: React.FC<FormatSelectProps> = ({
         {formats.map(format => (
           <div 
             key={format.value} 
-            className="flex items-center justify-between px-2 py-1.5 hover:bg-accent hover:text-accent-foreground relative"
+            className="flex items-center justify-between px-2 py-1.5 hover:bg-accent hover:text-accent-foreground relative cursor-pointer"
           >
             <SelectItem 
               value={format.value} 
@@ -50,7 +50,7 @@ export const FormatSelect: React.FC<FormatSelectProps> = ({
             </SelectItem>
             <button
               type="button"
-              className="ml-2 h-5 w-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600 absolute right-2"
+              className="ml-2 h-5 w-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600 absolute right-2 z-50"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -63,13 +63,14 @@ export const FormatSelect: React.FC<FormatSelectProps> = ({
           </div>
         ))}
 
-        <SelectItem
-          key="add-format"
-          value="__add_format__"
-          className="text-blue-600 cursor-pointer border-t border-muted"
-        >
-          + Add new format
-        </SelectItem>
+        <div className="border-t border-muted">
+          <SelectItem
+            value="__add_format__"
+            className="text-blue-600 cursor-pointer"
+          >
+            + Add new format
+          </SelectItem>
+        </div>
       </SelectContent>
     </Select>
   );

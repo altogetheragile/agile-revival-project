@@ -52,24 +52,25 @@ export const useCourseFormatManagement = () => {
     }
   };
 
-  const handleAddFormat = async (onAdd: (value: string) => void) => {
+  const handleAddFormat = async (): Promise<string | null> => {
     if (!newFormat.trim()) {
       toast({
         title: "Error",
         description: "Format name cannot be empty",
         variant: "destructive"
       });
-      return;
+      return null;
     }
 
     // Check if format already exists
-    if (formats.some(opt => opt.value.toLowerCase() === newFormat.trim().toLowerCase())) {
+    if (formats.some(opt => opt.value.toLowerCase() === newFormat.trim().toLowerCase() ||
+                           opt.label.toLowerCase() === newFormat.trim().toLowerCase())) {
       toast({
         title: "Error",
         description: `"${newFormat.trim()}" already exists in formats.`,
         variant: "destructive"
       });
-      return;
+      return null;
     }
 
     const newFmt = { 
@@ -79,28 +80,40 @@ export const useCourseFormatManagement = () => {
     const updatedFormats = [...formats, newFmt];
     
     console.log("Adding new format:", newFmt);
-    const success = await saveFormatsToSettings(updatedFormats);
-    
-    if (success) {
-      setFormats(updatedFormats);
-      onAdd(newFmt.value);
-      setAddMode(false);
-      setNewFormat("");
+    try {
+      const success = await saveFormatsToSettings(updatedFormats);
       
-      toast({
-        title: "Format added",
-        description: `"${newFmt.label}" has been added to formats.`
-      });
-    } else {
+      if (success) {
+        setFormats(updatedFormats);
+        setAddMode(false);
+        setNewFormat("");
+        
+        toast({
+          title: "Format added",
+          description: `"${newFmt.label}" has been added to formats.`
+        });
+        
+        return newFmt.value;
+      } else {
+        toast({
+          title: "Error",
+          description: "There was a problem adding the format.",
+          variant: "destructive"
+        });
+        return null;
+      }
+    } catch (error) {
+      console.error("Error in handleAddFormat:", error);
       toast({
         title: "Error",
         description: "There was a problem adding the format.",
         variant: "destructive"
       });
+      return null;
     }
   };
 
-  const handleDeleteFormat = async (value: string, onDelete: () => void) => {
+  const handleDeleteFormat = async (value: string): Promise<boolean> => {
     try {
       console.log("Attempting to delete format:", value);
       const formatToDelete = formats.find(fmt => fmt.value === value);
@@ -112,7 +125,7 @@ export const useCourseFormatManagement = () => {
           description: "Format not found.",
           variant: "destructive"
         });
-        return;
+        return false;
       }
       
       const updatedFormats = formats.filter(fmt => fmt.value !== value);
@@ -123,12 +136,13 @@ export const useCourseFormatManagement = () => {
       if (success) {
         console.log("Format deleted successfully, updating state");
         setFormats(updatedFormats);
-        onDelete();
         
         toast({
           title: "Format deleted",
           description: `"${formatToDelete?.label || value}" has been removed from formats.`
         });
+        
+        return true;
       } else {
         console.error("Failed to save updated formats after deletion");
         toast({
@@ -136,6 +150,7 @@ export const useCourseFormatManagement = () => {
           description: "There was a problem deleting the format.",
           variant: "destructive"
         });
+        return false;
       }
     } catch (error) {
       console.error("Error during format deletion:", error);
@@ -144,6 +159,7 @@ export const useCourseFormatManagement = () => {
         description: "There was a problem deleting the format.",
         variant: "destructive"
       });
+      return false;
     }
   };
 

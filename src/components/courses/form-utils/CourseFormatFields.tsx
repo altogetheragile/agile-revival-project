@@ -50,9 +50,13 @@ export const CourseFormatFields: React.FC<CourseFormatFieldsProps> = ({ form }) 
                   onChange={setNewFormat}
                   onAdd={() => {
                     console.log("Format add triggered with value:", newFormat);
-                    handleAddFormat((value) => {
-                      console.log("Format added callback with value:", value);
-                      field.onChange(value);
+                    handleAddFormat().then(formatValue => {
+                      console.log("Format added successfully:", formatValue);
+                      if (formatValue) {
+                        field.onChange(formatValue);
+                      }
+                    }).catch(err => {
+                      console.error("Error adding format:", err);
                     });
                   }}
                   onCancel={() => {
@@ -79,11 +83,13 @@ export const CourseFormatFields: React.FC<CourseFormatFieldsProps> = ({ form }) 
                     console.log("Format delete triggered for:", formatValue);
                     e.preventDefault();
                     e.stopPropagation();
-                    handleDeleteFormat(formatValue, () => {
-                      console.log("Format deleted callback");
-                      if (field.value === formatValue) {
+                    handleDeleteFormat(formatValue).then(success => {
+                      console.log("Format deleted result:", success);
+                      if (success && field.value === formatValue) {
                         field.onChange("");
                       }
+                    }).catch(err => {
+                      console.error("Error deleting format:", err);
                     });
                   }}
                 />
