@@ -12,7 +12,8 @@ export const useFormatOperations = (
   setNewFormat: (format: string) => void,
   isProcessing: boolean,
   setIsProcessing: (processing: boolean) => void,
-  refreshSettings: () => Promise<void>
+  refreshSettings: () => Promise<void>,
+  newFormat: string
 ) => {
   const { toast } = useToast();
   const { saveFormatsToSettings } = useFormatPersistence();

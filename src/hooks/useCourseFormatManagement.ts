@@ -26,7 +26,8 @@ export const useCourseFormatManagement = () => {
     setNewFormat,
     isProcessing,
     setIsProcessing,
-    refreshSettings
+    refreshSettings,
+    newFormat
   );
 
   return {
