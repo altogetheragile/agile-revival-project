@@ -47,6 +47,15 @@ const CourseGrid: React.FC<CourseGridProps> = ({ courses, onEdit, onDelete }) =>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mt-8">
         {courses.map((course) => (
           <Card key={course.id} className="h-full flex flex-col">
+            {course.imageUrl && (
+              <div className="w-full h-48 overflow-hidden">
+                <img 
+                  src={course.imageUrl} 
+                  alt={course.title} 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
                 <div className="flex-1">

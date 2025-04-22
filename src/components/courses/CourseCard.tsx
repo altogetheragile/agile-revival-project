@@ -19,6 +19,15 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete, isMob
   return (
     <>
       <Card className="h-full flex flex-col">
+        {course.imageUrl && (
+          <div className="w-full h-40 overflow-hidden">
+            <img 
+              src={course.imageUrl} 
+              alt={course.title} 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
         <CardHeader className="relative">
           <div className="flex flex-col">
             <CardTitle className="text-agile-purple-dark">{course.title}</CardTitle>

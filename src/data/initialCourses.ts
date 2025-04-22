@@ -14,7 +14,8 @@ export const initialCourses: Course[] = [
     spotsAvailable: 8,
     format: "in-person",
     status: "published",
-    materials: []
+    materials: [],
+    imageUrl: "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1000&auto=format&fit=crop"
   },
   {
     id: "crs-002",
@@ -28,7 +29,8 @@ export const initialCourses: Course[] = [
     spotsAvailable: 12,
     format: "online",
     status: "published",
-    materials: []
+    materials: [],
+    imageUrl: "https://images.unsplash.com/photo-1542626991-cbc4e32524cc?q=80&w=1000&auto=format&fit=crop"
   },
   {
     id: "crs-003",
@@ -42,7 +44,8 @@ export const initialCourses: Course[] = [
     spotsAvailable: 10,
     format: "in-person",
     status: "published",
-    materials: []
+    materials: [],
+    imageUrl: "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?q=80&w=1000&auto=format&fit=crop"
   },
   {
     id: "crs-004",
@@ -56,7 +59,8 @@ export const initialCourses: Course[] = [
     spotsAvailable: 6,
     format: "hybrid",
     status: "published",
-    materials: []
+    materials: [],
+    imageUrl: "https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?q=80&w=1000&auto=format&fit=crop"
   },
   {
     id: "crs-005",
@@ -70,6 +74,7 @@ export const initialCourses: Course[] = [
     spotsAvailable: 15,
     format: "live",
     status: "published",
-    materials: []
+    materials: [],
+    imageUrl: "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1000&auto=format&fit=crop"
   }
 ];

@@ -67,6 +67,16 @@ const CourseDetails = () => {
           </Button>
           
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            {course.imageUrl && (
+              <div className="w-full h-64 bg-gray-100">
+                <img 
+                  src={course.imageUrl} 
+                  alt={course.title} 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            
             <div className="p-8 bg-agile-purple/10">
               <div className="flex justify-between items-start">
                 <h1 className="text-3xl font-bold text-agile-purple-dark">{course.title}</h1>
