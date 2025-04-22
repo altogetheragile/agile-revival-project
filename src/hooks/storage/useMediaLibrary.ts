@@ -13,22 +13,34 @@ export const useMediaLibrary = () => {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [bucketExists, setBucketExists] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const checkBucketExists = useCallback(async () => {
-    const { data: buckets, error } = await supabase.storage.listBuckets();
-    if (error) {
-      console.error("Error checking buckets:", error);
+    try {
+      const { data: buckets, error } = await supabase.storage.listBuckets();
+      if (error) {
+        console.error("Error checking buckets:", error);
+        setError("Failed to connect to storage: " + error.message);
+        return false;
+      }
+      
+      const exists = buckets?.some(bucket => bucket.name === "media") || false;
+      console.log("Media bucket exists:", exists);
+      setBucketExists(exists);
+      return exists;
+    } catch (err) {
+      console.error("Exception checking bucket existence:", err);
+      setError("Connection error: " + (err instanceof Error ? err.message : String(err)));
       return false;
     }
-    return buckets?.some(bucket => bucket.name === "media") || false;
   }, []);
 
   const fetchMedia = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       // First check if bucket exists
       const exists = await checkBucketExists();
-      setBucketExists(exists);
       
       if (!exists) {
         console.log("Media bucket doesn't exist, cannot fetch media items");
@@ -44,6 +56,7 @@ export const useMediaLibrary = () => {
       
       if (error) {
         console.error("Error fetching media:", error);
+        setError("Failed to list media files: " + error.message);
         setLoading(false);
         return;
       }
@@ -54,6 +67,7 @@ export const useMediaLibrary = () => {
         const supportedMediaPattern = /\.(jpe?g|png|gif|webp|svg|mp3|wav|ogg|mp4|webm|mpeg)$/i;
         
         const mediaItems = data
+          .filter((f) => !f.id.includes('/')) // Filter out folders
           .filter((f) => f.name.match(supportedMediaPattern))
           .map((f) => {
             // Determine file type based on extension
@@ -80,6 +94,7 @@ export const useMediaLibrary = () => {
       }
     } catch (error) {
       console.error("Exception in fetchMedia:", error);
+      setError("Failed to load media: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);
     }
@@ -98,7 +113,7 @@ export const useMediaLibrary = () => {
       const exists = await checkBucketExists();
       if (!exists) {
         console.log("Media bucket doesn't exist, cannot upload");
-        return { error: new Error("Media storage bucket doesn't exist. Please create it in your Supabase dashboard.") };
+        return { error: new Error("Media storage bucket doesn't exist. Please create a 'media' bucket in your Supabase dashboard.") };
       }
       
       const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
@@ -131,5 +146,5 @@ export const useMediaLibrary = () => {
     }
   };
 
-  return { items, loading, upload, fetchMedia, bucketExists };
+  return { items, loading, upload, fetchMedia, bucketExists, error };
 };

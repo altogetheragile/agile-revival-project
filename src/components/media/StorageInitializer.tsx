@@ -19,6 +19,12 @@ const StorageInitializer = () => {
         
         if (error) {
           console.error("Failed to list storage buckets:", error);
+          toast({
+            title: "Storage Error",
+            description: "Could not connect to storage. Please check your connection or Supabase configuration.",
+            duration: 7000,
+            variant: "destructive"
+          });
           return;
         }
         
@@ -26,20 +32,18 @@ const StorageInitializer = () => {
         const mediaBucketExists = buckets?.some(bucket => bucket.name === "media");
         
         if (!mediaBucketExists) {
-          // Instead of showing an error, just inform the user they need to create a bucket
           console.log("Media bucket doesn't exist. Please create it in the Supabase dashboard.");
           toast({
             title: "Media Storage Notice",
-            description: "For full functionality, please create a 'media' bucket in your Supabase project.",
+            description: "For full functionality, please create a 'media' bucket in your Supabase project and set it to public.",
             duration: 7000,
           });
         } else {
-          console.log("Media bucket exists, proceeding with normal operation");
-          // Let's check if we can access it
+          console.log("Media bucket exists, validating access permissions...");
           try {
             // Try to get a sample public URL to verify the bucket is properly configured
-            const testUrl = supabase.storage.from("media").getPublicUrl("test.txt");
-            if (testUrl.data.publicUrl) {
+            const publicUrlData = supabase.storage.from("media").getPublicUrl("test.txt");
+            if (publicUrlData.data.publicUrl) {
               console.log("Media bucket is accessible");
             }
           } catch (err) {
@@ -51,6 +55,12 @@ const StorageInitializer = () => {
         setInitialized(true);
       } catch (err) {
         console.error("Error checking storage buckets:", err);
+        toast({
+          title: "Storage Error",
+          description: "An unexpected error occurred while connecting to storage.",
+          duration: 7000,
+          variant: "destructive"
+        });
         // Still set initialized to true to allow the app to function
         setInitialized(true);
       }

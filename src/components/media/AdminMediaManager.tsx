@@ -3,12 +3,12 @@ import React, { useState, useRef } from "react";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { AlertCircle, Image, Music, Video, File } from "lucide-react";
+import { AlertCircle, Image, Music, Video, File, RefreshCcw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminMediaManager: React.FC = () => {
-  const { items, loading, upload, fetchMedia, bucketExists } = useMediaLibrary();
+  const { items, loading, upload, fetchMedia, bucketExists, error } = useMediaLibrary();
   const { toast } = useToast();
   const uploadRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -50,6 +50,14 @@ const AdminMediaManager: React.FC = () => {
         if (uploadRef.current) uploadRef.current.value = "";
       }
     }
+  };
+
+  const handleRefresh = () => {
+    fetchMedia();
+    toast({
+      title: "Refreshing media library",
+      description: "Checking for new media files..."
+    });
   };
 
   // Filter items based on active tab
@@ -115,12 +123,20 @@ const AdminMediaManager: React.FC = () => {
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Storage Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
       {!bucketExists && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Storage Configuration Required</AlertTitle>
           <AlertDescription>
-            The media storage bucket has not been created. You need to create a "media" bucket in your Supabase project.
+            The media storage bucket has not been created or is not accessible. Please create a "media" bucket in your Supabase project and ensure it's set to public.
           </AlertDescription>
         </Alert>
       )}
@@ -148,15 +164,18 @@ const AdminMediaManager: React.FC = () => {
           variant="secondary"
           onClick={() => uploadRef.current?.click()}
           disabled={uploading || !bucketExists}
+          className="bg-green-500 hover:bg-green-600 text-white"
         >
           {uploading ? "Uploading..." : "Upload Media"}
         </Button>
         <Button
           type="button"
           variant="outline"
-          onClick={fetchMedia}
-          disabled={loading || uploading || !bucketExists}
+          onClick={handleRefresh}
+          disabled={loading || uploading}
+          className="flex items-center gap-1"
         >
+          <RefreshCcw className="h-4 w-4" />
           Refresh
         </Button>
       </div>
@@ -181,15 +200,15 @@ const AdminMediaManager: React.FC = () => {
           </TabsList>
           
           <TabsContent value={activeTab} className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-80 overflow-auto p-2 border rounded bg-white">
-            {loading && <div className="col-span-full text-center">Loading...</div>}
+            {loading && <div className="col-span-full text-center py-8">Loading media files...</div>}
             {!loading && !bucketExists && (
-              <div className="col-span-full text-center text-muted-foreground">
-                Media storage is not configured. Create a "media" bucket in your Supabase project.
+              <div className="col-span-full text-center text-muted-foreground py-8">
+                Media storage is not configured. Create a "media" bucket in your Supabase project and make sure it's set to public.
               </div>
             )}
             {!loading && bucketExists && filteredItems.length === 0 && (
-              <div className="col-span-full text-center text-muted-foreground">
-                No {activeTab !== "all" ? activeTab : ""} files found.
+              <div className="col-span-full text-center text-muted-foreground py-8">
+                No {activeTab !== "all" ? activeTab : ""} files found. Upload some to get started.
               </div>
             )}
             {filteredItems.map((item) => (

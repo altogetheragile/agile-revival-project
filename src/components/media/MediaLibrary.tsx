@@ -3,7 +3,7 @@ import React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertTriangle, Image, Music, Video, File } from "lucide-react";
+import { Loader2, AlertTriangle, Image, Music, Video, File, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,7 +20,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   onOpenChange,
   onSelect
 }) => {
-  const { items, loading, upload, bucketExists } = useMediaLibrary();
+  const { items, loading, upload, fetchMedia, bucketExists, error } = useMediaLibrary();
   const { toast } = useToast();
   const [uploading, setUploading] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState("all");
@@ -29,6 +29,14 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   const handleSelect = (url: string) => {
     onSelect(url);
     onOpenChange(false);
+  };
+
+  const handleRefresh = () => {
+    fetchMedia();
+    toast({
+      title: "Refreshing media library",
+      description: "Checking for new media files..."
+    });
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,11 +145,20 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
           </DialogDescription>
         </DialogHeader>
         
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {!bucketExists && (
           <Alert variant="destructive" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              Media storage is not properly configured. Please contact your administrator to set up the media bucket in Supabase.
+              Media storage is not properly configured. Please create a "media" bucket in your Supabase project and ensure it's set to public.
             </AlertDescription>
           </Alert>
         )}
@@ -157,6 +174,15 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
               className="max-w-xs"
             />
             {uploading && <Loader2 className="animate-spin h-4 w-4" />}
+            <Button 
+              onClick={handleRefresh} 
+              variant="outline" 
+              size="sm"
+              disabled={loading}
+              className="ml-auto"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+            </Button>
           </div>
           
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
@@ -182,7 +208,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
                 </div>
               ) : !bucketExists ? (
                 <div className="flex items-center justify-center h-full text-gray-500">
-                  Media storage is not configured. Create a "media" bucket in your Supabase project.
+                  Media storage is not configured. Create a "media" bucket in your Supabase project and set it to public.
                 </div>
               ) : filteredItems.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-gray-500">
