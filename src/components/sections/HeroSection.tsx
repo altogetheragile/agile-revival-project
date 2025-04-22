@@ -59,7 +59,7 @@ const HeroSection = () => {
                 href="#contact" 
                 className="secondary-button flex items-center justify-center"
               >
-                Book a Course
+                Get in Touch
               </a>
             </div>
           </div>
