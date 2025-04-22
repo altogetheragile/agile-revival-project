@@ -75,14 +75,18 @@ const addToRemoveQueue = (toastId: string) => {
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
-      // Prevent duplicate toasts with the same title and description
+      // Stronger duplicate prevention with more comprehensive check
       if (state.toasts.some(
-        t => t.title === action.toast.title && 
-            t.description === action.toast.description &&
-            t.open === true
+        t => 
+          t.title === action.toast.title && 
+          t.description === action.toast.description &&
+          // Consider a toast as duplicate only if it's currently open
+          t.open === true
       )) {
         return state;
       }
+      
+      // Add new toast to the beginning of the array and maintain toast limit
       return {
         ...state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),

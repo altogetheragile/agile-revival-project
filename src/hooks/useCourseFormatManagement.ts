@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { CourseFormat, defaultFormats } from "@/types/courseFormat";
 import { useToast } from "@/hooks/use-toast";
 import { useSiteSettings } from "@/contexts/site-settings";
@@ -10,38 +10,65 @@ export const useCourseFormatManagement = () => {
   const [addMode, setAddMode] = useState(false);
   const [newFormat, setNewFormat] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [initialized, setInitialized] = useState(false);
+  
+  // Use refs to track initialization state
+  const isInitialized = useRef(false);
+  const shouldSaveDefaults = useRef(false);
+  
   const { toast } = useToast();
   const { settings, updateSettings, refreshSettings } = useSiteSettings();
 
-  // Initialize formats from settings
+  // Initialize formats from settings - with careful handling to prevent unnecessary operations
   useEffect(() => {
-    const initFormats = () => {
-      try {
-        console.log("Initializing formats from settings:", settings);
-        if (settings.courseFormats && Array.isArray(settings.courseFormats)) {
-          console.log("Using formats from settings:", settings.courseFormats);
-          setFormats(settings.courseFormats);
-        } else {
-          console.log("No courseFormats in settings, using defaults:", defaultFormats);
-          setFormats(defaultFormats);
-          // Only save defaults if we've confirmed settings are loaded but missing courseFormats
-          if (Object.keys(settings).length > 0 && !settings.courseFormats) {
-            saveFormatsToSettings(defaultFormats).catch(err => 
-              console.error("Failed to save default formats:", err)
-            );
-          }
-        }
-        setInitialized(true);
-      } catch (error) {
-        console.error("Error initializing formats:", error);
+    // Skip if already initialized to prevent re-triggering
+    if (isInitialized.current) {
+      return;
+    }
+    
+    try {
+      console.log("Initializing formats from settings:", settings);
+      
+      // Check if we have valid settings and courseFormats
+      if (settings.courseFormats && Array.isArray(settings.courseFormats) && settings.courseFormats.length > 0) {
+        console.log("Using formats from settings:", settings.courseFormats);
+        setFormats(settings.courseFormats);
+        isInitialized.current = true;
+      } 
+      // Only save defaults if settings exist but courseFormats is missing/empty
+      else if (Object.keys(settings).length > 0) {
+        console.log("No courseFormats in settings, using defaults:", defaultFormats);
         setFormats(defaultFormats);
-        setInitialized(true);
+        isInitialized.current = true;
+        
+        // Mark that defaults should be saved, but don't do it in this effect
+        shouldSaveDefaults.current = true;
+      }
+    } catch (error) {
+      console.error("Error initializing formats:", error);
+      if (!isInitialized.current) {
+        setFormats(defaultFormats);
+        isInitialized.current = true;
+      }
+    }
+  }, [settings]);
+
+  // Handle saving default formats in a separate effect to prevent initialization loops
+  useEffect(() => {
+    const saveDefaultFormats = async () => {
+      if (shouldSaveDefaults.current && isInitialized.current) {
+        console.log("Saving default formats silently");
+        try {
+          await updateSettings('courseFormats', defaultFormats);
+          console.log("Default formats saved successfully");
+          shouldSaveDefaults.current = false;
+        } catch (err) {
+          console.error("Failed to save default formats:", err);
+        }
       }
     };
     
-    initFormats();
-  }, [settings.courseFormats]);
+    saveDefaultFormats();
+  }, [updateSettings]);
 
   // Save formats to settings - without automatic toast
   const saveFormatsToSettings = async (updatedFormats: CourseFormat[], showToast: boolean = false) => {
@@ -106,7 +133,8 @@ export const useCourseFormatManagement = () => {
       const updatedFormats = [...formats, newFmt];
       setFormats(updatedFormats);
       
-      const success = await saveFormatsToSettings(updatedFormats, true); // Show toast only on user action
+      // Always show toast for user-initiated actions
+      const success = await saveFormatsToSettings(updatedFormats, true);
       
       if (success) {
         setAddMode(false);
@@ -118,6 +146,7 @@ export const useCourseFormatManagement = () => {
         return formatValue;
       }
       
+      // Roll back on failure
       setFormats(formats);
       
       setIsProcessing(false);
@@ -166,7 +195,8 @@ export const useCourseFormatManagement = () => {
       
       setFormats(updatedFormats);
       
-      const success = await saveFormatsToSettings(updatedFormats, true); // Show toast only on user action
+      // Always show toast for user-initiated actions
+      const success = await saveFormatsToSettings(updatedFormats, true);
       
       if (success) {
         await refreshSettings();
@@ -174,12 +204,14 @@ export const useCourseFormatManagement = () => {
         return true;
       }
       
+      // Roll back on failure
       setFormats(formats);
       
       setIsProcessing(false);
       return false;
     } catch (error) {
       console.error("Error during format deletion:", error);
+      // Roll back on error
       setFormats(formats);
       
       toast({
