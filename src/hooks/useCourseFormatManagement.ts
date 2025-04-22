@@ -19,6 +19,7 @@ export const useCourseFormatManagement = () => {
   const [formats, setFormats] = useState<CourseFormat[]>([]);
   const [addMode, setAddMode] = useState(false);
   const [newFormat, setNewFormat] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const { settings, updateSettings, refreshSettings } = useSiteSettings();
 
@@ -47,6 +48,16 @@ export const useCourseFormatManagement = () => {
     initFormats();
   }, [settings.courseFormats, updateSettings]);
 
+  // Debounce function to prevent multiple rapid calls
+  const debounce = useCallback((fn: Function, delay: number) => {
+    let timeoutId: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn(...args), delay);
+    };
+  }, []);
+
+  // Save formats to settings with debounce
   const saveFormatsToSettings = useCallback(async (updatedFormats: CourseFormat[]) => {
     try {
       console.log("Saving formats to settings:", updatedFormats);
@@ -59,7 +70,20 @@ export const useCourseFormatManagement = () => {
     }
   }, [updateSettings]);
 
+  // Debounced save to prevent multiple rapid saves
+  const debouncedSave = useCallback(
+    debounce(async (formats: CourseFormat[]) => {
+      return await saveFormatsToSettings(formats);
+    }, 300),
+    [saveFormatsToSettings, debounce]
+  );
+
   const handleAddFormat = useCallback(async (): Promise<string | null> => {
+    if (isProcessing) {
+      console.log("Already processing a format change, skipping");
+      return null;
+    }
+
     if (!newFormat.trim()) {
       toast({
         title: "Error",
@@ -69,41 +93,45 @@ export const useCourseFormatManagement = () => {
       return null;
     }
 
-    // Check if format already exists
-    const exists = formats.some(opt => 
-      opt.value.toLowerCase() === newFormat.trim().toLowerCase().replace(/\s+/g, '-') ||
-      opt.label.toLowerCase() === newFormat.trim().toLowerCase()
-    );
-    
-    if (exists) {
-      toast({
-        title: "Error",
-        description: `"${newFormat.trim()}" already exists in formats.`,
-        variant: "destructive"
-      });
-      return null;
-    }
+    setIsProcessing(true);
 
-    const newFmt = { 
-      value: newFormat.trim().toLowerCase().replace(/\s+/g, '-'), 
-      label: newFormat.trim() 
-    };
-    
-    console.log("Adding new format:", newFmt);
-    
     try {
+      // Check if format already exists
+      const exists = formats.some(opt => 
+        opt.value.toLowerCase() === newFormat.trim().toLowerCase().replace(/\s+/g, '-') ||
+        opt.label.toLowerCase() === newFormat.trim().toLowerCase()
+      );
+      
+      if (exists) {
+        toast({
+          title: "Error",
+          description: `"${newFormat.trim()}" already exists in formats.`,
+          variant: "destructive"
+        });
+        setIsProcessing(false);
+        return null;
+      }
+
+      const newFmt = { 
+        value: newFormat.trim().toLowerCase().replace(/\s+/g, '-'), 
+        label: newFormat.trim() 
+      };
+      
+      console.log("Adding new format:", newFmt);
+      
       // Create a new array with the new format
       const updatedFormats = [...formats, newFmt];
       
-      // Save to settings first
+      // Update local state first for immediate feedback
+      setFormats(updatedFormats);
+      
+      // Save to settings
       const success = await saveFormatsToSettings(updatedFormats);
       
       if (success) {
-        // Update local state
-        setFormats(updatedFormats);
         setAddMode(false);
         
-        // Only clear newFormat after successful save
+        // Store value before clearing the input
         const formatValue = newFmt.value;
         setNewFormat("");
         
@@ -115,27 +143,45 @@ export const useCourseFormatManagement = () => {
           description: `"${newFmt.label}" has been added to formats.`
         });
         
+        setIsProcessing(false);
         return formatValue;
       } else {
+        // Revert state if save failed
+        setFormats(formats);
+        
         toast({
           title: "Error",
           description: "There was a problem adding the format.",
           variant: "destructive"
         });
+        
+        setIsProcessing(false);
         return null;
       }
     } catch (error) {
       console.error("Error in handleAddFormat:", error);
+      // Revert state if there was an error
+      setFormats(formats);
+      
       toast({
         title: "Error",
         description: "There was a problem adding the format.",
         variant: "destructive"
       });
+      
+      setIsProcessing(false);
       return null;
     }
-  }, [formats, newFormat, refreshSettings, saveFormatsToSettings, toast]);
+  }, [formats, newFormat, refreshSettings, saveFormatsToSettings, toast, isProcessing]);
 
   const handleDeleteFormat = useCallback(async (value: string): Promise<boolean> => {
+    if (isProcessing) {
+      console.log("Already processing a format change, skipping");
+      return false;
+    }
+
+    setIsProcessing(true);
+
     try {
       console.log("Attempting to delete format:", value);
       const formatToDelete = formats.find(fmt => fmt.value === value);
@@ -147,6 +193,7 @@ export const useCourseFormatManagement = () => {
           description: "Format not found.",
           variant: "destructive"
         });
+        setIsProcessing(false);
         return false;
       }
       
@@ -154,14 +201,13 @@ export const useCourseFormatManagement = () => {
       const updatedFormats = formats.filter(fmt => fmt.value !== value);
       console.log("Formats after deletion:", updatedFormats);
       
-      // Save to settings first
+      // Update local state first for immediate feedback
+      setFormats(updatedFormats);
+      
+      // Save to settings
       const success = await saveFormatsToSettings(updatedFormats);
       
       if (success) {
-        console.log("Format deleted successfully, updating state");
-        // Update local state
-        setFormats(updatedFormats);
-        
         // Force refresh settings to ensure the UI reflects the changes
         await refreshSettings();
         
@@ -170,26 +216,36 @@ export const useCourseFormatManagement = () => {
           description: `"${formatToDelete?.label || value}" has been removed from formats.`
         });
         
+        setIsProcessing(false);
         return true;
       } else {
-        console.error("Failed to save updated formats after deletion");
+        // Revert state if save failed
+        setFormats(formats);
+        
         toast({
           title: "Error",
           description: "There was a problem deleting the format.",
           variant: "destructive"
         });
+        
+        setIsProcessing(false);
         return false;
       }
     } catch (error) {
       console.error("Error during format deletion:", error);
+      // Revert state if there was an error
+      setFormats(formats);
+      
       toast({
         title: "Error",
         description: "There was a problem deleting the format.",
         variant: "destructive"
       });
+      
+      setIsProcessing(false);
       return false;
     }
-  }, [formats, refreshSettings, saveFormatsToSettings, toast]);
+  }, [formats, refreshSettings, saveFormatsToSettings, toast, isProcessing]);
 
   return {
     formats,

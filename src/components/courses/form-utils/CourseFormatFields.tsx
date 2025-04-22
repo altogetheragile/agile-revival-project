@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   FormControl,
   FormField,
@@ -35,6 +35,14 @@ export const CourseFormatFields: React.FC<CourseFormatFieldsProps> = ({ form }) 
     handleDeleteFormat
   } = useCourseFormatManagement();
 
+  // Reset add mode when component unmounts
+  useEffect(() => {
+    return () => {
+      setAddMode(false);
+      setNewFormat("");
+    };
+  }, [setAddMode, setNewFormat]);
+
   const handleFormatAdd = async () => {
     console.log("Format add triggered with value:", newFormat);
     try {
@@ -50,9 +58,11 @@ export const CourseFormatFields: React.FC<CourseFormatFieldsProps> = ({ form }) 
   };
 
   const handleFormatDelete = async (value: string, e: React.MouseEvent) => {
-    console.log("Format delete triggered for:", value);
+    // Stop propagation to prevent the dropdown from closing
     e.preventDefault();
     e.stopPropagation();
+    
+    console.log("Format delete triggered for:", value);
     
     try {
       const success = await handleDeleteFormat(value);

@@ -51,23 +51,29 @@ export const FormatInput: React.FC<FormatInputProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form 
+      onSubmit={handleSubmit} 
+      className="flex gap-2"
+      onClick={(e) => e.stopPropagation()}
+    >
       <Input
         ref={inputRef}
         placeholder="Type new format"
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         className="flex-1"
+        onClick={(e) => e.stopPropagation()}
       />
       <Button
-        type="submit"
+        type="button"
         variant="outline"
         disabled={!value.trim()}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           if (value.trim()) {
+            console.log("Add button clicked with value:", value);
             onAdd();
           }
         }}
