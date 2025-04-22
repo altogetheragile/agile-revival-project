@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useState, useEffect, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { defaultSettings } from "./defaultSettings";
@@ -20,6 +20,8 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
   const [settings, setSettings] = useState<AllSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  // Track if this is the initial settings load
+  const isInitialLoad = useRef(true);
 
   const fetchSettings = async () => {
     try {
@@ -34,11 +36,14 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
 
       if (error) {
         console.error("Error fetching settings:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load site settings, using defaults",
-          variant: "destructive",
-        });
+        // Only show error toast after initial load
+        if (!isInitialLoad.current) {
+          toast({
+            title: "Error",
+            description: "Failed to load site settings, using defaults",
+            variant: "destructive",
+          });
+        }
         // Continue with default settings
         setSettings(defaultSettings);
         setIsLoading(false);
@@ -86,6 +91,8 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       setSettings(defaultSettings);
     } finally {
       setIsLoading(false);
+      // Mark the initial load as completed
+      isInitialLoad.current = false;
     }
   };
 
@@ -145,11 +152,8 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         [key]: values
       }));
       
-      try {
-        await refreshSettings(); // Fetch updated settings to ensure consistency
-      } catch (refreshError) {
-        console.error("Error refreshing settings after update:", refreshError);
-      }
+      // Skip refreshSettings to avoid duplicate toasts - we already updated state above
+      // and we'll refresh from database via the subscription channel
       
       toast({
         title: "Settings updated",
@@ -168,6 +172,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
   const refreshSettings = async () => {
     console.log("Refreshing settings...");
     try {
+      // Don't show toast on refresh - the caller is responsible for showing toasts
       await fetchSettings();
     } catch (error) {
       console.error("Error during settings refresh:", error);

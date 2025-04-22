@@ -14,6 +14,8 @@ export const useCourseFormatManagement = () => {
   // Use refs to track initialization state
   const isInitialized = useRef(false);
   const shouldSaveDefaults = useRef(false);
+  // Add a ref to prevent showing toasts on initial save
+  const isInitialSave = useRef(true);
   
   const { toast } = useToast();
   const { settings, updateSettings, refreshSettings } = useSiteSettings();
@@ -58,9 +60,12 @@ export const useCourseFormatManagement = () => {
       if (shouldSaveDefaults.current && isInitialized.current) {
         console.log("Saving default formats silently");
         try {
+          // We use direct update without toast for initial save
           await updateSettings('courseFormats', defaultFormats);
           console.log("Default formats saved successfully");
           shouldSaveDefaults.current = false;
+          // Make sure to set this so future saves will show toast
+          isInitialSave.current = false;
         } catch (err) {
           console.error("Failed to save default formats:", err);
         }
@@ -70,20 +75,28 @@ export const useCourseFormatManagement = () => {
     saveDefaultFormats();
   }, [updateSettings]);
 
-  // Save formats to settings - without automatic toast
+  // Save formats to settings - now with a silent option for initial saves
   const saveFormatsToSettings = async (updatedFormats: CourseFormat[], showToast: boolean = false) => {
     try {
       console.log("Saving formats to settings:", updatedFormats);
-      await updateSettings('courseFormats', updatedFormats);
-      console.log("Formats saved successfully");
       
-      if (showToast) {
-        toast({
-          title: "Success",
-          description: "Format changes saved successfully",
-        });
+      // Don't show toast on initial save operation
+      if (isInitialSave.current) {
+        await updateSettings('courseFormats', updatedFormats);
+        console.log("Initial formats saved silently");
+        isInitialSave.current = false;
+        return true;
       }
-      return true;
+      
+      // For user-initiated actions, show toasts as requested
+      if (showToast) {
+        await updateSettings('courseFormats', updatedFormats);
+        return true;
+      } else {
+        // This is a silent update (not initial, but also not user-triggered)
+        await updateSettings('courseFormats', updatedFormats);
+        return true;
+      }
     } catch (error) {
       console.error("Error saving formats:", error);
       
