@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +11,7 @@ import BlogManagement from "@/components/admin/BlogManagement";
 import UserManagement from "@/components/admin/UserManagement";
 import SiteSettings from "@/components/admin/SiteSettings";
 import PageManagement from "@/components/admin/PageManagement";
+import AdminMediaManager from "@/components/media/AdminMediaManager";
 
 const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("courses");
@@ -20,7 +20,6 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { isAdmin, isAuthReady } = useAuth();
   
-  // No longer needed to check admin status in a restricted application
   useEffect(() => {
     setIsChecking(false);
   }, []);
@@ -40,6 +39,7 @@ const AdminDashboard = () => {
                 <TabsTrigger value="users">User Management</TabsTrigger>
                 <TabsTrigger value="pages">Page Management</TabsTrigger>
                 <TabsTrigger value="settings">Site Settings</TabsTrigger>
+                <TabsTrigger value="media">Media Library</TabsTrigger>
               </TabsList>
               
               <TabsContent value="courses" className="pt-4">
@@ -60,6 +60,10 @@ const AdminDashboard = () => {
               
               <TabsContent value="settings" className="pt-4">
                 <SiteSettings />
+              </TabsContent>
+
+              <TabsContent value="media" className="pt-4">
+                <AdminMediaManager />
               </TabsContent>
             </Tabs>
           </div>
