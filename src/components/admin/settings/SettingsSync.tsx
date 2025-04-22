@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSiteSettings } from '@/contexts/site-settings';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -7,8 +7,10 @@ import { useToast } from '@/hooks/use-toast';
 export const SettingsSync = () => {
   const { refreshSettings } = useSiteSettings();
   const { toast } = useToast();
-  // Add a ref to track if this is the first load
+  // Track if this is the first load
   const isInitialLoad = useRef(true);
+  // Add state to track connection status
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     try {
@@ -43,7 +45,10 @@ export const SettingsSync = () => {
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log("Realtime subscription status:", status);
+          setIsConnected(status === 'SUBSCRIBED');
+        });
 
       return () => {
         try {
