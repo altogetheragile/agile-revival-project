@@ -1,4 +1,3 @@
-
 import { Activity, Compass, BarChart3, Users, Laptop, Puzzle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
@@ -22,37 +21,37 @@ const ServicesSection = () => {
   const services = [
     {
       title: "Leadership Coaching",
-      description: "One-on-one coaching for leaders to develop an agile mindset and effectively support self-organizing teams.",
+      description: "Personalized one-on-one coaching to help leaders cultivate an agile mindset and empower self-organizing teams.",
       icon: Compass,
       url: "/services/leadership-coaching"
     },
     {
       title: "Team Coaching",
-      description: "Hands-on coaching for agile teams using Scrum, Kanban, or hybrid approaches to improve collaboration and delivery.",
+      description: "Collaborative coaching for agile teams using Scrum, Kanban, or hybrid methods to enhance teamwork and delivery efficiency.",
       icon: Users,
       url: "/services/team-coaching"
     },
     {
       title: "Agile Training",
-      description: "Interactive workshops and certification courses on agile methodologies, tailored to your organization's context.",
+      description: "Engaging workshops and certification courses on agile methodologies, customized to your organization's unique context.",
       icon: Laptop,
       url: "/training-schedule"
     },
     {
       title: "Agile Facilitation",
-      description: "Expert facilitation of key agile ceremonies, retrospectives, and strategic planning sessions.",
+      description: "Strategic facilitation of key agile ceremonies, retrospectives, and planning sessions to drive meaningful collaboration.",
       icon: Activity,
       url: "/services/agile-facilitation"
     },
     {
       title: "Performance Metrics",
-      description: "Developing meaningful measurement approaches that focus on outcomes and support continuous improvement.",
+      description: "Developing insightful measurement approaches that focus on outcomes, continuous improvement, and organizational growth.",
       icon: BarChart3,
       url: "/services/performance-metrics"
     },
     {
       title: "Custom Coaching Solutions",
-      description: "Tailored coaching programs designed to address your organization's unique challenges and goals.",
+      description: "Tailored, flexible coaching programs designed to address your organization's specific challenges and strategic goals.",
       icon: Puzzle,
       url: "/services/custom-coaching"
     }
