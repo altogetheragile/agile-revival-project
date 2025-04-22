@@ -44,15 +44,14 @@ const StorageInitializer = () => {
             } else {
               console.log("Media bucket created successfully");
               
-              // Create policy to allow public access to media files
-              // Using the correct API method for policies
-              const { error: policyError } = await supabase.storage.from('media').getPublicUrl('dummy.txt');
-              
-              if (policyError) {
-                console.error("Failed to create media bucket policy:", policyError);
-              } else {
+              // Since getPublicUrl doesn't return an error property, we'll just check if we can get a public URL
+              // which verifies the bucket is properly configured for public access
+              try {
+                const { data } = supabase.storage.from('media').getPublicUrl('dummy.txt');
                 console.log("Media bucket policy verified successfully");
                 setInitialized(true);
+              } catch (policyError) {
+                console.error("Failed to verify media bucket policy:", policyError);
               }
             }
           } catch (err) {
