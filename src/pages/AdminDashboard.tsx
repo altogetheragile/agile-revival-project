@@ -11,6 +11,7 @@ import CourseManagement from "@/components/admin/CourseManagement";
 import BlogManagement from "@/components/admin/BlogManagement";
 import UserManagement from "@/components/admin/UserManagement";
 import SiteSettings from "@/components/admin/SiteSettings";
+import PageManagement from "@/components/admin/PageManagement";
 
 const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("courses");
@@ -37,6 +38,7 @@ const AdminDashboard = () => {
                 <TabsTrigger value="courses">Course Management</TabsTrigger>
                 <TabsTrigger value="blog">Blog Management</TabsTrigger>
                 <TabsTrigger value="users">User Management</TabsTrigger>
+                <TabsTrigger value="pages">Page Management</TabsTrigger>
                 <TabsTrigger value="settings">Site Settings</TabsTrigger>
               </TabsList>
               
@@ -50,6 +52,10 @@ const AdminDashboard = () => {
               
               <TabsContent value="users" className="pt-4">
                 <UserManagement />
+              </TabsContent>
+              
+              <TabsContent value="pages" className="pt-4">
+                <PageManagement />
               </TabsContent>
               
               <TabsContent value="settings" className="pt-4">

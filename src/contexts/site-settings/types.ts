@@ -1,3 +1,4 @@
+
 // Types for our various settings
 import { CourseTemplate } from "@/types/course";
 import { CourseCategoryConfig } from "@/constants/courseCategories";
@@ -49,9 +50,22 @@ export type SecuritySettings = {
   strongPasswords: boolean;
 };
 
-// Course related settings
-export type CourseSettings = {
-  courseTemplates: CourseTemplate[];
+// Page section types
+export type PageSection = {
+  id: string;
+  type: string;
+  title: string;
+  content: string;
+  enabled: boolean;
+  settings?: any;
+};
+
+// Page structure
+export type Page = {
+  id: string;
+  title: string;
+  url: string;
+  sections: PageSection[];
 };
 
 // Combined settings types
@@ -63,6 +77,8 @@ export type AllSettings = {
   courseTemplates?: CourseTemplate[];
   courseCategories?: CourseCategoryConfig[];
   skillLevels?: { value: string; label: string }[];
+  services?: any[];
+  pages?: Page[];
   [key: string]: any;
 };
 

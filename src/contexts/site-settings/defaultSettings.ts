@@ -53,7 +53,7 @@ export const defaultSettings: AllSettings = {
     { value: "advanced", label: "Advanced" },
     { value: "all-levels", label: "All Levels" },
   ],
-  // Add default services text array
+  // Services array
   services: [
     {
       icon: "Compass",
@@ -90,6 +90,96 @@ export const defaultSettings: AllSettings = {
       title: "Custom Coaching Solutions",
       description: "Tailored, flexible coaching programs designed to address your organization's specific challenges and strategic goals.",
       url: "/services/custom-coaching"
+    }
+  ],
+  // Default pages structure
+  pages: [
+    {
+      id: "home",
+      title: "Home",
+      url: "/",
+      sections: [
+        {
+          id: "hero-section",
+          type: "hero",
+          title: "Welcome to AltogetherAgile",
+          content: "Transform your organization with expert agile coaching and training.",
+          enabled: true,
+          settings: {
+            buttonText: "Get Started",
+            buttonLink: "/contact",
+            imageUrl: ""
+          }
+        },
+        {
+          id: "services-section",
+          type: "services",
+          title: "Our Services",
+          content: "Comprehensive agile coaching and training solutions tailored to your needs.",
+          enabled: true
+        },
+        {
+          id: "about-section",
+          type: "content",
+          title: "About Us",
+          content: "AltogetherAgile helps organizations transform through agile coaching, consulting, and training.",
+          enabled: true
+        },
+        {
+          id: "testimonials-section",
+          type: "testimonials",
+          title: "What Our Clients Say",
+          content: "Read testimonials from our satisfied clients.",
+          enabled: true
+        },
+        {
+          id: "contact-section",
+          type: "contact",
+          title: "Get in Touch",
+          content: "Reach out to us to discuss how we can help you.",
+          enabled: true
+        }
+      ]
+    },
+    {
+      id: "about",
+      title: "About Us",
+      url: "/about",
+      sections: [
+        {
+          id: "about-hero",
+          type: "hero",
+          title: "About AltogetherAgile",
+          content: "Learn more about our mission and values.",
+          enabled: true,
+          settings: {
+            buttonText: "Contact Us",
+            buttonLink: "/contact",
+            imageUrl: ""
+          }
+        },
+        {
+          id: "about-content",
+          type: "content",
+          title: "Our Story",
+          content: "AltogetherAgile was founded with the mission to help organizations transform through agile methodologies.",
+          enabled: true
+        }
+      ]
+    },
+    {
+      id: "contact",
+      title: "Contact",
+      url: "/contact",
+      sections: [
+        {
+          id: "contact-form",
+          type: "contact",
+          title: "Get in Touch",
+          content: "Reach out to us for any questions or inquiries.",
+          enabled: true
+        }
+      ]
     }
   ]
 };
