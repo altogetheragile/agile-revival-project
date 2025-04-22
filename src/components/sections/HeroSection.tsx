@@ -1,5 +1,5 @@
 
-import { ArrowRightCircle } from "lucide-react";
+import { ArrowRightCircle, CircleArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -57,9 +57,10 @@ const HeroSection = () => {
               </Link>
               <a 
                 href="#contact" 
-                className="secondary-button flex items-center justify-center"
+                className="secondary-button flex items-center justify-center gap-2"
               >
                 Get in Touch
+                <CircleArrowRight size={20} />
               </a>
             </div>
           </div>
