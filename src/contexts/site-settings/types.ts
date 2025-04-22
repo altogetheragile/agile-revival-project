@@ -62,6 +62,7 @@ export type AllSettings = {
   security: SecuritySettings;
   courseTemplates?: CourseTemplate[];
   courseCategories?: CourseCategoryConfig[];
+  skillLevels?: { value: string; label: string }[];
   [key: string]: any;
 };
 

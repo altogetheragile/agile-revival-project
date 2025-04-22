@@ -47,4 +47,10 @@ export const defaultSettings: AllSettings = {
     strongPasswords: true,
   },
   courseCategories: COURSE_CATEGORIES,
+  skillLevels: [
+    { value: "beginner", label: "Beginner" },
+    { value: "intermediate", label: "Intermediate" },
+    { value: "advanced", label: "Advanced" },
+    { value: "all-levels", label: "All Levels" },
+  ]
 };
