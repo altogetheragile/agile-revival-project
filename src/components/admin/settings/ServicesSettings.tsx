@@ -4,6 +4,8 @@ import { useSiteSettings } from "@/contexts/site-settings/useSiteSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
 
 const DEFAULT_SERVICES = [
   {
@@ -78,36 +80,53 @@ export const ServicesSettings: React.FC = () => {
         Update the text for each service below. Changes appear instantly on your public site.
       </p>
       {services.map((service, idx) => (
-        <div key={idx} className="p-4 border rounded-lg mb-6 bg-white/80">
-          <div className="mb-3 flex gap-4">
-            <Input
-              label="Title"
-              value={service.title}
-              onChange={e => handleInputChange(idx, "title", e.target.value)}
-              placeholder="Service Title"
-              className="font-semibold"
-            />
-            <Input
-              disabled
-              value={iconNames[idx]}
-              className="w-40 text-gray-500 opacity-80"
-              style={{ background: "#f6f6fa" }}
+        <Card key={idx} className="p-4 mb-6 bg-white/80">
+          <div className="mb-3 space-y-4">
+            <div>
+              <Label htmlFor={`service-title-${idx}`} className="mb-2 block">Title</Label>
+              <Input
+                id={`service-title-${idx}`}
+                value={service.title}
+                onChange={e => handleInputChange(idx, "title", e.target.value)}
+                placeholder="Service Title"
+                className="font-semibold"
+              />
+            </div>
+            
+            <div className="flex items-center">
+              <Label htmlFor={`service-icon-${idx}`} className="mr-3">Icon:</Label>
+              <Input
+                id={`service-icon-${idx}`}
+                disabled
+                value={iconNames[idx]}
+                className="w-40 text-gray-500 opacity-80"
+                style={{ background: "#f6f6fa" }}
+              />
+            </div>
+          </div>
+          
+          <div className="mb-3">
+            <Label htmlFor={`service-desc-${idx}`} className="mb-2 block">Description</Label>
+            <Textarea
+              id={`service-desc-${idx}`}
+              value={service.description}
+              onChange={e => handleInputChange(idx, "description", e.target.value)}
+              placeholder="Service Description"
+              className="min-h-24"
             />
           </div>
-          <Textarea
-            label="Description"
-            value={service.description}
-            onChange={e => handleInputChange(idx, "description", e.target.value)}
-            placeholder="Service Description"
-          />
-          <Input
-            value={service.url}
-            onChange={e => handleInputChange(idx, "url", e.target.value)}
-            placeholder="URL (e.g. /services/team-coaching)"
-            className="mt-3"
-            label="URL"
-          />
-        </div>
+          
+          <div>
+            <Label htmlFor={`service-url-${idx}`} className="mb-2 block">URL</Label>
+            <Input
+              id={`service-url-${idx}`}
+              value={service.url}
+              onChange={e => handleInputChange(idx, "url", e.target.value)}
+              placeholder="URL (e.g. /services/team-coaching)"
+              className="mt-1"
+            />
+          </div>
+        </Card>
       ))}
       <Button onClick={handleSave} disabled={saving || isLoading}>
         {saving ? "Saving..." : "Save Changes"}
@@ -115,4 +134,3 @@ export const ServicesSettings: React.FC = () => {
     </div>
   );
 };
-
