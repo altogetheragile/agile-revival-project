@@ -33,13 +33,22 @@ const StorageInitializer = () => {
             description: "For full functionality, please create a 'media' bucket in your Supabase project.",
             duration: 7000,
           });
-          
-          // Continue with limited functionality
-          setInitialized(true);
         } else {
           console.log("Media bucket exists, proceeding with normal operation");
-          setInitialized(true);
+          // Let's check if we can access it
+          try {
+            // Try to get a sample public URL to verify the bucket is properly configured
+            const testUrl = supabase.storage.from("media").getPublicUrl("test.txt");
+            if (testUrl.data.publicUrl) {
+              console.log("Media bucket is accessible");
+            }
+          } catch (err) {
+            console.error("Error checking storage bucket access:", err);
+          }
         }
+        
+        // Set as initialized even if bucket doesn't exist to allow the app to function
+        setInitialized(true);
       } catch (err) {
         console.error("Error checking storage buckets:", err);
         // Still set initialized to true to allow the app to function

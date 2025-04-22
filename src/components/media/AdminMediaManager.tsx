@@ -3,8 +3,9 @@ import React, { useState, useRef } from "react";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Image, Music, Video, File } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminMediaManager: React.FC = () => {
   const { items, loading, upload, fetchMedia, bucketExists } = useMediaLibrary();
@@ -12,6 +13,7 @@ const AdminMediaManager: React.FC = () => {
   const uploadRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("all");
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -32,7 +34,7 @@ const AdminMediaManager: React.FC = () => {
         } else {
           toast({ 
             title: "Upload successful",
-            description: "The image was uploaded to the media library."
+            description: "The file was uploaded to the media library."
           });
         }
       } catch (error: any) {
@@ -47,6 +49,67 @@ const AdminMediaManager: React.FC = () => {
         setUploading(false);
         if (uploadRef.current) uploadRef.current.value = "";
       }
+    }
+  };
+
+  // Filter items based on active tab
+  const filteredItems = React.useMemo(() => {
+    if (activeTab === "all") return items;
+    return items.filter(item => item.type === activeTab);
+  }, [items, activeTab]);
+  
+  // Count items by type
+  const counts = React.useMemo(() => {
+    const counts = { image: 0, audio: 0, video: 0 };
+    items.forEach(item => {
+      if (item.type in counts) {
+        counts[item.type as keyof typeof counts]++;
+      }
+    });
+    return counts;
+  }, [items]);
+
+  // Get icon based on media type
+  const getMediaIcon = (type: string) => {
+    switch (type) {
+      case 'image': return <Image className="h-4 w-4" />;
+      case 'audio': return <Music className="h-4 w-4" />;
+      case 'video': return <Video className="h-4 w-4" />;
+      default: return <File className="h-4 w-4" />;
+    }
+  };
+
+  // Render preview based on media type
+  const renderMediaPreview = (item: { type: string, url: string, name: string }) => {
+    switch (item.type) {
+      case 'image':
+        return (
+          <img
+            src={item.url}
+            alt={item.name}
+            className="w-full h-28 object-contain border rounded bg-gray-50"
+            title={item.name}
+          />
+        );
+      case 'audio':
+        return (
+          <div className="w-full h-28 flex flex-col items-center justify-center border rounded bg-gray-50">
+            <Music className="h-10 w-10 text-gray-400 mb-1" />
+            <audio src={item.url} controls className="w-full h-6 mt-1" />
+          </div>
+        );
+      case 'video':
+        return (
+          <div className="w-full h-28 flex items-center justify-center border rounded bg-gray-50 relative">
+            <Video className="h-10 w-10 text-gray-400" />
+          </div>
+        );
+      default:
+        return (
+          <div className="w-full h-28 flex items-center justify-center border rounded bg-gray-50">
+            <File className="h-10 w-10 text-gray-400" />
+          </div>
+        );
     }
   };
 
@@ -74,7 +137,7 @@ const AdminMediaManager: React.FC = () => {
         <input
           id="admin-media-upload"
           type="file"
-          accept="image/*"
+          accept="image/*, audio/*, video/*"
           hidden
           ref={uploadRef}
           disabled={uploading || !bucketExists}
@@ -86,7 +149,7 @@ const AdminMediaManager: React.FC = () => {
           onClick={() => uploadRef.current?.click()}
           disabled={uploading || !bucketExists}
         >
-          {uploading ? "Uploading..." : "Upload Image"}
+          {uploading ? "Uploading..." : "Upload Media"}
         </Button>
         <Button
           type="button"
@@ -97,33 +160,52 @@ const AdminMediaManager: React.FC = () => {
           Refresh
         </Button>
       </div>
+      
       <div>
         <h2 className="font-semibold mb-2">Media Library</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-80 overflow-auto p-2 border rounded bg-white">
-          {loading && <div className="col-span-full text-center">Loading...</div>}
-          {!loading && !bucketExists && (
-            <div className="col-span-full text-center text-muted-foreground">
-              Media storage is not configured. Create a "media" bucket in your Supabase project.
-            </div>
-          )}
-          {!loading && bucketExists && items.length === 0 && (
-            <div className="col-span-full text-center text-muted-foreground">No images found.</div>
-          )}
-          {items.map((item) => (
-            <div key={item.url} className="flex flex-col items-center gap-1">
-              <img
-                src={item.url}
-                alt={item.name}
-                className="w-full h-28 object-contain border rounded bg-gray-50"
-                title={item.name}
-              />
-              <span className="text-xs truncate w-full">{item.name}</span>
-              <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-agile-purple text-xs underline">
-                View
-              </a>
-            </div>
-          ))}
-        </div>
+        
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-2">
+            <TabsTrigger value="all" className="flex gap-1">
+              <File className="h-4 w-4" /> All ({items.length})
+            </TabsTrigger>
+            <TabsTrigger value="image" className="flex gap-1">
+              <Image className="h-4 w-4" /> Images ({counts.image})
+            </TabsTrigger>
+            <TabsTrigger value="audio" className="flex gap-1">
+              <Music className="h-4 w-4" /> Audio ({counts.audio})
+            </TabsTrigger>
+            <TabsTrigger value="video" className="flex gap-1">
+              <Video className="h-4 w-4" /> Video ({counts.video})
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value={activeTab} className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-80 overflow-auto p-2 border rounded bg-white">
+            {loading && <div className="col-span-full text-center">Loading...</div>}
+            {!loading && !bucketExists && (
+              <div className="col-span-full text-center text-muted-foreground">
+                Media storage is not configured. Create a "media" bucket in your Supabase project.
+              </div>
+            )}
+            {!loading && bucketExists && filteredItems.length === 0 && (
+              <div className="col-span-full text-center text-muted-foreground">
+                No {activeTab !== "all" ? activeTab : ""} files found.
+              </div>
+            )}
+            {filteredItems.map((item) => (
+              <div key={item.url} className="flex flex-col items-center gap-1">
+                {renderMediaPreview(item)}
+                <div className="flex items-center gap-1 w-full">
+                  {getMediaIcon(item.type)}
+                  <span className="text-xs truncate">{item.name}</span>
+                </div>
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-agile-purple text-xs underline">
+                  View
+                </a>
+              </div>
+            ))}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface MediaItem {
   name: string;
   url: string;
+  type: string;
 }
 
 export const useMediaLibrary = () => {
@@ -49,14 +50,33 @@ export const useMediaLibrary = () => {
       
       if (data) {
         console.log("Media data retrieved:", data.length, "items");
-        const urls = data
-          .filter((f) => f.name.match(/\.(jpe?g|png|gif|webp|svg)$/i))
-          .map((f) => ({
-            name: f.name,
-            url: supabase.storage.from("media").getPublicUrl(f.name).data.publicUrl,
-          }));
-        setItems(urls);
-        console.log("Processed media items:", urls.length);
+        // Support multiple media types
+        const supportedMediaPattern = /\.(jpe?g|png|gif|webp|svg|mp3|wav|ogg|mp4|webm|mpeg)$/i;
+        
+        const mediaItems = data
+          .filter((f) => f.name.match(supportedMediaPattern))
+          .map((f) => {
+            // Determine file type based on extension
+            const extension = f.name.split('.').pop()?.toLowerCase() || '';
+            let type = 'other';
+            
+            if (/jpe?g|png|gif|webp|svg/i.test(extension)) {
+              type = 'image';
+            } else if (/mp3|wav|ogg|mpeg/i.test(extension)) {
+              type = 'audio';
+            } else if (/mp4|webm/i.test(extension)) {
+              type = 'video';
+            }
+            
+            return {
+              name: f.name,
+              url: supabase.storage.from("media").getPublicUrl(f.name).data.publicUrl,
+              type
+            };
+          });
+          
+        setItems(mediaItems);
+        console.log("Processed media items:", mediaItems.length);
       }
     } catch (error) {
       console.error("Exception in fetchMedia:", error);

@@ -3,10 +3,11 @@ import React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Image, Music, Video, File } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface MediaLibraryProps {
   open: boolean;
@@ -22,6 +23,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   const { items, loading, upload, bucketExists } = useMediaLibrary();
   const { toast } = useToast();
   const [uploading, setUploading] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState("all");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleSelect = (url: string) => {
@@ -64,6 +66,66 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
       }
     }
   };
+  
+  // Filter items based on active tab
+  const filteredItems = React.useMemo(() => {
+    if (activeTab === "all") return items;
+    return items.filter(item => item.type === activeTab);
+  }, [items, activeTab]);
+  
+  // Count items by type
+  const counts = React.useMemo(() => {
+    const counts = { image: 0, audio: 0, video: 0 };
+    items.forEach(item => {
+      if (item.type in counts) {
+        counts[item.type as keyof typeof counts]++;
+      }
+    });
+    return counts;
+  }, [items]);
+
+  // Get media icon based on type
+  const getMediaIcon = (type: string) => {
+    switch (type) {
+      case 'image': return <Image className="h-4 w-4" />;
+      case 'audio': return <Music className="h-4 w-4" />;
+      case 'video': return <Video className="h-4 w-4" />;
+      default: return <File className="h-4 w-4" />;
+    }
+  };
+
+  // Render media item based on its type
+  const renderMediaItem = (item: { name: string, url: string, type: string }) => {
+    switch (item.type) {
+      case 'image':
+        return (
+          <img 
+            src={item.url} 
+            alt={item.name} 
+            className="w-full aspect-square object-cover rounded-md"
+          />
+        );
+      case 'audio':
+        return (
+          <div className="w-full aspect-square flex items-center justify-center bg-gray-100 rounded-md">
+            <Music className="h-12 w-12 text-gray-400" />
+            <audio src={item.url} controls className="hidden" />
+          </div>
+        );
+      case 'video':
+        return (
+          <div className="w-full aspect-square relative bg-gray-100 rounded-md">
+            <Video className="absolute inset-0 m-auto h-12 w-12 text-gray-400" />
+          </div>
+        );
+      default:
+        return (
+          <div className="w-full aspect-square flex items-center justify-center bg-gray-100 rounded-md">
+            <File className="h-12 w-12 text-gray-400" />
+          </div>
+        );
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -71,7 +133,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
         <DialogHeader>
           <DialogTitle>Media Library</DialogTitle>
           <DialogDescription>
-            Choose an image from the library or upload a new one.
+            Choose media from the library or upload a new file.
           </DialogDescription>
         </DialogHeader>
         
@@ -89,7 +151,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
             <Input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*, audio/*, video/*"
               onChange={handleFileChange}
               disabled={uploading || !bucketExists}
               className="max-w-xs"
@@ -97,43 +159,59 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
             {uploading && <Loader2 className="animate-spin h-4 w-4" />}
           </div>
           
-          <div className="border rounded-md p-2 h-[50vh] overflow-y-auto bg-white">
-            {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="animate-spin h-8 w-8" />
-              </div>
-            ) : !bucketExists ? (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                Media storage is not configured. Create a "media" bucket in your Supabase project.
-              </div>
-            ) : items.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                No images found. Upload one to get started.
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-2">
-                {items.map((item) => (
-                  <div
-                    key={item.url}
-                    className="relative group cursor-pointer border rounded-md p-2 hover:bg-gray-50 transition-colors"
-                    onClick={() => handleSelect(item.url)}
-                  >
-                    <img 
-                      src={item.url} 
-                      alt={item.name} 
-                      className="w-full aspect-square object-cover rounded-md"
-                    />
-                    <div className="mt-1 text-xs truncate">{item.name}</div>
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <Button variant="secondary" size="sm">
-                        Select
-                      </Button>
+          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-2">
+              <TabsTrigger value="all" className="flex gap-1">
+                <File className="h-4 w-4" /> All ({items.length})
+              </TabsTrigger>
+              <TabsTrigger value="image" className="flex gap-1">
+                <Image className="h-4 w-4" /> Images ({counts.image})
+              </TabsTrigger>
+              <TabsTrigger value="audio" className="flex gap-1">
+                <Music className="h-4 w-4" /> Audio ({counts.audio})
+              </TabsTrigger>
+              <TabsTrigger value="video" className="flex gap-1">
+                <Video className="h-4 w-4" /> Video ({counts.video})
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value={activeTab} className="border rounded-md p-2 h-[50vh] overflow-y-auto bg-white">
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="animate-spin h-8 w-8" />
+                </div>
+              ) : !bucketExists ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Media storage is not configured. Create a "media" bucket in your Supabase project.
+                </div>
+              ) : filteredItems.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  No {activeTab !== "all" ? activeTab : ""} files found. Upload one to get started.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-2">
+                  {filteredItems.map((item) => (
+                    <div
+                      key={item.url}
+                      className="relative group cursor-pointer border rounded-md p-2 hover:bg-gray-50 transition-colors"
+                      onClick={() => handleSelect(item.url)}
+                    >
+                      {renderMediaItem(item)}
+                      <div className="mt-1 flex items-center gap-1">
+                        {getMediaIcon(item.type)}
+                        <span className="text-xs truncate">{item.name}</span>
+                      </div>
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <Button variant="secondary" size="sm">
+                          Select
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </DialogContent>
     </Dialog>
