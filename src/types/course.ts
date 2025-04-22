@@ -21,6 +21,7 @@ export interface Course {
   googleDriveFolderUrl?: string;
   isTemplate?: boolean;
   templateId?: string;
+  imageUrl?: string; // Add imageUrl property
 }
 
 export interface CourseMaterial {
@@ -40,6 +41,7 @@ export type CourseFormData = Omit<Course, "id"> & {
   googleDriveFolderUrl?: string;
   isTemplate?: boolean;
   templateId?: string;
+  imageUrl?: string; // Add imageUrl property
 };
 
 export interface CourseWithFormData extends Omit<Course, "learningOutcomes"> {
@@ -59,6 +61,7 @@ export interface CourseTemplate {
   skillLevel?: "beginner" | "intermediate" | "advanced" | "all-levels";
   format?: string; // Changed from string literal to any string
   status?: "draft" | "published";
+  imageUrl?: string; // Add imageUrl property
 }
 
 // New interface for scheduling a course from a template

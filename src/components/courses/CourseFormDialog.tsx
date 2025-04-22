@@ -28,7 +28,8 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
       id: course.id,
       // Include Google Drive folder information
       googleDriveFolderId: course.googleDriveFolderId,
-      googleDriveFolderUrl: course.googleDriveFolderUrl
+      googleDriveFolderUrl: course.googleDriveFolderUrl,
+      imageUrl: course.imageUrl
     };
   };
   
