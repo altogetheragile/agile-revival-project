@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Image } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { InterfaceFormValues } from "./schema";
+import ImageUploadInput from "@/components/images/ImageUploadInput";
+import React from "react";
 
 interface BrandingSectionProps {
   form: UseFormReturn<InterfaceFormValues>;
@@ -30,8 +32,14 @@ export const BrandingSection = ({ form }: BrandingSectionProps) => {
                 <FormControl>
                   <Input {...field} placeholder="https://example.com/logo.png" />
                 </FormControl>
+                <div className="mt-2">
+                  <ImageUploadInput
+                    label="Upload Logo"
+                    onUpload={(url) => form.setValue("logoUrl", url, { shouldValidate: true })}
+                  />
+                </div>
                 <FormDescription>
-                  Enter the URL for your site logo (recommended size: 200x50px)
+                  Enter or upload your site logo (recommended size: 200x50px)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -47,8 +55,14 @@ export const BrandingSection = ({ form }: BrandingSectionProps) => {
                 <FormControl>
                   <Input {...field} placeholder="https://example.com/favicon.png" />
                 </FormControl>
+                <div className="mt-2">
+                  <ImageUploadInput
+                    label="Upload Favicon"
+                    onUpload={(url) => form.setValue("faviconUrl", url, { shouldValidate: true })}
+                  />
+                </div>
                 <FormDescription>
-                  Enter the URL for your site favicon (must be PNG, size: 32x32px)
+                  Enter or upload your site favicon (must be PNG, size: 32x32px)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
