@@ -1,8 +1,20 @@
+
 import { Activity, Compass, BarChart3, Users, Laptop, Puzzle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { useSiteSettings } from "@/contexts/site-settings/useSiteSettings";
 
-const ServiceCard = ({ title, description, icon: Icon, url }) => {
+const iconMap: Record<string, any> = {
+  Compass,
+  Users,
+  Laptop,
+  Activity,
+  BarChart3,
+  Puzzle
+};
+
+const ServiceCard = ({ title, description, icon, url }) => {
+  const Icon = iconMap[icon] || Compass;
   return (
     <Card className="p-6 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-300 hover:border-agile-purple h-full flex flex-col">
       <div className="bg-agile-purple-light p-3 rounded-full w-12 h-12 flex items-center justify-center mb-5">
@@ -17,45 +29,49 @@ const ServiceCard = ({ title, description, icon: Icon, url }) => {
   );
 };
 
+const DEFAULT_SERVICES = [
+  {
+    icon: "Compass",
+    title: "Leadership Coaching",
+    description: "Personalized one-on-one coaching to help leaders cultivate an agile mindset and empower self-organizing teams.",
+    url: "/services/leadership-coaching"
+  },
+  {
+    icon: "Users",
+    title: "Team Coaching",
+    description: "Collaborative coaching for agile teams using Scrum, Kanban, or hybrid methods to enhance teamwork and delivery efficiency.",
+    url: "/services/team-coaching"
+  },
+  {
+    icon: "Laptop",
+    title: "Agile Training",
+    description: "Engaging workshops and certification courses on agile methodologies, customized to your organization's unique context.",
+    url: "/training-schedule"
+  },
+  {
+    icon: "Activity",
+    title: "Agile Facilitation",
+    description: "Strategic facilitation of key agile ceremonies, retrospectives, and planning sessions to drive meaningful collaboration.",
+    url: "/services/agile-facilitation"
+  },
+  {
+    icon: "BarChart3",
+    title: "Performance Metrics",
+    description: "Developing insightful measurement approaches that focus on outcomes, continuous improvement, and organizational growth.",
+    url: "/services/performance-metrics"
+  },
+  {
+    icon: "Puzzle",
+    title: "Custom Coaching Solutions",
+    description: "Tailored, flexible coaching programs designed to address your organization's specific challenges and strategic goals.",
+    url: "/services/custom-coaching"
+  }
+];
+
 const ServicesSection = () => {
-  const services = [
-    {
-      title: "Leadership Coaching",
-      description: "Personalized one-on-one coaching to help leaders cultivate an agile mindset and empower self-organizing teams.",
-      icon: Compass,
-      url: "/services/leadership-coaching"
-    },
-    {
-      title: "Team Coaching",
-      description: "Collaborative coaching for agile teams using Scrum, Kanban, or hybrid methods to enhance teamwork and delivery efficiency.",
-      icon: Users,
-      url: "/services/team-coaching"
-    },
-    {
-      title: "Agile Training",
-      description: "Engaging workshops and certification courses on agile methodologies, customized to your organization's unique context.",
-      icon: Laptop,
-      url: "/training-schedule"
-    },
-    {
-      title: "Agile Facilitation",
-      description: "Strategic facilitation of key agile ceremonies, retrospectives, and planning sessions to drive meaningful collaboration.",
-      icon: Activity,
-      url: "/services/agile-facilitation"
-    },
-    {
-      title: "Performance Metrics",
-      description: "Developing insightful measurement approaches that focus on outcomes, continuous improvement, and organizational growth.",
-      icon: BarChart3,
-      url: "/services/performance-metrics"
-    },
-    {
-      title: "Custom Coaching Solutions",
-      description: "Tailored, flexible coaching programs designed to address your organization's specific challenges and strategic goals.",
-      icon: Puzzle,
-      url: "/services/custom-coaching"
-    }
-  ];
+  const { settings } = useSiteSettings?.() || {};
+  // Fallback to default if not in context (e.g., SSR/build)
+  const services = (settings && settings.services?.length ? settings.services : DEFAULT_SERVICES);
 
   return (
     <section id="services" className="section-container bg-gradient-to-b from-white to-agile-purple-light">
