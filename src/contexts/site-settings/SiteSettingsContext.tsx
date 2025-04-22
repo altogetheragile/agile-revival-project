@@ -2,7 +2,8 @@
 import { createContext } from 'react';
 import { AllSettings } from './types';
 
-export interface SiteSettingsContextType {
+// Rename the interface to avoid naming conflict with the one in types.ts
+export interface SiteSettingsContextValue {
   settings: AllSettings;
   isLoading: boolean;
   updateSettings: (key: string, values: any, silentMode?: boolean) => Promise<void>;
@@ -10,7 +11,7 @@ export interface SiteSettingsContextType {
 }
 
 // Create context with default values
-export const SiteSettingsContext = createContext<SiteSettingsContextType>({
+export const SiteSettingsContext = createContext<SiteSettingsContextValue>({
   settings: {} as AllSettings,
   isLoading: true,
   updateSettings: async () => {},

@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { defaultSettings } from "./defaultSettings";
 import { AllSettings } from "./types";
-import { SiteSettingsContext } from "./SiteSettingsContext";
+import { SiteSettingsContext, SiteSettingsContextValue } from "./SiteSettingsContext";
 import { deepMergeObjects } from "./deepMergeObjects";
 
 interface SiteSettingsProviderProps {
@@ -136,7 +135,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
     }
   }, []);
 
-  const value = {
+  const value: SiteSettingsContextValue = {
     settings,
     isLoading,
     updateSettings,
