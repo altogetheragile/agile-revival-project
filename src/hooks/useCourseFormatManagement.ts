@@ -10,6 +10,7 @@ export const useCourseFormatManagement = () => {
   const [addMode, setAddMode] = useState(false);
   const [newFormat, setNewFormat] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const { toast } = useToast();
   const { settings, updateSettings, refreshSettings } = useSiteSettings();
 
@@ -24,33 +25,48 @@ export const useCourseFormatManagement = () => {
         } else {
           console.log("No courseFormats in settings, using defaults:", defaultFormats);
           setFormats(defaultFormats);
-          saveFormatsToSettings(defaultFormats).catch(err => 
-            console.error("Failed to save default formats:", err)
-          );
+          // Only save defaults if we've confirmed settings are loaded but missing courseFormats
+          if (Object.keys(settings).length > 0 && !settings.courseFormats) {
+            saveFormatsToSettings(defaultFormats).catch(err => 
+              console.error("Failed to save default formats:", err)
+            );
+          }
         }
+        setInitialized(true);
       } catch (error) {
         console.error("Error initializing formats:", error);
         setFormats(defaultFormats);
+        setInitialized(true);
       }
     };
     
     initFormats();
   }, [settings.courseFormats]);
 
-  // Save formats to settings
-  const saveFormatsToSettings = async (updatedFormats: CourseFormat[]) => {
+  // Save formats to settings - without automatic toast
+  const saveFormatsToSettings = async (updatedFormats: CourseFormat[], showToast: boolean = false) => {
     try {
       console.log("Saving formats to settings:", updatedFormats);
       await updateSettings('courseFormats', updatedFormats);
       console.log("Formats saved successfully");
+      
+      if (showToast) {
+        toast({
+          title: "Success",
+          description: "Format changes saved successfully",
+        });
+      }
       return true;
     } catch (error) {
       console.error("Error saving formats:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save format changes",
-        variant: "destructive"
-      });
+      
+      if (showToast) {
+        toast({
+          title: "Error",
+          description: "Failed to save format changes",
+          variant: "destructive"
+        });
+      }
       return false;
     }
   };
@@ -90,7 +106,7 @@ export const useCourseFormatManagement = () => {
       const updatedFormats = [...formats, newFmt];
       setFormats(updatedFormats);
       
-      const success = await saveFormatsToSettings(updatedFormats);
+      const success = await saveFormatsToSettings(updatedFormats, true); // Show toast only on user action
       
       if (success) {
         setAddMode(false);
@@ -98,22 +114,11 @@ export const useCourseFormatManagement = () => {
         setNewFormat("");
         
         await refreshSettings();
-        
-        toast({
-          title: "Format added",
-          description: `"${newFmt.label}" has been added to formats.`
-        });
-        
         setIsProcessing(false);
         return formatValue;
       }
       
       setFormats(formats);
-      toast({
-        title: "Error",
-        description: "There was a problem adding the format.",
-        variant: "destructive"
-      });
       
       setIsProcessing(false);
       return null;
@@ -161,26 +166,15 @@ export const useCourseFormatManagement = () => {
       
       setFormats(updatedFormats);
       
-      const success = await saveFormatsToSettings(updatedFormats);
+      const success = await saveFormatsToSettings(updatedFormats, true); // Show toast only on user action
       
       if (success) {
         await refreshSettings();
-        
-        toast({
-          title: "Format deleted",
-          description: `"${formatToDelete?.label || value}" has been removed from formats.`
-        });
-        
         setIsProcessing(false);
         return true;
       }
       
       setFormats(formats);
-      toast({
-        title: "Error",
-        description: "There was a problem deleting the format.",
-        variant: "destructive"
-      });
       
       setIsProcessing(false);
       return false;
