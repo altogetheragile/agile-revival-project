@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { 
@@ -14,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { BlogPostFormData } from "@/types/blog";
+import MediaLibrary from "@/components/media/MediaLibrary";
+import { useState } from "react";
 
 interface BlogFormProps {
   initialData?: BlogPostFormData;
@@ -35,6 +36,8 @@ const BlogForm: React.FC<BlogFormProps> = ({
   const form = useForm<BlogPostFormData>({
     defaultValues: initialData
   });
+
+  const [mediaLibOpen, setMediaLibOpen] = useState(false);
 
   const handleSubmit = (data: BlogPostFormData) => {
     onSubmit(data);
@@ -97,9 +100,29 @@ const BlogForm: React.FC<BlogFormProps> = ({
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL (Optional)</FormLabel>
+              <FormLabel>
+                Image URL (Optional)
+                <Button
+                  className="ml-2"
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setMediaLibOpen(true)}
+                >
+                  Choose from Library
+                </Button>
+              </FormLabel>
               <FormControl>
-                <Input placeholder="https://example.com/image.jpg" {...field} />
+                <div className="flex flex-col gap-2">
+                  <Input placeholder="https://example.com/image.jpg" {...field} />
+                  {field.value && (
+                    <img
+                      src={field.value}
+                      alt="Preview"
+                      className="mt-2 w-36 h-20 object-contain border rounded bg-white"
+                    />
+                  )}
+                </div>
               </FormControl>
               <FormDescription>
                 URL to an image for the blog post
@@ -107,6 +130,12 @@ const BlogForm: React.FC<BlogFormProps> = ({
               <FormMessage />
             </FormItem>
           )}
+        />
+
+        <MediaLibrary
+          open={mediaLibOpen}
+          onOpenChange={setMediaLibOpen}
+          onSelect={(url) => form.setValue("imageUrl", url, { shouldValidate: true })}
         />
 
         <FormField

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
@@ -21,6 +20,10 @@ import {
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import MediaLibrary from "@/components/media/MediaLibrary";
+import { useState } from "react";
 
 interface CourseFormProps {
   initialData?: CourseFormData;
@@ -57,6 +60,8 @@ const CourseForm: React.FC<CourseFormProps> = ({
   const form = useForm<CourseFormData>({
     defaultValues: initialData
   });
+
+  const [mediaLibOpen, setMediaLibOpen] = useState(false);
 
   const handleSubmit = (data: CourseFormData) => {
     // Process learning outcomes if provided as a string
@@ -123,6 +128,50 @@ const CourseForm: React.FC<CourseFormProps> = ({
         <LearningOutcomeField form={form} />
         <CourseGoogleDriveSection courseId={initialData?.id} />
         
+        {/* Add image picker for course image */}
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Course Image URL
+                <Button
+                  className="ml-2"
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setMediaLibOpen(true)}
+                >
+                  Choose from Library
+                </Button>
+              </FormLabel>
+              <FormControl>
+                <div className="flex flex-col gap-2">
+                  <Input placeholder="https://example.com/image.jpg" {...field} />
+                  {field.value && (
+                    <img
+                      src={field.value}
+                      alt="Preview"
+                      className="mt-2 w-36 h-20 object-contain border rounded bg-white"
+                    />
+                  )}
+                </div>
+              </FormControl>
+              <FormDescription>
+                This image will be shown in course details and listings.
+              </FormDescription>
+              {/* Do not show FormMessage here to avoid clutter */}
+            </FormItem>
+          )}
+        />
+
+        <MediaLibrary
+          open={mediaLibOpen}
+          onOpenChange={setMediaLibOpen}
+          onSelect={(url) => form.setValue("imageUrl", url, { shouldValidate: true })}
+        />
+
         <CourseFormActions 
           onCancel={onCancel} 
           isEditing={!!initialData.id}
