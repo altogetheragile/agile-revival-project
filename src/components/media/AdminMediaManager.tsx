@@ -3,30 +3,63 @@ import React, { useState, useRef } from "react";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const AdminMediaManager: React.FC = () => {
   const { items, loading, upload, fetchMedia } = useMediaLibrary();
   const { toast } = useToast();
   const uploadRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setUploading(true);
-      const { error } = await upload(file);
-      setUploading(false);
-      if (error) {
-        toast({ title: "Upload failed", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Upload successful" });
+      try {
+        setUploading(true);
+        setUploadError(null);
+        const { error } = await upload(file);
+        
+        if (error) {
+          console.error("Upload error:", error);
+          setUploadError(error.message);
+          toast({ 
+            title: "Upload failed", 
+            description: error.message, 
+            variant: "destructive" 
+          });
+        } else {
+          toast({ 
+            title: "Upload successful",
+            description: "The image was uploaded to the media library."
+          });
+        }
+      } catch (error: any) {
+        console.error("Unexpected upload error:", error);
+        setUploadError(error.message || "An unexpected error occurred");
+        toast({ 
+          title: "Upload failed", 
+          description: error.message || "An unexpected error occurred", 
+          variant: "destructive" 
+        });
+      } finally {
+        setUploading(false);
+        if (uploadRef.current) uploadRef.current.value = "";
       }
-      uploadRef.current!.value = "";
     }
   };
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
+      {uploadError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Upload Error</AlertTitle>
+          <AlertDescription>{uploadError}</AlertDescription>
+        </Alert>
+      )}
+      
       <div className="flex gap-2">
         <input
           id="admin-media-upload"
@@ -49,7 +82,7 @@ const AdminMediaManager: React.FC = () => {
           type="button"
           variant="outline"
           onClick={fetchMedia}
-          disabled={loading}
+          disabled={loading || uploading}
         >
           Refresh
         </Button>
