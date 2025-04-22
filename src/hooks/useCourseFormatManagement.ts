@@ -45,7 +45,7 @@ export const useCourseFormatManagement = () => {
     };
     
     initFormats();
-  }, [settings.courseFormats]);
+  }, [settings.courseFormats, updateSettings]);
 
   const saveFormatsToSettings = useCallback(async (updatedFormats: CourseFormat[]) => {
     try {
@@ -70,8 +70,12 @@ export const useCourseFormatManagement = () => {
     }
 
     // Check if format already exists
-    if (formats.some(opt => opt.value.toLowerCase() === newFormat.trim().toLowerCase() ||
-                           opt.label.toLowerCase() === newFormat.trim().toLowerCase())) {
+    const exists = formats.some(opt => 
+      opt.value.toLowerCase() === newFormat.trim().toLowerCase().replace(/\s+/g, '-') ||
+      opt.label.toLowerCase() === newFormat.trim().toLowerCase()
+    );
+    
+    if (exists) {
       toast({
         title: "Error",
         description: `"${newFormat.trim()}" already exists in formats.`,
@@ -84,16 +88,23 @@ export const useCourseFormatManagement = () => {
       value: newFormat.trim().toLowerCase().replace(/\s+/g, '-'), 
       label: newFormat.trim() 
     };
-    const updatedFormats = [...formats, newFmt];
     
     console.log("Adding new format:", newFmt);
+    
     try {
+      // Create a new array with the new format
+      const updatedFormats = [...formats, newFmt];
+      
+      // Save to settings first
       const success = await saveFormatsToSettings(updatedFormats);
       
       if (success) {
-        // Explicitly update the state here
+        // Update local state
         setFormats(updatedFormats);
         setAddMode(false);
+        
+        // Only clear newFormat after successful save
+        const formatValue = newFmt.value;
         setNewFormat("");
         
         // Force refresh settings to ensure the UI reflects the changes
@@ -104,7 +115,7 @@ export const useCourseFormatManagement = () => {
           description: `"${newFmt.label}" has been added to formats.`
         });
         
-        return newFmt.value;
+        return formatValue;
       } else {
         toast({
           title: "Error",
@@ -139,14 +150,16 @@ export const useCourseFormatManagement = () => {
         return false;
       }
       
+      // Create a new array without the deleted format
       const updatedFormats = formats.filter(fmt => fmt.value !== value);
       console.log("Formats after deletion:", updatedFormats);
       
+      // Save to settings first
       const success = await saveFormatsToSettings(updatedFormats);
       
       if (success) {
         console.log("Format deleted successfully, updating state");
-        // Explicitly update the state
+        // Update local state
         setFormats(updatedFormats);
         
         // Force refresh settings to ensure the UI reflects the changes

@@ -27,6 +27,7 @@ export const FormatInput: React.FC<FormatInputProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (value.trim()) {
       console.log("Format input form submitted with value:", value);
       onAdd();
@@ -36,11 +37,14 @@ export const FormatInput: React.FC<FormatInputProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
+      e.stopPropagation();
       if (value.trim()) {
         console.log("Enter key pressed in format input with value:", value);
         onAdd();
       }
     } else if (e.key === "Escape") {
+      e.preventDefault(); 
+      e.stopPropagation();
       console.log("Escape key pressed in format input");
       onCancel();
     }
@@ -60,6 +64,13 @@ export const FormatInput: React.FC<FormatInputProps> = ({
         type="submit"
         variant="outline"
         disabled={!value.trim()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (value.trim()) {
+            onAdd();
+          }
+        }}
       >
         Add
       </Button>
@@ -68,6 +79,7 @@ export const FormatInput: React.FC<FormatInputProps> = ({
         variant="ghost"
         onClick={(e) => {
           e.preventDefault();
+          e.stopPropagation();
           console.log("Cancel button clicked in format input");
           onCancel();
         }}
