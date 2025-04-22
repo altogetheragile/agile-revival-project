@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -127,7 +126,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
     }
   };
 
-  const updateSettings = async (key: string, values: any) => {
+  const updateSettings = async (key: string, values: any, silentMode: boolean = false) => {
     try {
       console.log(`Updating ${key} settings:`, values);
       
@@ -152,13 +151,15 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         [key]: values
       }));
       
-      // Skip refreshSettings to avoid duplicate toasts - we already updated state above
-      // and we'll refresh from database via the subscription channel
-      
-      toast({
-        title: "Settings updated",
-        description: `${key.charAt(0).toUpperCase() + key.slice(1)} settings have been saved`,
-      });
+      // Skip toast for initial loads or silent updates
+      if (!silentMode && !isInitialLoad.current) {
+        toast({
+          title: "Settings updated",
+          description: `${key.charAt(0).toUpperCase() + key.slice(1)} settings have been saved`,
+        });
+      } else {
+        console.log("Silent update completed for", key);
+      }
     } catch (error) {
       console.error("Exception updating settings:", error);
       toast({

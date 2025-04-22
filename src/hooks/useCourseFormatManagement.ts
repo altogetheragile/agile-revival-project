@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { CourseFormat, defaultFormats } from "@/types/courseFormat";
 import { useToast } from "@/hooks/use-toast";
 import { useSiteSettings } from "@/contexts/site-settings";
-import { validateNewFormat, createFormatObject } from "@/utils/formatUtils";
 import { useFormatsInitialization } from "./course-format/useFormatsInitialization";
 import { useAddCourseFormat } from "./course-format/useAddCourseFormat";
 import { useDeleteCourseFormat } from "./course-format/useDeleteCourseFormat";
@@ -30,6 +29,7 @@ export const useCourseFormatManagement = () => {
     const saveDefaultFormats = async () => {
       if (shouldSaveDefaults.current && isInitialized.current) {
         try {
+          // Use silent mode for initial default format saving
           await updateSettings("courseFormats", defaultFormats);
           shouldSaveDefaults.current = false;
           isInitialSave.current = false;
@@ -42,12 +42,16 @@ export const useCourseFormatManagement = () => {
   // Save formats to settings, with optional toast
   const saveFormatsToSettings = async (updatedFormats: CourseFormat[], showToast: boolean = false) => {
     try {
+      // Skip toast on initial save
       if (isInitialSave.current) {
         await updateSettings("courseFormats", updatedFormats);
         isInitialSave.current = false;
         return true;
       }
-      await updateSettings("courseFormats", updatedFormats);
+      
+      // Only show toast for user-initiated actions
+      const silentMode = !showToast;
+      await updateSettings("courseFormats", updatedFormats, silentMode);
       return true;
     } catch (error) {
       if (showToast) {

@@ -1,4 +1,3 @@
-
 // Types for our various settings
 import { CourseTemplate } from "@/types/course";
 import { CourseCategoryConfig } from "@/constants/courseCategories";
@@ -69,6 +68,6 @@ export type AllSettings = {
 export interface SiteSettingsContextType {
   settings: AllSettings;
   isLoading: boolean;
-  updateSettings: (key: string, values: any) => Promise<void>;
+  updateSettings: (key: string, values: any, silentMode?: boolean) => Promise<void>;
   refreshSettings: () => Promise<void>;
 }
