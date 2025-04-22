@@ -15,49 +15,48 @@ const StorageInitializer = () => {
     const checkStorageBuckets = async () => {
       try {
         console.log("Checking for required storage buckets...");
-        const { data: buckets, error } = await supabase.storage.listBuckets();
         
-        if (error) {
-          console.error("Failed to list storage buckets:", error);
-          toast({
-            title: "Storage Error",
-            description: "Could not connect to storage. Please check your connection or Supabase configuration.",
-            duration: 7000,
-            variant: "destructive"
-          });
-          return;
-        }
+        // Directly try to list files from the media bucket to verify it exists and is accessible
+        const { data: files, error: filesError } = await supabase.storage
+          .from("media")
+          .list("", { limit: 1 });
         
-        console.log("Available buckets:", buckets?.map(b => b.name) || []);
-        const mediaBucketExists = buckets?.some(bucket => bucket.name === "media");
-        
-        if (!mediaBucketExists) {
-          console.log("Media bucket doesn't exist. Please create it in the Supabase dashboard.");
-          toast({
-            title: "Media Storage Notice",
-            description: "For full functionality, please create a 'media' bucket in your Supabase project and set it to public.",
-            duration: 7000,
-          });
-        } else {
-          console.log("Media bucket exists, validating access permissions...");
-          try {
-            // Try to get a sample public URL to verify the bucket is properly configured
-            const publicUrlData = supabase.storage.from("media").getPublicUrl("test.txt");
-            if (publicUrlData.data.publicUrl) {
-              console.log("Media bucket is accessible");
-            }
-          } catch (err) {
-            console.error("Error checking storage bucket access:", err);
+        if (filesError) {
+          console.error("Failed to access media bucket:", filesError.message);
+          
+          if (filesError.message.includes("does not exist") || 
+              filesError.message.includes("not found")) {
+            console.log("Media bucket doesn't exist. Create it in the Supabase dashboard.");
+            toast({
+              title: "Media Storage Required",
+              description: "Please create a 'media' bucket in your Supabase project and set it to public.",
+              duration: 10000,
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Storage Access Error",
+              description: "Could not access the media storage. Check permissions in your Supabase project.",
+              duration: 10000,
+              variant: "destructive"
+            });
           }
+        } else {
+          console.log("Media bucket exists and is accessible!", files);
+          toast({
+            title: "Media Storage Connected",
+            description: "Successfully connected to the media storage bucket.",
+            duration: 5000,
+          });
         }
         
-        // Set as initialized even if bucket doesn't exist to allow the app to function
+        // Set as initialized to allow the app to function
         setInitialized(true);
       } catch (err) {
         console.error("Error checking storage buckets:", err);
         toast({
-          title: "Storage Error",
-          description: "An unexpected error occurred while connecting to storage.",
+          title: "Storage Connection Error",
+          description: "An unexpected error occurred. Check your browser console for details.",
           duration: 7000,
           variant: "destructive"
         });

@@ -3,11 +3,12 @@ import React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertTriangle, Image, Music, Video, File, RefreshCw } from "lucide-react";
+import { Loader2, AlertTriangle, Image, Music, Video, File, RefreshCw, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface MediaLibraryProps {
   open: boolean;
@@ -148,32 +149,55 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
+            <AlertTitle>Storage Error</AlertTitle>
+            <AlertDescription className="whitespace-pre-wrap">
               {error}
             </AlertDescription>
           </Alert>
         )}
         
         {!bucketExists && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Media storage is not properly configured. Please create a "media" bucket in your Supabase project and ensure it's set to public.
-            </AlertDescription>
-          </Alert>
+          <Card className="border-red-200 bg-red-50 mb-4">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-6 w-6 text-red-600 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-red-700">Media Storage Configuration Required</h3>
+                  <p className="text-sm text-red-700 mt-1">
+                    The media storage bucket has not been created or is not accessible. Please create a "media" bucket 
+                    in your Supabase project and ensure it's set to public with the correct CORS settings.
+                  </p>
+                  <p className="text-sm font-medium text-red-700 mt-2">
+                    After creating the bucket, click the Refresh button below.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
         
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*, audio/*, video/*"
-              onChange={handleFileChange}
-              disabled={uploading || !bucketExists}
-              className="max-w-xs"
-            />
-            {uploading && <Loader2 className="animate-spin h-4 w-4" />}
+            <div className="flex-1 flex gap-2">
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || !bucketExists}
+                className="bg-green-500 hover:bg-green-600 text-white flex gap-2 items-center"
+                type="button"
+              >
+                <Upload className="h-4 w-4" />
+                {uploading ? "Uploading..." : "Upload File"}
+              </Button>
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*, audio/*, video/*"
+                onChange={handleFileChange}
+                disabled={uploading || !bucketExists}
+                className="hidden"
+              />
+              {uploading && <Loader2 className="animate-spin h-4 w-4" />}
+            </div>
             <Button 
               onClick={handleRefresh} 
               variant="outline" 
@@ -181,7 +205,8 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
               disabled={loading}
               className="ml-auto"
             >
-              <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+              <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} /> 
+              {loading ? "Refreshing..." : "Refresh"}
             </Button>
           </div>
           
@@ -203,8 +228,9 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
             
             <TabsContent value={activeTab} className="border rounded-md p-2 h-[50vh] overflow-y-auto bg-white">
               {loading ? (
-                <div className="flex items-center justify-center h-full">
+                <div className="flex flex-col items-center justify-center h-full gap-2">
                   <Loader2 className="animate-spin h-8 w-8" />
+                  <p className="text-sm text-gray-500">Loading media files...</p>
                 </div>
               ) : !bucketExists ? (
                 <div className="flex items-center justify-center h-full text-gray-500">

@@ -3,9 +3,10 @@ import React, { useState, useRef } from "react";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { AlertCircle, Image, Music, Video, File, RefreshCcw } from "lucide-react";
+import { AlertCircle, Image, Music, Video, File, RefreshCcw, Upload, Link2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 
 const AdminMediaManager: React.FC = () => {
   const { items, loading, upload, fetchMedia, bucketExists, error } = useMediaLibrary();
@@ -14,6 +15,7 @@ const AdminMediaManager: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("all");
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -57,6 +59,14 @@ const AdminMediaManager: React.FC = () => {
     toast({
       title: "Refreshing media library",
       description: "Checking for new media files..."
+    });
+  };
+
+  const copyUrlToClipboard = (url: string) => {
+    navigator.clipboard.writeText(url);
+    toast({
+      title: "URL copied",
+      description: "File URL has been copied to clipboard"
     });
   };
 
@@ -127,18 +137,28 @@ const AdminMediaManager: React.FC = () => {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Storage Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
         </Alert>
       )}
       
       {!bucketExists && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Storage Configuration Required</AlertTitle>
-          <AlertDescription>
-            The media storage bucket has not been created or is not accessible. Please create a "media" bucket in your Supabase project and ensure it's set to public.
-          </AlertDescription>
-        </Alert>
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-6 w-6 text-red-600 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-red-700">Media Storage Configuration Required</h3>
+                <p className="text-sm text-red-700 mt-1">
+                  The media storage bucket has not been created or is not accessible. Please create a "media" bucket 
+                  in your Supabase project and ensure it's set to public with the correct CORS settings.
+                </p>
+                <p className="text-sm font-medium text-red-700 mt-2">
+                  After creating the bucket, click the Refresh button below.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
       
       {uploadError && (
@@ -161,11 +181,11 @@ const AdminMediaManager: React.FC = () => {
         />
         <Button
           type="button"
-          variant="secondary"
           onClick={() => uploadRef.current?.click()}
           disabled={uploading || !bucketExists}
-          className="bg-green-500 hover:bg-green-600 text-white"
+          className="bg-green-500 hover:bg-green-600 text-white flex gap-2 items-center"
         >
+          <Upload className="h-4 w-4" />
           {uploading ? "Uploading..." : "Upload Media"}
         </Button>
         <Button
@@ -175,8 +195,8 @@ const AdminMediaManager: React.FC = () => {
           disabled={loading || uploading}
           className="flex items-center gap-1"
         >
-          <RefreshCcw className="h-4 w-4" />
-          Refresh
+          <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          {loading ? "Refreshing..." : "Refresh"}
         </Button>
       </div>
       
@@ -212,15 +232,30 @@ const AdminMediaManager: React.FC = () => {
               </div>
             )}
             {filteredItems.map((item) => (
-              <div key={item.url} className="flex flex-col items-center gap-1">
+              <div key={item.url} className="flex flex-col items-center gap-1 group">
                 {renderMediaPreview(item)}
                 <div className="flex items-center gap-1 w-full">
                   {getMediaIcon(item.type)}
-                  <span className="text-xs truncate">{item.name}</span>
+                  <span className="text-xs truncate max-w-[80%]" title={item.name}>
+                    {item.name}
+                  </span>
                 </div>
-                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-agile-purple text-xs underline">
-                  View
-                </a>
+                <div className="flex gap-1">
+                  <a 
+                    href={item.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-blue-600 text-xs underline"
+                  >
+                    View
+                  </a>
+                  <button
+                    onClick={() => copyUrlToClipboard(item.url)}
+                    className="text-blue-600 text-xs underline flex items-center gap-0.5"
+                  >
+                    <Link2 className="h-3 w-3" /> Copy URL
+                  </button>
+                </div>
               </div>
             ))}
           </TabsContent>
