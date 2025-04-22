@@ -3,9 +3,10 @@ import React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface MediaLibraryProps {
   open: boolean;
@@ -18,7 +19,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   onOpenChange,
   onSelect
 }) => {
-  const { items, loading, upload } = useMediaLibrary();
+  const { items, loading, upload, bucketExists } = useMediaLibrary();
   const { toast } = useToast();
   const [uploading, setUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -74,6 +75,15 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
           </DialogDescription>
         </DialogHeader>
         
+        {!bucketExists && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Media storage is not properly configured. Please contact your administrator to set up the media bucket in Supabase.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Input
@@ -81,7 +91,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              disabled={uploading}
+              disabled={uploading || !bucketExists}
               className="max-w-xs"
             />
             {uploading && <Loader2 className="animate-spin h-4 w-4" />}
@@ -91,6 +101,10 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="animate-spin h-8 w-8" />
+              </div>
+            ) : !bucketExists ? (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                Media storage is not configured. Create a "media" bucket in your Supabase project.
               </div>
             ) : items.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-500">

@@ -7,7 +7,7 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const AdminMediaManager: React.FC = () => {
-  const { items, loading, upload, fetchMedia } = useMediaLibrary();
+  const { items, loading, upload, fetchMedia, bucketExists } = useMediaLibrary();
   const { toast } = useToast();
   const uploadRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -52,6 +52,16 @@ const AdminMediaManager: React.FC = () => {
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
+      {!bucketExists && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Storage Configuration Required</AlertTitle>
+          <AlertDescription>
+            The media storage bucket has not been created. You need to create a "media" bucket in your Supabase project.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {uploadError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -67,14 +77,14 @@ const AdminMediaManager: React.FC = () => {
           accept="image/*"
           hidden
           ref={uploadRef}
-          disabled={uploading}
+          disabled={uploading || !bucketExists}
           onChange={handleFileChange}
         />
         <Button
           type="button"
           variant="secondary"
           onClick={() => uploadRef.current?.click()}
-          disabled={uploading}
+          disabled={uploading || !bucketExists}
         >
           {uploading ? "Uploading..." : "Upload Image"}
         </Button>
@@ -82,7 +92,7 @@ const AdminMediaManager: React.FC = () => {
           type="button"
           variant="outline"
           onClick={fetchMedia}
-          disabled={loading || uploading}
+          disabled={loading || uploading || !bucketExists}
         >
           Refresh
         </Button>
@@ -91,7 +101,12 @@ const AdminMediaManager: React.FC = () => {
         <h2 className="font-semibold mb-2">Media Library</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-80 overflow-auto p-2 border rounded bg-white">
           {loading && <div className="col-span-full text-center">Loading...</div>}
-          {!loading && items.length === 0 && (
+          {!loading && !bucketExists && (
+            <div className="col-span-full text-center text-muted-foreground">
+              Media storage is not configured. Create a "media" bucket in your Supabase project.
+            </div>
+          )}
+          {!loading && bucketExists && items.length === 0 && (
             <div className="col-span-full text-center text-muted-foreground">No images found.</div>
           )}
           {items.map((item) => (

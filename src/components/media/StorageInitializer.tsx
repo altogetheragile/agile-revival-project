@@ -12,7 +12,7 @@ const StorageInitializer = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const initializeStorage = async () => {
+    const checkStorageBuckets = async () => {
       try {
         console.log("Checking for required storage buckets...");
         const { data: buckets, error } = await supabase.storage.listBuckets();
@@ -26,47 +26,28 @@ const StorageInitializer = () => {
         const mediaBucketExists = buckets?.some(bucket => bucket.name === "media");
         
         if (!mediaBucketExists) {
-          console.log("Media bucket doesn't exist, attempting to create it...");
-          try {
-            const { data, error: createError } = await supabase.storage.createBucket('media', {
-              public: true,
-              fileSizeLimit: 5242880, // 5MB
-              allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
-            });
-            
-            if (createError) {
-              console.error("Failed to create media bucket:", createError);
-              toast({
-                title: "Storage setup failed",
-                description: "Could not create the media storage bucket. Please check your connection.",
-                variant: "destructive",
-              });
-            } else {
-              console.log("Media bucket created successfully");
-              
-              // Since getPublicUrl doesn't return an error property, we'll just check if we can get a public URL
-              // which verifies the bucket is properly configured for public access
-              try {
-                const { data } = supabase.storage.from('media').getPublicUrl('dummy.txt');
-                console.log("Media bucket policy verified successfully");
-                setInitialized(true);
-              } catch (policyError) {
-                console.error("Failed to verify media bucket policy:", policyError);
-              }
-            }
-          } catch (err) {
-            console.error("Exception while creating media bucket:", err);
-          }
+          // Instead of showing an error, just inform the user they need to create a bucket
+          console.log("Media bucket doesn't exist. Please create it in the Supabase dashboard.");
+          toast({
+            title: "Media Storage Notice",
+            description: "For full functionality, please create a 'media' bucket in your Supabase project.",
+            duration: 7000,
+          });
+          
+          // Continue with limited functionality
+          setInitialized(true);
         } else {
-          console.log("Media bucket already exists");
+          console.log("Media bucket exists, proceeding with normal operation");
           setInitialized(true);
         }
       } catch (err) {
-        console.error("Error in storage initialization:", err);
+        console.error("Error checking storage buckets:", err);
+        // Still set initialized to true to allow the app to function
+        setInitialized(true);
       }
     };
 
-    initializeStorage();
+    checkStorageBuckets();
   }, [toast]);
 
   return null; // This component doesn't render anything

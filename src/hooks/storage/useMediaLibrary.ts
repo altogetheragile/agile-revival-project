@@ -11,10 +11,30 @@ export interface MediaItem {
 export const useMediaLibrary = () => {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [bucketExists, setBucketExists] = useState(false);
+
+  const checkBucketExists = useCallback(async () => {
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    if (error) {
+      console.error("Error checking buckets:", error);
+      return false;
+    }
+    return buckets?.some(bucket => bucket.name === "media") || false;
+  }, []);
 
   const fetchMedia = useCallback(async () => {
     setLoading(true);
     try {
+      // First check if bucket exists
+      const exists = await checkBucketExists();
+      setBucketExists(exists);
+      
+      if (!exists) {
+        console.log("Media bucket doesn't exist, cannot fetch media items");
+        setLoading(false);
+        return;
+      }
+      
       console.log("Fetching media from Supabase storage...");
       const { data, error } = await supabase.storage.from("media").list("", { 
         limit: 100,
@@ -43,7 +63,7 @@ export const useMediaLibrary = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [checkBucketExists]);
 
   useEffect(() => {
     console.log("Media library hook initialized, fetching media...");
@@ -54,25 +74,15 @@ export const useMediaLibrary = () => {
     console.log("Uploading file:", file.name, "size:", file.size);
     setLoading(true);
     try {
+      // Check if bucket exists first
+      const exists = await checkBucketExists();
+      if (!exists) {
+        console.log("Media bucket doesn't exist, cannot upload");
+        return { error: new Error("Media storage bucket doesn't exist. Please create it in your Supabase dashboard.") };
+      }
+      
       const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
       console.log("Generated filename:", fileName);
-      
-      // Check if storage bucket exists
-      console.log("Checking for media bucket...");
-      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
-      
-      if (bucketError) {
-        console.error("Failed to list storage buckets:", bucketError);
-        return { error: bucketError };
-      }
-      
-      const mediaBucketExists = buckets?.some(bucket => bucket.name === "media");
-      console.log("Media bucket exists:", mediaBucketExists);
-      
-      if (!mediaBucketExists) {
-        console.error("Media bucket does not exist - this should be created by the Supabase setup");
-        return { error: new Error("Media storage is not configured correctly. Please contact support.") };
-      }
       
       // Use upsert option to handle potential conflicts
       const { data, error } = await supabase.storage
@@ -101,5 +111,5 @@ export const useMediaLibrary = () => {
     }
   };
 
-  return { items, loading, upload, fetchMedia };
+  return { items, loading, upload, fetchMedia, bucketExists };
 };
