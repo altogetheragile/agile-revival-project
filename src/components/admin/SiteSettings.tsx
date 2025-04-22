@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GoogleDriveSettings } from "./settings/GoogleDriveSettings";
@@ -8,7 +7,7 @@ import { SecuritySettings } from "./settings/SecuritySettings";
 import { UserSettings } from "./settings/UserSettings";
 import { SocialMediaSettings } from "./settings/SocialMediaSettings";
 import { CourseTemplatesSettings } from "./settings/CourseTemplatesSettings";
-import { SiteSettingsProvider } from "@/contexts/site-settings/SiteSettingsContext";
+import { SiteSettingsProvider } from "@/contexts/site-settings";
 import { SettingsHeader } from "./settings/SettingsHeader";
 import { SettingsSync } from "./settings/SettingsSync";
 
