@@ -14,7 +14,7 @@ export interface Course {
   targetAudience?: string;
   duration?: string;
   skillLevel?: "beginner" | "intermediate" | "advanced" | "all-levels";
-  format?: "online" | "live" | "in-person" | "hybrid";
+  format?: string; // Changed from string literal union to any string
   status?: "draft" | "published";
   materials?: CourseMaterial[];
   googleDriveFolderId?: string;
@@ -57,7 +57,7 @@ export interface CourseTemplate {
   targetAudience?: string;
   duration?: string;
   skillLevel?: "beginner" | "intermediate" | "advanced" | "all-levels";
-  format?: "online" | "live" | "in-person" | "hybrid";
+  format?: string; // Changed from string literal to any string
   status?: "draft" | "published";
 }
 
