@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { CourseFormData } from "@/types/course";
@@ -65,9 +65,21 @@ const CourseForm: React.FC<CourseFormProps> = ({
   formData,
   setFormData
 }) => {
+  // Initialize the form with either formData (if provided) or initialData
   const form = useForm<CourseFormData>({
     defaultValues: formData || initialData
   });
+
+  // Update form values when formData changes (e.g., when image is selected from media library)
+  useEffect(() => {
+    if (formData) {
+      // Reset the form with the new data, including the imageUrl
+      Object.entries(formData).forEach(([key, value]) => {
+        form.setValue(key as any, value);
+      });
+      console.log("Form values updated from formData:", formData);
+    }
+  }, [formData, form]);
 
   const [mediaLibOpen, setMediaLibOpen] = useState(false);
 
@@ -178,7 +190,11 @@ const CourseForm: React.FC<CourseFormProps> = ({
           <MediaLibrary
             open={mediaLibOpen}
             onOpenChange={setMediaLibOpen}
-            onSelect={(url) => form.setValue("imageUrl", url, { shouldValidate: true })}
+            onSelect={(url) => {
+              form.setValue("imageUrl", url, { shouldValidate: true });
+              console.log("Direct form update with URL:", url);
+              setMediaLibOpen(false);
+            }}
           />
         )}
 

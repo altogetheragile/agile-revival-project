@@ -28,7 +28,12 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleSelect = (url: string) => {
+    console.log("Media selected in MediaLibrary:", url);
     onSelect(url);
+    toast({
+      title: "Media selected",
+      description: "The selected media URL has been added to the form."
+    });
     onOpenChange(false);
   };
 

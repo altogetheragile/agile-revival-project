@@ -91,9 +91,12 @@ export const useMediaLibrary = () => {
               type = 'video';
             }
             
+            const url = supabase.storage.from("media").getPublicUrl(f.name).data.publicUrl;
+            console.log(`Media item: ${f.name}, URL: ${url}`);
+            
             return {
               name: f.name,
-              url: supabase.storage.from("media").getPublicUrl(f.name).data.publicUrl,
+              url: url,
               type
             };
           });
