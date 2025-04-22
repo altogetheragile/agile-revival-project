@@ -27,11 +27,22 @@ const AdminMediaManager: React.FC = () => {
     });
   };
 
-  const handleUpload = async (file: File) => {
+  // Wrapper function to match expected type signature
+  const handleUpload = async (file: File): Promise<{ error: Error | null }> => {
     setUploading(true);
     try {
       const result = await upload(file);
-      return result;
+      
+      // If there's an error in the result, return it with the expected format
+      if (result.error) {
+        return { error: result.error instanceof Error ? result.error : new Error(String(result.error)) };
+      }
+      
+      // If successful, return null error
+      return { error: null };
+    } catch (err) {
+      // Convert any caught error to the expected format
+      return { error: err instanceof Error ? err : new Error(String(err)) };
     } finally {
       setUploading(false);
     }
