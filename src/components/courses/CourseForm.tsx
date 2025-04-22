@@ -12,17 +12,8 @@ import { CourseFormatFields } from "./form-utils/CourseFormatFields";
 import { CourseGoogleDriveSection } from "./form-utils/CourseGoogleDriveSection";
 import { CourseInstructorPriceFields } from "./form-utils/CourseInstructorPriceFields";
 import { CourseScheduleFields } from "./form-utils/CourseScheduleFields";
-import { 
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription
-} from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CourseStatusField } from "./form-utils/CourseStatusField";
+import { CourseImageField } from "./form-utils/CourseImageField";
 import MediaLibrary from "@/components/media/MediaLibrary";
 import { useState, Dispatch, SetStateAction } from "react";
 
@@ -99,91 +90,22 @@ const CourseForm: React.FC<CourseFormProps> = ({
     });
   };
 
-  // Add status field explicitly
-  const CourseStatusField = () => (
-    <FormField
-      control={form.control}
-      name="status"
-      render={({ field }) => (
-        <FormItem className="space-y-3">
-          <FormLabel>Course Status</FormLabel>
-          <FormControl>
-            <RadioGroup
-              onValueChange={field.onChange}
-              defaultValue={field.value}
-              className="flex flex-col space-y-1"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="draft" id="status-draft" />
-                <Label htmlFor="status-draft" className="font-medium">Draft</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="published" id="status-published" />
-                <Label htmlFor="status-published" className="font-medium">Published</Label>
-              </div>
-            </RadioGroup>
-          </FormControl>
-          <FormDescription>
-            Draft courses are only visible to administrators and can be edited. Published courses are visible to everyone.
-          </FormDescription>
-        </FormItem>
-      )}
-    />
-  );
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <BasicCourseFields form={form} />
-        
         <CourseScheduleFields form={form} />
         <CourseInstructorPriceFields form={form} />
         <CourseCategoryFields form={form} />
-        
-        {/* Add explicit status field */}
-        <CourseStatusField />
-        
+        <CourseStatusField form={form} />
         <CourseDetailsFields form={form} />
         <CourseFormatFields form={form} />
         <LearningOutcomeField form={form} />
         <CourseGoogleDriveSection courseId={initialData?.id} />
         
-        {/* Add image picker for course image */}
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Course Image URL
-                <Button
-                  className="ml-2"
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={onOpenMediaLibrary || (() => setMediaLibOpen(true))}
-                >
-                  Choose from Library
-                </Button>
-              </FormLabel>
-              <FormControl>
-                <div className="flex flex-col gap-2">
-                  <Input placeholder="https://example.com/image.jpg" {...field} />
-                  {field.value && (
-                    <img
-                      src={field.value}
-                      alt="Preview"
-                      className="mt-2 w-36 h-20 object-contain border rounded bg-white"
-                    />
-                  )}
-                </div>
-              </FormControl>
-              <FormDescription>
-                This image will be shown in course details and listings.
-              </FormDescription>
-              {/* Do not show FormMessage here to avoid clutter */}
-            </FormItem>
-          )}
+        <CourseImageField 
+          form={form}
+          onOpenMediaLibrary={onOpenMediaLibrary || (() => setMediaLibOpen(true))}
         />
 
         {!onOpenMediaLibrary && (
