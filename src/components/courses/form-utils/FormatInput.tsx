@@ -27,9 +27,22 @@ export const FormatInput: React.FC<FormatInputProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
     if (value.trim()) {
+      console.log("Format input form submitted with value:", value);
       onAdd();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (value.trim()) {
+        console.log("Enter key pressed in format input with value:", value);
+        onAdd();
+      }
+    } else if (e.key === "Escape") {
+      console.log("Escape key pressed in format input");
+      onCancel();
     }
   };
 
@@ -40,16 +53,7 @@ export const FormatInput: React.FC<FormatInputProps> = ({
         placeholder="Type new format"
         value={value}
         onChange={e => onChange(e.target.value)}
-        onKeyDown={e => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            if (value.trim()) {
-              onAdd();
-            }
-          } else if (e.key === "Escape") {
-            onCancel();
-          }
-        }}
+        onKeyDown={handleKeyDown}
         className="flex-1"
       />
       <Button
@@ -64,6 +68,7 @@ export const FormatInput: React.FC<FormatInputProps> = ({
         variant="ghost"
         onClick={(e) => {
           e.preventDefault();
+          console.log("Cancel button clicked in format input");
           onCancel();
         }}
       >

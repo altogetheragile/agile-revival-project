@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSiteSettings } from "@/contexts/site-settings";
 
@@ -20,27 +20,34 @@ export const useCourseFormatManagement = () => {
   const [addMode, setAddMode] = useState(false);
   const [newFormat, setNewFormat] = useState("");
   const { toast } = useToast();
-  const { settings, updateSettings } = useSiteSettings();
+  const { settings, updateSettings, refreshSettings } = useSiteSettings();
 
+  // Initialize formats from settings or defaults
   useEffect(() => {
     const initFormats = () => {
-      if (settings.courseFormats && Array.isArray(settings.courseFormats)) {
-        console.log("Loading formats from settings:", settings.courseFormats);
-        setFormats(settings.courseFormats);
-      } else {
-        console.log("No courseFormats in settings, using defaults:", defaultFormats);
+      try {
+        console.log("Initializing formats from settings:", settings);
+        if (settings.courseFormats && Array.isArray(settings.courseFormats)) {
+          console.log("Using formats from settings:", settings.courseFormats);
+          setFormats(settings.courseFormats);
+        } else {
+          console.log("No courseFormats in settings, using defaults:", defaultFormats);
+          setFormats(defaultFormats);
+          // Save default formats to settings
+          saveFormatsToSettings(defaultFormats).catch(err => 
+            console.error("Failed to save default formats:", err)
+          );
+        }
+      } catch (error) {
+        console.error("Error initializing formats:", error);
         setFormats(defaultFormats);
-        // Save default formats to settings
-        saveFormatsToSettings(defaultFormats).catch(err => 
-          console.error("Failed to save default formats:", err)
-        );
       }
     };
     
     initFormats();
-  }, [settings]);
+  }, [settings.courseFormats]);
 
-  const saveFormatsToSettings = async (updatedFormats: CourseFormat[]) => {
+  const saveFormatsToSettings = useCallback(async (updatedFormats: CourseFormat[]) => {
     try {
       console.log("Saving formats to settings:", updatedFormats);
       await updateSettings('courseFormats', updatedFormats);
@@ -50,9 +57,9 @@ export const useCourseFormatManagement = () => {
       console.error("Error saving formats:", error);
       return false;
     }
-  };
+  }, [updateSettings]);
 
-  const handleAddFormat = async (): Promise<string | null> => {
+  const handleAddFormat = useCallback(async (): Promise<string | null> => {
     if (!newFormat.trim()) {
       toast({
         title: "Error",
@@ -84,9 +91,13 @@ export const useCourseFormatManagement = () => {
       const success = await saveFormatsToSettings(updatedFormats);
       
       if (success) {
+        // Explicitly update the state here
         setFormats(updatedFormats);
         setAddMode(false);
         setNewFormat("");
+        
+        // Force refresh settings to ensure the UI reflects the changes
+        await refreshSettings();
         
         toast({
           title: "Format added",
@@ -111,9 +122,9 @@ export const useCourseFormatManagement = () => {
       });
       return null;
     }
-  };
+  }, [formats, newFormat, refreshSettings, saveFormatsToSettings, toast]);
 
-  const handleDeleteFormat = async (value: string): Promise<boolean> => {
+  const handleDeleteFormat = useCallback(async (value: string): Promise<boolean> => {
     try {
       console.log("Attempting to delete format:", value);
       const formatToDelete = formats.find(fmt => fmt.value === value);
@@ -135,7 +146,11 @@ export const useCourseFormatManagement = () => {
       
       if (success) {
         console.log("Format deleted successfully, updating state");
+        // Explicitly update the state
         setFormats(updatedFormats);
+        
+        // Force refresh settings to ensure the UI reflects the changes
+        await refreshSettings();
         
         toast({
           title: "Format deleted",
@@ -161,7 +176,7 @@ export const useCourseFormatManagement = () => {
       });
       return false;
     }
-  };
+  }, [formats, refreshSettings, saveFormatsToSettings, toast]);
 
   return {
     formats,

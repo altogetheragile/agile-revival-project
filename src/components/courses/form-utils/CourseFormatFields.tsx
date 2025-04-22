@@ -35,6 +35,38 @@ export const CourseFormatFields: React.FC<CourseFormatFieldsProps> = ({ form }) 
     handleDeleteFormat
   } = useCourseFormatManagement();
 
+  const handleFormatAdd = async () => {
+    console.log("Format add triggered with value:", newFormat);
+    try {
+      const formatValue = await handleAddFormat();
+      console.log("Format add result:", formatValue);
+      if (formatValue) {
+        // Update the form field with the new format value
+        form.setValue("format", formatValue);
+      }
+    } catch (err) {
+      console.error("Error in handleFormatAdd:", err);
+    }
+  };
+
+  const handleFormatDelete = async (value: string, e: React.MouseEvent) => {
+    console.log("Format delete triggered for:", value);
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      const success = await handleDeleteFormat(value);
+      console.log("Format delete result:", success);
+      
+      // If the deleted format was selected, clear the selection
+      if (success && form.getValues("format") === value) {
+        form.setValue("format", "");
+      }
+    } catch (err) {
+      console.error("Error in handleFormatDelete:", err);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <FormField
@@ -48,17 +80,7 @@ export const CourseFormatFields: React.FC<CourseFormatFieldsProps> = ({ form }) 
                 <FormatInput
                   value={newFormat}
                   onChange={setNewFormat}
-                  onAdd={() => {
-                    console.log("Format add triggered with value:", newFormat);
-                    handleAddFormat().then(formatValue => {
-                      console.log("Format added successfully:", formatValue);
-                      if (formatValue) {
-                        field.onChange(formatValue);
-                      }
-                    }).catch(err => {
-                      console.error("Error adding format:", err);
-                    });
-                  }}
+                  onAdd={handleFormatAdd}
                   onCancel={() => {
                     console.log("Format add cancelled");
                     setAddMode(false);
@@ -79,19 +101,7 @@ export const CourseFormatFields: React.FC<CourseFormatFieldsProps> = ({ form }) 
                       field.onChange(value);
                     }
                   }}
-                  onDelete={(formatValue, e) => {
-                    console.log("Format delete triggered for:", formatValue);
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleDeleteFormat(formatValue).then(success => {
-                      console.log("Format deleted result:", success);
-                      if (success && field.value === formatValue) {
-                        field.onChange("");
-                      }
-                    }).catch(err => {
-                      console.error("Error deleting format:", err);
-                    });
-                  }}
+                  onDelete={handleFormatDelete}
                 />
               </FormControl>
             )}
