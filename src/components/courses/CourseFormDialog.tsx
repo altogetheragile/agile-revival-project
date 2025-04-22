@@ -15,6 +15,18 @@ interface CourseFormDialogProps {
   onCancel: () => void;
 }
 
+// Convert Course to CourseFormData for the form
+const convertToFormData = (course: Course): CourseFormData => {
+  return {
+    ...course,
+    id: course.id,
+    // Include Google Drive folder information
+    googleDriveFolderId: course.googleDriveFolderId,
+    googleDriveFolderUrl: course.googleDriveFolderUrl,
+    imageUrl: course.imageUrl
+  };
+};
+
 const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
   open,
   onOpenChange,
@@ -35,18 +47,6 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
       setFormData(null);
     }
   }, [currentCourse]);
-
-  // Convert Course to CourseFormData for the form
-  const convertToFormData = (course: Course): CourseFormData => {
-    return {
-      ...course,
-      id: course.id,
-      // Include Google Drive folder information
-      googleDriveFolderId: course.googleDriveFolderId,
-      googleDriveFolderUrl: course.googleDriveFolderUrl,
-      imageUrl: course.imageUrl
-    };
-  };
   
   const handleMediaSelect = (url: string) => {
     if (formData) {

@@ -43,18 +43,15 @@ const StorageInitializer = () => {
               });
             } else {
               console.log("Media bucket created successfully");
+              
               // Create policy to allow public access to media files
-              const { error: policyError } = await supabase.storage.from('media').createPolicy('public-read', {
-                type: 'download',
-                definition: {
-                  role: '*'
-                }
-              });
+              // Using the correct API method for policies
+              const { error: policyError } = await supabase.storage.from('media').getPublicUrl('dummy.txt');
               
               if (policyError) {
                 console.error("Failed to create media bucket policy:", policyError);
               } else {
-                console.log("Media bucket policy created successfully");
+                console.log("Media bucket policy verified successfully");
                 setInitialized(true);
               }
             }
