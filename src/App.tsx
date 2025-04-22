@@ -21,6 +21,7 @@ import CustomCoaching from "./pages/services/CustomCoaching";
 import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 import { AuthProvider } from "@/contexts/AuthContext";
 import AuthPage from "@/pages/auth/AuthPage";
+import StorageInitializer from "@/components/media/StorageInitializer";
 
 // Create a client with sensible default options
 const queryClient = new QueryClient({
@@ -55,6 +56,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <ScrollToTop />
+              <StorageInitializer />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/training-schedule" element={<TrainingSchedule />} />

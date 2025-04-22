@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import CourseForm from "./CourseForm";
 import { Course, CourseFormData } from "@/types/course";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MediaLibrary } from "@/components/media/MediaLibrary";
+import MediaLibrary from "@/components/media/MediaLibrary";
 
 interface CourseFormDialogProps {
   open: boolean;
@@ -23,7 +23,18 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
   onCancel,
 }) => {
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
-  const [formData, setFormData] = useState<CourseFormData | null>(null);
+  const [formData, setFormData] = useState<CourseFormData | null>(
+    currentCourse ? convertToFormData(currentCourse) : null
+  );
+
+  // Update formData when currentCourse changes
+  React.useEffect(() => {
+    if (currentCourse) {
+      setFormData(convertToFormData(currentCourse));
+    } else {
+      setFormData(null);
+    }
+  }, [currentCourse]);
 
   // Convert Course to CourseFormData for the form
   const convertToFormData = (course: Course): CourseFormData => {

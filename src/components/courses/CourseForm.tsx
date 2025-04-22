@@ -32,7 +32,7 @@ interface CourseFormProps {
   onCancel: () => void;
   stayOpenOnSubmit?: boolean;
   isTemplate?: boolean;
-  // Add new props for media library integration
+  // Media library integration props
   onOpenMediaLibrary?: () => void;
   formData?: CourseFormData | null;
   setFormData?: Dispatch<SetStateAction<CourseFormData | null>>;

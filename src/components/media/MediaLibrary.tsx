@@ -1,9 +1,11 @@
 
-import React, { useRef, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { Button } from "@/components/ui/button";
-import { useMediaLibrary, MediaItem } from "@/hooks/storage/useMediaLibrary";
-import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 interface MediaLibraryProps {
   open: boolean;
@@ -11,87 +13,112 @@ interface MediaLibraryProps {
   onSelect: (url: string) => void;
 }
 
-export const MediaLibrary: React.FC<MediaLibraryProps> = ({
-  open,
+export const MediaLibrary: React.FC<MediaLibraryProps> = ({ 
+  open, 
   onOpenChange,
-  onSelect,
+  onSelect
 }) => {
-  const { items, loading, upload, fetchMedia } = useMediaLibrary();
+  const { items, loading, upload } = useMediaLibrary();
   const { toast } = useToast();
-  const uploadRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleSelect = (url: string) => {
+    onSelect(url);
+    onOpenChange(false);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       setUploading(true);
-      const { error } = await upload(file);
-      setUploading(false);
-      if (error) {
-        toast({ title: "Upload failed", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Upload successful" });
+      try {
+        const { error } = await upload(file);
+        if (error) {
+          console.error("Error uploading file:", error);
+          toast({
+            title: "Upload failed",
+            description: error.message || "There was a problem uploading your file",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "File uploaded",
+            description: "Your file has been uploaded successfully",
+          });
+        }
+      } catch (err: any) {
+        console.error("Upload error:", err);
+        toast({
+          title: "Upload failed",
+          description: err.message || "There was a problem uploading your file",
+          variant: "destructive",
+        });
+      } finally {
+        setUploading(false);
+        // Clear input value to allow uploading the same file again
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
-      uploadRef.current!.value = "";
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>Media Library</DialogTitle>
+          <DialogDescription>
+            Choose an image from the library or upload a new one.
+          </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-4">
-          <div className="flex gap-2">
-            <input
-              id="media-upload-input"
+        
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
-              hidden
-              ref={uploadRef}
-              disabled={uploading}
               onChange={handleFileChange}
-            />
-            <Button
-              type="button"
-              onClick={() => uploadRef.current?.click()}
               disabled={uploading}
-              variant="secondary"
-            >
-              {uploading ? "Uploading..." : "Upload Image"}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={fetchMedia}
-              disabled={loading}
-              variant="outline"
-            >
-              Refresh
-            </Button>
+              className="max-w-xs"
+            />
+            {uploading && <Loader2 className="animate-spin h-4 w-4" />}
           </div>
-          <div className="grid grid-cols-3 gap-2 max-h-72 overflow-auto">
-            {loading && <div className="col-span-3 text-center">Loading...</div>}
-            {!loading && items.length === 0 && (
-              <div className="col-span-3 text-center text-muted-foreground">
-                No images found.
+          
+          <div className="border rounded-md p-2 h-[50vh] overflow-y-auto bg-white">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="animate-spin h-8 w-8" />
+              </div>
+            ) : items.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No images found. Upload one to get started.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-2">
+                {items.map((item) => (
+                  <div
+                    key={item.url}
+                    className="relative group cursor-pointer border rounded-md p-2 hover:bg-gray-50 transition-colors"
+                    onClick={() => handleSelect(item.url)}
+                  >
+                    <img 
+                      src={item.url} 
+                      alt={item.name} 
+                      className="w-full aspect-square object-cover rounded-md"
+                    />
+                    <div className="mt-1 text-xs truncate">{item.name}</div>
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <Button variant="secondary" size="sm">
+                        Select
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-            {items.map((item, idx) => (
-              <button
-                type="button"
-                key={item.url + idx}
-                onClick={() => {
-                  onSelect(item.url);
-                  onOpenChange(false);
-                }}
-                className="border border-gray-300 rounded hover:ring-2 ring-agile-purple transition p-1 bg-white"
-                title={item.name}
-              >
-                <img src={item.url} alt={item.name} className="w-full h-24 object-contain" />
-              </button>
-            ))}
           </div>
         </div>
       </DialogContent>
