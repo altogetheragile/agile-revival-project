@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
@@ -23,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import MediaLibrary from "@/components/media/MediaLibrary";
-import { useState } from "react";
+import { useState, Dispatch, SetStateAction } from "react";
 
 interface CourseFormProps {
   initialData?: CourseFormData;
@@ -31,6 +32,10 @@ interface CourseFormProps {
   onCancel: () => void;
   stayOpenOnSubmit?: boolean;
   isTemplate?: boolean;
+  // Add new props for media library integration
+  onOpenMediaLibrary?: () => void;
+  formData?: CourseFormData | null;
+  setFormData?: Dispatch<SetStateAction<CourseFormData | null>>;
 }
 
 const CourseForm: React.FC<CourseFormProps> = ({
@@ -55,10 +60,13 @@ const CourseForm: React.FC<CourseFormProps> = ({
   onSubmit,
   onCancel,
   stayOpenOnSubmit = false,
-  isTemplate = false
+  isTemplate = false,
+  onOpenMediaLibrary,
+  formData,
+  setFormData
 }) => {
   const form = useForm<CourseFormData>({
-    defaultValues: initialData
+    defaultValues: formData || initialData
   });
 
   const [mediaLibOpen, setMediaLibOpen] = useState(false);
@@ -141,7 +149,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
                   type="button"
                   size="sm"
                   variant="secondary"
-                  onClick={() => setMediaLibOpen(true)}
+                  onClick={onOpenMediaLibrary || (() => setMediaLibOpen(true))}
                 >
                   Choose from Library
                 </Button>
@@ -166,11 +174,13 @@ const CourseForm: React.FC<CourseFormProps> = ({
           )}
         />
 
-        <MediaLibrary
-          open={mediaLibOpen}
-          onOpenChange={setMediaLibOpen}
-          onSelect={(url) => form.setValue("imageUrl", url, { shouldValidate: true })}
-        />
+        {!onOpenMediaLibrary && (
+          <MediaLibrary
+            open={mediaLibOpen}
+            onOpenChange={setMediaLibOpen}
+            onSelect={(url) => form.setValue("imageUrl", url, { shouldValidate: true })}
+          />
+        )}
 
         <CourseFormActions 
           onCancel={onCancel} 
