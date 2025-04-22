@@ -43,6 +43,10 @@ const BlogForm: React.FC<BlogFormProps> = ({
     onSubmit(data);
   };
 
+  const handleRemoveImage = () => {
+    form.setValue("imageUrl", "", { shouldValidate: true });
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -111,6 +115,17 @@ const BlogForm: React.FC<BlogFormProps> = ({
                 >
                   Choose from Library
                 </Button>
+                {field.value && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="ml-2 text-red-500 border-red-200"
+                    onClick={handleRemoveImage}
+                  >
+                    Remove Image
+                  </Button>
+                )}
               </FormLabel>
               <FormControl>
                 <div className="flex flex-col gap-2">
