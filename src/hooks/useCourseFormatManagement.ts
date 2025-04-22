@@ -30,7 +30,7 @@ export const useCourseFormatManagement = () => {
       if (shouldSaveDefaults.current && isInitialized.current) {
         try {
           // Use silent mode for initial default format saving
-          await updateSettings("courseFormats", defaultFormats);
+          await updateSettings("courseFormats", defaultFormats, true);
           shouldSaveDefaults.current = false;
           isInitialSave.current = false;
         } catch {}
@@ -44,7 +44,7 @@ export const useCourseFormatManagement = () => {
     try {
       // Skip toast on initial save
       if (isInitialSave.current) {
-        await updateSettings("courseFormats", updatedFormats);
+        await updateSettings("courseFormats", updatedFormats, true);
         isInitialSave.current = false;
         return true;
       }
