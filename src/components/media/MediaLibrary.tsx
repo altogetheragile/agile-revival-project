@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,7 @@ export const MediaLibraryReset: React.FC = () => {
       description: "Making sure all devices show the same images. Page will refresh.",
     });
     
+    // Remove the argument that was causing the error
     setTimeout(() => {
       synchronizeImageUrls();
     }, 1000);
@@ -101,6 +103,7 @@ export const MediaLibraryReset: React.FC = () => {
       variant: "default",
     });
     
+    // Remove the argument that was causing the error
     setTimeout(() => {
       makeThisBrowserMasterSource();
     }, 1000);

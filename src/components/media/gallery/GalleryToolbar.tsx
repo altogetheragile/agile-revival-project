@@ -26,6 +26,7 @@ export const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
     toast.success("Synchronizing images", {
       description: "Making all your devices show the same images. Page will refresh."
     });
+    // Remove the argument that was causing the error
     setTimeout(() => synchronizeImageUrls(), 1000);
   };
 
@@ -33,6 +34,7 @@ export const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
     toast.success("Setting Master Source", {
       description: "This browser is now the authoritative source for images. All other devices will sync to match."
     });
+    // Remove the argument that was causing the error
     setTimeout(() => makeThisBrowserMasterSource(), 1000);
   };
 
