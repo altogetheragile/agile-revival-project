@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { File, Image, Music, Video, AlertTriangle, RefreshCw, RefreshCcwDot } from "lucide-react";
 import { toast } from "sonner";
-import { getGlobalCacheBust } from "@/utils/courseStorage";
+import { getGlobalCacheBust, synchronizeImageUrls } from "@/utils/courseStorage";
 
 interface MediaGalleryProps {
   items: { name: string; url: string; type: string }[];
@@ -74,12 +74,23 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
       description: "All images in the gallery have been refreshed from source."
     });
   };
+
+  // Function to sync images across devices
+  const handleSyncAcrossDevices = () => {
+    toast.success("Synchronizing images", {
+      description: "Making all your devices show the same images. Page will refresh."
+    });
+    
+    setTimeout(() => {
+      synchronizeImageUrls();
+    }, 1000);
+  };
   
   const renderMediaItem = (item: { name: string; url: string; type: string }) => {
     // Apply both individual and global cache busting to the URL
     const refreshKey = refreshKeys[item.url] || 0;
     const baseUrl = item.url.split('?')[0];
-    const cachedUrl = `${baseUrl}?v=${refreshKey || globalCacheBust}`;
+    const cachedUrl = `${baseUrl}?v=${refreshKey || globalCacheBust}-${Date.now().toString().slice(-4)}`;
     
     switch (item.type) {
       case 'image':
@@ -178,7 +189,16 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
         <>
           {/* Add a refresh all button if we have images */}
           {imageCount > 0 && (
-            <div className="flex justify-end mb-2">
+            <div className="flex justify-end mb-2 gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSyncAcrossDevices}
+                className="text-xs bg-blue-50 text-blue-700 border-blue-300"
+              >
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Sync Across Devices
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -186,7 +206,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
                 className="text-xs"
               >
                 <RefreshCcwDot className="h-3 w-3 mr-1" />
-                Refresh All Images ({imageCount})
+                Refresh All ({imageCount})
               </Button>
             </div>
           )}

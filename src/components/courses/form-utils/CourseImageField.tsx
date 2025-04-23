@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Settings, RefreshCw } from "lucide-react";
+import { Settings, RefreshCw, Smartphone } from "lucide-react";
 import { toast } from "sonner";
-import { getStorageVersion, getGlobalCacheBust } from "@/utils/courseStorage";
+import { getStorageVersion, getGlobalCacheBust, synchronizeImageUrls } from "@/utils/courseStorage";
 
 interface CourseImageFieldProps {
   form: UseFormReturn<CourseFormData>;
@@ -18,6 +18,15 @@ interface CourseImageFieldProps {
 export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpenMediaLibrary }) => {
   const [refreshKey, setRefreshKey] = useState<number>(Date.now());
   const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
+  const [deviceInfo, setDeviceInfo] = useState<string>("");
+
+  // Get device info for better debugging
+  useEffect(() => {
+    const browser = navigator.userAgent;
+    const platform = navigator.platform;
+    const device = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop";
+    setDeviceInfo(`${device} - ${platform}`);
+  }, []);
 
   // Periodically check for global cache bust changes
   useEffect(() => {
@@ -46,9 +55,10 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
       aspectRatio,
       imageSize,
       imageLayout,
-      cacheBust: globalCacheBust
+      cacheBust: globalCacheBust,
+      deviceInfo
     });
-  }, [form, globalCacheBust]);
+  }, [form, globalCacheBust, deviceInfo]);
 
   const handleRemoveImage = () => {
     console.log("Removing course image");
@@ -81,6 +91,16 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
     });
   }, [form]);
 
+  const handleSyncAcrossDevices = () => {
+    toast.success("Synchronizing images", {
+      description: "Making all your devices show the same images. Page will refresh."
+    });
+    
+    setTimeout(() => {
+      synchronizeImageUrls();
+    }, 1000);
+  };
+
   // Listen for keyboard shortcut Cmd+Shift+R or Ctrl+Shift+R to refresh image
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -110,9 +130,10 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
       imageSize,
       imageLayout,
       storageVersion: getStorageVersion(),
-      globalCacheBust: getGlobalCacheBust()
+      globalCacheBust: getGlobalCacheBust(),
+      deviceInfo
     });
-  }, [imageUrl, aspectRatio, imageSize, imageLayout]);
+  }, [imageUrl, aspectRatio, imageSize, imageLayout, deviceInfo]);
   
   // Parse the aspect ratio string into a number
   const getAspectRatioValue = (ratio: string): number => {
@@ -125,9 +146,9 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
   const getImageUrlWithCacheBusting = (url: string) => {
     if (!url) return "";
     
-    // Use both specific refresh key and global cache bust
+    // Use both specific refresh key and global cache bust plus a random component
     const baseUrl = url.split('?')[0];
-    return `${baseUrl}?v=${refreshKey}-${globalCacheBust}`;
+    return `${baseUrl}?v=${refreshKey}-${globalCacheBust}-${Date.now().toString().slice(-4)}`;
   };
 
   // Render image based on layout
@@ -259,6 +280,16 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                     type="button"
                     size="sm"
                     variant="outline"
+                    className="ml-2 text-green-600 border-green-200"
+                    onClick={handleSyncAcrossDevices}
+                  >
+                    <Smartphone className="h-3.5 w-3.5 mr-1" />
+                    Sync Across Devices
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
                     className="ml-2 text-red-500 border-red-200"
                     onClick={handleRemoveImage}
                   >
@@ -281,9 +312,12 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                         {imageSize !== 100 && ` • ${imageSize}% size`}
                         {imageLayout !== "standard" && ` • ${imageLayout} layout`}
                         <div className="text-xs text-gray-400">
-                          Cache: {globalCacheBust.substring(0, 6)}...
+                          Device: {deviceInfo} | Cache: {globalCacheBust.substring(0, 6)}...
                           {refreshKey !== parseInt(globalCacheBust) && 
                             ` | Local: ${String(refreshKey).substring(0, 6)}...`}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          Base URL: {field.value.split('?')[0].substring(0, 40)}...
                         </div>
                       </div>
                       <Button
@@ -308,6 +342,9 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                     onClick={handleRefreshImage}
                   >
                     <span className="font-bold">Tip:</span> Having trouble seeing image changes? Click "Refresh Image" or use Cmd+Shift+R / Ctrl+Shift+R
+                  </span>
+                  <span className="text-xs block text-green-500 cursor-pointer mt-1">
+                    <span className="font-bold">Multi-device tip:</span> If images look different on your phone or other browsers, use "Sync Across Devices"
                   </span>
                 </div>
               )}

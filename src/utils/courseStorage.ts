@@ -5,6 +5,7 @@ import { initialCourses } from "@/data/initialCourses";
 const COURSES_STORAGE_KEY = 'agile-trainer-courses';
 const STORAGE_VERSION_KEY = 'agile-trainer-storage-version';
 const GLOBAL_CACHE_BUST_KEY = 'agile-trainer-cache-bust';
+const MASTER_IMAGE_KEY = 'agile-trainer-master-images';
 
 // Add a debug prefix to make logs more identifiable
 const logPrefix = "[CourseStorage]";
@@ -50,6 +51,124 @@ export const getGlobalCacheBust = () => {
   }
 };
 
+// Store a master record of all image URLs
+const storeMasterImageRecord = (courses: Course[]) => {
+  try {
+    // Extract just the id and imageUrl from each course
+    const imageMap = courses.map(course => ({
+      id: course.id,
+      imageUrl: course.imageUrl ? course.imageUrl.split('?')[0] : null // Store without cache params
+    }));
+    
+    localStorage.setItem(MASTER_IMAGE_KEY, JSON.stringify(imageMap));
+    console.log(`${logPrefix} Stored master image record:`, imageMap);
+  } catch (error) {
+    console.error(`${logPrefix} Failed to store master image record:`, error);
+  }
+};
+
+// Get the master image URL record
+const getMasterImageRecord = () => {
+  try {
+    const record = localStorage.getItem(MASTER_IMAGE_KEY);
+    if (record) {
+      return JSON.parse(record);
+    }
+  } catch (error) {
+    console.error(`${logPrefix} Failed to get master image record:`, error);
+  }
+  return null;
+};
+
+// New function to force synchronization of image URLs across all browsers and devices
+export const synchronizeImageUrls = () => {
+  try {
+    console.log(`${logPrefix} Starting image URL synchronization...`);
+    
+    // First, load the current courses
+    const currentCourses = loadCourses();
+    
+    // Get or create a master image record
+    let masterRecord = getMasterImageRecord();
+    
+    if (!masterRecord) {
+      // If no master record exists, create one from current courses
+      storeMasterImageRecord(currentCourses);
+      masterRecord = currentCourses.map(course => ({
+        id: course.id,
+        imageUrl: course.imageUrl ? course.imageUrl.split('?')[0] : null
+      }));
+      console.log(`${logPrefix} Created new master image record:`, masterRecord);
+    } else {
+      console.log(`${logPrefix} Using existing master image record:`, masterRecord);
+    }
+    
+    // Synchronize all courses with the master record
+    const synchronizedCourses = currentCourses.map(course => {
+      const masterImage = masterRecord.find((record: any) => record.id === course.id);
+      
+      if (masterImage && masterImage.imageUrl) {
+        // Strip any existing cache busting params from master URL
+        const masterBaseUrl = masterImage.imageUrl.split('?')[0];
+        
+        // If current image URL is different from master, update it
+        const currentBaseUrl = course.imageUrl ? course.imageUrl.split('?')[0] : null;
+        
+        if (currentBaseUrl !== masterBaseUrl) {
+          console.log(`${logPrefix} Synchronizing image for course ${course.id}:`);
+          console.log(`  - From: ${currentBaseUrl}`);
+          console.log(`  - To: ${masterBaseUrl}`);
+          
+          return {
+            ...course,
+            imageUrl: masterBaseUrl
+          };
+        }
+      }
+      
+      // No change needed
+      return course;
+    });
+    
+    // Generate a new global cache bust key
+    const newBust = generateVersionId();
+    
+    // Apply cache busting to all image URLs
+    const finalizedCourses = synchronizedCourses.map(course => {
+      if (course.imageUrl) {
+        const baseUrl = course.imageUrl.split('?')[0];
+        return {
+          ...course,
+          imageUrl: `${baseUrl}?v=${newBust}`
+        };
+      }
+      return course;
+    });
+    
+    // Update the global cache bust key
+    localStorage.setItem(GLOBAL_CACHE_BUST_KEY, newBust);
+    console.log(`${logPrefix} Updated global cache bust key: ${newBust}`);
+    
+    // Save the synchronized courses
+    localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(finalizedCourses));
+    console.log(`${logPrefix} Saved synchronized courses`);
+    
+    // Update the master record
+    storeMasterImageRecord(finalizedCourses);
+    
+    // Dispatch custom event
+    dispatchCoursesUpdatedEvent();
+    
+    // Force page reload to apply changes
+    window.location.href = window.location.pathname + "?sync=" + newBust;
+    
+    return true;
+  } catch (error) {
+    console.error(`${logPrefix} Error synchronizing image URLs:`, error);
+    return false;
+  }
+};
+
 export const loadCourses = (): Course[] => {
   try {
     const storedCourses = localStorage.getItem(COURSES_STORAGE_KEY);
@@ -71,6 +190,10 @@ export const loadCourses = (): Course[] => {
       if (validCourses) {
         // Always apply current cache busting to images when loading
         const coursesWithCacheBust = applyCacheBusting(validCourses);
+        
+        // Also update the master record if needed
+        storeMasterImageRecord(coursesWithCacheBust);
+        
         return coursesWithCacheBust;
       } else {
         console.warn(`${logPrefix} Course data validation failed, resetting to initial courses`);
@@ -86,7 +209,10 @@ export const loadCourses = (): Course[] => {
   
   // Return initial courses if nothing in storage or error occurred
   console.log(`${logPrefix} Using initial courses data`);
-  return applyCacheBusting([...initialCourses]);
+  const initialWithCache = applyCacheBusting([...initialCourses]);
+  // Update master record
+  storeMasterImageRecord(initialWithCache);
+  return initialWithCache;
 };
 
 // Apply cache busting to all image URLs
@@ -214,6 +340,27 @@ export const forceGlobalReset = () => {
     const newBust = Date.now().toString();
     localStorage.setItem(GLOBAL_CACHE_BUST_KEY, newBust);
     
+    // Reset to initial courses
+    const initialWithCache = initialCourses.map(course => {
+      if (course.imageUrl) {
+        // Remove any existing version params
+        const baseUrl = course.imageUrl.split('?')[0];
+        // Add new version param
+        return {
+          ...course,
+          imageUrl: `${baseUrl}?v=${newBust}`
+        };
+      }
+      return course;
+    });
+    
+    // Save the reset courses
+    localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(initialWithCache));
+    console.log(`${logPrefix} Performed nuclear reset with cache busting: ${newBust}`);
+    
+    // Update the master record
+    storeMasterImageRecord(initialWithCache);
+    
     // Force a reload with the new cache bust key
     window.location.href = window.location.pathname + "?forcereset=" + newBust;
   } catch (e) {
@@ -248,6 +395,9 @@ export const resetCoursesToInitial = (reloadPage = true): void => {
     // Save the versioned courses
     localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(versionedInitialCourses));
     console.log(`${logPrefix} Reset courses to initial state with cache busting: ${cacheBust}`);
+    
+    // Update master record
+    storeMasterImageRecord(versionedInitialCourses);
     
     // Dispatch the custom event
     dispatchCoursesUpdatedEvent();

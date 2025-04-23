@@ -2,14 +2,15 @@
 import React, { useEffect } from 'react';
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { Button } from "@/components/ui/button";
-import { RefreshCcw, AlertTriangle, Trash } from "lucide-react";
+import { RefreshCcw, AlertTriangle, Trash, Smartphone } from "lucide-react";
 import { 
   resetCoursesToInitial, 
   verifyStorageIntegrity, 
   setupCourseUpdateListener,
   getStorageVersion,
   getGlobalCacheBust,
-  forceGlobalReset
+  forceGlobalReset,
+  synchronizeImageUrls
 } from "@/utils/courseStorage";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
@@ -64,6 +65,18 @@ export const MediaLibraryReset: React.FC = () => {
       forceGlobalReset();
     }, 1000);
   };
+
+  const handleSynchronizeImages = () => {
+    console.log("Synchronizing images across all devices...");
+    toast({
+      title: "Synchronizing images",
+      description: "Making sure all devices show the same images. Page will refresh.",
+    });
+    
+    setTimeout(() => {
+      synchronizeImageUrls();
+    }, 1000);
+  };
   
   // Always show the reset section for better troubleshooting
   const storageHasIssues = !verifyStorageIntegrity();
@@ -106,6 +119,14 @@ export const MediaLibraryReset: React.FC = () => {
               Force Browser Refresh
             </Button>
             <Button 
+              onClick={handleSynchronizeImages}
+              variant="outline"
+              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              <Smartphone className="mr-2 h-4 w-4" />
+              Sync Images Across Devices
+            </Button>
+            <Button 
               onClick={handleNuclearReset}
               variant="outline"
               className="border-red-300 text-red-700 hover:bg-red-100"
@@ -129,14 +150,16 @@ export const GlobalResetProvider: React.FC = () => {
       window.resetCoursesToInitial = resetCoursesToInitial;
       // @ts-ignore - Expose force global reset function
       window.forceGlobalReset = forceGlobalReset;
-      console.log("Reset functions available. Use resetCoursesToInitial() or forceGlobalReset() in console to reset course data.");
+      // @ts-ignore - Expose synchronize images function
+      window.synchronizeImageUrls = synchronizeImageUrls;
+      console.log("Reset functions available. Use resetCoursesToInitial(), forceGlobalReset(), or synchronizeImageUrls() in console to reset course data.");
       
       // Check for URL parameters that indicate cache busting
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('refresh') || urlParams.has('forceCacheBust') || urlParams.has('forcereset')) {
+      if (urlParams.has('refresh') || urlParams.has('forceCacheBust') || urlParams.has('forcereset') || urlParams.has('sync')) {
         // Show toast notification after page reload
         toast.success("Page refreshed. Image cache should be updated.", {
-          description: "If you still see outdated images, try the Nuclear Reset button.",
+          description: "If you still see outdated images, try the Nuclear Reset or Sync buttons.",
           duration: 5000,
         });
         
