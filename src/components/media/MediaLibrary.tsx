@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { Button } from "@/components/ui/button";
-import { RefreshCcw, AlertTriangle, Trash, Smartphone, Star } from "lucide-react";
+import { RefreshCcw, AlertTriangle, Trash, Smartphone, Star, RefreshCw } from "lucide-react";
 import { 
   resetCoursesToInitial, 
   verifyStorageIntegrity, 
@@ -54,6 +54,20 @@ export const MediaLibraryReset: React.FC = () => {
     }, 500);
   };
 
+  const handleForceHardRefresh = () => {
+    console.log("Forcing hard browser refresh...");
+    toast({
+      title: "Hard refresh",
+      description: "Performing a complete page reload with cache clearing.",
+      variant: "destructive",
+    });
+    
+    setTimeout(() => {
+      // Force a hard reload with cache clearing
+      window.location.reload(true);
+    }, 500);
+  };
+
   const handleNuclearReset = () => {
     console.log("Performing nuclear reset across all browsers...");
     toast({
@@ -91,12 +105,28 @@ export const MediaLibraryReset: React.FC = () => {
       makeThisBrowserMasterSource();
     }, 1000);
   };
+
+  // Browser identifier info
+  const getBrowserId = () => {
+    return localStorage.getItem('agile-trainer-browser-id') || 'Not set';
+  };
   
   // Always show the reset section for better troubleshooting
   const storageHasIssues = !verifyStorageIntegrity();
   const storageVersion = getStorageVersion();
   const globalCacheBust = getGlobalCacheBust();
   const isMasterSource = localStorage.getItem('agile-trainer-master-source') === 'true';
+  const browserId = getBrowserId();
+  const isPrivateMode = (() => {
+    try {
+      // Try to detect private browsing mode
+      localStorage.setItem('test', 'test');
+      localStorage.removeItem('test');
+      return false;
+    } catch (e) {
+      return true;
+    }
+  })();
   
   return (
     <div className="p-4 border border-amber-200 bg-amber-50 rounded-md mb-4">
@@ -111,6 +141,11 @@ export const MediaLibraryReset: React.FC = () => {
                   <Star className="h-3 w-3 mr-1" /> Master Source
                 </span>
               )}
+              {isPrivateMode && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 border border-purple-300">
+                  Private/Incognito Mode
+                </span>
+              )}
             </h3>
             <p className="text-amber-700 text-sm">
               {storageHasIssues 
@@ -118,7 +153,7 @@ export const MediaLibraryReset: React.FC = () => {
                 : "Reset course images if you're seeing inconsistent images across browsers."}
             </p>
             <p className="text-amber-600 text-xs mt-1">
-              Storage version: {storageVersion || 'Not set'} | Cache bust: {globalCacheBust || 'Not set'}
+              Storage version: {storageVersion || 'Not set'} | Cache bust: {globalCacheBust || 'Not set'} | Browser ID: {browserId}
               {isMasterSource && ' | This browser is the master source for images'}
             </p>
             <p className="text-amber-600 text-xs mt-1">
@@ -136,6 +171,14 @@ export const MediaLibraryReset: React.FC = () => {
               {isMasterSource ? 'Current Master Source' : 'Make This Browser Master Source'}
             </Button>
             <Button 
+              onClick={handleSynchronizeImages}
+              variant="outline"
+              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              <Smartphone className="mr-2 h-4 w-4" />
+              Sync Images Across Devices
+            </Button>
+            <Button 
               onClick={handleReset}
               variant="outline"
               className="border-amber-300 text-amber-700 hover:bg-amber-100"
@@ -148,16 +191,16 @@ export const MediaLibraryReset: React.FC = () => {
               variant="outline"
               className="border-amber-300 text-amber-700 hover:bg-amber-100"
             >
-              <RefreshCcw className="mr-2 h-4 w-4" />
+              <RefreshCw className="mr-2 h-4 w-4" />
               Force Browser Refresh
             </Button>
             <Button 
-              onClick={handleSynchronizeImages}
+              onClick={handleForceHardRefresh}
               variant="outline"
-              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+              className="border-amber-400 text-amber-800 hover:bg-amber-100"
             >
-              <Smartphone className="mr-2 h-4 w-4" />
-              Sync Images Across Devices
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Hard Refresh (Clear Cache)
             </Button>
             <Button 
               onClick={handleNuclearReset}
@@ -206,7 +249,8 @@ export const GlobalResetProvider: React.FC = () => {
         if (e.key === 'agile-trainer-courses' || 
             e.key === 'agile-trainer-storage-version' || 
             e.key === 'agile-trainer-cache-bust' ||
-            e.key === 'agile-trainer-last-update') {
+            e.key === 'agile-trainer-last-update' ||
+            e.key === 'agile-trainer-master-source') {
           console.log("Course data changed in another tab/window. Reloading...");
           window.location.reload();
         }
@@ -223,4 +267,3 @@ export const GlobalResetProvider: React.FC = () => {
   
   return null;
 };
-

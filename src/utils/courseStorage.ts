@@ -6,9 +6,24 @@ const STORAGE_VERSION_KEY = 'agile-trainer-storage-version';
 const GLOBAL_CACHE_BUST_KEY = 'agile-trainer-cache-bust';
 const MASTER_IMAGE_KEY = 'agile-trainer-master-images';
 const MASTER_SOURCE_TRACKER = 'agile-trainer-master-source';
+const LAST_SYNC_TIME_KEY = 'agile-trainer-last-sync';
+const BROWSER_ID_KEY = 'agile-trainer-browser-id';
 
 const logPrefix = "[CourseStorage]";
 const COURSES_UPDATED_EVENT = 'courses-data-updated';
+
+const getBrowserId = () => {
+  let id = localStorage.getItem(BROWSER_ID_KEY);
+  if (!id) {
+    id = `browser-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    try {
+      localStorage.setItem(BROWSER_ID_KEY, id);
+    } catch (e) {
+      console.error(`${logPrefix} Failed to store browser ID:`, e);
+    }
+  }
+  return id;
+};
 
 const generateVersionId = () => {
   return Date.now().toString();
@@ -47,10 +62,13 @@ const storeMasterImageRecord = (courses: Course[], browserSource = false) => {
   try {
     const imageMap = courses.map(course => ({
       id: course.id,
-      imageUrl: course.imageUrl ? course.imageUrl.split('?')[0] : null
+      imageUrl: course.imageUrl ? course.imageUrl.split('?')[0] : null,
+      lastUpdated: Date.now(),
+      browserId: getBrowserId()
     }));
     
     localStorage.setItem(MASTER_IMAGE_KEY, JSON.stringify(imageMap));
+    localStorage.setItem(LAST_SYNC_TIME_KEY, Date.now().toString());
     
     if (browserSource) {
       localStorage.setItem(MASTER_SOURCE_TRACKER, 'true');
@@ -78,6 +96,7 @@ const getMasterImageRecord = () => {
 export const synchronizeImageUrls = (forceMasterSource = false) => {
   try {
     console.log(`${logPrefix} Starting image URL synchronization...`);
+    console.log(`${logPrefix} Browser ID: ${getBrowserId()}`);
     
     const currentCourses = loadCourses();
     let masterRecord = getMasterImageRecord();
@@ -87,7 +106,9 @@ export const synchronizeImageUrls = (forceMasterSource = false) => {
       storeMasterImageRecord(currentCourses, true);
       masterRecord = currentCourses.map(course => ({
         id: course.id,
-        imageUrl: course.imageUrl ? course.imageUrl.split('?')[0] : null
+        imageUrl: course.imageUrl ? course.imageUrl.split('?')[0] : null,
+        lastUpdated: Date.now(),
+        browserId: getBrowserId()
       }));
       console.log(`${logPrefix} Created new master image record as the authoritative source:`, masterRecord);
     } else if (!isMasterSource) {
@@ -99,7 +120,6 @@ export const synchronizeImageUrls = (forceMasterSource = false) => {
       
       if (masterImage && masterImage.imageUrl) {
         const masterBaseUrl = masterImage.imageUrl.split('?')[0];
-        
         const currentBaseUrl = course.imageUrl ? course.imageUrl.split('?')[0] : null;
         
         if (currentBaseUrl !== masterBaseUrl) {
@@ -152,11 +172,17 @@ export const synchronizeImageUrls = (forceMasterSource = false) => {
 export const makeThisBrowserMasterSource = () => {
   try {
     const currentCourses = loadCourses();
-    storeMasterImageRecord(currentCourses, true);
+    
     const newBust = generateVersionId();
     localStorage.setItem(GLOBAL_CACHE_BUST_KEY, newBust);
+    localStorage.setItem(MASTER_SOURCE_TRACKER, 'true');
     
-    console.log(`${logPrefix} This browser is now the MASTER SOURCE for all image URLs`);
+    storeMasterImageRecord(currentCourses, true);
+    
+    console.log(`${logPrefix} This browser (ID: ${getBrowserId()}) is now the MASTER SOURCE for all image URLs`);
+    console.log(`${logPrefix} Browser: ${navigator.userAgent}`);
+    console.log(`${logPrefix} Vendor: ${navigator.vendor}`);
+    console.log(`${logPrefix} Platform: ${navigator.platform}`);
     
     synchronizeImageUrls(true);
     
@@ -174,12 +200,14 @@ export const loadCourses = (): Course[] => {
     if (storedCourses) {
       const courses = JSON.parse(storedCourses);
       
+      console.log(`${logPrefix} Browser ID: ${getBrowserId()}`);
       console.log(`${logPrefix} Browser: ${navigator.userAgent}`);
       console.log(`${logPrefix} Browser vendor: ${navigator.vendor}`);
       console.log(`${logPrefix} Platform: ${navigator.platform}`);
       console.log(`${logPrefix} Storage version: ${getStorageVersion()}`);
       console.log(`${logPrefix} Cache bust key: ${getGlobalCacheBust()}`);
       console.log(`${logPrefix} Is master source: ${localStorage.getItem(MASTER_SOURCE_TRACKER) === 'true'}`);
+      console.log(`${logPrefix} Last sync: ${localStorage.getItem(LAST_SYNC_TIME_KEY) || 'Never'}`);
       
       const validCourses = validateCourses(courses);
       
@@ -292,7 +320,11 @@ export const saveCourses = (courses: Course[]): void => {
 const dispatchCoursesUpdatedEvent = () => {
   if (typeof window !== 'undefined') {
     const event = new CustomEvent(COURSES_UPDATED_EVENT, { 
-      detail: { timestamp: Date.now(), cacheBust: getGlobalCacheBust() } 
+      detail: { 
+        timestamp: Date.now(), 
+        cacheBust: getGlobalCacheBust(),
+        browserId: getBrowserId()
+      } 
     });
     window.dispatchEvent(event);
     console.log(`${logPrefix} Dispatched courses updated event with timestamp: ${Date.now()}`);
@@ -309,6 +341,7 @@ export const forceGlobalReset = () => {
   try {
     const newBust = Date.now().toString();
     localStorage.setItem(GLOBAL_CACHE_BUST_KEY, newBust);
+    localStorage.removeItem(MASTER_SOURCE_TRACKER);
     
     const initialWithCache = initialCourses.map(course => {
       if (course.imageUrl) {
@@ -338,6 +371,7 @@ export const resetCoursesToInitial = (reloadPage = true): void => {
   try {
     const cacheBust = Date.now().toString();
     localStorage.setItem(GLOBAL_CACHE_BUST_KEY, cacheBust);
+    localStorage.removeItem(MASTER_SOURCE_TRACKER);
     
     const versionedInitialCourses = initialCourses.map(course => {
       if (course.imageUrl) {
@@ -393,7 +427,11 @@ export const setupCourseUpdateListener = (callback: () => void): () => void => {
   window.addEventListener(COURSES_UPDATED_EVENT, handleCustomEvent);
   
   const handleStorageChange = (e: StorageEvent) => {
-    if (e.key === COURSES_STORAGE_KEY || e.key === STORAGE_VERSION_KEY || e.key === GLOBAL_CACHE_BUST_KEY || e.key === 'agile-trainer-last-update') {
+    if (e.key === COURSES_STORAGE_KEY || 
+        e.key === STORAGE_VERSION_KEY || 
+        e.key === GLOBAL_CACHE_BUST_KEY || 
+        e.key === 'agile-trainer-last-update' ||
+        e.key === MASTER_SOURCE_TRACKER) {
       console.log(`${logPrefix} Course data changed in another tab/window. Reloading...`);
       window.location.reload();
     }
