@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 
-// Add window interface to declare global functions
 declare global {
   interface Window {
     resetCoursesToInitial: typeof resetCoursesToInitial;
