@@ -87,6 +87,8 @@ export const MediaLibraryProvider: React.FC<MediaLibraryProviderProps> = ({
   const onSelect = (url: string) => {
     console.log("Image selected:", url);
     setSelectedImage(url);
+    // Automatically move to the adjust tab when an image is selected
+    setActiveTabPanel("adjust");
   };
 
   // Handle final confirmation
@@ -98,8 +100,11 @@ export const MediaLibraryProvider: React.FC<MediaLibraryProviderProps> = ({
         size: selectedSize, 
         layout: selectedLayout
       });
+      
       // Important: Pass all settings to the selectHandler
       selectHandler(selectedImage, selectedAspectRatio, selectedSize, selectedLayout);
+      
+      // Show success message and close dialog
       onClose();
     }
   };
