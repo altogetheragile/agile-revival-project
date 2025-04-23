@@ -25,20 +25,15 @@ const getMediaIcon = (type: string) => {
 const MediaGallery: React.FC<MediaGalleryProps> = ({
   items, loading, bucketExists, activeTab, onSelect, selectedImage
 }) => {
-  // Use global cache bust key to refresh all images at once
   const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
-  // Add state to track refresh keys for each image
   const [refreshKeys, setRefreshKeys] = useState<Record<string, number>>({});
-  // Track if this browser is the master source
   const [isMasterSource, setIsMasterSource] = useState<boolean>(
     localStorage.getItem('agile-trainer-master-source') === 'true'
   );
-  // Track browser ID
   const [browserId, setBrowserId] = useState<string>(
     localStorage.getItem('agile-trainer-browser-id') || 'Unknown'
   );
   
-  // Update the global cache bust when it changes in storage
   useEffect(() => {
     const intervalId = setInterval(() => {
       const currentBust = getGlobalCacheBust();
@@ -62,7 +57,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     return () => clearInterval(intervalId);
   }, [globalCacheBust, isMasterSource, browserId]);
   
-  // Function to force refresh a specific image
   const refreshImage = (url: string) => {
     setRefreshKeys(prev => ({
       ...prev,
@@ -74,7 +68,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     });
   };
   
-  // Function to refresh all images in the gallery
   const refreshAllImages = () => {
     const newKeys: Record<string, number> = {};
     const timestamp = Date.now();
@@ -93,7 +86,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     });
   };
 
-  // Function to sync images across devices
   const handleSyncAcrossDevices = () => {
     toast.success("Synchronizing images", {
       description: "Making all your devices show the same images. Page will refresh."
@@ -104,7 +96,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     }, 1000);
   };
   
-  // Function to make this browser the master source for images
   const handleMakeMasterSource = () => {
     toast.success("Setting Master Source", {
       description: "This browser is now the authoritative source for images. All other devices will sync to match."
@@ -115,7 +106,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     }, 1000);
   };
 
-  // Force a hard reload with cache clearing
   const forceHardRefresh = () => {
     toast.success("Hard refresh", {
       description: "Performing a complete reload with cache clearing."
@@ -127,7 +117,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   };
   
   const renderMediaItem = (item: { name: string; url: string; type: string }) => {
-    // Apply both individual and global cache busting to the URL
     const refreshKey = refreshKeys[item.url] || 0;
     const baseUrl = item.url.split('?')[0];
     const cachedUrl = `${baseUrl}?v=${refreshKey || globalCacheBust}-${Date.now().toString().slice(-4)}-${browserId}`;
@@ -146,16 +135,13 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
                 console.error(`Browser: ${navigator.userAgent}`);
                 console.error(`Browser ID: ${browserId}`);
                 
-                // Set a fallback image
                 (e.target as HTMLImageElement).src = '/placeholder.svg';
                 
-                // Add visual indicator for failed images
                 const parent = (e.target as HTMLElement).parentElement;
                 if (parent && !parent.querySelector('.error-indicator')) {
                   const errorIndicator = document.createElement('div');
                   errorIndicator.className = 'absolute top-0 right-0 p-1 bg-red-100 rounded-bl error-indicator';
                   
-                  // Add refresh button
                   const refreshButton = document.createElement('button');
                   refreshButton.className = 'flex items-center justify-center w-6 h-6 bg-white rounded-full shadow hover:bg-gray-100';
                   refreshButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg>';
@@ -169,7 +155,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
                 }
               }}
             />
-            {/* Add a refresh button overlay */}
             <button 
               className="absolute top-1 right-1 bg-white bg-opacity-70 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={(e) => {
@@ -208,10 +193,8 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     return items.filter(item => item.type === activeTab);
   }, [items, activeTab]);
 
-  // Count images for refresh all button
   const imageCount = filteredItems.filter(item => item.type === 'image').length;
 
-  // Check for private browsing mode
   const isPrivateMode = (() => {
     try {
       localStorage.setItem('test', 'test');
@@ -239,7 +222,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
         </div>
       ) : (
         <>
-          {/* Add a refresh all button if we have images */}
           {imageCount > 0 && (
             <div className="flex justify-end mb-2 gap-2">
               {isPrivateMode && (
@@ -288,7 +270,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
             </div>
           )}
           
-          {/* Show browser ID and debug info */}
           <div className="mb-2 text-xs text-gray-500 bg-gray-50 p-1 rounded border border-gray-200">
             <div className="flex justify-between items-center">
               <div>Browser ID: {browserId.substring(0, 8)}...</div>

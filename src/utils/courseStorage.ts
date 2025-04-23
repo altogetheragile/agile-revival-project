@@ -1,4 +1,29 @@
+
 import { toast } from "sonner";
+import { Course } from "@/types/course";
+
+// Function to load courses from localStorage
+export const loadCourses = (): Course[] => {
+  try {
+    const storedCourses = localStorage.getItem('agile-trainer-courses');
+    return storedCourses ? JSON.parse(storedCourses) : [];
+  } catch (error) {
+    console.error("[CourseStorage] Error loading courses:", error);
+    return [];
+  }
+};
+
+// Function to save courses to localStorage
+export const saveCourses = (courses: Course[]): void => {
+  try {
+    localStorage.setItem('agile-trainer-courses', JSON.stringify(courses));
+    localStorage.setItem('agile-trainer-last-update', Date.now().toString());
+    localStorage.setItem('agile-trainer-storage-version', Date.now().toString());
+  } catch (error) {
+    console.error("[CourseStorage] Error saving courses:", error);
+    toast.error("Failed to save course data");
+  }
+};
 
 // Function to reset course data to initial state
 export const resetCoursesToInitial = (cacheBust: boolean = false) => {
@@ -71,8 +96,8 @@ export const forceGlobalReset = () => {
   window.location.href = window.location.href.split('?')[0] + '?forcereset=' + timestamp;
 };
 
-// Add or update the function signature to accept a parameter
-export const makeThisBrowserMasterSource = (force: boolean = false) => {
+// Fix the function signatures to match usage
+export const makeThisBrowserMasterSource = () => {
   console.log("[CourseStorage] This browser is now the MASTER SOURCE for images");
   
   // Generate a browser ID if one doesn't exist yet
@@ -85,7 +110,7 @@ export const makeThisBrowserMasterSource = (force: boolean = false) => {
   localStorage.setItem('agile-trainer-master-source', 'true');
   
   // Get all courses with image URLs
-  const courses = JSON.parse(localStorage.getItem('agile-trainer-courses') || '[]');
+  const courses = loadCourses();
   const coursesWithImages = courses.filter((course: any) => course.imageUrl);
   
   console.log("[CourseStorage] Validated courses with images:", coursesWithImages);
@@ -107,14 +132,12 @@ export const makeThisBrowserMasterSource = (force: boolean = false) => {
   const timestamp = Date.now().toString();
   localStorage.setItem('agile-trainer-cache-bust', timestamp);
   
-  // If force is true, reload the page to apply changes immediately
-  if (force) {
-    window.location.href = window.location.href.split('?')[0] + '?master=' + timestamp;
-  }
+  // Reload the page to apply changes immediately
+  window.location.href = window.location.href.split('?')[0] + '?master=' + timestamp;
 };
 
-// Update synchronizeImageUrls to accept a force parameter
-export const synchronizeImageUrls = (force: boolean = false) => {
+// Update synchronizeImageUrls to not require a parameter
+export const synchronizeImageUrls = () => {
   // Check if there's a master image record
   const masterRecordStr = localStorage.getItem('agile-trainer-master-image-record');
   
@@ -125,10 +148,8 @@ export const synchronizeImageUrls = (force: boolean = false) => {
     const timestamp = Date.now().toString();
     localStorage.setItem('agile-trainer-cache-bust', timestamp);
     
-    if (force) {
-      window.location.href = window.location.href.split('?')[0] + '?sync=' + timestamp;
-    }
-    
+    // Reload to apply the new cache-busting timestamp
+    window.location.href = window.location.href.split('?')[0] + '?sync=' + timestamp;
     return;
   }
   
@@ -138,7 +159,7 @@ export const synchronizeImageUrls = (force: boolean = false) => {
     console.log("[CourseStorage] Found master image record:", masterRecord);
     
     // Get current courses
-    const courses = JSON.parse(localStorage.getItem('agile-trainer-courses') || '[]');
+    const courses = loadCourses();
     
     // Update course image URLs to match the master record
     const updatedCourses = courses.map((course: any) => {
@@ -154,7 +175,7 @@ export const synchronizeImageUrls = (force: boolean = false) => {
     });
     
     // Save updated courses
-    localStorage.setItem('agile-trainer-courses', JSON.stringify(updatedCourses));
+    saveCourses(updatedCourses);
     
     // Update the global cache bust
     const timestamp = Date.now().toString();
@@ -162,10 +183,8 @@ export const synchronizeImageUrls = (force: boolean = false) => {
     
     console.log("[CourseStorage] Synchronization complete.");
     
-    // If force is true, reload the page to show updated images
-    if (force) {
-      window.location.href = window.location.href.split('?')[0] + '?sync=' + timestamp;
-    }
+    // Reload the page to show updated images
+    window.location.href = window.location.href.split('?')[0] + '?sync=' + timestamp;
   } catch (e) {
     console.error("[CourseStorage] Error during synchronization:", e);
   }
