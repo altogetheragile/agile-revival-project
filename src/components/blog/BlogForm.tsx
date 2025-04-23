@@ -1,21 +1,13 @@
 
 import React from "react";
 import { useForm } from "react-hook-form";
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { BlogPostFormData } from "@/types/blog";
 import MediaLibrary from "@/components/media/MediaLibrary";
 import { useState } from "react";
+import { BasicBlogFields } from "./form-utils/BasicBlogFields";
+import { BlogMetaFields } from "./form-utils/BlogMetaFields";
 import BlogImageField from "./form-utils/BlogImageField";
 
 interface BlogFormProps {
@@ -40,7 +32,6 @@ const BlogForm: React.FC<BlogFormProps> = ({
 }) => {
   const [mediaLibOpen, setMediaLibOpen] = useState(false);
   
-  // Initialize the form
   const form = useForm<BlogPostFormData>({
     defaultValues: initialData
   });
@@ -48,59 +39,9 @@ const BlogForm: React.FC<BlogFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Title field */}
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Blog post title" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Content field */}
-        <FormField
-          control={form.control}
-          name="content"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Content</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Blog post content" 
-                  className="min-h-[200px]" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* URL field */}
-        <FormField
-          control={form.control}
-          name="url"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>URL</FormLabel>
-              <FormControl>
-                <Input placeholder="https://example.com/blog-post" {...field} />
-              </FormControl>
-              <FormDescription>
-                Full URL to the blog post if hosted elsewhere
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Image field using the new BlogImageField component */}
+        <BasicBlogFields form={form} />
+        <BlogMetaFields form={form} />
+        
         <BlogImageField 
           form={form}
           onOpenMediaLibrary={() => setMediaLibOpen(true)}
@@ -122,31 +63,6 @@ const BlogForm: React.FC<BlogFormProps> = ({
           }}
         />
 
-        {/* Draft checkbox */}
-        <FormField
-          control={form.control}
-          name="isDraft"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <input
-                  type="checkbox"
-                  checked={field.value}
-                  onChange={field.onChange}
-                  className="h-4 w-4 rounded border-gray-300 text-agile-purple"
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Save as draft</FormLabel>
-                <FormDescription>
-                  Draft posts won't be displayed publicly
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        {/* Form action buttons */}
         <div className="flex justify-end space-x-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
@@ -161,3 +77,4 @@ const BlogForm: React.FC<BlogFormProps> = ({
 };
 
 export default BlogForm;
+
