@@ -1,6 +1,6 @@
 
 import React from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Music, Video, File } from "lucide-react"; // Import the missing icons
 import { Button } from "@/components/ui/button";
 import { getMediaIcon } from "./MediaIcon";
 
