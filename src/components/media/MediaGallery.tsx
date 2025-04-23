@@ -1,8 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { File, Image, Music, Video, AlertTriangle, RefreshCw } from "lucide-react";
+import { File, Image, Music, Video, AlertTriangle, RefreshCw, RefreshCcwDot } from "lucide-react";
 import { toast } from "sonner";
+import { getGlobalCacheBust } from "@/utils/courseStorage";
 
 interface MediaGalleryProps {
   items: { name: string; url: string; type: string }[];
@@ -25,8 +26,23 @@ const getMediaIcon = (type: string) => {
 const MediaGallery: React.FC<MediaGalleryProps> = ({
   items, loading, bucketExists, activeTab, onSelect, selectedImage
 }) => {
+  // Use global cache bust key to refresh all images at once
+  const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
   // Add state to track refresh keys for each image
   const [refreshKeys, setRefreshKeys] = useState<Record<string, number>>({});
+  
+  // Update the global cache bust when it changes in storage
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const currentBust = getGlobalCacheBust();
+      if (currentBust !== globalCacheBust) {
+        setGlobalCacheBust(currentBust);
+        console.log("Updated gallery cache bust key:", currentBust);
+      }
+    }, 2000);
+    
+    return () => clearInterval(intervalId);
+  }, [globalCacheBust]);
   
   // Function to force refresh a specific image
   const refreshImage = (url: string) => {
@@ -40,10 +56,30 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     });
   };
   
+  // Function to refresh all images in the gallery
+  const refreshAllImages = () => {
+    const newKeys: Record<string, number> = {};
+    const timestamp = Date.now();
+    
+    items.forEach(item => {
+      if (item.type === 'image') {
+        newKeys[item.url] = timestamp;
+      }
+    });
+    
+    setRefreshKeys(newKeys);
+    setGlobalCacheBust(getGlobalCacheBust());
+    
+    toast.success("All images refreshed", {
+      description: "All images in the gallery have been refreshed from source."
+    });
+  };
+  
   const renderMediaItem = (item: { name: string; url: string; type: string }) => {
-    // Add cache busting to the URL
+    // Apply both individual and global cache busting to the URL
     const refreshKey = refreshKeys[item.url] || 0;
-    const cachedUrl = refreshKey ? `${item.url.split('?')[0]}?v=${refreshKey}` : item.url;
+    const baseUrl = item.url.split('?')[0];
+    const cachedUrl = `${baseUrl}?v=${refreshKey || globalCacheBust}`;
     
     switch (item.type) {
       case 'image':
@@ -53,7 +89,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
               src={cachedUrl} 
               alt={item.name}
               className="w-full aspect-square object-cover rounded-md"
-              key={refreshKey || 'initial'}
+              key={`${refreshKey || 'global'}-${globalCacheBust}`}
               onError={(e) => {
                 console.error(`Failed to load image: ${cachedUrl}`);
                 console.error(`Browser: ${navigator.userAgent}`);
@@ -120,6 +156,9 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     return items.filter(item => item.type === activeTab);
   }, [items, activeTab]);
 
+  // Count images for refresh all button
+  const imageCount = filteredItems.filter(item => item.type === 'image').length;
+
   return (
     <div className="border rounded-md p-2 h-[50vh] overflow-y-auto bg-white">
       {loading ? (
@@ -136,28 +175,45 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
           No {activeTab !== "all" ? activeTab : ""} files found. Upload one to get started.
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-2">
-          {filteredItems.map((item) => (
-            <div
-              key={`${item.url}-${refreshKeys[item.url] || 'initial'}`}
-              className={`relative group cursor-pointer border rounded-md p-2 hover:bg-gray-50 transition-colors ${
-                selectedImage === item.url ? 'ring-2 ring-agile-purple bg-gray-50' : ''
-              }`}
-              onClick={() => onSelect(item.url)}
-            >
-              {renderMediaItem(item)}
-              <div className="mt-1 flex items-center gap-1">
-                {getMediaIcon(item.type)}
-                <span className="text-xs truncate">{item.name}</span>
-              </div>
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
-                <Button variant="secondary" size="sm">
-                  {selectedImage === item.url ? "Selected" : "Select"}
-                </Button>
-              </div>
+        <>
+          {/* Add a refresh all button if we have images */}
+          {imageCount > 0 && (
+            <div className="flex justify-end mb-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={refreshAllImages}
+                className="text-xs"
+              >
+                <RefreshCcwDot className="h-3 w-3 mr-1" />
+                Refresh All Images ({imageCount})
+              </Button>
             </div>
-          ))}
-        </div>
+          )}
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-2">
+            {filteredItems.map((item) => (
+              <div
+                key={`${item.url}-${refreshKeys[item.url] || globalCacheBust}`}
+                className={`relative group cursor-pointer border rounded-md p-2 hover:bg-gray-50 transition-colors ${
+                  selectedImage === item.url ? 'ring-2 ring-agile-purple bg-gray-50' : ''
+                }`}
+                onClick={() => onSelect(item.url)}
+              >
+                {renderMediaItem(item)}
+                <div className="mt-1 flex items-center gap-1">
+                  {getMediaIcon(item.type)}
+                  <span className="text-xs truncate">{item.name}</span>
+                </div>
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <Button variant="secondary" size="sm">
+                    {selectedImage === item.url ? "Selected" : "Select"}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

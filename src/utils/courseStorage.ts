@@ -4,6 +4,7 @@ import { initialCourses } from "@/data/initialCourses";
 
 const COURSES_STORAGE_KEY = 'agile-trainer-courses';
 const STORAGE_VERSION_KEY = 'agile-trainer-storage-version';
+const GLOBAL_CACHE_BUST_KEY = 'agile-trainer-cache-bust';
 
 // Add a debug prefix to make logs more identifiable
 const logPrefix = "[CourseStorage]";
@@ -21,6 +22,8 @@ const updateStorageVersion = () => {
   try {
     const version = generateVersionId();
     localStorage.setItem(STORAGE_VERSION_KEY, version);
+    // Also update the global cache bust key
+    localStorage.setItem(GLOBAL_CACHE_BUST_KEY, version);
     console.log(`${logPrefix} Updated storage version to: ${version}`);
     return version;
   } catch (error) {
@@ -33,6 +36,15 @@ const updateStorageVersion = () => {
 export const getStorageVersion = () => {
   try {
     return localStorage.getItem(STORAGE_VERSION_KEY) || generateVersionId();
+  } catch {
+    return generateVersionId();
+  }
+};
+
+// Get global cache bust timestamp
+export const getGlobalCacheBust = () => {
+  try {
+    return localStorage.getItem(GLOBAL_CACHE_BUST_KEY) || generateVersionId();
   } catch {
     return generateVersionId();
   }
@@ -51,12 +63,15 @@ export const loadCourses = (): Course[] => {
       console.log(`${logPrefix} Browser vendor: ${navigator.vendor}`);
       console.log(`${logPrefix} Platform: ${navigator.platform}`);
       console.log(`${logPrefix} Storage version: ${getStorageVersion()}`);
+      console.log(`${logPrefix} Cache bust key: ${getGlobalCacheBust()}`);
       
       // Validate all course data is properly structured
       const validCourses = validateCourses(courses);
       
       if (validCourses) {
-        return validCourses;
+        // Always apply current cache busting to images when loading
+        const coursesWithCacheBust = applyCacheBusting(validCourses);
+        return coursesWithCacheBust;
       } else {
         console.warn(`${logPrefix} Course data validation failed, resetting to initial courses`);
         resetCoursesToInitial(false); // Don't reload page on validation failure
@@ -71,7 +86,24 @@ export const loadCourses = (): Course[] => {
   
   // Return initial courses if nothing in storage or error occurred
   console.log(`${logPrefix} Using initial courses data`);
-  return [...initialCourses];
+  return applyCacheBusting([...initialCourses]);
+};
+
+// Apply cache busting to all image URLs
+const applyCacheBusting = (courses: Course[]): Course[] => {
+  const cacheBust = getGlobalCacheBust();
+  return courses.map(course => {
+    if (course.imageUrl) {
+      // Strip any existing cache busting params
+      const baseUrl = course.imageUrl.split('?')[0];
+      // Apply new cache busting param
+      return {
+        ...course,
+        imageUrl: `${baseUrl}?v=${cacheBust}`
+      };
+    }
+    return course;
+  });
 };
 
 // Validates course data for consistency and completeness
@@ -128,33 +160,22 @@ export const saveCourses = (courses: Course[]): void => {
       return course;
     });
 
+    // Update the storage version and global cache bust key to ensure cache busting
+    updateStorageVersion();
+    
     // Normalize imageUrls to prevent cross-browser inconsistencies
     const normalizedCourses = coursesToSave.map(course => {
       if (course.imageUrl) {
-        // Add cache-busting query param to force image refresh
-        if (course.imageUrl.includes('?v=')) {
-          // Remove old version param if exists
-          course.imageUrl = course.imageUrl.split('?v=')[0];
-        }
+        // Remove old version param if exists
+        const baseUrl = course.imageUrl.split('?')[0];
         
         // Add new version param
-        const version = getStorageVersion();
-        course.imageUrl = `${course.imageUrl}?v=${version}`;
-        
-        // Ensure URLs are absolute and properly formatted
-        try {
-          const url = new URL(course.imageUrl, window.location.origin);
-          course.imageUrl = url.toString();
-        } catch (e) {
-          console.warn(`${logPrefix} Invalid image URL format for course ${course.id}: ${course.imageUrl}`);
-        }
+        const cacheBust = getGlobalCacheBust();
+        course.imageUrl = `${baseUrl}?v=${cacheBust}`;
       }
       return course;
     });
 
-    // Update the storage version to ensure cache busting
-    updateStorageVersion();
-    
     // Save the courses with updated version
     localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(normalizedCourses));
     
@@ -172,16 +193,41 @@ export const saveCourses = (courses: Course[]): void => {
 const dispatchCoursesUpdatedEvent = () => {
   if (typeof window !== 'undefined') {
     const event = new CustomEvent(COURSES_UPDATED_EVENT, { 
-      detail: { timestamp: Date.now() } 
+      detail: { timestamp: Date.now(), cacheBust: getGlobalCacheBust() } 
     });
     window.dispatchEvent(event);
     console.log(`${logPrefix} Dispatched courses updated event with timestamp: ${Date.now()}`);
+    
+    // Also update a global flag to help with cross-browser detection
+    try {
+      localStorage.setItem('agile-trainer-last-update', Date.now().toString());
+    } catch (e) {
+      console.error(`${logPrefix} Failed to update last-update flag:`, e);
+    }
+  }
+};
+
+// Hard reset function to force all browsers to reload fresh data
+export const forceGlobalReset = () => {
+  try {
+    // Generate a completely new cache bust key
+    const newBust = Date.now().toString();
+    localStorage.setItem(GLOBAL_CACHE_BUST_KEY, newBust);
+    
+    // Force a reload with the new cache bust key
+    window.location.href = window.location.pathname + "?forcereset=" + newBust;
+  } catch (e) {
+    console.error(`${logPrefix} Failed to force global reset:`, e);
   }
 };
 
 // Reset courses to initial state and optionally reload the page to refresh all data
 export const resetCoursesToInitial = (reloadPage = true): void => {
   try {
+    // Generate a new cache bust key
+    const cacheBust = Date.now().toString();
+    localStorage.setItem(GLOBAL_CACHE_BUST_KEY, cacheBust);
+    
     // Apply cache busting to initial courses before saving
     const versionedInitialCourses = initialCourses.map(course => {
       if (course.imageUrl) {
@@ -190,7 +236,7 @@ export const resetCoursesToInitial = (reloadPage = true): void => {
         // Add new version param
         return {
           ...course,
-          imageUrl: `${baseUrl}?v=${Date.now()}`
+          imageUrl: `${baseUrl}?v=${cacheBust}`
         };
       }
       return course;
@@ -201,7 +247,7 @@ export const resetCoursesToInitial = (reloadPage = true): void => {
     
     // Save the versioned courses
     localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(versionedInitialCourses));
-    console.log(`${logPrefix} Reset courses to initial state with cache busting`);
+    console.log(`${logPrefix} Reset courses to initial state with cache busting: ${cacheBust}`);
     
     // Dispatch the custom event
     dispatchCoursesUpdatedEvent();
@@ -210,7 +256,7 @@ export const resetCoursesToInitial = (reloadPage = true): void => {
     if (reloadPage && typeof window !== 'undefined') {
       console.log(`${logPrefix} Reloading page to refresh data...`);
       // Force a hard reload to clear all caches
-      window.location.href = window.location.href + '?refresh=' + Date.now();
+      window.location.href = window.location.pathname + '?refresh=' + cacheBust;
     }
   } catch (error) {
     console.error(`${logPrefix} Error resetting courses:`, error);
@@ -246,7 +292,7 @@ export const setupCourseUpdateListener = (callback: () => void): () => void => {
   
   // Also listen for storage events from other tabs/windows
   const handleStorageChange = (e: StorageEvent) => {
-    if (e.key === COURSES_STORAGE_KEY || e.key === STORAGE_VERSION_KEY) {
+    if (e.key === COURSES_STORAGE_KEY || e.key === STORAGE_VERSION_KEY || e.key === GLOBAL_CACHE_BUST_KEY || e.key === 'agile-trainer-last-update') {
       console.log(`${logPrefix} Course data changed in another tab/window. Reloading...`);
       window.location.reload();
     }

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { CourseFormData } from "@/types/course";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Settings, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { getStorageVersion } from "@/utils/courseStorage";
+import { getStorageVersion, getGlobalCacheBust } from "@/utils/courseStorage";
 
 interface CourseImageFieldProps {
   form: UseFormReturn<CourseFormData>;
@@ -17,6 +17,22 @@ interface CourseImageFieldProps {
 
 export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpenMediaLibrary }) => {
   const [refreshKey, setRefreshKey] = useState<number>(Date.now());
+  const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
+
+  // Periodically check for global cache bust changes
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const currentBust = getGlobalCacheBust();
+      if (currentBust !== globalCacheBust) {
+        setGlobalCacheBust(currentBust);
+        console.log("Updated course image field with new cache bust key:", currentBust);
+        // Force a re-render of the image
+        setRefreshKey(Date.now());
+      }
+    }, 2000);
+    
+    return () => clearInterval(intervalId);
+  }, [globalCacheBust]);
 
   // Log initial values when component mounts
   useEffect(() => {
@@ -29,9 +45,10 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
       imageUrl,
       aspectRatio,
       imageSize,
-      imageLayout
+      imageLayout,
+      cacheBust: globalCacheBust
     });
-  }, [form]);
+  }, [form, globalCacheBust]);
 
   const handleRemoveImage = () => {
     console.log("Removing course image");
@@ -42,26 +59,43 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
     form.setValue("imageLayout" as any, "standard", { shouldValidate: false });
   };
 
-  const handleRefreshImage = () => {
+  const handleRefreshImage = useCallback(() => {
     // Get the current image URL
     const currentUrl = form.getValues("imageUrl");
     if (!currentUrl) return;
 
     // Force a refresh by updating the URL with a new cache-busting parameter
     const baseUrl = currentUrl.split('?')[0];
-    const newUrl = `${baseUrl}?v=${Date.now()}`;
+    const newTimestamp = Date.now();
+    const newUrl = `${baseUrl}?v=${newTimestamp}`;
     
     // Update the form value
     form.setValue("imageUrl", newUrl, { shouldValidate: true });
     
     // Update the refresh key to force re-render
-    setRefreshKey(Date.now());
+    setRefreshKey(newTimestamp);
     
     // Show toast notification
     toast.success("Image refreshed", {
       description: "The image has been refreshed from source."
     });
-  };
+  }, [form]);
+
+  // Listen for keyboard shortcut Cmd+Shift+R or Ctrl+Shift+R to refresh image
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'r') {
+        e.preventDefault();
+        const imageUrl = form.getValues("imageUrl");
+        if (imageUrl) {
+          handleRefreshImage();
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleRefreshImage, form]);
 
   const imageUrl = form.watch("imageUrl");
   const aspectRatio = form.watch("imageAspectRatio" as any) || "16/9";
@@ -75,7 +109,8 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
       aspectRatio,
       imageSize,
       imageLayout,
-      storageVersion: getStorageVersion()
+      storageVersion: getStorageVersion(),
+      globalCacheBust: getGlobalCacheBust()
     });
   }, [imageUrl, aspectRatio, imageSize, imageLayout]);
   
@@ -90,11 +125,9 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
   const getImageUrlWithCacheBusting = (url: string) => {
     if (!url) return "";
     
-    // Make sure we have a fresh URL with our current refresh key
-    if (url.includes('?')) {
-      return `${url.split('?')[0]}?v=${refreshKey}`;
-    }
-    return `${url}?v=${refreshKey}`;
+    // Use both specific refresh key and global cache bust
+    const baseUrl = url.split('?')[0];
+    return `${baseUrl}?v=${refreshKey}-${globalCacheBust}`;
   };
 
   // Render image based on layout
@@ -117,11 +150,20 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
               src={cachedImageUrl}
               alt="Preview"
               className="w-full object-contain"
-              key={refreshKey} // Force re-render on refresh
+              key={`${refreshKey}-${globalCacheBust}`}
               onError={(e) => {
                 console.error("Failed to load image:", cachedImageUrl);
                 // Set a fallback or display an error indicator
                 (e.target as HTMLImageElement).src = "/placeholder.svg";
+                
+                // Show a toast to suggest refreshing
+                toast.error("Failed to load image", {
+                  description: "Try clicking the 'Refresh Image' button to reload it.",
+                  action: {
+                    label: "Refresh",
+                    onClick: handleRefreshImage
+                  }
+                });
               }}
             />
           ) : (
@@ -130,11 +172,20 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                 src={cachedImageUrl}
                 alt="Preview"
                 className="w-full h-full object-cover"
-                key={refreshKey} // Force re-render on refresh
+                key={`${refreshKey}-${globalCacheBust}`}
                 onError={(e) => {
                   console.error("Failed to load image:", cachedImageUrl);
                   // Set a fallback or display an error indicator
                   (e.target as HTMLImageElement).src = "/placeholder.svg";
+                  
+                  // Show a toast to suggest refreshing
+                  toast.error("Failed to load image", {
+                    description: "Try clicking the 'Refresh Image' button to reload it.",
+                    action: {
+                      label: "Refresh",
+                      onClick: handleRefreshImage
+                    }
+                  });
                 }}
               />
             </AspectRatio>
@@ -150,7 +201,11 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
             src={cachedImageUrl}
             alt="Preview"
             className="w-full object-contain"
-            key={refreshKey} // Force re-render on refresh
+            key={`${refreshKey}-${globalCacheBust}`}
+            onError={(e) => {
+              console.error("Failed to load image:", cachedImageUrl);
+              (e.target as HTMLImageElement).src = "/placeholder.svg";
+            }}
           />
         ) : (
           <AspectRatio ratio={getAspectRatioValue(aspectRatio)}>
@@ -158,7 +213,11 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
               src={cachedImageUrl}
               alt="Preview"
               className="w-full h-full object-cover"
-              key={refreshKey} // Force re-render on refresh
+              key={`${refreshKey}-${globalCacheBust}`}
+              onError={(e) => {
+                console.error("Failed to load image:", cachedImageUrl);
+                (e.target as HTMLImageElement).src = "/placeholder.svg";
+              }}
             />
           </AspectRatio>
         )}
@@ -221,7 +280,11 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                           : "Original ratio"} 
                         {imageSize !== 100 && ` • ${imageSize}% size`}
                         {imageLayout !== "standard" && ` • ${imageLayout} layout`}
-                        <div className="text-xs text-gray-400">v{refreshKey}</div>
+                        <div className="text-xs text-gray-400">
+                          Cache: {globalCacheBust.substring(0, 6)}...
+                          {refreshKey !== parseInt(globalCacheBust) && 
+                            ` | Local: ${String(refreshKey).substring(0, 6)}...`}
+                        </div>
                       </div>
                       <Button
                         size="sm"
@@ -238,7 +301,16 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
             </FormControl>
             <FormDescription>
               This image will be shown in course details and listings.
-              {field.value && <span className="text-xs block text-blue-500 cursor-pointer" onClick={handleRefreshImage}>Having trouble seeing image changes? Click "Refresh Image"</span>}
+              {field.value && (
+                <div>
+                  <span 
+                    className="text-xs block text-blue-500 cursor-pointer mt-1" 
+                    onClick={handleRefreshImage}
+                  >
+                    <span className="font-bold">Tip:</span> Having trouble seeing image changes? Click "Refresh Image" or use Cmd+Shift+R / Ctrl+Shift+R
+                  </span>
+                </div>
+              )}
             </FormDescription>
           </FormItem>
         )}
