@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { Course } from "@/types/course";
 
