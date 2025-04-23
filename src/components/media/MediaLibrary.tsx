@@ -1,17 +1,12 @@
 
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle } from "lucide-react";
-import { MediaLibraryTabs } from "./MediaLibraryTabs";
-import { MediaLibraryFileUploader } from "./MediaLibraryFileUploader";
-import { MediaGallery } from "./MediaGallery";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ImageAdjustmentPanel from "./ImageAdjustmentPanel";
-import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MediaLibraryHeader } from "./header/MediaLibraryHeader";
+import { StorageErrors } from "./errors/StorageErrors";
+import { MediaLibraryTabsContent } from "./tabs/MediaLibraryTabsContent";
 
 interface MediaLibraryProps {
   open: boolean;
@@ -35,7 +30,6 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
   const [activeTabPanel, setActiveTabPanel] = useState<string>("browse");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Fetch media when the component mounts or when the dialog opens
   useEffect(() => {
     if (open) {
       fetchMedia();
@@ -47,7 +41,6 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
         activeTabPanel
       });
     } else {
-      // Reset state when dialog closes
       setActiveTabPanel("browse");
     }
   }, [open, fetchMedia]);
@@ -55,7 +48,6 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
   const handleSelect = (url: string) => {
     console.log("Image selected:", url);
     setSelectedImage(url);
-    // Automatically switch to adjust tab when an image is selected
     setActiveTabPanel("adjust");
   };
 
@@ -118,7 +110,6 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
     }
   };
 
-  // Handle tab change logic
   const handleTabChange = (value: string) => {
     setActiveTabPanel(value);
     console.log("Tab changed to:", value);
@@ -130,43 +121,9 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
       onOpenChange(isOpen);
     }}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Media Library</DialogTitle>
-          <DialogDescription>
-            Choose media from the library or upload a new file.
-          </DialogDescription>
-        </DialogHeader>
+        <MediaLibraryHeader />
+        <StorageErrors error={error} bucketExists={bucketExists} />
         
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Storage Error</AlertTitle>
-            <AlertDescription className="whitespace-pre-wrap">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {!bucketExists && (
-          <Card className="border-red-200 bg-red-50 mb-4">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-6 w-6 text-red-600 mt-0.5" />
-                <div>
-                  <h3 className="font-semibold text-red-700">Media Storage Configuration Required</h3>
-                  <p className="text-sm text-red-700 mt-1">
-                    The media storage bucket has not been created or is not accessible. Please create a "media" bucket 
-                    in your Supabase project and ensure it's set to public with the correct CORS settings.
-                  </p>
-                  <p className="text-sm font-medium text-red-700 mt-2">
-                    After creating the bucket, click the Refresh button below.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <Tabs value={activeTabPanel} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full">
             <TabsTrigger value="browse" className="flex-1">Browse Media</TabsTrigger>
@@ -175,96 +132,30 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="browse">
-            <div className="space-y-4">
-              <div>
-                <MediaLibraryFileUploader
-                  uploading={uploading}
-                  loading={loading}
-                  bucketExists={bucketExists}
-                  fileInputRef={fileInputRef}
-                  onFileChange={handleFileChange}
-                  onUploadClick={() => fileInputRef.current?.click()}
-                  onRefresh={handleRefresh}
-                />
-              </div>
-
-              <MediaLibraryTabs
-                items={items}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-              />
-
-              <MediaGallery
-                items={items}
-                loading={loading}
-                bucketExists={bucketExists}
-                activeTab={activeTab}
-                onSelect={handleSelect}
-                selectedImage={selectedImage}
-              />
-              
-              {selectedImage && (
-                <div className="flex justify-end space-x-2 mt-4">
-                  <Button 
-                    onClick={() => setSelectedImage(null)}
-                    variant="outline"
-                  >
-                    Clear Selection
-                  </Button>
-                  <Button 
-                    onClick={() => setActiveTabPanel("adjust")}
-                    variant="default"
-                  >
-                    Adjust Image
-                  </Button>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="adjust">
-            {selectedImage ? (
-              <ImageAdjustmentPanel
-                imageUrl={selectedImage}
-                aspectRatio={selectedAspectRatio || "16/9"}
-                size={selectedSize || 100}
-                layout={selectedLayout || "standard"}
-                onAspectRatioChange={(ratio) => {
-                  console.log("Aspect ratio changed to:", ratio);
-                  setSelectedAspectRatio(ratio);
-                }}
-                onSizeChange={(size) => {
-                  console.log("Size changed to:", size);
-                  setSelectedSize(size);
-                }}
-                onLayoutChange={(layout) => {
-                  console.log("Layout changed to:", layout);
-                  setSelectedLayout(layout);
-                }}
-              />
-            ) : (
-              <div className="p-6 text-center">
-                <p className="text-gray-500">No image selected. Please select an image first.</p>
-              </div>
-            )}
-            
-            <div className="mt-4 flex justify-end space-x-2">
-              <Button 
-                onClick={() => setActiveTabPanel("browse")}
-                variant="outline"
-              >
-                Back to Browse
-              </Button>
-              <Button 
-                onClick={handleConfirmSelection}
-                variant="default"
-                disabled={!selectedImage}
-              >
-                Confirm Selection
-              </Button>
-            </div>
-          </TabsContent>
+          <MediaLibraryTabsContent
+            activeTabPanel={activeTabPanel}
+            selectedImage={selectedImage}
+            selectedAspectRatio={selectedAspectRatio}
+            selectedSize={selectedSize}
+            selectedLayout={selectedLayout}
+            items={items}
+            loading={loading}
+            bucketExists={bucketExists}
+            uploading={uploading}
+            activeTab={activeTab}
+            fileInputRef={fileInputRef}
+            onFileChange={handleFileChange}
+            onUploadClick={() => fileInputRef.current?.click()}
+            onRefresh={handleRefresh}
+            setActiveTab={setActiveTab}
+            onSelect={handleSelect}
+            setSelectedImage={setSelectedImage}
+            setActiveTabPanel={setActiveTabPanel}
+            onAspectRatioChange={setSelectedAspectRatio}
+            onSizeChange={setSelectedSize}
+            onLayoutChange={setSelectedLayout}
+            handleConfirmSelection={handleConfirmSelection}
+          />
         </Tabs>
       </DialogContent>
     </Dialog>
