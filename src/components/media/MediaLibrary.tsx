@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { useToast } from "@/hooks/use-toast";
@@ -35,9 +35,10 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
   const [activeTabPanel, setActiveTabPanel] = useState<string>("browse");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Log when component renders with current state
-  React.useEffect(() => {
+  // Fetch media when the component mounts or when the dialog opens
+  useEffect(() => {
     if (open) {
+      fetchMedia();
       console.log("MediaLibrary opened with state:", {
         selectedImage,
         selectedAspectRatio,
@@ -46,7 +47,7 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
         activeTabPanel
       });
     }
-  }, [open, selectedImage, selectedAspectRatio, selectedSize, selectedLayout, activeTabPanel]);
+  }, [open, fetchMedia]);
 
   const handleSelect = (url: string) => {
     console.log("Image selected:", url);
@@ -121,7 +122,10 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      console.log("Dialog onOpenChange called with:", isOpen);
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Media Library</DialogTitle>

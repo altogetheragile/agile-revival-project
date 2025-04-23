@@ -18,6 +18,7 @@ import MediaLibrary from "@/components/media/MediaLibrary";
 import { useState, useEffect } from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Settings } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface BlogFormProps {
   initialData?: BlogPostFormData;
@@ -41,6 +42,7 @@ const BlogForm: React.FC<BlogFormProps> = ({
 }) => {
   // Store complete form data separately to avoid losing fields
   const [formData, setFormData] = useState<BlogPostFormData>(initialData);
+  const { toast } = useToast();
   
   // Initialize the form
   const form = useForm<BlogPostFormData>({
@@ -135,6 +137,11 @@ const BlogForm: React.FC<BlogFormProps> = ({
     
     // Update state
     setFormData(updatedFormData);
+    
+    toast({
+      title: "Image updated",
+      description: "The image and its settings have been applied to the blog post."
+    });
     
     console.log("Updated blog form data:", updatedFormData);
   };
@@ -271,7 +278,22 @@ const BlogForm: React.FC<BlogFormProps> = ({
                           size="sm"
                           variant="ghost"
                           className="flex items-center gap-1"
-                          onClick={() => setMediaLibOpen(true)}
+                          onClick={() => {
+                            // Ensure we have the current form values when opening the media library
+                            const currentImageUrl = form.getValues("imageUrl");
+                            const currentAspectRatio = form.getValues("imageAspectRatio") || formData.imageAspectRatio || "16/9";
+                            const currentImageSize = form.getValues("imageSize") || formData.imageSize || 100;
+                            const currentImageLayout = form.getValues("imageLayout") || formData.imageLayout || "standard";
+                            
+                            console.log("Opening media library with current settings:", {
+                              url: currentImageUrl,
+                              aspectRatio: currentAspectRatio,
+                              size: currentImageSize,
+                              layout: currentImageLayout
+                            });
+                            
+                            setMediaLibOpen(true);
+                          }}
                         >
                           <Settings className="h-4 w-4" /> Adjust
                         </Button>
@@ -316,7 +338,10 @@ const BlogForm: React.FC<BlogFormProps> = ({
         {/* Media Library component */}
         <MediaLibrary
           open={mediaLibOpen}
-          onOpenChange={setMediaLibOpen}
+          onOpenChange={(open) => {
+            console.log("Media library open state changing to:", open);
+            setMediaLibOpen(open);
+          }}
           onSelect={handleMediaSelect}
         />
 

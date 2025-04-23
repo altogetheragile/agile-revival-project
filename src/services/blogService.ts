@@ -1,3 +1,4 @@
+
 import { BlogPost, BlogPostFormData } from "@/types/blog";
 import { blogPosts as initialBlogPosts } from "@/data/blogPosts";
 
@@ -101,7 +102,6 @@ export const updateBlogPost = (id: number, postData: BlogPostFormData): BlogPost
     url: postData.url !== undefined ? postData.url : originalPost.url,
     isDraft: postData.isDraft !== undefined ? postData.isDraft : originalPost.isDraft,
     // Explicitly handle image properties to prevent them from becoming undefined
-    // Always use the postData value if provided, otherwise fall back to original, then to defaults
     imageUrl: postData.imageUrl !== undefined ? postData.imageUrl : originalPost.imageUrl || "",
     imageAspectRatio: postData.imageAspectRatio !== undefined ? postData.imageAspectRatio : originalPost.imageAspectRatio || "16/9",
     imageSize: postData.imageSize !== undefined ? postData.imageSize : originalPost.imageSize || 100,
