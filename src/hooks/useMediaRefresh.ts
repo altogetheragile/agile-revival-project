@@ -1,62 +1,127 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getGlobalCacheBust } from "@/utils/courseStorage";
 import { toast } from "sonner";
 
-export const useMediaRefresh = () => {
-  const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
-  const [refreshKeys, setRefreshKeys] = useState<Record<string, number>>({});
+// Define TypeScript interfaces for better type safety
+export interface RefreshKeys {
+  [url: string]: number;
+}
 
+export interface MediaRefreshOptions {
+  pollingInterval?: number;
+  showToasts?: boolean;
+}
+
+export interface MediaRefreshResult {
+  globalCacheBust: string;
+  refreshKeys: RefreshKeys;
+  refreshImage: (url: string) => void;
+  refreshAllImages: (urls: string[]) => void;
+  getImageUrl: (baseUrl: string) => string;
+  resetRefreshKeys: () => void;
+}
+
+/**
+ * A hook for managing media refresh states and cache busting
+ * @param options Configuration options for the hook
+ * @returns Methods and state for media refreshing
+ */
+export const useMediaRefresh = (options: MediaRefreshOptions = {}): MediaRefreshResult => {
+  const { 
+    pollingInterval = 2000, 
+    showToasts = true 
+  } = options;
+  
+  const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
+  const [refreshKeys, setRefreshKeys] = useState<RefreshKeys>({});
+
+  // Check for global cache bust changes
   useEffect(() => {
     const intervalId = setInterval(() => {
-      const currentBust = getGlobalCacheBust();
-      if (currentBust !== globalCacheBust) {
-        setGlobalCacheBust(currentBust);
-        console.log("Updated media refresh with new cache bust key:", currentBust);
+      try {
+        const currentBust = getGlobalCacheBust();
+        if (currentBust !== globalCacheBust) {
+          setGlobalCacheBust(currentBust);
+          console.log("Updated media refresh with new cache bust key:", currentBust);
+        }
+      } catch (error) {
+        console.error("Error checking for cache bust updates:", error);
       }
-    }, 2000);
+    }, pollingInterval);
     
     return () => clearInterval(intervalId);
-  }, [globalCacheBust]);
+  }, [globalCacheBust, pollingInterval]);
 
-  const refreshImage = (url: string) => {
+  // Refresh a single image
+  const refreshImage = useCallback((url: string): void => {
+    if (!url) {
+      console.warn("Attempted to refresh an empty URL");
+      return;
+    }
+
     setRefreshKeys(prev => ({
       ...prev,
       [url]: Date.now()
     }));
     
-    toast.success("Image refreshed", {
-      description: "The image has been refreshed from source."
-    });
-  };
+    if (showToasts) {
+      toast.success("Image refreshed", {
+        description: "The image has been refreshed from source."
+      });
+    }
+  }, [showToasts]);
 
-  const refreshAllImages = (urls: string[]) => {
-    const newKeys: Record<string, number> = {};
+  // Refresh multiple images at once
+  const refreshAllImages = useCallback((urls: string[]): void => {
+    if (!urls.length) {
+      console.warn("No URLs provided for refresh");
+      return;
+    }
+
+    const newKeys: RefreshKeys = {};
     const timestamp = Date.now();
     
     urls.forEach(url => {
-      newKeys[url] = timestamp;
+      if (url) {
+        newKeys[url] = timestamp;
+      }
     });
     
-    setRefreshKeys(newKeys);
+    setRefreshKeys(prev => ({
+      ...prev,
+      ...newKeys
+    }));
+    
+    // Also update global cache bust to ensure all images update
     setGlobalCacheBust(getGlobalCacheBust());
     
-    toast.success("All images refreshed", {
-      description: "All images in the gallery have been refreshed from source."
-    });
-  };
+    if (showToasts) {
+      toast.success("All images refreshed", {
+        description: `${urls.length} images in the gallery have been refreshed from source.`
+      });
+    }
+  }, [showToasts]);
 
-  const getImageUrl = (baseUrl: string) => {
+  // Get a cache-busted image URL
+  const getImageUrl = useCallback((baseUrl: string): string => {
+    if (!baseUrl) return '';
+    
     const refreshKey = refreshKeys[baseUrl] || globalCacheBust;
     return `${baseUrl.split('?')[0]}?v=${refreshKey}`;
-  };
+  }, [refreshKeys, globalCacheBust]);
+
+  // Reset all refresh keys
+  const resetRefreshKeys = useCallback((): void => {
+    setRefreshKeys({});
+  }, []);
 
   return {
     globalCacheBust,
     refreshKeys,
     refreshImage,
     refreshAllImages,
-    getImageUrl
+    getImageUrl,
+    resetRefreshKeys
   };
 };
-

@@ -8,6 +8,7 @@ import { MediaLibraryHeader } from "./header/MediaLibraryHeader";
 import { StorageErrors } from "./errors/StorageErrors";
 import MediaLibraryTabsContainer from "./MediaLibraryTabsContainer";
 import MediaLibraryContentController from "./MediaLibraryContentController";
+import { MediaLibraryProvider } from "./context/MediaLibraryContext";
 
 interface MediaLibraryDialogProps {
   open: boolean;
@@ -29,14 +30,8 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({
   const { toast } = useToast();
 
   const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
   const [activeTabPanel, setActiveTabPanel] = useState("browse");
-
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>("16/9");
-  const [selectedSize, setSelectedSize] = useState<number>(100);
-  const [selectedLayout, setSelectedLayout] = useState<string>("standard");
-
+  
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Use a callback for fetching to prevent unnecessary re-renders
@@ -49,18 +44,11 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({
     if (open) {
       // Refresh media whenever dialog is opened
       refreshMedia();
-      console.log("MediaLibrary opened with state:", {
-        selectedImage,
-        selectedAspectRatio,
-        selectedSize,
-        selectedLayout,
-        activeTabPanel
-      });
     } else {
       // Reset to browse tab when dialog closes
       setActiveTabPanel("browse");
     }
-  }, [open, refreshMedia, selectedImage, selectedAspectRatio, selectedSize, selectedLayout, activeTabPanel]);
+  }, [open, refreshMedia]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -105,29 +93,6 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({
     });
   };
 
-  const handleSelect = (url: string) => {
-    console.log("Image selected:", url);
-    setSelectedImage(url);
-  };
-
-  const handleConfirmSelection = () => {
-    if (selectedImage) {
-      console.log("Confirming selection with:", selectedImage, selectedAspectRatio, selectedSize, selectedLayout);
-      onSelect(selectedImage, selectedAspectRatio, selectedSize, selectedLayout);
-      toast({
-        title: "Media selected",
-        description: "The selected media has been added with your adjustments."
-      });
-      onOpenChange(false);
-    } else {
-      toast({
-        title: "No image selected",
-        description: "Please select an image first.",
-        variant: "destructive"
-      });
-    }
-  };
-
   const handleTabChange = (value: string) => {
     setActiveTabPanel(value);
     console.log("Tab changed to:", value);
@@ -145,38 +110,28 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({
         <MediaLibraryHeader />
         <StorageErrors error={error} bucketExists={bucketExists} />
 
-        <Tabs value={activeTabPanel} onValueChange={handleTabChange}>
-          <MediaLibraryTabsContainer 
-            activeTabPanel={activeTabPanel} 
-            onTabChange={handleTabChange} 
-            selectedImage={selectedImage} 
-          />
+        <MediaLibraryProvider
+          items={items}
+          loading={loading}
+          bucketExists={bucketExists}
+          onSelect={onSelect}
+          onClose={() => onOpenChange(false)}
+          onRefresh={handleRefresh}
+        >
+          <Tabs value={activeTabPanel} onValueChange={handleTabChange}>
+            <MediaLibraryTabsContainer 
+              activeTabPanel={activeTabPanel} 
+              onTabChange={handleTabChange}
+            />
 
-          <MediaLibraryContentController
-            activeTabPanel={activeTabPanel}
-            selectedImage={selectedImage}
-            selectedAspectRatio={selectedAspectRatio}
-            selectedSize={selectedSize}
-            selectedLayout={selectedLayout}
-            items={items}
-            loading={loading}
-            bucketExists={bucketExists}
-            uploading={uploading}
-            activeTab={activeTab}
-            fileInputRef={fileInputRef}
-            onFileChange={handleFileChange}
-            onUploadClick={() => fileInputRef.current?.click()}
-            onRefresh={handleRefresh}
-            setActiveTab={setActiveTab}
-            onSelect={handleSelect}
-            setSelectedImage={setSelectedImage}
-            setActiveTabPanel={setActiveTabPanel}
-            onAspectRatioChange={setSelectedAspectRatio}
-            onSizeChange={setSelectedSize}
-            onLayoutChange={setSelectedLayout}
-            handleConfirmSelection={handleConfirmSelection}
-          />
-        </Tabs>
+            <MediaLibraryContentController
+              uploading={uploading}
+              fileInputRef={fileInputRef}
+              onFileChange={handleFileChange}
+              onUploadClick={() => fileInputRef.current?.click()}
+            />
+          </Tabs>
+        </MediaLibraryProvider>
       </DialogContent>
     </Dialog>
   );

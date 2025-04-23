@@ -1,0 +1,82 @@
+
+import { useState, useEffect, useCallback } from 'react';
+import { getStorageVersion, getGlobalCacheBust } from "@/utils/courseStorage";
+import { toast } from "sonner";
+import { UseFormReturn } from "react-hook-form";
+
+interface UseImageRefreshProps {
+  form: UseFormReturn<any>;
+  imageUrlField: string;
+}
+
+export const useImageRefresh = ({ form, imageUrlField }: UseImageRefreshProps) => {
+  const [refreshKey, setRefreshKey] = useState<number>(Date.now());
+  const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
+
+  // Periodically check for global cache bust changes
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const currentBust = getGlobalCacheBust();
+      if (currentBust !== globalCacheBust) {
+        setGlobalCacheBust(currentBust);
+        console.log("Updated course image field with new cache bust key:", currentBust);
+        // Force a re-render of the image
+        setRefreshKey(Date.now());
+      }
+    }, 2000);
+    
+    return () => clearInterval(intervalId);
+  }, [globalCacheBust]);
+
+  // Handle removing image
+  const handleRemoveImage = useCallback(() => {
+    console.log("Removing course image");
+    form.setValue(imageUrlField, "", { shouldValidate: true });
+    // Clear all image related settings
+    form.setValue("imageAspectRatio" as any, "16/9", { shouldValidate: false });
+    form.setValue("imageSize" as any, 100, { shouldValidate: false });
+    form.setValue("imageLayout" as any, "standard", { shouldValidate: false });
+  }, [form, imageUrlField]);
+
+  // Handle refreshing image
+  const handleRefreshImage = useCallback(() => {
+    // Get the current image URL
+    const currentUrl = form.getValues(imageUrlField);
+    if (!currentUrl) return;
+
+    // Force a refresh by updating the URL with a new cache-busting parameter
+    const baseUrl = currentUrl.split('?')[0];
+    const newTimestamp = Date.now();
+    const newUrl = `${baseUrl}?v=${newTimestamp}`;
+    
+    // Update the form value
+    form.setValue(imageUrlField, newUrl, { shouldValidate: true });
+    
+    // Update the refresh key to force re-render
+    setRefreshKey(newTimestamp);
+    
+    // Show toast notification
+    toast.success("Image refreshed", {
+      description: "The image has been refreshed from source."
+    });
+  }, [form, imageUrlField]);
+
+  // Add cache busting to image URL
+  const getImageUrlWithCacheBusting = useCallback((url: string) => {
+    if (!url) return "";
+    
+    // Use both specific refresh key and global cache bust
+    const baseUrl = url.split('?')[0];
+    return `${baseUrl}?v=${refreshKey}-${globalCacheBust}`;
+  }, [refreshKey, globalCacheBust]);
+
+  return {
+    refreshKey,
+    globalCacheBust,
+    handleRemoveImage,
+    handleRefreshImage,
+    getImageUrlWithCacheBusting
+  };
+};
+
+export default useImageRefresh;
