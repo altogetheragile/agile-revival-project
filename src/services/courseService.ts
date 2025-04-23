@@ -1,5 +1,7 @@
-import { Course, CourseFormData, ScheduleCourseFormData } from "@/types/course";
-import { loadCourses, saveCourses, getGlobalCacheBust } from "@/utils/courseStorage";
+
+import { Course, CourseFormData } from "@/types/course";
+import { loadCourses, saveCourses } from "@/utils/courseStorage";
+import { applyImageSettings } from "./courseImageService";
 
 // Get all courses
 export const getAllCourses = (): Course[] => {
@@ -20,63 +22,25 @@ export const getCourseById = (id: string): Course | undefined => {
   return courses.find(course => course.id === id);
 };
 
-// Get all scheduled (non-template) courses, regardless of status
+// Get all scheduled (non-template) courses
 export const getScheduledCourses = (): Course[] => {
   const courses = loadCourses();
-  // Filter out templates and include all courses with status 'published' or 'draft'
   return courses.filter(course => !course.isTemplate && (course.status === 'published' || course.status === 'draft'));
 };
 
 // Get published courses only
 export const getPublishedCourses = (): Course[] => {
   const courses = loadCourses();
-  // Filter out templates and only include published courses
   return courses.filter(course => course.status === 'published' && !course.isTemplate);
-};
-
-// Get course templates
-export const getCourseTemplates = (): Course[] => {
-  const courses = loadCourses();
-  return courses.filter(course => course.isTemplate === true);
-};
-
-// Get courses by template ID
-export const getCoursesByTemplateId = (templateId: string): Course[] => {
-  const courses = loadCourses();
-  return courses.filter(course => course.templateId === templateId);
-};
-
-// Apply cache busting to image URL
-const applyCacheBustToImage = (imageUrl: string | undefined): string => {
-  if (!imageUrl) return "";
-  
-  // Strip any existing cache busting params
-  const baseUrl = imageUrl.split('?')[0];
-  // Apply new cache busting param
-  const cacheBust = getGlobalCacheBust();
-  return `${baseUrl}?v=${cacheBust}`;
 };
 
 // Create a new course
 export const createCourse = (courseData: CourseFormData): Course => {
   const courses = loadCourses();
-  
   const newId = `crs-${String(Date.now()).slice(-6)}`;
   
-  // Apply cache busting to image URL
-  const imageUrlWithCache = applyCacheBustToImage(courseData.imageUrl);
-  
-  console.log("Creating course with image settings:", {
-    imageUrl: imageUrlWithCache,
-    originalUrl: courseData.imageUrl,
-    imageAspectRatio: courseData.imageAspectRatio,
-    imageSize: courseData.imageSize,
-    imageLayout: courseData.imageLayout
-  });
-  
-  // Create the new course with explicit image properties
+  // Create the new course with image settings
   const newCourse: Course = {
-    // Basic course properties
     id: newId,
     title: courseData.title || "",
     description: courseData.description || "",
@@ -88,8 +52,6 @@ export const createCourse = (courseData: CourseFormData): Course => {
     spotsAvailable: courseData.spotsAvailable || 0,
     status: courseData.status,
     isTemplate: courseData.isTemplate || false,
-    
-    // Additional properties
     materials: [],
     learningOutcomes: Array.isArray(courseData.learningOutcomes) 
       ? courseData.learningOutcomes 
@@ -102,52 +64,7 @@ export const createCourse = (courseData: CourseFormData): Course => {
     googleDriveFolderId: courseData.googleDriveFolderId,
     googleDriveFolderUrl: courseData.googleDriveFolderUrl,
     templateId: courseData.templateId,
-    
-    // Explicitly include ALL image settings with appropriate defaults
-    imageUrl: imageUrlWithCache,
-    imageAspectRatio: courseData.imageAspectRatio || "16/9",
-    imageSize: courseData.imageSize === undefined ? 100 : courseData.imageSize,
-    imageLayout: courseData.imageLayout || "standard"
-  };
-  
-  courses.push(newCourse);
-  saveCourses(courses);
-  
-  return newCourse;
-};
-
-// Create a course from a template
-export const createCourseFromTemplate = (templateId: string, scheduleData: ScheduleCourseFormData): Course => {
-  const courses = loadCourses();
-  const template = courses.find(course => course.id === templateId);
-  
-  if (!template) {
-    throw new Error("Template not found");
-  }
-  
-  const newId = `crs-${String(Date.now()).slice(-6)}`;
-  
-  // Apply cache busting to image URL
-  const imageUrlWithCache = applyCacheBustToImage(template.imageUrl);
-  
-  // Create a new course based on the template, but with scheduled details
-  // Preserve image settings from template
-  const newCourse: Course = {
-    ...template,
-    id: newId,
-    dates: scheduleData.dates,
-    location: scheduleData.location,
-    instructor: scheduleData.instructor,
-    spotsAvailable: scheduleData.spotsAvailable,
-    status: scheduleData.status,
-    isTemplate: false, // This is now a scheduled course, not a template
-    templateId: templateId, // Reference back to the template it was created from
-    materials: [],
-    // Explicitly preserve image settings with cache busting
-    imageUrl: imageUrlWithCache,
-    imageAspectRatio: template.imageAspectRatio || "16/9",
-    imageSize: template.imageSize || 100,
-    imageLayout: template.imageLayout || "standard"
+    ...applyImageSettings({}, courseData)
   };
   
   courses.push(newCourse);
@@ -169,30 +86,9 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
   const existingCourse = courses[index];
   const existingMaterials = existingCourse.materials || [];
   
-  // Apply cache busting to image URL if it has changed
-  const imageUrlWithCache = courseData.imageUrl !== existingCourse.imageUrl ? 
-    applyCacheBustToImage(courseData.imageUrl) : courseData.imageUrl;
-  
-  console.log("Updating course with image settings:", {
-    original: {
-      imageUrl: existingCourse.imageUrl,
-      imageAspectRatio: existingCourse.imageAspectRatio,
-      imageSize: existingCourse.imageSize,
-      imageLayout: existingCourse.imageLayout
-    },
-    new: {
-      imageUrl: imageUrlWithCache,
-      originalUrl: courseData.imageUrl,
-      imageAspectRatio: courseData.imageAspectRatio,
-      imageSize: courseData.imageSize,
-      imageLayout: courseData.imageLayout
-    }
-  });
-  
   // Create updated course with explicit image property handling
   const updatedCourse: Course = {
     ...existingCourse,
-    // Update basic course properties
     title: courseData.title !== undefined ? courseData.title : existingCourse.title,
     description: courseData.description !== undefined ? courseData.description : existingCourse.description,
     dates: courseData.dates !== undefined ? courseData.dates : existingCourse.dates,
@@ -203,8 +99,6 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
     spotsAvailable: courseData.spotsAvailable !== undefined ? courseData.spotsAvailable : existingCourse.spotsAvailable,
     status: courseData.status !== undefined ? courseData.status : existingCourse.status,
     isTemplate: courseData.isTemplate !== undefined ? courseData.isTemplate : existingCourse.isTemplate,
-    
-    // Preserve and update additional properties
     materials: existingMaterials,
     learningOutcomes: Array.isArray(courseData.learningOutcomes) 
       ? courseData.learningOutcomes 
@@ -217,25 +111,11 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
     googleDriveFolderId: courseData.googleDriveFolderId !== undefined ? courseData.googleDriveFolderId : existingCourse.googleDriveFolderId,
     googleDriveFolderUrl: courseData.googleDriveFolderUrl !== undefined ? courseData.googleDriveFolderUrl : existingCourse.googleDriveFolderUrl,
     templateId: courseData.templateId !== undefined ? courseData.templateId : existingCourse.templateId,
-    
-    // Explicitly handle image properties to prevent them from becoming undefined
-    imageUrl: imageUrlWithCache || existingCourse.imageUrl || "",
-    imageAspectRatio: courseData.imageAspectRatio || existingCourse.imageAspectRatio || "16/9",
-    imageSize: courseData.imageSize !== undefined ? courseData.imageSize : (existingCourse.imageSize !== undefined ? existingCourse.imageSize : 100),
-    imageLayout: courseData.imageLayout || existingCourse.imageLayout || "standard",
-    
-    // Preserve ID
-    id: id
+    ...applyImageSettings(existingCourse, courseData)
   };
   
   courses[index] = updatedCourse;
   saveCourses(courses);
-  console.log("Course updated successfully with image settings:", {
-    imageUrl: updatedCourse.imageUrl,
-    imageAspectRatio: updatedCourse.imageAspectRatio,
-    imageSize: updatedCourse.imageSize,
-    imageLayout: updatedCourse.imageLayout
-  });
   
   return updatedCourse;
 };
@@ -255,3 +135,10 @@ export const deleteCourse = (id: string): boolean => {
 
 // Re-export course material operations
 export { addCourseMaterial, removeCourseMaterial } from './courseMaterialService';
+
+// Re-export template operations
+export { 
+  getCourseTemplates,
+  getCoursesByTemplateId,
+  createCourseFromTemplate 
+} from './courseTemplateService';
