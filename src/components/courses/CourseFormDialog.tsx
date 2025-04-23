@@ -7,6 +7,7 @@ import { Course, CourseFormData } from "@/types/course";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MediaLibrary from "@/components/media/MediaLibrary";
 import { useToast } from "@/components/ui/use-toast";
+import { getGlobalCacheBust } from "@/utils/courseStorage";
 
 interface CourseFormDialogProps {
   open: boolean;
@@ -44,6 +45,7 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
   const [formData, setFormData] = useState<CourseFormData | null>(
     currentCourse ? convertToFormData(currentCourse) : null
   );
+  const [formKey, setFormKey] = useState(Date.now());
 
   // Update formData when currentCourse changes
   useEffect(() => {
@@ -51,6 +53,8 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
       const convertedData = convertToFormData(currentCourse);
       console.log("CourseFormDialog initialized with course:", convertedData);
       setFormData(convertedData);
+      // Set a new form key to force re-render with fresh data
+      setFormKey(Date.now());
     } else {
       setFormData(null);
     }
@@ -62,13 +66,18 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
     size?: number, 
     layout?: string
   ) => {
-    console.log("Course media selected:", url, aspectRatio, size, layout);
+    // Ensure URL has a cache busting parameter
+    const cacheBust = getGlobalCacheBust();
+    const urlWithoutParams = url.split('?')[0];
+    const finalUrl = `${urlWithoutParams}?v=${cacheBust}`;
+    
+    console.log("Course media selected:", finalUrl, aspectRatio, size, layout);
     
     if (formData) {
       // Update the formData with the new image URL and settings
       const updatedFormData = {
         ...formData,
-        imageUrl: url,
+        imageUrl: finalUrl,
         imageAspectRatio: aspectRatio || "16/9",
         imageSize: size || 100,
         imageLayout: layout || "standard"
@@ -123,7 +132,8 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
           </DialogHeader>
           <ScrollArea className="max-h-[70vh] pr-4">
             <CourseForm 
-              initialData={currentCourse ? convertToFormData(currentCourse) : undefined}
+              key={formKey}
+              initialData={formData || undefined}
               onSubmit={handleSubmit}
               onCancel={onCancel}
               stayOpenOnSubmit={true}

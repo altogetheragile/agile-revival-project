@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData } from "@/types/course";
 import { getAllCourses, createCourse, updateCourse, deleteCourse } from "@/services/courseService";
+import { forceGlobalReset } from "@/utils/courseStorage";
 
 export const useCourseManagement = () => {
   const [courses, setCourses] = useState<Course[]>(getAllCourses());
@@ -13,6 +14,19 @@ export const useCourseManagement = () => {
   const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
   const [viewingRegistrations, setViewingRegistrations] = useState(false);
   const { toast } = useToast();
+  
+  // Refresh timer to periodically update courses list
+  useEffect(() => {
+    // Initial load
+    setCourses(getAllCourses());
+    
+    // Refresh every 5 seconds to ensure we have the latest data
+    const intervalId = setInterval(() => {
+      setCourses(getAllCourses());
+    }, 5000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Refresh courses list when something changes
   useEffect(() => {
@@ -92,6 +106,15 @@ export const useCourseManagement = () => {
       setDeleteCourseId(null);
     }
   };
+  
+  // Add a reset function to force a global cache reset
+  const handleForceReset = () => {
+    forceGlobalReset();
+    toast({
+      title: "Cache reset",
+      description: "The course data cache has been reset. The page will reload."
+    });
+  };
 
   return {
     courses: filteredCourses,
@@ -108,6 +131,7 @@ export const useCourseManagement = () => {
     viewingRegistrations,
     setViewingRegistrations,
     handleFormSubmit,
-    handleDelete
+    handleDelete,
+    handleForceReset
   };
 };

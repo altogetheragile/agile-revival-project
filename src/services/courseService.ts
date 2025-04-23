@@ -1,6 +1,6 @@
 
 import { Course, CourseFormData, ScheduleCourseFormData } from "@/types/course";
-import { loadCourses, saveCourses } from "@/utils/courseStorage";
+import { loadCourses, saveCourses, getGlobalCacheBust } from "@/utils/courseStorage";
 
 // Get all courses
 export const getAllCourses = (): Course[] => {
@@ -47,14 +47,29 @@ export const getCoursesByTemplateId = (templateId: string): Course[] => {
   return courses.filter(course => course.templateId === templateId);
 };
 
+// Apply cache busting to image URL
+const applyCacheBustToImage = (imageUrl: string | undefined): string => {
+  if (!imageUrl) return "";
+  
+  // Strip any existing cache busting params
+  const baseUrl = imageUrl.split('?')[0];
+  // Apply new cache busting param
+  const cacheBust = getGlobalCacheBust();
+  return `${baseUrl}?v=${cacheBust}`;
+};
+
 // Create a new course
 export const createCourse = (courseData: CourseFormData): Course => {
   const courses = loadCourses();
   
   const newId = `crs-${String(Date.now()).slice(-6)}`;
   
+  // Apply cache busting to image URL
+  const imageUrlWithCache = applyCacheBustToImage(courseData.imageUrl);
+  
   console.log("Creating course with image settings:", {
-    imageUrl: courseData.imageUrl,
+    imageUrl: imageUrlWithCache,
+    originalUrl: courseData.imageUrl,
     imageAspectRatio: courseData.imageAspectRatio,
     imageSize: courseData.imageSize,
     imageLayout: courseData.imageLayout
@@ -90,7 +105,7 @@ export const createCourse = (courseData: CourseFormData): Course => {
     templateId: courseData.templateId,
     
     // Explicitly include ALL image settings with appropriate defaults
-    imageUrl: courseData.imageUrl || "",
+    imageUrl: imageUrlWithCache,
     imageAspectRatio: courseData.imageAspectRatio || "16/9",
     imageSize: courseData.imageSize || 100,
     imageLayout: courseData.imageLayout || "standard"
@@ -113,6 +128,9 @@ export const createCourseFromTemplate = (templateId: string, scheduleData: Sched
   
   const newId = `crs-${String(Date.now()).slice(-6)}`;
   
+  // Apply cache busting to image URL
+  const imageUrlWithCache = applyCacheBustToImage(template.imageUrl);
+  
   // Create a new course based on the template, but with scheduled details
   // Preserve image settings from template
   const newCourse: Course = {
@@ -126,8 +144,8 @@ export const createCourseFromTemplate = (templateId: string, scheduleData: Sched
     isTemplate: false, // This is now a scheduled course, not a template
     templateId: templateId, // Reference back to the template it was created from
     materials: [],
-    // Explicitly preserve image settings
-    imageUrl: template.imageUrl || "",
+    // Explicitly preserve image settings with cache busting
+    imageUrl: imageUrlWithCache,
     imageAspectRatio: template.imageAspectRatio || "16/9",
     imageSize: template.imageSize || 100,
     imageLayout: template.imageLayout || "standard"
@@ -152,6 +170,10 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
   const existingCourse = courses[index];
   const existingMaterials = existingCourse.materials || [];
   
+  // Apply cache busting to image URL if it has changed
+  const imageUrlWithCache = courseData.imageUrl !== existingCourse.imageUrl ? 
+    applyCacheBustToImage(courseData.imageUrl) : courseData.imageUrl;
+  
   console.log("Updating course with image settings:", {
     original: {
       imageUrl: existingCourse.imageUrl,
@@ -160,7 +182,8 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
       imageLayout: existingCourse.imageLayout
     },
     new: {
-      imageUrl: courseData.imageUrl,
+      imageUrl: imageUrlWithCache,
+      originalUrl: courseData.imageUrl,
       imageAspectRatio: courseData.imageAspectRatio,
       imageSize: courseData.imageSize,
       imageLayout: courseData.imageLayout
@@ -198,7 +221,7 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
     
     // Explicitly handle image properties to prevent them from becoming undefined
     // Always use the courseData value if provided, otherwise fall back to existing, then to defaults
-    imageUrl: courseData.imageUrl !== undefined ? courseData.imageUrl : (existingCourse.imageUrl || ""),
+    imageUrl: imageUrlWithCache,
     imageAspectRatio: courseData.imageAspectRatio !== undefined ? courseData.imageAspectRatio : (existingCourse.imageAspectRatio || "16/9"),
     imageSize: courseData.imageSize !== undefined ? courseData.imageSize : (existingCourse.imageSize || 100),
     imageLayout: courseData.imageLayout !== undefined ? courseData.imageLayout : (existingCourse.imageLayout || "standard"),

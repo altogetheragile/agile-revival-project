@@ -13,6 +13,9 @@ import CustomTrainingCTA from "@/components/courses/CustomTrainingCTA";
 import CourseFormDialog from "@/components/courses/CourseFormDialog";
 import { DeleteConfirmationDialog } from "@/components/admin/users/DeleteConfirmationDialog";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import { forceGlobalReset } from "@/utils/courseStorage";
 
 const TrainingSchedule = () => {
   // Updated to use string type for CourseCategory
@@ -29,6 +32,13 @@ const TrainingSchedule = () => {
 
   useEffect(() => {
     refreshCourses();
+    
+    // Set up periodic refresh
+    const intervalId = setInterval(() => {
+      refreshCourses();
+    }, 10000);
+    
+    return () => clearInterval(intervalId);
   }, []);
 
   const filteredCourses = selectedTab === "all" 
@@ -86,6 +96,23 @@ const TrainingSchedule = () => {
       setDeleteCourseId(null);
     }
   };
+  
+  const handleManualRefresh = () => {
+    refreshCourses();
+    toast({
+      title: "Refreshed",
+      description: "Course data has been refreshed from storage."
+    });
+  };
+  
+  // Add a reset function to force a global cache reset
+  const handleForceReset = () => {
+    forceGlobalReset();
+    toast({
+      title: "Cache reset",
+      description: "The course data cache has been reset. The page will reload."
+    });
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -93,6 +120,28 @@ const TrainingSchedule = () => {
       <main className="flex-grow pt-24">
         <section className="section-container">
           <TrainingHeader />
+          
+          <div className="flex justify-end mb-4 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualRefresh}
+              className="text-gray-600 border-gray-300 hover:bg-gray-50"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh Data
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleForceReset}
+              className="text-blue-600 border-blue-300 hover:bg-blue-50"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Reset Cache & Reload
+            </Button>
+          </div>
           
           <CourseFilters
             selectedTab={selectedTab}

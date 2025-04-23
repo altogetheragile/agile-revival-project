@@ -10,6 +10,8 @@ import { useCourseManagement } from "@/hooks/useCourseManagement";
 import ScheduleCourseDialog from "@/components/courses/ScheduleCourseDialog";
 import { useToast } from "@/components/ui/use-toast";
 import { createCourseFromTemplate } from "@/services/courseService";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 export const CourseManagementContainer: React.FC = () => {
   const {
@@ -27,7 +29,8 @@ export const CourseManagementContainer: React.FC = () => {
     viewingRegistrations,
     setViewingRegistrations,
     handleFormSubmit,
-    handleDelete
+    handleDelete,
+    handleForceReset
   } = useCourseManagement();
 
   const { toast } = useToast();
@@ -100,6 +103,18 @@ export const CourseManagementContainer: React.FC = () => {
         onSearchChange={setSearchTerm}
         onAddNew={handleAddCourse}
       />
+      
+      <div className="mb-4 flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleForceReset}
+          className="text-blue-600 border-blue-300 hover:bg-blue-50"
+        >
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Reset Cache & Reload
+        </Button>
+      </div>
       
       <CourseTable 
         courses={templateCourses}
