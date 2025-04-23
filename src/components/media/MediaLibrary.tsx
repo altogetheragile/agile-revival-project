@@ -46,6 +46,9 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
         selectedLayout,
         activeTabPanel
       });
+    } else {
+      // Reset state when dialog closes
+      setActiveTabPanel("browse");
     }
   }, [open, fetchMedia]);
 
@@ -221,12 +224,12 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
           </TabsContent>
           
           <TabsContent value="adjust">
-            {selectedImage && (
+            {selectedImage ? (
               <ImageAdjustmentPanel
                 imageUrl={selectedImage}
-                aspectRatio={selectedAspectRatio}
-                size={selectedSize}
-                layout={selectedLayout}
+                aspectRatio={selectedAspectRatio || "16/9"}
+                size={selectedSize || 100}
+                layout={selectedLayout || "standard"}
                 onAspectRatioChange={(ratio) => {
                   console.log("Aspect ratio changed to:", ratio);
                   setSelectedAspectRatio(ratio);
@@ -240,6 +243,10 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
                   setSelectedLayout(layout);
                 }}
               />
+            ) : (
+              <div className="p-6 text-center">
+                <p className="text-gray-500">No image selected. Please select an image first.</p>
+              </div>
             )}
             
             <div className="mt-4 flex justify-end space-x-2">
@@ -252,6 +259,7 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
               <Button 
                 onClick={handleConfirmSelection}
                 variant="default"
+                disabled={!selectedImage}
               >
                 Confirm Selection
               </Button>

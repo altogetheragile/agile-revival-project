@@ -23,23 +23,27 @@ export type ImageLayout = "standard" | "side-by-side" | "image-top" | "image-lef
 
 const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
   imageUrl,
-  aspectRatio,
+  aspectRatio = "16/9",
   onAspectRatioChange,
   onSizeChange,
   onLayoutChange,
   size = 100,
   layout = "standard"
 }) => {
-  const [currentSize, setCurrentSize] = useState(size);
+  const [currentSize, setCurrentSize] = useState<number>(size);
   const [currentLayout, setCurrentLayout] = useState<string>(layout);
-  const [currentAspectRatio, setCurrentAspectRatio] = useState(aspectRatio);
+  const [currentAspectRatio, setCurrentAspectRatio] = useState<string>(aspectRatio);
 
   // Initialize with props when they change
   useEffect(() => {
-    setCurrentSize(size);
-    setCurrentLayout(layout);
-    setCurrentAspectRatio(aspectRatio);
-    console.log("ImageAdjustmentPanel initialized with:", { aspectRatio, size, layout });
+    setCurrentSize(size || 100);
+    setCurrentLayout(layout || "standard");
+    setCurrentAspectRatio(aspectRatio || "16/9");
+    console.log("ImageAdjustmentPanel initialized with:", { 
+      aspectRatio: aspectRatio || "16/9", 
+      size: size || 100, 
+      layout: layout || "standard" 
+    });
   }, [aspectRatio, size, layout]);
 
   // Parse the aspect ratio string into a number
@@ -59,6 +63,11 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
 
   // Handle size slider change
   const handleSizeChange = (value: number[]) => {
+    if (!value || !Array.isArray(value)) {
+      console.error("Invalid size value:", value);
+      return;
+    }
+    
     const newSize = value[0];
     console.log("Size changing to:", newSize);
     setCurrentSize(newSize);
@@ -68,6 +77,11 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
 
   // Handle aspect ratio change
   const handleAspectRatioChange = (value: string) => {
+    if (!value) {
+      console.error("Invalid aspect ratio value:", value);
+      return;
+    }
+    
     console.log("Aspect ratio changing to:", value);
     setCurrentAspectRatio(value);
     // Immediately update parent to ensure changes are captured
@@ -76,6 +90,11 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
 
   // Handle layout change
   const handleLayoutChange = (value: string) => {
+    if (!value) {
+      console.error("Invalid layout value:", value);
+      return;
+    }
+    
     console.log("Layout changing to:", value);
     setCurrentLayout(value);
     // Immediately update parent to ensure changes are captured
