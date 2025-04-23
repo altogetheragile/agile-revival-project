@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { File, Image, Music, Video } from "lucide-react";
+import { File, Image, Music, Video, AlertTriangle } from "lucide-react";
 
 interface MediaGalleryProps {
   items: { name: string; url: string; type: string }[];
@@ -25,15 +25,26 @@ const renderMediaItem = (item: { name: string; url: string; type: string }) => {
   switch (item.type) {
     case 'image':
       return (
-        <img 
-          src={item.url} 
-          alt={item.name}
-          className="w-full aspect-square object-cover rounded-md"
-          onError={(e) => {
-            console.error(`Failed to load image: ${item.url}`);
-            (e.target as HTMLImageElement).src = '/placeholder.svg';
-          }}
-        />
+        <div className="relative w-full h-full">
+          <img 
+            src={item.url} 
+            alt={item.name}
+            className="w-full aspect-square object-cover rounded-md"
+            onError={(e) => {
+              console.error(`Failed to load image: ${item.url}`);
+              (e.target as HTMLImageElement).src = '/placeholder.svg';
+              
+              // Add visual indicator for failed images
+              const parent = (e.target as HTMLElement).parentElement;
+              if (parent) {
+                const errorIndicator = document.createElement('div');
+                errorIndicator.className = 'absolute top-0 right-0 p-1 bg-red-100 rounded-bl';
+                errorIndicator.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+                parent.appendChild(errorIndicator);
+              }
+            }}
+          />
+        </div>
       );
     case 'audio':
       return (
