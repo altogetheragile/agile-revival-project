@@ -43,11 +43,7 @@ const StorageInitializer = () => {
           }
         } else {
           console.log("Media bucket exists and is accessible!", files);
-          toast({
-            title: "Media Storage Connected",
-            description: "Successfully connected to the media storage bucket.",
-            duration: 5000,
-          });
+          // Removed the success toast notification
         }
         
         // Set as initialized to allow the app to function
