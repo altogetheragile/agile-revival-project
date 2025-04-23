@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { File, Image, Music, Video, AlertTriangle, RefreshCw, RefreshCcwDot } from "lucide-react";
+import { File, Image, Music, Video, AlertTriangle, RefreshCw, RefreshCcwDot, Star } from "lucide-react";
 import { toast } from "sonner";
-import { getGlobalCacheBust, synchronizeImageUrls } from "@/utils/courseStorage";
+import { getGlobalCacheBust, synchronizeImageUrls, makeThisBrowserMasterSource } from "@/utils/courseStorage";
 
 interface MediaGalleryProps {
   items: { name: string; url: string; type: string }[];
@@ -30,19 +30,29 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
   // Add state to track refresh keys for each image
   const [refreshKeys, setRefreshKeys] = useState<Record<string, number>>({});
+  // Track if this browser is the master source
+  const [isMasterSource, setIsMasterSource] = useState<boolean>(
+    localStorage.getItem('agile-trainer-master-source') === 'true'
+  );
   
   // Update the global cache bust when it changes in storage
   useEffect(() => {
     const intervalId = setInterval(() => {
       const currentBust = getGlobalCacheBust();
+      const currentMasterStatus = localStorage.getItem('agile-trainer-master-source') === 'true';
+      
       if (currentBust !== globalCacheBust) {
         setGlobalCacheBust(currentBust);
         console.log("Updated gallery cache bust key:", currentBust);
       }
+      
+      if (currentMasterStatus !== isMasterSource) {
+        setIsMasterSource(currentMasterStatus);
+      }
     }, 2000);
     
     return () => clearInterval(intervalId);
-  }, [globalCacheBust]);
+  }, [globalCacheBust, isMasterSource]);
   
   // Function to force refresh a specific image
   const refreshImage = (url: string) => {
@@ -83,6 +93,17 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     
     setTimeout(() => {
       synchronizeImageUrls();
+    }, 1000);
+  };
+  
+  // Function to make this browser the master source for images
+  const handleMakeMasterSource = () => {
+    toast.success("Setting Master Source", {
+      description: "This browser is now the authoritative source for images. All other devices will sync to match."
+    });
+    
+    setTimeout(() => {
+      makeThisBrowserMasterSource();
     }, 1000);
   };
   
@@ -193,6 +214,16 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
               <Button 
                 variant="outline" 
                 size="sm" 
+                onClick={handleMakeMasterSource}
+                className={`text-xs ${isMasterSource ? 'bg-yellow-50 text-yellow-700 border-yellow-300' : 'bg-amber-50 text-amber-700 border-amber-300'}`}
+                disabled={isMasterSource}
+              >
+                <Star className="h-3 w-3 mr-1" />
+                {isMasterSource ? 'Current Master Source' : 'Make Master Source'}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
                 onClick={handleSyncAcrossDevices}
                 className="text-xs bg-blue-50 text-blue-700 border-blue-300"
               >
@@ -240,3 +271,4 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
 };
 
 export { MediaGallery };
+

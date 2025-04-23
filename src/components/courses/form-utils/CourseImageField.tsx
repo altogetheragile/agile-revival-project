@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -6,9 +5,9 @@ import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Settings, RefreshCw, Smartphone } from "lucide-react";
+import { Settings, RefreshCw, Smartphone, Star } from "lucide-react";
 import { toast } from "sonner";
-import { getStorageVersion, getGlobalCacheBust, synchronizeImageUrls } from "@/utils/courseStorage";
+import { getStorageVersion, getGlobalCacheBust, synchronizeImageUrls, makeThisBrowserMasterSource } from "@/utils/courseStorage";
 
 interface CourseImageFieldProps {
   form: UseFormReturn<CourseFormData>;
@@ -19,8 +18,10 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
   const [refreshKey, setRefreshKey] = useState<number>(Date.now());
   const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
   const [deviceInfo, setDeviceInfo] = useState<string>("");
+  const [isMasterSource, setIsMasterSource] = useState<boolean>(
+    localStorage.getItem('agile-trainer-master-source') === 'true'
+  );
 
-  // Get device info for better debugging
   useEffect(() => {
     const browser = navigator.userAgent;
     const platform = navigator.platform;
@@ -28,22 +29,25 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
     setDeviceInfo(`${device} - ${platform}`);
   }, []);
 
-  // Periodically check for global cache bust changes
   useEffect(() => {
     const intervalId = setInterval(() => {
       const currentBust = getGlobalCacheBust();
+      const currentMasterStatus = localStorage.getItem('agile-trainer-master-source') === 'true';
+      
       if (currentBust !== globalCacheBust) {
         setGlobalCacheBust(currentBust);
         console.log("Updated course image field with new cache bust key:", currentBust);
-        // Force a re-render of the image
         setRefreshKey(Date.now());
+      }
+      
+      if (currentMasterStatus !== isMasterSource) {
+        setIsMasterSource(currentMasterStatus);
       }
     }, 2000);
     
     return () => clearInterval(intervalId);
-  }, [globalCacheBust]);
+  }, [globalCacheBust, isMasterSource]);
 
-  // Log initial values when component mounts
   useEffect(() => {
     const imageUrl = form.getValues("imageUrl");
     const aspectRatio = form.getValues("imageAspectRatio" as any);
@@ -63,29 +67,21 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
   const handleRemoveImage = () => {
     console.log("Removing course image");
     form.setValue("imageUrl", "", { shouldValidate: true });
-    // Clear all image related settings
     form.setValue("imageAspectRatio" as any, "16/9", { shouldValidate: false });
     form.setValue("imageSize" as any, 100, { shouldValidate: false });
     form.setValue("imageLayout" as any, "standard", { shouldValidate: false });
   };
 
   const handleRefreshImage = useCallback(() => {
-    // Get the current image URL
     const currentUrl = form.getValues("imageUrl");
     if (!currentUrl) return;
 
-    // Force a refresh by updating the URL with a new cache-busting parameter
     const baseUrl = currentUrl.split('?')[0];
     const newTimestamp = Date.now();
     const newUrl = `${baseUrl}?v=${newTimestamp}`;
     
-    // Update the form value
     form.setValue("imageUrl", newUrl, { shouldValidate: true });
-    
-    // Update the refresh key to force re-render
     setRefreshKey(newTimestamp);
-    
-    // Show toast notification
     toast.success("Image refreshed", {
       description: "The image has been refreshed from source."
     });
@@ -101,7 +97,16 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
     }, 1000);
   };
 
-  // Listen for keyboard shortcut Cmd+Shift+R or Ctrl+Shift+R to refresh image
+  const handleMakeMasterSource = () => {
+    toast.success("Setting Master Source", {
+      description: "This browser is now the authoritative source for images. All other devices will sync to match."
+    });
+    
+    setTimeout(() => {
+      makeThisBrowserMasterSource();
+    }, 1000);
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'r') {
@@ -122,7 +127,6 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
   const imageSize = form.watch("imageSize" as any) || 100;
   const imageLayout = form.watch("imageLayout" as any) || "standard";
   
-  // When any of these values change, log them
   useEffect(() => {
     console.log("Course image field values changed:", {
       imageUrl,
@@ -135,23 +139,19 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
     });
   }, [imageUrl, aspectRatio, imageSize, imageLayout, deviceInfo]);
   
-  // Parse the aspect ratio string into a number
   const getAspectRatioValue = (ratio: string): number => {
-    if (ratio === "auto") return undefined as any; // Let the image use its natural ratio
+    if (ratio === "auto") return undefined as any;
     const [width, height] = ratio.split("/").map(Number);
     return width / height;
   };
 
-  // Add cache busting to image URL
   const getImageUrlWithCacheBusting = (url: string) => {
     if (!url) return "";
     
-    // Use both specific refresh key and global cache bust plus a random component
     const baseUrl = url.split('?')[0];
     return `${baseUrl}?v=${refreshKey}-${globalCacheBust}-${Date.now().toString().slice(-4)}`;
   };
 
-  // Render image based on layout
   const renderImage = () => {
     if (!imageUrl) return null;
     
@@ -162,7 +162,6 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
       maxWidth: '100%',
     };
 
-    // Standard layout (default)
     if (!imageLayout || imageLayout === "standard") {
       return (
         <div className="w-full" style={imageStyle}>
@@ -174,10 +173,8 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
               key={`${refreshKey}-${globalCacheBust}`}
               onError={(e) => {
                 console.error("Failed to load image:", cachedImageUrl);
-                // Set a fallback or display an error indicator
                 (e.target as HTMLImageElement).src = "/placeholder.svg";
                 
-                // Show a toast to suggest refreshing
                 toast.error("Failed to load image", {
                   description: "Try clicking the 'Refresh Image' button to reload it.",
                   action: {
@@ -196,10 +193,8 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                 key={`${refreshKey}-${globalCacheBust}`}
                 onError={(e) => {
                   console.error("Failed to load image:", cachedImageUrl);
-                  // Set a fallback or display an error indicator
                   (e.target as HTMLImageElement).src = "/placeholder.svg";
                   
-                  // Show a toast to suggest refreshing
                   toast.error("Failed to load image", {
                     description: "Try clicking the 'Refresh Image' button to reload it.",
                     action: {
@@ -290,6 +285,17 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                     type="button"
                     size="sm"
                     variant="outline"
+                    className={`ml-2 ${isMasterSource ? 'text-yellow-600 border-yellow-200 bg-yellow-50' : 'text-amber-600 border-amber-200'}`}
+                    onClick={handleMakeMasterSource}
+                    disabled={isMasterSource}
+                  >
+                    <Star className="h-3.5 w-3.5 mr-1" />
+                    {isMasterSource ? 'Master Source' : 'Make Master Source'}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
                     className="ml-2 text-red-500 border-red-200"
                     onClick={handleRemoveImage}
                   >
@@ -315,6 +321,7 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                           Device: {deviceInfo} | Cache: {globalCacheBust.substring(0, 6)}...
                           {refreshKey !== parseInt(globalCacheBust) && 
                             ` | Local: ${String(refreshKey).substring(0, 6)}...`}
+                          {isMasterSource && ' | Master Source'}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
                           Base URL: {field.value.split('?')[0].substring(0, 40)}...
@@ -343,9 +350,14 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                   >
                     <span className="font-bold">Tip:</span> Having trouble seeing image changes? Click "Refresh Image" or use Cmd+Shift+R / Ctrl+Shift+R
                   </span>
-                  <span className="text-xs block text-green-500 cursor-pointer mt-1">
+                  <span className="text-xs block text-green-500 cursor-pointer mt-1" onClick={handleSyncAcrossDevices}>
                     <span className="font-bold">Multi-device tip:</span> If images look different on your phone or other browsers, use "Sync Across Devices"
                   </span>
+                  {!isMasterSource && (
+                    <span className="text-xs block text-amber-500 cursor-pointer mt-1" onClick={handleMakeMasterSource}>
+                      <span className="font-bold">Advanced tip:</span> To make your current image the one all browsers use, click "Make Master Source"
+                    </span>
+                  )}
                 </div>
               )}
             </FormDescription>
@@ -353,7 +365,6 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
         )}
       />
       
-      {/* Hidden fields to store image adjustment values */}
       <FormField
         control={form.control}
         name={"imageAspectRatio" as any}

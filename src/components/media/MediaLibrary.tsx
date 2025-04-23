@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { Button } from "@/components/ui/button";
-import { RefreshCcw, AlertTriangle, Trash, Smartphone } from "lucide-react";
+import { RefreshCcw, AlertTriangle, Trash, Smartphone, Star } from "lucide-react";
 import { 
   resetCoursesToInitial, 
   verifyStorageIntegrity, 
@@ -10,7 +10,8 @@ import {
   getStorageVersion,
   getGlobalCacheBust,
   forceGlobalReset,
-  synchronizeImageUrls
+  synchronizeImageUrls,
+  makeThisBrowserMasterSource
 } from "@/utils/courseStorage";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
@@ -77,11 +78,25 @@ export const MediaLibraryReset: React.FC = () => {
       synchronizeImageUrls();
     }, 1000);
   };
+
+  const handleMakeMasterSource = () => {
+    console.log("Making this browser the master source for images...");
+    toast({
+      title: "Setting Master Source",
+      description: "This browser is now the authoritative source for images. All other devices will sync to match.",
+      variant: "default",
+    });
+    
+    setTimeout(() => {
+      makeThisBrowserMasterSource();
+    }, 1000);
+  };
   
   // Always show the reset section for better troubleshooting
   const storageHasIssues = !verifyStorageIntegrity();
   const storageVersion = getStorageVersion();
   const globalCacheBust = getGlobalCacheBust();
+  const isMasterSource = localStorage.getItem('agile-trainer-master-source') === 'true';
   
   return (
     <div className="p-4 border border-amber-200 bg-amber-50 rounded-md mb-4">
@@ -91,6 +106,11 @@ export const MediaLibraryReset: React.FC = () => {
             <h3 className="text-amber-800 font-medium flex items-center gap-2">
               {storageHasIssues && <AlertTriangle className="h-4 w-4 text-amber-600" />}
               Browser storage management
+              {isMasterSource && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
+                  <Star className="h-3 w-3 mr-1" /> Master Source
+                </span>
+              )}
             </h3>
             <p className="text-amber-700 text-sm">
               {storageHasIssues 
@@ -99,9 +119,22 @@ export const MediaLibraryReset: React.FC = () => {
             </p>
             <p className="text-amber-600 text-xs mt-1">
               Storage version: {storageVersion || 'Not set'} | Cache bust: {globalCacheBust || 'Not set'}
+              {isMasterSource && ' | This browser is the master source for images'}
+            </p>
+            <p className="text-amber-600 text-xs mt-1">
+              Browser: {navigator.userAgent.substring(0, 50)}...
             </p>
           </div>
           <div className="flex flex-col gap-2 mt-2">
+            <Button 
+              onClick={handleMakeMasterSource}
+              variant="outline"
+              className={`border-yellow-300 ${isMasterSource ? 'bg-yellow-100 text-yellow-700' : 'text-amber-700 hover:bg-amber-100'}`}
+              disabled={isMasterSource}
+            >
+              <Star className="mr-2 h-4 w-4" />
+              {isMasterSource ? 'Current Master Source' : 'Make This Browser Master Source'}
+            </Button>
             <Button 
               onClick={handleReset}
               variant="outline"
@@ -190,3 +223,4 @@ export const GlobalResetProvider: React.FC = () => {
   
   return null;
 };
+
