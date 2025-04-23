@@ -1,11 +1,8 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { File, Image, Music, Video, AlertTriangle, RefreshCw, RefreshCcwDot } from "lucide-react";
-import { toast } from "sonner";
-import { getGlobalCacheBust } from "@/utils/courseStorage";
+import { File, Image, Music, Video, RefreshCcwDot } from "lucide-react";
+import { useMediaRefresh } from "@/hooks/useMediaRefresh";
 
-// Move the media icon logic to a separate component
 const MediaIcon: React.FC<{ type: string }> = ({ type }) => {
   switch (type) {
     case 'image': return <Image className="h-4 w-4" />;
@@ -15,7 +12,6 @@ const MediaIcon: React.FC<{ type: string }> = ({ type }) => {
   }
 };
 
-// Extract the image error handling into a reusable component
 const MediaImage: React.FC<{
   url: string;
   name: string;
@@ -53,7 +49,6 @@ const MediaImage: React.FC<{
   );
 };
 
-// Create a separate component for the media item
 const MediaItem: React.FC<{
   item: { name: string; url: string; type: string };
   onSelect: () => void;
@@ -111,49 +106,8 @@ interface MediaGalleryProps {
 export const MediaGallery: React.FC<MediaGalleryProps> = ({
   items, loading, bucketExists, activeTab, onSelect, selectedImage
 }) => {
-  const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
-  const [refreshKeys, setRefreshKeys] = useState<Record<string, number>>({});
+  const { globalCacheBust, refreshKeys, refreshImage, refreshAllImages } = useMediaRefresh();
   
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      const currentBust = getGlobalCacheBust();
-      if (currentBust !== globalCacheBust) {
-        setGlobalCacheBust(currentBust);
-      }
-    }, 2000);
-    
-    return () => clearInterval(intervalId);
-  }, [globalCacheBust]);
-  
-  const refreshImage = (url: string) => {
-    setRefreshKeys(prev => ({
-      ...prev,
-      [url]: Date.now()
-    }));
-    
-    toast.success("Image refreshed", {
-      description: "The image has been refreshed from source."
-    });
-  };
-
-  const refreshAllImages = () => {
-    const newKeys: Record<string, number> = {};
-    const timestamp = Date.now();
-    
-    items.forEach(item => {
-      if (item.type === 'image') {
-        newKeys[item.url] = timestamp;
-      }
-    });
-    
-    setRefreshKeys(newKeys);
-    setGlobalCacheBust(getGlobalCacheBust());
-    
-    toast.success("All images refreshed", {
-      description: "All images in the gallery have been refreshed from source."
-    });
-  };
-
   const filteredItems = React.useMemo(() => {
     if (activeTab === "all") return items;
     return items.filter(item => item.type === activeTab);
@@ -183,7 +137,7 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={refreshAllImages}
+                onClick={() => refreshAllImages(filteredItems.map(item => item.url))}
                 className="text-xs"
               >
                 <RefreshCcwDot className="h-3 w-3 mr-1" />
@@ -209,4 +163,3 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
     </div>
   );
 };
-
