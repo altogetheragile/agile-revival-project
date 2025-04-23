@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
@@ -8,6 +8,16 @@ import { useToast } from "@/hooks/use-toast";
 
 // Export the reset function so it can be called from other components or console
 export const resetMediaLibraryData = resetCoursesToInitial;
+
+// Make the reset function globally available for browser console access
+// This ensures the function is accessible in all browsers including Safari
+useEffect(() => {
+  if (typeof window !== 'undefined') {
+    // @ts-ignore - Intentionally adding to window for debugging
+    window.resetCoursesToInitial = resetCoursesToInitial;
+    console.log("Reset function available. Use resetCoursesToInitial() in console to reset course data.");
+  }
+}, []);
 
 // Export the original dialog component as default
 export default MediaLibraryDialog;
@@ -27,17 +37,19 @@ export const MediaLibraryReset: React.FC = () => {
     setTimeout(() => window.location.reload(), 1500);
   };
   
+  // Always show the reset button since we're having cross-browser issues
   const storageHasIssues = !verifyStorageIntegrity();
-  
-  // Only show the reset button if storage integrity check fails
-  if (!storageHasIssues) return null;
   
   return (
     <div className="p-4 border border-amber-200 bg-amber-50 rounded-md mb-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-amber-800 font-medium">Storage inconsistency detected</h3>
-          <p className="text-amber-700 text-sm">There may be issues with course images across browsers.</p>
+          <h3 className="text-amber-800 font-medium">Browser storage management</h3>
+          <p className="text-amber-700 text-sm">
+            {storageHasIssues 
+              ? "Storage inconsistency detected. Reset recommended."
+              : "Reset course images if you're seeing inconsistent images across browsers."}
+          </p>
         </div>
         <Button 
           onClick={handleReset}
@@ -50,4 +62,17 @@ export const MediaLibraryReset: React.FC = () => {
       </div>
     </div>
   );
+};
+
+// Create a component that exposes the reset function globally
+export const GlobalResetProvider: React.FC = () => {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // @ts-ignore - Intentionally adding to window for debugging
+      window.resetCoursesToInitial = resetCoursesToInitial;
+      console.log("Reset function available. Use resetCoursesToInitial() in console to reset course data.");
+    }
+  }, []);
+  
+  return null;
 };
