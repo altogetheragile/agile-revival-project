@@ -1,6 +1,5 @@
 
 import React from "react";
-import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { MediaLibraryFileUploader } from "./MediaLibraryFileUploader";
 import { MediaLibraryTabs } from "./MediaLibraryTabs";
@@ -56,9 +55,11 @@ const MediaLibraryContentController: React.FC<MediaLibraryContentControllerProps
   onLayoutChange,
   handleConfirmSelection,
 }) => {
+  // Render different content based on the active tab panel
+  // Instead of using TabsContent directly, we'll conditionally render content
   return (
-    <>
-      <TabsContent value="browse">
+    <div>
+      {activeTabPanel === "browse" && (
         <div className="space-y-4">
           <div>
             <MediaLibraryFileUploader
@@ -104,44 +105,45 @@ const MediaLibraryContentController: React.FC<MediaLibraryContentControllerProps
             </div>
           )}
         </div>
-      </TabsContent>
+      )}
       
-      <TabsContent value="adjust">
-        {selectedImage ? (
-          <ImageAdjustmentPanel
-            imageUrl={selectedImage}
-            aspectRatio={selectedAspectRatio || "16/9"}
-            size={selectedSize || 100}
-            layout={selectedLayout || "standard"}
-            onAspectRatioChange={onAspectRatioChange}
-            onSizeChange={onSizeChange}
-            onLayoutChange={onLayoutChange}
-          />
-        ) : (
-          <div className="p-6 text-center">
-            <p className="text-gray-500">No image selected. Please select an image first.</p>
+      {activeTabPanel === "adjust" && (
+        <div>
+          {selectedImage ? (
+            <ImageAdjustmentPanel
+              imageUrl={selectedImage}
+              aspectRatio={selectedAspectRatio || "16/9"}
+              size={selectedSize || 100}
+              layout={selectedLayout || "standard"}
+              onAspectRatioChange={onAspectRatioChange}
+              onSizeChange={onSizeChange}
+              onLayoutChange={onLayoutChange}
+            />
+          ) : (
+            <div className="p-6 text-center">
+              <p className="text-gray-500">No image selected. Please select an image first.</p>
+            </div>
+          )}
+          
+          <div className="mt-4 flex justify-end space-x-2">
+            <Button 
+              onClick={() => setActiveTabPanel("browse")}
+              variant="outline"
+            >
+              Back to Browse
+            </Button>
+            <Button 
+              onClick={handleConfirmSelection}
+              variant="default"
+              disabled={!selectedImage}
+            >
+              Confirm Selection
+            </Button>
           </div>
-        )}
-        
-        <div className="mt-4 flex justify-end space-x-2">
-          <Button 
-            onClick={() => setActiveTabPanel("browse")}
-            variant="outline"
-          >
-            Back to Browse
-          </Button>
-          <Button 
-            onClick={handleConfirmSelection}
-            variant="default"
-            disabled={!selectedImage}
-          >
-            Confirm Selection
-          </Button>
         </div>
-      </TabsContent>
-    </>
+      )}
+    </div>
   );
 };
 
 export default MediaLibraryContentController;
-

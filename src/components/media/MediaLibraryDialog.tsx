@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tabs } from "@/components/ui/tabs";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { useToast } from "@/hooks/use-toast";
 import { MediaLibraryHeader } from "./header/MediaLibraryHeader";
@@ -135,32 +136,38 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({
         <MediaLibraryHeader />
         <StorageErrors error={error} bucketExists={bucketExists} />
 
-        <MediaLibraryTabsContainer activeTabPanel={activeTabPanel} onTabChange={handleTabChange} selectedImage={selectedImage} />
+        <Tabs value={activeTabPanel} onValueChange={handleTabChange}>
+          <MediaLibraryTabsContainer 
+            activeTabPanel={activeTabPanel} 
+            onTabChange={handleTabChange} 
+            selectedImage={selectedImage} 
+          />
 
-        <MediaLibraryContentController
-          activeTabPanel={activeTabPanel}
-          selectedImage={selectedImage}
-          selectedAspectRatio={selectedAspectRatio}
-          selectedSize={selectedSize}
-          selectedLayout={selectedLayout}
-          items={items}
-          loading={loading}
-          bucketExists={bucketExists}
-          uploading={uploading}
-          activeTab={activeTab}
-          fileInputRef={fileInputRef}
-          onFileChange={handleFileChange}
-          onUploadClick={() => fileInputRef.current?.click()}
-          onRefresh={handleRefresh}
-          setActiveTab={setActiveTab}
-          onSelect={handleSelect}
-          setSelectedImage={setSelectedImage}
-          setActiveTabPanel={setActiveTabPanel}
-          onAspectRatioChange={setSelectedAspectRatio}
-          onSizeChange={setSelectedSize}
-          onLayoutChange={setSelectedLayout}
-          handleConfirmSelection={handleConfirmSelection}
-        />
+          <MediaLibraryContentController
+            activeTabPanel={activeTabPanel}
+            selectedImage={selectedImage}
+            selectedAspectRatio={selectedAspectRatio}
+            selectedSize={selectedSize}
+            selectedLayout={selectedLayout}
+            items={items}
+            loading={loading}
+            bucketExists={bucketExists}
+            uploading={uploading}
+            activeTab={activeTab}
+            fileInputRef={fileInputRef}
+            onFileChange={handleFileChange}
+            onUploadClick={() => fileInputRef.current?.click()}
+            onRefresh={handleRefresh}
+            setActiveTab={setActiveTab}
+            onSelect={handleSelect}
+            setSelectedImage={setSelectedImage}
+            setActiveTabPanel={setActiveTabPanel}
+            onAspectRatioChange={setSelectedAspectRatio}
+            onSizeChange={setSelectedSize}
+            onLayoutChange={setSelectedLayout}
+            handleConfirmSelection={handleConfirmSelection}
+          />
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
