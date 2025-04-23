@@ -1,9 +1,10 @@
 
 import { Button } from "@/components/ui/button";
+import { BlogPostFormData } from "@/types/blog";
 
 interface BlogFormActionsProps {
   onCancel: () => void;
-  initialData?: { id?: string };
+  initialData?: BlogPostFormData;
 }
 
 export const BlogFormActions: React.FC<BlogFormActionsProps> = ({ 
