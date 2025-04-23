@@ -11,6 +11,7 @@ import { MediaLibraryFileUploader } from "./MediaLibraryFileUploader";
 import { MediaGallery } from "./MediaGallery";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ImageAdjustmentPanel from "./ImageAdjustmentPanel";
+import { Button } from "@/components/ui/button";
 
 interface MediaLibraryProps {
   open: boolean;
@@ -31,20 +32,44 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
   const [selectedAspectRatio, setSelectedAspectRatio] = React.useState<string>("16/9");
   const [selectedSize, setSelectedSize] = React.useState<number>(100);
   const [selectedLayout, setSelectedLayout] = React.useState<string>("standard");
+  const [activeTabPanel, setActiveTabPanel] = useState<string>("browse");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Log when component renders with current state
+  React.useEffect(() => {
+    if (open) {
+      console.log("MediaLibrary opened with state:", {
+        selectedImage,
+        selectedAspectRatio,
+        selectedSize,
+        selectedLayout,
+        activeTabPanel
+      });
+    }
+  }, [open, selectedImage, selectedAspectRatio, selectedSize, selectedLayout, activeTabPanel]);
+
   const handleSelect = (url: string) => {
+    console.log("Image selected:", url);
     setSelectedImage(url);
+    // Automatically switch to adjust tab when an image is selected
+    setActiveTabPanel("adjust");
   };
 
   const handleConfirmSelection = () => {
     if (selectedImage) {
+      console.log("Confirming selection with:", selectedImage, selectedAspectRatio, selectedSize, selectedLayout);
       onSelect(selectedImage, selectedAspectRatio, selectedSize, selectedLayout);
       toast({
         title: "Media selected",
         description: "The selected media has been added with your adjustments."
       });
       onOpenChange(false);
+    } else {
+      toast({
+        title: "No image selected",
+        description: "Please select an image first.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -89,6 +114,12 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
     }
   };
 
+  // Handle tab change logic
+  const handleTabChange = (value: string) => {
+    setActiveTabPanel(value);
+    console.log("Tab changed to:", value);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -129,7 +160,7 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
           </Card>
         )}
 
-        <Tabs defaultValue={selectedImage ? "adjust" : "browse"} className="w-full">
+        <Tabs value={activeTabPanel} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full">
             <TabsTrigger value="browse" className="flex-1">Browse Media</TabsTrigger>
             <TabsTrigger value="adjust" className="flex-1" disabled={!selectedImage}>
@@ -167,13 +198,19 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
               />
               
               {selectedImage && (
-                <div className="flex justify-end space-x-2">
-                  <button 
+                <div className="flex justify-end space-x-2 mt-4">
+                  <Button 
                     onClick={() => setSelectedImage(null)}
-                    className="px-4 py-2 rounded border border-gray-300"
+                    variant="outline"
                   >
                     Clear Selection
-                  </button>
+                  </Button>
+                  <Button 
+                    onClick={() => setActiveTabPanel("adjust")}
+                    variant="default"
+                  >
+                    Adjust Image
+                  </Button>
                 </div>
               )}
             </div>
@@ -186,25 +223,34 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
                 aspectRatio={selectedAspectRatio}
                 size={selectedSize}
                 layout={selectedLayout}
-                onAspectRatioChange={setSelectedAspectRatio}
-                onSizeChange={setSelectedSize}
-                onLayoutChange={setSelectedLayout}
+                onAspectRatioChange={(ratio) => {
+                  console.log("Aspect ratio changed to:", ratio);
+                  setSelectedAspectRatio(ratio);
+                }}
+                onSizeChange={(size) => {
+                  console.log("Size changed to:", size);
+                  setSelectedSize(size);
+                }}
+                onLayoutChange={(layout) => {
+                  console.log("Layout changed to:", layout);
+                  setSelectedLayout(layout);
+                }}
               />
             )}
             
             <div className="mt-4 flex justify-end space-x-2">
-              <button 
-                onClick={() => setSelectedImage(null)}
-                className="px-4 py-2 rounded border border-gray-300"
+              <Button 
+                onClick={() => setActiveTabPanel("browse")}
+                variant="outline"
               >
-                Cancel
-              </button>
-              <button 
+                Back to Browse
+              </Button>
+              <Button 
                 onClick={handleConfirmSelection}
-                className="px-4 py-2 rounded bg-agile-purple text-white"
+                variant="default"
               >
                 Confirm Selection
-              </button>
+              </Button>
             </div>
           </TabsContent>
         </Tabs>

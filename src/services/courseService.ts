@@ -53,6 +53,13 @@ export const createCourse = (courseData: CourseFormData): Course => {
   
   const newId = `crs-${String(Date.now()).slice(-6)}`;
   
+  console.log("Creating course with image settings:", {
+    imageUrl: courseData.imageUrl,
+    imageAspectRatio: courseData.imageAspectRatio,
+    imageSize: courseData.imageSize,
+    imageLayout: courseData.imageLayout
+  });
+  
   // Create the new course with explicit image properties
   const newCourse: Course = {
     // Basic course properties
@@ -82,8 +89,8 @@ export const createCourse = (courseData: CourseFormData): Course => {
     googleDriveFolderUrl: courseData.googleDriveFolderUrl,
     templateId: courseData.templateId,
     
-    // Explicitly include ALL image settings
-    imageUrl: courseData.imageUrl || undefined,
+    // Explicitly include ALL image settings with appropriate defaults
+    imageUrl: courseData.imageUrl || "",
     imageAspectRatio: courseData.imageAspectRatio || "16/9",
     imageSize: courseData.imageSize || 100,
     imageLayout: courseData.imageLayout || "standard"
@@ -120,7 +127,7 @@ export const createCourseFromTemplate = (templateId: string, scheduleData: Sched
     templateId: templateId, // Reference back to the template it was created from
     materials: [],
     // Explicitly preserve image settings
-    imageUrl: template.imageUrl,
+    imageUrl: template.imageUrl || "",
     imageAspectRatio: template.imageAspectRatio || "16/9",
     imageSize: template.imageSize || 100,
     imageLayout: template.imageLayout || "standard"
@@ -138,11 +145,27 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
   const index = courses.findIndex(course => course.id === id);
   
   if (index === -1) {
+    console.error("Failed to update course: Course not found with ID", id);
     return null;
   }
   
   const existingCourse = courses[index];
   const existingMaterials = existingCourse.materials || [];
+  
+  console.log("Updating course with image settings:", {
+    original: {
+      imageUrl: existingCourse.imageUrl,
+      imageAspectRatio: existingCourse.imageAspectRatio,
+      imageSize: existingCourse.imageSize,
+      imageLayout: existingCourse.imageLayout
+    },
+    new: {
+      imageUrl: courseData.imageUrl,
+      imageAspectRatio: courseData.imageAspectRatio,
+      imageSize: courseData.imageSize,
+      imageLayout: courseData.imageLayout
+    }
+  });
   
   // Create updated course with explicit image property handling
   const updatedCourse: Course = {
@@ -174,7 +197,8 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
     templateId: courseData.templateId !== undefined ? courseData.templateId : existingCourse.templateId,
     
     // Explicitly handle image properties to prevent them from becoming undefined
-    imageUrl: courseData.imageUrl !== undefined ? courseData.imageUrl : existingCourse.imageUrl,
+    // Always use the courseData value if provided, otherwise fall back to existing, then to defaults
+    imageUrl: courseData.imageUrl !== undefined ? courseData.imageUrl : (existingCourse.imageUrl || ""),
     imageAspectRatio: courseData.imageAspectRatio !== undefined ? courseData.imageAspectRatio : (existingCourse.imageAspectRatio || "16/9"),
     imageSize: courseData.imageSize !== undefined ? courseData.imageSize : (existingCourse.imageSize || 100),
     imageLayout: courseData.imageLayout !== undefined ? courseData.imageLayout : (existingCourse.imageLayout || "standard"),
@@ -185,7 +209,7 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
   
   courses[index] = updatedCourse;
   saveCourses(courses);
-  console.log("Course updated with image settings:", {
+  console.log("Course updated successfully with image settings:", {
     imageUrl: updatedCourse.imageUrl,
     imageAspectRatio: updatedCourse.imageAspectRatio,
     imageSize: updatedCourse.imageSize,

@@ -39,39 +39,58 @@ const BlogForm: React.FC<BlogFormProps> = ({
   onSubmit, 
   onCancel 
 }) => {
+  // Store complete form data separately to avoid losing fields
+  const [formData, setFormData] = useState<BlogPostFormData>(initialData);
+  
+  // Initialize the form
   const form = useForm<BlogPostFormData>({
-    defaultValues: initialData
+    defaultValues: formData
   });
 
   const [mediaLibOpen, setMediaLibOpen] = useState(false);
-  const [formData, setFormData] = useState<BlogPostFormData>(initialData);
 
-  // Update form values when initialData changes
+  // Reinitialize form when initialData changes
   useEffect(() => {
     if (initialData) {
-      Object.entries(initialData).forEach(([key, value]) => {
+      console.log("BlogForm initializing with data:", initialData);
+      const newFormData = {
+        ...initialData,
+        // Set defaults for image settings if they don't exist
+        imageAspectRatio: initialData.imageAspectRatio || "16/9",
+        imageSize: initialData.imageSize || 100,
+        imageLayout: initialData.imageLayout || "standard"
+      };
+      
+      setFormData(newFormData);
+      
+      // Update all form fields
+      Object.entries(newFormData).forEach(([key, value]) => {
         form.setValue(key as any, value);
       });
-      setFormData(initialData);
     }
   }, [initialData, form]);
 
   const handleSubmit = (data: BlogPostFormData) => {
-    onSubmit({
+    // Merge form data with complete image settings
+    const completeData = {
       ...data,
-      imageAspectRatio: data.imageAspectRatio || "16/9",
-      imageSize: data.imageSize || 100,
-      imageLayout: data.imageLayout || "standard"
-    });
+      imageUrl: data.imageUrl || formData.imageUrl,
+      imageAspectRatio: data.imageAspectRatio || formData.imageAspectRatio || "16/9",
+      imageSize: data.imageSize || formData.imageSize || 100,
+      imageLayout: data.imageLayout || formData.imageLayout || "standard"
+    };
+    
+    console.log("BlogForm submitting with data:", completeData);
+    onSubmit(completeData);
   };
 
   const handleRemoveImage = () => {
+    // Update both form and formData state
     form.setValue("imageUrl", "", { shouldValidate: true });
     form.setValue("imageAspectRatio", "16/9", { shouldValidate: false });
     form.setValue("imageSize", 100, { shouldValidate: false });
     form.setValue("imageLayout", "standard", { shouldValidate: false });
     
-    // Update formData state as well
     setFormData({
       ...formData,
       imageUrl: "",
@@ -79,6 +98,8 @@ const BlogForm: React.FC<BlogFormProps> = ({
       imageSize: 100,
       imageLayout: "standard"
     });
+    
+    console.log("Image removed from blog post");
   };
   
   // Parse the aspect ratio string into a number
@@ -88,13 +109,16 @@ const BlogForm: React.FC<BlogFormProps> = ({
     return width / height;
   };
 
+  // Use form.watch to get current values
   const imageUrl = form.watch("imageUrl");
-  const aspectRatio = form.watch("imageAspectRatio") || "16/9";
-  const imageSize = form.watch("imageSize") || 100;
-  const imageLayout = form.watch("imageLayout") || "standard";
+  const aspectRatio = form.watch("imageAspectRatio") || formData.imageAspectRatio || "16/9";
+  const imageSize = form.watch("imageSize") || formData.imageSize || 100;
+  const imageLayout = form.watch("imageLayout") || formData.imageLayout || "standard";
 
   // Handle media selection from library
   const handleMediaSelect = (url: string, aspectRatio?: string, size?: number, layout?: string) => {
+    console.log("Blog media selected:", url, aspectRatio, size, layout);
+    
     const updatedFormData = {
       ...formData,
       imageUrl: url,
@@ -111,6 +135,8 @@ const BlogForm: React.FC<BlogFormProps> = ({
     
     // Update state
     setFormData(updatedFormData);
+    
+    console.log("Updated blog form data:", updatedFormData);
   };
 
   // Render image based on layout and settings
@@ -146,6 +172,7 @@ const BlogForm: React.FC<BlogFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        {/* Title field */}
         <FormField
           control={form.control}
           name="title"
@@ -160,6 +187,7 @@ const BlogForm: React.FC<BlogFormProps> = ({
           )}
         />
 
+        {/* Content field */}
         <FormField
           control={form.control}
           name="content"
@@ -178,6 +206,7 @@ const BlogForm: React.FC<BlogFormProps> = ({
           )}
         />
 
+        {/* URL field */}
         <FormField
           control={form.control}
           name="url"
@@ -195,6 +224,7 @@ const BlogForm: React.FC<BlogFormProps> = ({
           )}
         />
 
+        {/* Image URL field with preview */}
         <FormField
           control={form.control}
           name="imageUrl"
@@ -258,7 +288,7 @@ const BlogForm: React.FC<BlogFormProps> = ({
           )}
         />
 
-        {/* Hidden fields to store image settings */}
+        {/* Hidden fields to store image settings - these will be properly managed by formData state too */}
         <FormField
           control={form.control}
           name="imageAspectRatio"
@@ -283,12 +313,14 @@ const BlogForm: React.FC<BlogFormProps> = ({
           )}
         />
 
+        {/* Media Library component */}
         <MediaLibrary
           open={mediaLibOpen}
           onOpenChange={setMediaLibOpen}
           onSelect={handleMediaSelect}
         />
 
+        {/* Draft checkbox */}
         <FormField
           control={form.control}
           name="isDraft"
@@ -312,12 +344,13 @@ const BlogForm: React.FC<BlogFormProps> = ({
           )}
         />
 
+        {/* Form action buttons */}
         <div className="flex justify-end space-x-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
           <Button type="submit">
-            {initialData.id ? 'Update Post' : 'Create Post'}
+            {initialData?.id ? 'Update Post' : 'Create Post'}
           </Button>
         </div>
       </form>

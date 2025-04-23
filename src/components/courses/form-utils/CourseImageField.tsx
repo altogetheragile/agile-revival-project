@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,18 +14,44 @@ interface CourseImageFieldProps {
 }
 
 export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpenMediaLibrary }) => {
+  // Log initial values when component mounts
+  useEffect(() => {
+    const imageUrl = form.getValues("imageUrl");
+    const aspectRatio = form.getValues("imageAspectRatio" as any);
+    const imageSize = form.getValues("imageSize" as any);
+    const imageLayout = form.getValues("imageLayout" as any);
+    
+    console.log("CourseImageField initialized with:", {
+      imageUrl,
+      aspectRatio,
+      imageSize,
+      imageLayout
+    });
+  }, [form]);
+
   const handleRemoveImage = () => {
+    console.log("Removing course image");
     form.setValue("imageUrl", "", { shouldValidate: true });
     // Clear all image related settings
-    form.setValue("imageAspectRatio" as any, undefined, { shouldValidate: false });
-    form.setValue("imageSize" as any, undefined, { shouldValidate: false });
-    form.setValue("imageLayout" as any, undefined, { shouldValidate: false });
+    form.setValue("imageAspectRatio" as any, "16/9", { shouldValidate: false });
+    form.setValue("imageSize" as any, 100, { shouldValidate: false });
+    form.setValue("imageLayout" as any, "standard", { shouldValidate: false });
   };
 
   const imageUrl = form.watch("imageUrl");
   const aspectRatio = form.watch("imageAspectRatio" as any) || "16/9";
   const imageSize = form.watch("imageSize" as any) || 100;
   const imageLayout = form.watch("imageLayout" as any) || "standard";
+  
+  // When any of these values change, log them
+  useEffect(() => {
+    console.log("Course image field values changed:", {
+      imageUrl,
+      aspectRatio,
+      imageSize,
+      imageLayout
+    });
+  }, [imageUrl, aspectRatio, imageSize, imageLayout]);
   
   // Parse the aspect ratio string into a number
   const getAspectRatioValue = (ratio: string): number => {

@@ -36,6 +36,13 @@ export const createBlogPost = (postData: BlogPostFormData): BlogPost => {
     ? Math.max(...posts.map(post => post.id)) + 1 
     : 1;
   
+  console.log("Creating blog post with image settings:", {
+    imageUrl: postData.imageUrl,
+    aspectRatio: postData.imageAspectRatio,
+    size: postData.imageSize,
+    layout: postData.imageLayout
+  });
+  
   // Create the new post with the current date and explicit image properties
   const newPost: BlogPost = {
     id: newId,
@@ -44,7 +51,7 @@ export const createBlogPost = (postData: BlogPostFormData): BlogPost => {
     url: postData.url,
     date: postData.date || new Date().toISOString().split('T')[0],
     isDraft: postData.isDraft !== undefined ? postData.isDraft : true,
-    // Explicitly include ALL image settings
+    // Explicitly include ALL image settings with defaults if not provided
     imageUrl: postData.imageUrl || "",
     imageAspectRatio: postData.imageAspectRatio || "16/9",
     imageSize: postData.imageSize || 100,
@@ -64,11 +71,27 @@ export const updateBlogPost = (id: number, postData: BlogPostFormData): BlogPost
   const index = posts.findIndex(post => post.id === id);
   
   if (index === -1) {
+    console.error("Failed to update blog post: Post not found with ID", id);
     return null;
   }
   
   // Get original post to maintain any fields not provided in update
   const originalPost = posts[index];
+  
+  console.log("Updating blog post with image settings:", {
+    original: {
+      imageUrl: originalPost.imageUrl,
+      imageAspectRatio: originalPost.imageAspectRatio,
+      imageSize: originalPost.imageSize,
+      imageLayout: originalPost.imageLayout
+    },
+    new: {
+      imageUrl: postData.imageUrl,
+      imageAspectRatio: postData.imageAspectRatio,
+      imageSize: postData.imageSize,
+      imageLayout: postData.imageLayout
+    }
+  });
   
   // Update the blog post with new data while preserving ID and date
   const updatedPost: BlogPost = {
@@ -78,10 +101,11 @@ export const updateBlogPost = (id: number, postData: BlogPostFormData): BlogPost
     url: postData.url !== undefined ? postData.url : originalPost.url,
     isDraft: postData.isDraft !== undefined ? postData.isDraft : originalPost.isDraft,
     // Explicitly handle image properties to prevent them from becoming undefined
-    imageUrl: postData.imageUrl !== undefined ? postData.imageUrl : originalPost.imageUrl,
-    imageAspectRatio: postData.imageAspectRatio || originalPost.imageAspectRatio || "16/9",
-    imageSize: postData.imageSize || originalPost.imageSize || 100,
-    imageLayout: postData.imageLayout || originalPost.imageLayout || "standard",
+    // Always use the postData value if provided, otherwise fall back to original, then to defaults
+    imageUrl: postData.imageUrl !== undefined ? postData.imageUrl : originalPost.imageUrl || "",
+    imageAspectRatio: postData.imageAspectRatio !== undefined ? postData.imageAspectRatio : originalPost.imageAspectRatio || "16/9",
+    imageSize: postData.imageSize !== undefined ? postData.imageSize : originalPost.imageSize || 100,
+    imageLayout: postData.imageLayout !== undefined ? postData.imageLayout : originalPost.imageLayout || "standard",
     // Keep original ID and date
     id: id,
     date: originalPost.date
@@ -91,6 +115,7 @@ export const updateBlogPost = (id: number, postData: BlogPostFormData): BlogPost
   posts[index] = updatedPost;
   saveBlogPosts(posts);
   
+  console.log("Blog post updated successfully:", updatedPost);
   return updatedPost;
 };
 

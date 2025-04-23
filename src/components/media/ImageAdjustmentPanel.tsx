@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -35,6 +34,14 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
   const [currentLayout, setCurrentLayout] = useState<string>(layout);
   const [currentAspectRatio, setCurrentAspectRatio] = useState(aspectRatio);
 
+  // Initialize with props when they change
+  useEffect(() => {
+    setCurrentSize(size);
+    setCurrentLayout(layout);
+    setCurrentAspectRatio(aspectRatio);
+    console.log("ImageAdjustmentPanel initialized with:", { aspectRatio, size, layout });
+  }, [aspectRatio, size, layout]);
+
   // Parse the aspect ratio string into a number
   const getAspectRatioValue = (ratio: string): number => {
     if (!ratio || ratio === "auto") return undefined as any; // Let the image use its natural ratio
@@ -44,6 +51,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
 
   // Apply changes when user confirms
   const applyChanges = () => {
+    console.log("Applying changes:", { currentAspectRatio, currentSize, currentLayout });
     onAspectRatioChange(currentAspectRatio);
     onSizeChange(currentSize);
     onLayoutChange(currentLayout);
@@ -51,12 +59,36 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
 
   // Handle size slider change
   const handleSizeChange = (value: number[]) => {
-    setCurrentSize(value[0]);
+    const newSize = value[0];
+    console.log("Size changing to:", newSize);
+    setCurrentSize(newSize);
+    // Immediately update parent to ensure changes are captured
+    onSizeChange(newSize);
   };
 
-  // Update preview on any change
+  // Handle aspect ratio change
+  const handleAspectRatioChange = (value: string) => {
+    console.log("Aspect ratio changing to:", value);
+    setCurrentAspectRatio(value);
+    // Immediately update parent to ensure changes are captured
+    onAspectRatioChange(value);
+  };
+
+  // Handle layout change
+  const handleLayoutChange = (value: string) => {
+    console.log("Layout changing to:", value);
+    setCurrentLayout(value);
+    // Immediately update parent to ensure changes are captured
+    onLayoutChange(value);
+  };
+
+  // Apply changes whenever they change (no need for Apply button)
   useEffect(() => {
-    // This would be a good place to apply any debounced preview updates
+    console.log("Image adjustment settings changed:", {
+      currentAspectRatio,
+      currentSize,
+      currentLayout
+    });
   }, [currentSize, currentAspectRatio, currentLayout]);
 
   return (
@@ -76,7 +108,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
                 <Button 
                   variant={currentLayout === "standard" ? "default" : "outline"} 
                   className="h-20 flex flex-col items-center justify-center gap-1"
-                  onClick={() => setCurrentLayout("standard")}
+                  onClick={() => handleLayoutChange("standard")}
                 >
                   <LayoutGrid size={24} />
                   <span className="text-xs">Standard</span>
@@ -84,7 +116,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
                 <Button 
                   variant={currentLayout === "side-by-side" ? "default" : "outline"} 
                   className="h-20 flex flex-col items-center justify-center gap-1"
-                  onClick={() => setCurrentLayout("side-by-side")}
+                  onClick={() => handleLayoutChange("side-by-side")}
                 >
                   <div className="flex items-center">
                     <div className="w-4 h-6 bg-current rounded-sm mr-1"></div>
@@ -95,7 +127,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
                 <Button 
                   variant={currentLayout === "image-top" ? "default" : "outline"} 
                   className="h-20 flex flex-col items-center justify-center gap-1"
-                  onClick={() => setCurrentLayout("image-top")}
+                  onClick={() => handleLayoutChange("image-top")}
                 >
                   <div className="flex flex-col items-center">
                     <div className="w-8 h-3 border-2 border-current rounded-sm mb-1"></div>
@@ -106,7 +138,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
                 <Button 
                   variant={currentLayout === "image-left" ? "default" : "outline"} 
                   className="h-20 flex flex-col items-center justify-center gap-1"
-                  onClick={() => setCurrentLayout("image-left")}
+                  onClick={() => handleLayoutChange("image-left")}
                 >
                   <div className="flex items-center">
                     <div className="w-6 h-6 bg-current rounded-sm mr-1"></div>
@@ -117,7 +149,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
                 <Button 
                   variant={currentLayout === "full-width" ? "default" : "outline"} 
                   className="h-20 flex flex-col items-center justify-center gap-1"
-                  onClick={() => setCurrentLayout("full-width")}
+                  onClick={() => handleLayoutChange("full-width")}
                 >
                   <div className="w-12 h-6 bg-current rounded-sm"></div>
                   <span className="text-xs">Full Width</span>
@@ -131,7 +163,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
               <Label htmlFor="aspect-ratio">Aspect Ratio</Label>
               <Select 
                 value={currentAspectRatio} 
-                onValueChange={setCurrentAspectRatio}
+                onValueChange={handleAspectRatioChange}
               >
                 <SelectTrigger id="aspect-ratio">
                   <SelectValue placeholder="Select aspect ratio" />
@@ -174,6 +206,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
       <div className="mb-4">
         <h3 className="text-lg font-medium mb-2">Preview</h3>
         <div className="border rounded p-4 bg-white">
+          {/* Standard layout */}
           {currentLayout === "standard" && (
             <div className="space-y-4">
               <div style={{ width: `${currentSize}%`, maxWidth: '100%', margin: '0 auto' }}>
@@ -199,6 +232,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
             </div>
           )}
 
+          {/* Side-by-side layout */}
           {currentLayout === "side-by-side" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div style={{ width: `${currentSize}%`, maxWidth: '100%', margin: '0 auto' }}>
@@ -224,6 +258,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
             </div>
           )}
 
+          {/* Image-top layout */}
           {currentLayout === "image-top" && (
             <div className="space-y-4">
               <div style={{ width: `${currentSize}%`, maxWidth: '100%', margin: '0 auto' }}>
@@ -249,6 +284,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
             </div>
           )}
 
+          {/* Image-left layout */}
           {currentLayout === "image-left" && (
             <div className="flex flex-col md:flex-row gap-4">
               <div className="md:w-1/3" style={{ width: `${currentSize}%`, maxWidth: '100%' }}>
@@ -274,6 +310,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
             </div>
           )}
 
+          {/* Full-width layout */}
           {currentLayout === "full-width" && (
             <div className="space-y-4">
               <div style={{ width: `${currentSize}%`, maxWidth: '100%' }}>
@@ -301,6 +338,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
         </div>
       </div>
 
+      {/* Keep this button to maintain backwards compatibility but it now applies changes instantly too */}
       <div className="flex justify-end">
         <Button onClick={applyChanges}>Apply Changes</Button>
       </div>

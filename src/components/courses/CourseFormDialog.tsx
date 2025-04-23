@@ -6,6 +6,7 @@ import CourseForm from "./CourseForm";
 import { Course, CourseFormData } from "@/types/course";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MediaLibrary from "@/components/media/MediaLibrary";
+import { useToast } from "@/components/ui/use-toast";
 
 interface CourseFormDialogProps {
   open: boolean;
@@ -24,7 +25,7 @@ const convertToFormData = (course: Course): CourseFormData => {
     googleDriveFolderId: course.googleDriveFolderId,
     googleDriveFolderUrl: course.googleDriveFolderUrl,
     // Explicitly include image settings
-    imageUrl: course.imageUrl,
+    imageUrl: course.imageUrl || "",
     imageAspectRatio: course.imageAspectRatio || "16/9",
     imageSize: course.imageSize || 100,
     imageLayout: course.imageLayout || "standard"
@@ -38,6 +39,7 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const { toast } = useToast();
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
   const [formData, setFormData] = useState<CourseFormData | null>(
     currentCourse ? convertToFormData(currentCourse) : null
@@ -46,7 +48,9 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
   // Update formData when currentCourse changes
   useEffect(() => {
     if (currentCourse) {
-      setFormData(convertToFormData(currentCourse));
+      const convertedData = convertToFormData(currentCourse);
+      console.log("CourseFormDialog initialized with course:", convertedData);
+      setFormData(convertedData);
     } else {
       setFormData(null);
     }
@@ -58,7 +62,8 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
     size?: number, 
     layout?: string
   ) => {
-    console.log("Media selected:", url, "with aspect ratio:", aspectRatio, "size:", size, "layout:", layout);
+    console.log("Course media selected:", url, aspectRatio, size, layout);
+    
     if (formData) {
       // Update the formData with the new image URL and settings
       const updatedFormData = {
@@ -69,7 +74,13 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
         imageLayout: layout || "standard"
       };
       setFormData(updatedFormData);
-      console.log("Updated form data:", updatedFormData);
+      console.log("Updated course form data:", updatedFormData);
+      
+      // Show confirmation toast
+      toast({
+        title: "Image settings updated",
+        description: "The image and its settings have been applied to the course."
+      });
     }
   };
   
@@ -78,7 +89,8 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
     // Make sure we preserve all image settings when submitting
     const submissionData = {
       ...data,
-      imageUrl: data.imageUrl || formData?.imageUrl,
+      // Use formData as source of truth for image settings if available
+      imageUrl: data.imageUrl || (formData?.imageUrl || ""),
       imageAspectRatio: data.imageAspectRatio || formData?.imageAspectRatio || "16/9",
       imageSize: data.imageSize !== undefined ? data.imageSize : formData?.imageSize || 100,
       imageLayout: data.imageLayout || formData?.imageLayout || "standard"
