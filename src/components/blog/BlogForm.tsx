@@ -17,6 +17,7 @@ import { BlogPostFormData } from "@/types/blog";
 import MediaLibrary from "@/components/media/MediaLibrary";
 import { useState } from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Settings } from "lucide-react";
 
 interface BlogFormProps {
   initialData?: BlogPostFormData;
@@ -31,6 +32,8 @@ const BlogForm: React.FC<BlogFormProps> = ({
     url: "", 
     imageUrl: "", 
     imageAspectRatio: "16/9",
+    imageSize: 100,
+    imageLayout: "standard",
     isDraft: true 
   }, 
   onSubmit, 
@@ -49,6 +52,8 @@ const BlogForm: React.FC<BlogFormProps> = ({
   const handleRemoveImage = () => {
     form.setValue("imageUrl", "", { shouldValidate: true });
     form.setValue("imageAspectRatio", "16/9", { shouldValidate: false });
+    form.setValue("imageSize", 100, { shouldValidate: false });
+    form.setValue("imageLayout", "standard", { shouldValidate: false });
   };
   
   // Parse the aspect ratio string into a number
@@ -60,6 +65,38 @@ const BlogForm: React.FC<BlogFormProps> = ({
 
   const imageUrl = form.watch("imageUrl");
   const aspectRatio = form.watch("imageAspectRatio") || "16/9";
+  const imageSize = form.watch("imageSize") || 100;
+  const imageLayout = form.watch("imageLayout") || "standard";
+
+  // Render image based on layout and settings
+  const renderImage = () => {
+    if (!imageUrl) return null;
+    
+    const imageStyle = {
+      width: `${imageSize}%`,
+      maxWidth: '100%',
+    };
+
+    return (
+      <div className="w-full" style={imageStyle}>
+        {aspectRatio === "auto" ? (
+          <img 
+            src={imageUrl}
+            alt="Preview"
+            className="w-full object-contain"
+          />
+        ) : (
+          <AspectRatio ratio={getAspectRatioValue(aspectRatio)}>
+            <img
+              src={imageUrl}
+              alt="Preview"
+              className="w-full h-full object-cover"
+            />
+          </AspectRatio>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Form {...form}>
@@ -146,21 +183,24 @@ const BlogForm: React.FC<BlogFormProps> = ({
                   <Input placeholder="https://example.com/image.jpg" {...field} />
                   {field.value && (
                     <div className="mt-2 w-full max-w-md border rounded bg-white overflow-hidden">
-                      {aspectRatio === "auto" ? (
-                        <img 
-                          src={field.value}
-                          alt="Preview"
-                          className="w-full object-contain"
-                        />
-                      ) : (
-                        <AspectRatio ratio={getAspectRatioValue(aspectRatio)}>
-                          <img
-                            src={field.value}
-                            alt="Preview"
-                            className="w-full h-full object-cover"
-                          />
-                        </AspectRatio>
-                      )}
+                      {renderImage()}
+                      <div className="p-3 bg-gray-50 border-t flex justify-between items-center text-sm text-gray-500">
+                        <div>
+                          {aspectRatio !== "auto" 
+                            ? `${aspectRatio.replace("/", ":")} ratio` 
+                            : "Original ratio"} 
+                          {imageSize !== 100 && ` • ${imageSize}% size`}
+                          {imageLayout !== "standard" && ` • ${imageLayout} layout`}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="flex items-center gap-1"
+                          onClick={() => setMediaLibOpen(true)}
+                        >
+                          <Settings className="h-4 w-4" /> Adjust
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -173,10 +213,26 @@ const BlogForm: React.FC<BlogFormProps> = ({
           )}
         />
 
-        {/* Hidden field to store the aspect ratio */}
+        {/* Hidden fields to store image settings */}
         <FormField
           control={form.control}
           name="imageAspectRatio"
+          render={({ field }) => (
+            <input type="hidden" {...field} />
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="imageSize"
+          render={({ field }) => (
+            <input type="hidden" {...field} />
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="imageLayout"
           render={({ field }) => (
             <input type="hidden" {...field} />
           )}
@@ -185,9 +241,11 @@ const BlogForm: React.FC<BlogFormProps> = ({
         <MediaLibrary
           open={mediaLibOpen}
           onOpenChange={setMediaLibOpen}
-          onSelect={(url, aspectRatio) => {
+          onSelect={(url, aspectRatio, size, layout) => {
             form.setValue("imageUrl", url, { shouldValidate: true });
             form.setValue("imageAspectRatio", aspectRatio || "16/9", { shouldValidate: false });
+            form.setValue("imageSize", size || 100, { shouldValidate: false });
+            form.setValue("imageLayout", layout || "standard", { shouldValidate: false });
           }}
         />
 

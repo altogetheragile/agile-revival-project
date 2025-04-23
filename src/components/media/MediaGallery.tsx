@@ -9,6 +9,7 @@ interface MediaGalleryProps {
   bucketExists: boolean;
   activeTab: string;
   onSelect: (url: string) => void;
+  selectedImage?: string | null;
 }
 
 const getMediaIcon = (type: string) => {
@@ -53,7 +54,7 @@ const renderMediaItem = (item: { name: string; url: string; type: string }) => {
 };
 
 export const MediaGallery: React.FC<MediaGalleryProps> = ({
-  items, loading, bucketExists, activeTab, onSelect
+  items, loading, bucketExists, activeTab, onSelect, selectedImage
 }) => {
   const filteredItems = React.useMemo(() => {
     if (activeTab === "all") return items;
@@ -80,7 +81,9 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
           {filteredItems.map((item) => (
             <div
               key={item.url}
-              className="relative group cursor-pointer border rounded-md p-2 hover:bg-gray-50 transition-colors"
+              className={`relative group cursor-pointer border rounded-md p-2 hover:bg-gray-50 transition-colors ${
+                selectedImage === item.url ? 'ring-2 ring-agile-purple bg-gray-50' : ''
+              }`}
               onClick={() => onSelect(item.url)}
             >
               {renderMediaItem(item)}
@@ -90,7 +93,7 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
               </div>
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
                 <Button variant="secondary" size="sm">
-                  Select
+                  {selectedImage === item.url ? "Selected" : "Select"}
                 </Button>
               </div>
             </div>
@@ -100,4 +103,3 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
     </div>
   )
 };
-

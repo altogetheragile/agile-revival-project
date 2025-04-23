@@ -22,7 +22,9 @@ export interface Course {
   isTemplate?: boolean;
   templateId?: string;
   imageUrl?: string;
-  imageAspectRatio?: string; // Add imageAspectRatio property
+  imageAspectRatio?: string;
+  imageSize?: number;
+  imageLayout?: string;
 }
 
 export interface CourseMaterial {
@@ -43,7 +45,9 @@ export type CourseFormData = Omit<Course, "id"> & {
   isTemplate?: boolean;
   templateId?: string;
   imageUrl?: string;
-  imageAspectRatio?: string; // Add imageAspectRatio property
+  imageAspectRatio?: string;
+  imageSize?: number;
+  imageLayout?: string;
 };
 
 export interface CourseWithFormData extends Omit<Course, "learningOutcomes"> {

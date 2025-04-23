@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Settings } from "lucide-react";
 
 interface CourseImageFieldProps {
   form: UseFormReturn<CourseFormData>;
@@ -15,18 +16,75 @@ interface CourseImageFieldProps {
 export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpenMediaLibrary }) => {
   const handleRemoveImage = () => {
     form.setValue("imageUrl", "", { shouldValidate: true });
-    // Also clear the aspect ratio when removing the image
+    // Clear all image related settings
     form.setValue("imageAspectRatio" as any, undefined, { shouldValidate: false });
+    form.setValue("imageSize" as any, undefined, { shouldValidate: false });
+    form.setValue("imageLayout" as any, undefined, { shouldValidate: false });
   };
 
   const imageUrl = form.watch("imageUrl");
   const aspectRatio = form.watch("imageAspectRatio" as any) || "16/9";
+  const imageSize = form.watch("imageSize" as any) || 100;
+  const imageLayout = form.watch("imageLayout" as any) || "standard";
   
   // Parse the aspect ratio string into a number
   const getAspectRatioValue = (ratio: string): number => {
     if (ratio === "auto") return undefined as any; // Let the image use its natural ratio
     const [width, height] = ratio.split("/").map(Number);
     return width / height;
+  };
+
+  // Render image based on layout
+  const renderImage = () => {
+    if (!imageUrl) return null;
+    
+    const imageStyle = {
+      width: `${imageSize}%`,
+      maxWidth: '100%',
+    };
+
+    // Standard layout (default)
+    if (!imageLayout || imageLayout === "standard") {
+      return (
+        <div className="w-full" style={imageStyle}>
+          {aspectRatio === "auto" ? (
+            <img 
+              src={imageUrl}
+              alt="Preview"
+              className="w-full object-contain"
+            />
+          ) : (
+            <AspectRatio ratio={getAspectRatioValue(aspectRatio)}>
+              <img
+                src={imageUrl}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
+            </AspectRatio>
+          )}
+        </div>
+      );
+    }
+    
+    return (
+      <div className="w-full" style={imageStyle}>
+        {aspectRatio === "auto" ? (
+          <img 
+            src={imageUrl}
+            alt="Preview"
+            className="w-full object-contain"
+          />
+        ) : (
+          <AspectRatio ratio={getAspectRatioValue(aspectRatio)}>
+            <img
+              src={imageUrl}
+              alt="Preview"
+              className="w-full h-full object-cover"
+            />
+          </AspectRatio>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -64,21 +122,24 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                 <Input placeholder="https://example.com/image.jpg" {...field} />
                 {field.value && (
                   <div className="mt-2 w-full max-w-md border rounded bg-white overflow-hidden">
-                    {aspectRatio === "auto" ? (
-                      <img 
-                        src={field.value}
-                        alt="Preview"
-                        className="w-full object-contain"
-                      />
-                    ) : (
-                      <AspectRatio ratio={getAspectRatioValue(aspectRatio)}>
-                        <img
-                          src={field.value}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                      </AspectRatio>
-                    )}
+                    {renderImage()}
+                    <div className="p-3 bg-gray-50 border-t flex justify-between items-center text-sm text-gray-500">
+                      <div>
+                        {aspectRatio !== "auto" 
+                          ? `${aspectRatio.replace("/", ":")} ratio` 
+                          : "Original ratio"} 
+                        {imageSize !== 100 && ` • ${imageSize}% size`}
+                        {imageLayout !== "standard" && ` • ${imageLayout} layout`}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="flex items-center gap-1"
+                        onClick={onOpenMediaLibrary}
+                      >
+                        <Settings className="h-4 w-4" /> Adjust
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -90,10 +151,24 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
         )}
       />
       
-      {/* Hidden field to store the aspect ratio */}
+      {/* Hidden fields to store image adjustment values */}
       <FormField
         control={form.control}
         name={"imageAspectRatio" as any}
+        render={({ field }) => (
+          <input type="hidden" {...field} />
+        )}
+      />
+      <FormField
+        control={form.control}
+        name={"imageSize" as any}
+        render={({ field }) => (
+          <input type="hidden" {...field} />
+        )}
+      />
+      <FormField
+        control={form.control}
+        name={"imageLayout" as any}
         render={({ field }) => (
           <input type="hidden" {...field} />
         )}

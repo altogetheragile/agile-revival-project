@@ -33,58 +33,167 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({ post }) => {
     return width / height;
   };
 
-  return (
-    <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg">
-      {post.imageUrl && (
-        <div className="w-full overflow-hidden">
-          {post.imageAspectRatio === "auto" ? (
+  // Get image size style
+  const getImageSizeStyle = () => {
+    if (!post.imageSize || post.imageSize === 100) return {};
+    return { width: `${post.imageSize}%`, margin: '0 auto' };
+  };
+
+  // Render image based on layout
+  const renderImage = () => {
+    if (!post.imageUrl) return null;
+    
+    const imageStyle = getImageSizeStyle();
+    
+    return (
+      <div className="w-full" style={imageStyle}>
+        {post.imageAspectRatio === "auto" ? (
+          <img 
+            src={post.imageUrl} 
+            alt={post.title} 
+            className="w-full object-contain"
+          />
+        ) : (
+          <AspectRatio ratio={getAspectRatioValue(post.imageAspectRatio)}>
             <img 
               src={post.imageUrl} 
               alt={post.title} 
-              className="w-full object-contain"
+              className="w-full h-full object-cover"
             />
-          ) : (
-            <AspectRatio ratio={getAspectRatioValue(post.imageAspectRatio)}>
-              <img 
-                src={post.imageUrl} 
-                alt={post.title} 
-                className="w-full h-full object-cover"
-              />
-            </AspectRatio>
-          )}
-        </div>
-      )}
-      <CardHeader className="pb-2">
-        <CardDescription className="text-sm text-muted-foreground">
-          {formatDate(post.date)}
-        </CardDescription>
-        <CardTitle className="text-xl">{post.title}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <div className={`prose prose-sm max-w-none ${!expanded && isContentLong ? "max-h-24 overflow-hidden" : ""}`}>
-          {displayContent}
-        </div>
-        {isContentLong && (
-          <button 
-            onClick={() => setExpanded(!expanded)} 
-            className="text-agile-purple hover:text-agile-purple-dark font-medium mt-2 text-sm"
-          >
-            {expanded ? "Show less" : "Show more"}
-          </button>
+          </AspectRatio>
         )}
-      </CardContent>
-      <CardFooter>
-        <a 
-          href={post.url} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="inline-flex items-center gap-1 text-agile-purple hover:text-agile-purple-dark font-medium text-sm"
-        >
-          Read full article <ExternalLink size={16} />
-        </a>
-      </CardFooter>
-    </Card>
-  );
+      </div>
+    );
+  };
+
+  // Render the card content based on layout
+  const renderPostLayout = () => {
+    const layout = post.imageLayout || "standard";
+    
+    if (layout === "side-by-side" && post.imageUrl) {
+      return (
+        <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg">
+          <div className="flex flex-col md:flex-row">
+            <div className="md:w-1/2">
+              {renderImage()}
+            </div>
+            <div className="md:w-1/2">
+              <CardHeader className="pb-2">
+                <CardDescription className="text-sm text-muted-foreground">
+                  {formatDate(post.date)}
+                </CardDescription>
+                <CardTitle className="text-xl">{post.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <div className={`prose prose-sm max-w-none ${!expanded && isContentLong ? "max-h-24 overflow-hidden" : ""}`}>
+                  {displayContent}
+                </div>
+                {isContentLong && (
+                  <button 
+                    onClick={() => setExpanded(!expanded)} 
+                    className="text-agile-purple hover:text-agile-purple-dark font-medium mt-2 text-sm"
+                  >
+                    {expanded ? "Show less" : "Show more"}
+                  </button>
+                )}
+              </CardContent>
+              <CardFooter>
+                <a 
+                  href={post.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="inline-flex items-center gap-1 text-agile-purple hover:text-agile-purple-dark font-medium text-sm"
+                >
+                  Read full article <ExternalLink size={16} />
+                </a>
+              </CardFooter>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+    
+    if (layout === "image-left" && post.imageUrl) {
+      return (
+        <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg">
+          <div className="flex flex-col md:flex-row">
+            <div className="md:w-1/3 p-4">
+              {renderImage()}
+            </div>
+            <div className="md:w-2/3">
+              <CardHeader className="pb-2">
+                <CardDescription className="text-sm text-muted-foreground">
+                  {formatDate(post.date)}
+                </CardDescription>
+                <CardTitle className="text-xl">{post.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <div className={`prose prose-sm max-w-none ${!expanded && isContentLong ? "max-h-24 overflow-hidden" : ""}`}>
+                  {displayContent}
+                </div>
+                {isContentLong && (
+                  <button 
+                    onClick={() => setExpanded(!expanded)} 
+                    className="text-agile-purple hover:text-agile-purple-dark font-medium mt-2 text-sm"
+                  >
+                    {expanded ? "Show less" : "Show more"}
+                  </button>
+                )}
+              </CardContent>
+              <CardFooter>
+                <a 
+                  href={post.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="inline-flex items-center gap-1 text-agile-purple hover:text-agile-purple-dark font-medium text-sm"
+                >
+                  Read full article <ExternalLink size={16} />
+                </a>
+              </CardFooter>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+    
+    // Default layout (standard, image-top, full-width, etc.)
+    return (
+      <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg">
+        {post.imageUrl && renderImage()}
+        <CardHeader className="pb-2">
+          <CardDescription className="text-sm text-muted-foreground">
+            {formatDate(post.date)}
+          </CardDescription>
+          <CardTitle className="text-xl">{post.title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-grow">
+          <div className={`prose prose-sm max-w-none ${!expanded && isContentLong ? "max-h-24 overflow-hidden" : ""}`}>
+            {displayContent}
+          </div>
+          {isContentLong && (
+            <button 
+              onClick={() => setExpanded(!expanded)} 
+              className="text-agile-purple hover:text-agile-purple-dark font-medium mt-2 text-sm"
+            >
+              {expanded ? "Show less" : "Show more"}
+            </button>
+          )}
+        </CardContent>
+        <CardFooter>
+          <a 
+            href={post.url} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="inline-flex items-center gap-1 text-agile-purple hover:text-agile-purple-dark font-medium text-sm"
+          >
+            Read full article <ExternalLink size={16} />
+          </a>
+        </CardFooter>
+      </Card>
+    );
+  };
+  
+  return renderPostLayout();
 };
 
 export default BlogPostCard;

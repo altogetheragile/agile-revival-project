@@ -7,6 +7,8 @@ export interface BlogPost {
   url: string;
   imageUrl?: string;
   imageAspectRatio?: string;
+  imageSize?: number;
+  imageLayout?: string;
   isDraft?: boolean;
 }
 

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { useToast } from "@/hooks/use-toast";
@@ -9,16 +9,16 @@ import { AlertTriangle } from "lucide-react";
 import { MediaLibraryTabs } from "./MediaLibraryTabs";
 import { MediaLibraryFileUploader } from "./MediaLibraryFileUploader";
 import { MediaGallery } from "./MediaGallery";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ImageAdjustmentPanel from "./ImageAdjustmentPanel";
 
 interface MediaLibraryProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (url: string, aspectRatio?: string) => void;
+  onSelect: (url: string, aspectRatio?: string, size?: number, layout?: string) => void;
 }
 
-export const MediaLibrary: React.FC<MediaLibraryProps> = ({ 
+const MediaLibrary: React.FC<MediaLibraryProps> = ({ 
   open, 
   onOpenChange,
   onSelect
@@ -27,16 +27,25 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   const { toast } = useToast();
   const [uploading, setUploading] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState("all");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedAspectRatio, setSelectedAspectRatio] = React.useState<string>("16/9");
+  const [selectedSize, setSelectedSize] = React.useState<number>(100);
+  const [selectedLayout, setSelectedLayout] = React.useState<string>("standard");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleSelect = (url: string) => {
-    onSelect(url, selectedAspectRatio);
-    toast({
-      title: "Media selected",
-      description: "The selected media URL has been added to the form."
-    });
-    onOpenChange(false);
+    setSelectedImage(url);
+  };
+
+  const handleConfirmSelection = () => {
+    if (selectedImage) {
+      onSelect(selectedImage, selectedAspectRatio, selectedSize, selectedLayout);
+      toast({
+        title: "Media selected",
+        description: "The selected media has been added with your adjustments."
+      });
+      onOpenChange(false);
+    }
   };
 
   const handleRefresh = () => {
@@ -82,7 +91,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh]">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Media Library</DialogTitle>
           <DialogDescription>
@@ -120,56 +129,85 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
           </Card>
         )}
 
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-            <div className="flex-1">
-              <MediaLibraryFileUploader
-                uploading={uploading}
+        <Tabs defaultValue={selectedImage ? "adjust" : "browse"} className="w-full">
+          <TabsList className="w-full">
+            <TabsTrigger value="browse" className="flex-1">Browse Media</TabsTrigger>
+            <TabsTrigger value="adjust" className="flex-1" disabled={!selectedImage}>
+              Adjust Image
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="browse">
+            <div className="space-y-4">
+              <div>
+                <MediaLibraryFileUploader
+                  uploading={uploading}
+                  loading={loading}
+                  bucketExists={bucketExists}
+                  fileInputRef={fileInputRef}
+                  onFileChange={handleFileChange}
+                  onUploadClick={() => fileInputRef.current?.click()}
+                  onRefresh={handleRefresh}
+                />
+              </div>
+
+              <MediaLibraryTabs
+                items={items}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              />
+
+              <MediaGallery
+                items={items}
                 loading={loading}
                 bucketExists={bucketExists}
-                fileInputRef={fileInputRef}
-                onFileChange={handleFileChange}
-                onUploadClick={() => fileInputRef.current?.click()}
-                onRefresh={handleRefresh}
+                activeTab={activeTab}
+                onSelect={handleSelect}
+                selectedImage={selectedImage}
               />
+              
+              {selectedImage && (
+                <div className="flex justify-end space-x-2">
+                  <button 
+                    onClick={() => setSelectedImage(null)}
+                    className="px-4 py-2 rounded border border-gray-300"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              )}
             </div>
+          </TabsContent>
+          
+          <TabsContent value="adjust">
+            {selectedImage && (
+              <ImageAdjustmentPanel
+                imageUrl={selectedImage}
+                aspectRatio={selectedAspectRatio}
+                size={selectedSize}
+                layout={selectedLayout}
+                onAspectRatioChange={setSelectedAspectRatio}
+                onSizeChange={setSelectedSize}
+                onLayoutChange={setSelectedLayout}
+              />
+            )}
             
-            <div className="flex flex-col space-y-2 min-w-[180px]">
-              <Label htmlFor="aspect-ratio">Image Aspect Ratio</Label>
-              <Select 
-                value={selectedAspectRatio} 
-                onValueChange={setSelectedAspectRatio}
+            <div className="mt-4 flex justify-end space-x-2">
+              <button 
+                onClick={() => setSelectedImage(null)}
+                className="px-4 py-2 rounded border border-gray-300"
               >
-                <SelectTrigger id="aspect-ratio">
-                  <SelectValue placeholder="Select aspect ratio" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="16/9">16:9 (Widescreen)</SelectItem>
-                  <SelectItem value="4/3">4:3 (Standard)</SelectItem>
-                  <SelectItem value="1/1">1:1 (Square)</SelectItem>
-                  <SelectItem value="3/2">3:2 (Classic Photo)</SelectItem>
-                  <SelectItem value="2/3">2:3 (Portrait)</SelectItem>
-                  <SelectItem value="9/16">9:16 (Mobile)</SelectItem>
-                  <SelectItem value="auto">Auto (Original)</SelectItem>
-                </SelectContent>
-              </Select>
+                Cancel
+              </button>
+              <button 
+                onClick={handleConfirmSelection}
+                className="px-4 py-2 rounded bg-agile-purple text-white"
+              >
+                Confirm Selection
+              </button>
             </div>
-          </div>
-
-          <MediaLibraryTabs
-            items={items}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-          />
-
-          <MediaGallery
-            items={items}
-            loading={loading}
-            bucketExists={bucketExists}
-            activeTab={activeTab}
-            onSelect={handleSelect}
-          />
-        </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

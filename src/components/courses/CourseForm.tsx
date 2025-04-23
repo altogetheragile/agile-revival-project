@@ -47,6 +47,8 @@ const CourseForm: React.FC<CourseFormProps> = ({
     format: "in-person",
     status: "draft",
     imageAspectRatio: "16/9",
+    imageSize: 100,
+    imageLayout: "standard",
     isTemplate: false
   },
   onSubmit,
@@ -65,7 +67,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
   // Update form values when formData changes (e.g., when image is selected from media library)
   useEffect(() => {
     if (formData) {
-      // Reset the form with the new data, including the imageUrl
+      // Reset the form with the new data, including the imageUrl and image settings
       Object.entries(formData).forEach(([key, value]) => {
         form.setValue(key as any, value);
       });
@@ -113,10 +115,12 @@ const CourseForm: React.FC<CourseFormProps> = ({
           <MediaLibrary
             open={mediaLibOpen}
             onOpenChange={setMediaLibOpen}
-            onSelect={(url, aspectRatio) => {
+            onSelect={(url, aspectRatio, size, layout) => {
               form.setValue("imageUrl", url, { shouldValidate: true });
               form.setValue("imageAspectRatio", aspectRatio || "16/9", { shouldValidate: false });
-              console.log("Direct form update with URL:", url, "and ratio:", aspectRatio);
+              form.setValue("imageSize", size || 100, { shouldValidate: false });
+              form.setValue("imageLayout", layout || "standard", { shouldValidate: false });
+              console.log("Direct form update with URL:", url, "ratio:", aspectRatio, "size:", size, "layout:", layout);
               setMediaLibOpen(false);
             }}
           />
