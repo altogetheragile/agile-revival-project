@@ -53,14 +53,36 @@ export const createCourse = (courseData: CourseFormData): Course => {
   
   const newId = `crs-${String(Date.now()).slice(-6)}`;
   
-  // Ensure image properties are included
+  // Create the new course with explicit image properties
   const newCourse: Course = {
-    ...courseData,
+    // Basic course properties
     id: newId,
+    title: courseData.title || "",
+    description: courseData.description || "",
+    dates: courseData.dates || "",
+    location: courseData.location || "",
+    instructor: courseData.instructor || "",
+    price: courseData.price || "",
+    category: courseData.category || "",
+    spotsAvailable: courseData.spotsAvailable || 0,
+    status: courseData.status,
+    isTemplate: courseData.isTemplate || false,
+    
+    // Additional properties
     materials: [],
     learningOutcomes: Array.isArray(courseData.learningOutcomes) 
       ? courseData.learningOutcomes 
       : courseData.learningOutcomes ? [courseData.learningOutcomes] : [],
+    prerequisites: courseData.prerequisites,
+    targetAudience: courseData.targetAudience,
+    duration: courseData.duration,
+    skillLevel: courseData.skillLevel,
+    format: courseData.format,
+    googleDriveFolderId: courseData.googleDriveFolderId,
+    googleDriveFolderUrl: courseData.googleDriveFolderUrl,
+    templateId: courseData.templateId,
+    
+    // Explicitly include ALL image settings
     imageUrl: courseData.imageUrl || undefined,
     imageAspectRatio: courseData.imageAspectRatio || "16/9",
     imageSize: courseData.imageSize || 100,
@@ -97,10 +119,11 @@ export const createCourseFromTemplate = (templateId: string, scheduleData: Sched
     isTemplate: false, // This is now a scheduled course, not a template
     templateId: templateId, // Reference back to the template it was created from
     materials: [],
+    // Explicitly preserve image settings
     imageUrl: template.imageUrl,
-    imageAspectRatio: template.imageAspectRatio,
-    imageSize: template.imageSize,
-    imageLayout: template.imageLayout
+    imageAspectRatio: template.imageAspectRatio || "16/9",
+    imageSize: template.imageSize || 100,
+    imageLayout: template.imageLayout || "standard"
   };
   
   courses.push(newCourse);
@@ -118,28 +141,56 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
     return null;
   }
   
-  const existingMaterials = courses[index].materials || [];
+  const existingCourse = courses[index];
+  const existingMaterials = existingCourse.materials || [];
   
-  // Ensure image properties are properly preserved
+  // Create updated course with explicit image property handling
   const updatedCourse: Course = {
-    ...courses[index],
-    ...courseData,
-    id,
+    ...existingCourse,
+    // Update basic course properties
+    title: courseData.title !== undefined ? courseData.title : existingCourse.title,
+    description: courseData.description !== undefined ? courseData.description : existingCourse.description,
+    dates: courseData.dates !== undefined ? courseData.dates : existingCourse.dates,
+    location: courseData.location !== undefined ? courseData.location : existingCourse.location,
+    instructor: courseData.instructor !== undefined ? courseData.instructor : existingCourse.instructor,
+    price: courseData.price !== undefined ? courseData.price : existingCourse.price,
+    category: courseData.category !== undefined ? courseData.category : existingCourse.category,
+    spotsAvailable: courseData.spotsAvailable !== undefined ? courseData.spotsAvailable : existingCourse.spotsAvailable,
+    status: courseData.status !== undefined ? courseData.status : existingCourse.status,
+    isTemplate: courseData.isTemplate !== undefined ? courseData.isTemplate : existingCourse.isTemplate,
+    
+    // Preserve and update additional properties
     materials: existingMaterials,
     learningOutcomes: Array.isArray(courseData.learningOutcomes) 
       ? courseData.learningOutcomes 
-      : courseData.learningOutcomes ? [courseData.learningOutcomes] : courses[index].learningOutcomes,
-    googleDriveFolderId: courseData.googleDriveFolderId || courses[index].googleDriveFolderId,
-    googleDriveFolderUrl: courseData.googleDriveFolderUrl || courses[index].googleDriveFolderUrl,
-    // Explicitly include image settings to ensure they are saved
-    imageUrl: courseData.imageUrl !== undefined ? courseData.imageUrl : courses[index].imageUrl,
-    imageAspectRatio: courseData.imageAspectRatio || courses[index].imageAspectRatio || "16/9",
-    imageSize: courseData.imageSize || courses[index].imageSize || 100,
-    imageLayout: courseData.imageLayout || courses[index].imageLayout || "standard"
+      : courseData.learningOutcomes ? [courseData.learningOutcomes] : existingCourse.learningOutcomes,
+    prerequisites: courseData.prerequisites !== undefined ? courseData.prerequisites : existingCourse.prerequisites,
+    targetAudience: courseData.targetAudience !== undefined ? courseData.targetAudience : existingCourse.targetAudience,
+    duration: courseData.duration !== undefined ? courseData.duration : existingCourse.duration,
+    skillLevel: courseData.skillLevel !== undefined ? courseData.skillLevel : existingCourse.skillLevel,
+    format: courseData.format !== undefined ? courseData.format : existingCourse.format,
+    googleDriveFolderId: courseData.googleDriveFolderId !== undefined ? courseData.googleDriveFolderId : existingCourse.googleDriveFolderId,
+    googleDriveFolderUrl: courseData.googleDriveFolderUrl !== undefined ? courseData.googleDriveFolderUrl : existingCourse.googleDriveFolderUrl,
+    templateId: courseData.templateId !== undefined ? courseData.templateId : existingCourse.templateId,
+    
+    // Explicitly handle image properties to prevent them from becoming undefined
+    imageUrl: courseData.imageUrl !== undefined ? courseData.imageUrl : existingCourse.imageUrl,
+    imageAspectRatio: courseData.imageAspectRatio !== undefined ? courseData.imageAspectRatio : (existingCourse.imageAspectRatio || "16/9"),
+    imageSize: courseData.imageSize !== undefined ? courseData.imageSize : (existingCourse.imageSize || 100),
+    imageLayout: courseData.imageLayout !== undefined ? courseData.imageLayout : (existingCourse.imageLayout || "standard"),
+    
+    // Preserve ID
+    id: id
   };
   
   courses[index] = updatedCourse;
   saveCourses(courses);
+  console.log("Course updated with image settings:", {
+    imageUrl: updatedCourse.imageUrl,
+    imageAspectRatio: updatedCourse.imageAspectRatio,
+    imageSize: updatedCourse.imageSize,
+    imageLayout: updatedCourse.imageLayout
+  });
   
   return updatedCourse;
 };

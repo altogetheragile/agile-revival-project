@@ -23,6 +23,7 @@ const convertToFormData = (course: Course): CourseFormData => {
     // Include Google Drive folder information
     googleDriveFolderId: course.googleDriveFolderId,
     googleDriveFolderUrl: course.googleDriveFolderUrl,
+    // Explicitly include image settings
     imageUrl: course.imageUrl,
     imageAspectRatio: course.imageAspectRatio || "16/9",
     imageSize: course.imageSize || 100,
@@ -79,9 +80,16 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
       ...data,
       imageUrl: data.imageUrl || formData?.imageUrl,
       imageAspectRatio: data.imageAspectRatio || formData?.imageAspectRatio || "16/9",
-      imageSize: data.imageSize || formData?.imageSize || 100,
+      imageSize: data.imageSize !== undefined ? data.imageSize : formData?.imageSize || 100,
       imageLayout: data.imageLayout || formData?.imageLayout || "standard"
     };
+    
+    console.log("Submitting course with image settings:", {
+      imageUrl: submissionData.imageUrl,
+      imageAspectRatio: submissionData.imageAspectRatio,
+      imageSize: submissionData.imageSize,
+      imageLayout: submissionData.imageLayout
+    });
     
     // Call the original onSubmit with our complete data
     onSubmit(submissionData);

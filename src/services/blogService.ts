@@ -1,4 +1,3 @@
-
 import { BlogPost, BlogPostFormData } from "@/types/blog";
 import { blogPosts as initialBlogPosts } from "@/data/blogPosts";
 
@@ -37,13 +36,16 @@ export const createBlogPost = (postData: BlogPostFormData): BlogPost => {
     ? Math.max(...posts.map(post => post.id)) + 1 
     : 1;
   
-  // Create the new post with the current date
+  // Create the new post with the current date and explicit image properties
   const newPost: BlogPost = {
-    ...postData,
     id: newId,
+    title: postData.title,
+    content: postData.content,
+    url: postData.url,
     date: postData.date || new Date().toISOString().split('T')[0],
-    // Ensure image settings are included
-    imageUrl: postData.imageUrl,
+    isDraft: postData.isDraft !== undefined ? postData.isDraft : true,
+    // Explicitly include ALL image settings
+    imageUrl: postData.imageUrl || "",
     imageAspectRatio: postData.imageAspectRatio || "16/9",
     imageSize: postData.imageSize || 100,
     imageLayout: postData.imageLayout || "standard"
@@ -65,18 +67,27 @@ export const updateBlogPost = (id: number, postData: BlogPostFormData): BlogPost
     return null;
   }
   
+  // Get original post to maintain any fields not provided in update
+  const originalPost = posts[index];
+  
+  // Update the blog post with new data while preserving ID and date
   const updatedPost: BlogPost = {
-    ...posts[index],
-    ...postData,
-    id: id, // Ensure ID remains unchanged
-    date: posts[index].date, // Keep the original date
-    // Explicitly ensure image settings are updated
-    imageUrl: postData.imageUrl,
-    imageAspectRatio: postData.imageAspectRatio || posts[index].imageAspectRatio || "16/9",
-    imageSize: postData.imageSize || posts[index].imageSize || 100, 
-    imageLayout: postData.imageLayout || posts[index].imageLayout || "standard"
+    ...originalPost,
+    title: postData.title !== undefined ? postData.title : originalPost.title,
+    content: postData.content !== undefined ? postData.content : originalPost.content,
+    url: postData.url !== undefined ? postData.url : originalPost.url,
+    isDraft: postData.isDraft !== undefined ? postData.isDraft : originalPost.isDraft,
+    // Explicitly handle image properties to prevent them from becoming undefined
+    imageUrl: postData.imageUrl !== undefined ? postData.imageUrl : originalPost.imageUrl,
+    imageAspectRatio: postData.imageAspectRatio || originalPost.imageAspectRatio || "16/9",
+    imageSize: postData.imageSize || originalPost.imageSize || 100,
+    imageLayout: postData.imageLayout || originalPost.imageLayout || "standard",
+    // Keep original ID and date
+    id: id,
+    date: originalPost.date
   };
   
+  // Update the post in the array
   posts[index] = updatedPost;
   saveBlogPosts(posts);
   
