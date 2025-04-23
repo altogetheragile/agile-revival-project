@@ -32,6 +32,9 @@ const renderMediaItem = (item: { name: string; url: string; type: string }) => {
             className="w-full aspect-square object-cover rounded-md"
             onError={(e) => {
               console.error(`Failed to load image: ${item.url}`);
+              console.error(`Browser: ${navigator.userAgent}`);
+              
+              // Set a fallback image
               (e.target as HTMLImageElement).src = '/placeholder.svg';
               
               // Add visual indicator for failed images
