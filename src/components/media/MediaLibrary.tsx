@@ -9,11 +9,13 @@ import { AlertTriangle } from "lucide-react";
 import { MediaLibraryTabs } from "./MediaLibraryTabs";
 import { MediaLibraryFileUploader } from "./MediaLibraryFileUploader";
 import { MediaGallery } from "./MediaGallery";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface MediaLibraryProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (url: string) => void;
+  onSelect: (url: string, aspectRatio?: string) => void;
 }
 
 export const MediaLibrary: React.FC<MediaLibraryProps> = ({ 
@@ -25,10 +27,11 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   const { toast } = useToast();
   const [uploading, setUploading] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState("all");
+  const [selectedAspectRatio, setSelectedAspectRatio] = React.useState<string>("16/9");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleSelect = (url: string) => {
-    onSelect(url);
+    onSelect(url, selectedAspectRatio);
     toast({
       title: "Media selected",
       description: "The selected media URL has been added to the form."
@@ -118,15 +121,40 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
         )}
 
         <div className="space-y-4">
-          <MediaLibraryFileUploader
-            uploading={uploading}
-            loading={loading}
-            bucketExists={bucketExists}
-            fileInputRef={fileInputRef}
-            onFileChange={handleFileChange}
-            onUploadClick={() => fileInputRef.current?.click()}
-            onRefresh={handleRefresh}
-          />
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+            <div className="flex-1">
+              <MediaLibraryFileUploader
+                uploading={uploading}
+                loading={loading}
+                bucketExists={bucketExists}
+                fileInputRef={fileInputRef}
+                onFileChange={handleFileChange}
+                onUploadClick={() => fileInputRef.current?.click()}
+                onRefresh={handleRefresh}
+              />
+            </div>
+            
+            <div className="flex flex-col space-y-2 min-w-[180px]">
+              <Label htmlFor="aspect-ratio">Image Aspect Ratio</Label>
+              <Select 
+                value={selectedAspectRatio} 
+                onValueChange={setSelectedAspectRatio}
+              >
+                <SelectTrigger id="aspect-ratio">
+                  <SelectValue placeholder="Select aspect ratio" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="16/9">16:9 (Widescreen)</SelectItem>
+                  <SelectItem value="4/3">4:3 (Standard)</SelectItem>
+                  <SelectItem value="1/1">1:1 (Square)</SelectItem>
+                  <SelectItem value="3/2">3:2 (Classic Photo)</SelectItem>
+                  <SelectItem value="2/3">2:3 (Portrait)</SelectItem>
+                  <SelectItem value="9/16">9:16 (Mobile)</SelectItem>
+                  <SelectItem value="auto">Auto (Original)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
           <MediaLibraryTabs
             items={items}
@@ -148,4 +176,3 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
 };
 
 export default MediaLibrary;
-

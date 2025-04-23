@@ -14,6 +14,7 @@ import { Calendar, Clock, MapPin, Users, Eye, Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import RegistrationDialog from "./RegistrationDialog";
 import { Badge } from "@/components/ui/badge";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface CourseGridProps {
   courses: Course[];
@@ -41,6 +42,13 @@ const CourseGrid: React.FC<CourseGridProps> = ({ courses, onEdit, onDelete }) =>
     setSelectedCourse(course);
     setRegistrationOpen(true);
   };
+  
+  // Parse the aspect ratio string into a number
+  const getAspectRatioValue = (ratio?: string): number => {
+    if (!ratio || ratio === "auto") return 16/9; // Default to 16:9
+    const [width, height] = ratio.split("/").map(Number);
+    return width / height;
+  };
 
   return (
     <>
@@ -48,12 +56,22 @@ const CourseGrid: React.FC<CourseGridProps> = ({ courses, onEdit, onDelete }) =>
         {courses.map((course) => (
           <Card key={course.id} className="h-full flex flex-col">
             {course.imageUrl && (
-              <div className="w-full h-48 overflow-hidden">
-                <img 
-                  src={course.imageUrl} 
-                  alt={course.title} 
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-full overflow-hidden">
+                {course.imageAspectRatio === "auto" ? (
+                  <img 
+                    src={course.imageUrl} 
+                    alt={course.title} 
+                    className="w-full object-contain"
+                  />
+                ) : (
+                  <AspectRatio ratio={getAspectRatioValue(course.imageAspectRatio)}>
+                    <img 
+                      src={course.imageUrl} 
+                      alt={course.title} 
+                      className="w-full h-full object-cover"
+                    />
+                  </AspectRatio>
+                )}
               </div>
             )}
             <CardHeader className="pb-2">

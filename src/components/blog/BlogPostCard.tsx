@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { BlogPost } from "@/types/blog";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface BlogPostCardProps {
   post: BlogPost;
@@ -25,16 +25,33 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({ post }) => {
   const displayContent = expanded || !isContentLong 
     ? post.content 
     : `${post.content.slice(0, 150)}...`;
+    
+  // Parse the aspect ratio string into a number
+  const getAspectRatioValue = (ratio?: string): number => {
+    if (!ratio || ratio === "auto") return 16/9; // Default to 16:9
+    const [width, height] = ratio.split("/").map(Number);
+    return width / height;
+  };
 
   return (
     <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg">
       {post.imageUrl && (
-        <div className="relative w-full h-48 overflow-hidden">
-          <img 
-            src={post.imageUrl} 
-            alt={post.title} 
-            className="w-full h-full object-cover"
-          />
+        <div className="w-full overflow-hidden">
+          {post.imageAspectRatio === "auto" ? (
+            <img 
+              src={post.imageUrl} 
+              alt={post.title} 
+              className="w-full object-contain"
+            />
+          ) : (
+            <AspectRatio ratio={getAspectRatioValue(post.imageAspectRatio)}>
+              <img 
+                src={post.imageUrl} 
+                alt={post.title} 
+                className="w-full h-full object-cover"
+              />
+            </AspectRatio>
+          )}
         </div>
       )}
       <CardHeader className="pb-2">

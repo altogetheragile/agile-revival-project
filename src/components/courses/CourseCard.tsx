@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Course } from "@/types/course";
 import RegistrationDialog from "./RegistrationDialog";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface CourseCardProps {
   course: Course;
@@ -16,16 +17,33 @@ interface CourseCardProps {
 const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete, isMobile }) => {
   const [registrationOpen, setRegistrationOpen] = useState(false);
   
+  // Parse the aspect ratio string into a number
+  const getAspectRatioValue = (ratio?: string): number => {
+    if (!ratio || ratio === "auto") return 16/9; // Default to 16:9
+    const [width, height] = ratio.split("/").map(Number);
+    return width / height;
+  };
+  
   return (
     <>
       <Card className="h-full flex flex-col">
         {course.imageUrl && (
-          <div className="w-full h-40 overflow-hidden">
-            <img 
-              src={course.imageUrl} 
-              alt={course.title} 
-              className="w-full h-full object-cover"
-            />
+          <div className="w-full overflow-hidden">
+            {course.imageAspectRatio === "auto" ? (
+              <img 
+                src={course.imageUrl} 
+                alt={course.title} 
+                className="w-full object-contain"
+              />
+            ) : (
+              <AspectRatio ratio={getAspectRatioValue(course.imageAspectRatio)}>
+                <img 
+                  src={course.imageUrl} 
+                  alt={course.title} 
+                  className="w-full h-full object-cover"
+                />
+              </AspectRatio>
+            )}
           </div>
         )}
         <CardHeader className="relative">

@@ -6,6 +6,7 @@ export interface BlogPost {
   date: string;
   url: string;
   imageUrl?: string;
+  imageAspectRatio?: string;
   isDraft?: boolean;
 }
 

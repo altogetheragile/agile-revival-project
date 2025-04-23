@@ -23,7 +23,8 @@ const convertToFormData = (course: Course): CourseFormData => {
     // Include Google Drive folder information
     googleDriveFolderId: course.googleDriveFolderId,
     googleDriveFolderUrl: course.googleDriveFolderUrl,
-    imageUrl: course.imageUrl
+    imageUrl: course.imageUrl,
+    imageAspectRatio: course.imageAspectRatio || "16/9"
   };
 };
 
@@ -48,13 +49,14 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
     }
   }, [currentCourse]);
   
-  const handleMediaSelect = (url: string) => {
-    console.log("Media selected:", url);
+  const handleMediaSelect = (url: string, aspectRatio?: string) => {
+    console.log("Media selected:", url, "with aspect ratio:", aspectRatio);
     if (formData) {
-      // Update the formData with the new image URL
+      // Update the formData with the new image URL and aspect ratio
       const updatedFormData = {
         ...formData,
-        imageUrl: url
+        imageUrl: url,
+        imageAspectRatio: aspectRatio || "16/9"
       };
       setFormData(updatedFormData);
       console.log("Updated form data:", updatedFormData);
@@ -97,5 +99,3 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
     </>
   );
 };
-
-export default CourseFormDialog;

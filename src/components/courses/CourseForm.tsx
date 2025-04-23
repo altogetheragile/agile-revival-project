@@ -46,6 +46,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
     skillLevel: "all-levels",
     format: "in-person",
     status: "draft",
+    imageAspectRatio: "16/9",
     isTemplate: false
   },
   onSubmit,
@@ -112,9 +113,10 @@ const CourseForm: React.FC<CourseFormProps> = ({
           <MediaLibrary
             open={mediaLibOpen}
             onOpenChange={setMediaLibOpen}
-            onSelect={(url) => {
+            onSelect={(url, aspectRatio) => {
               form.setValue("imageUrl", url, { shouldValidate: true });
-              console.log("Direct form update with URL:", url);
+              form.setValue("imageAspectRatio", aspectRatio || "16/9", { shouldValidate: false });
+              console.log("Direct form update with URL:", url, "and ratio:", aspectRatio);
               setMediaLibOpen(false);
             }}
           />
@@ -130,5 +132,3 @@ const CourseForm: React.FC<CourseFormProps> = ({
     </Form>
   );
 };
-
-export default CourseForm;
