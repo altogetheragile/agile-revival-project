@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { toast } from "sonner";
+import { MediaResetProvider } from "./context/MediaResetContext";
 
 interface MediaLibraryProps {
   open: boolean;
@@ -45,12 +46,17 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
   };
 
   return (
-    <MediaLibraryDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      onSelect={handleSelect}
-    />
+    <MediaResetProvider>
+      <MediaLibraryDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        onSelect={handleSelect}
+      />
+    </MediaResetProvider>
   );
 };
 
 export default MediaLibrary;
+
+// Export the GlobalResetProvider to fix the import issue
+export { GlobalResetProvider } from './context/MediaResetContext';
