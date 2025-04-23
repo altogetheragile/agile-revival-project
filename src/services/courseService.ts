@@ -1,4 +1,3 @@
-
 import { Course, CourseFormData, ScheduleCourseFormData } from "@/types/course";
 import { loadCourses, saveCourses, getGlobalCacheBust } from "@/utils/courseStorage";
 
@@ -107,7 +106,7 @@ export const createCourse = (courseData: CourseFormData): Course => {
     // Explicitly include ALL image settings with appropriate defaults
     imageUrl: imageUrlWithCache,
     imageAspectRatio: courseData.imageAspectRatio || "16/9",
-    imageSize: courseData.imageSize || 100,
+    imageSize: courseData.imageSize === undefined ? 100 : courseData.imageSize,
     imageLayout: courseData.imageLayout || "standard"
   };
   
@@ -220,11 +219,10 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
     templateId: courseData.templateId !== undefined ? courseData.templateId : existingCourse.templateId,
     
     // Explicitly handle image properties to prevent them from becoming undefined
-    // Always use the courseData value if provided, otherwise fall back to existing, then to defaults
-    imageUrl: imageUrlWithCache,
-    imageAspectRatio: courseData.imageAspectRatio !== undefined ? courseData.imageAspectRatio : (existingCourse.imageAspectRatio || "16/9"),
-    imageSize: courseData.imageSize !== undefined ? courseData.imageSize : (existingCourse.imageSize || 100),
-    imageLayout: courseData.imageLayout !== undefined ? courseData.imageLayout : (existingCourse.imageLayout || "standard"),
+    imageUrl: imageUrlWithCache || existingCourse.imageUrl || "",
+    imageAspectRatio: courseData.imageAspectRatio || existingCourse.imageAspectRatio || "16/9",
+    imageSize: courseData.imageSize !== undefined ? courseData.imageSize : (existingCourse.imageSize !== undefined ? existingCourse.imageSize : 100),
+    imageLayout: courseData.imageLayout || existingCourse.imageLayout || "standard",
     
     // Preserve ID
     id: id

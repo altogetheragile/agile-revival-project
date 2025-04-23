@@ -19,6 +19,13 @@ interface CourseFormDialogProps {
 
 // Convert Course to CourseFormData for the form
 const convertToFormData = (course: Course): CourseFormData => {
+  console.log("Converting course to form data with image settings:", {
+    imageUrl: course.imageUrl,
+    imageAspectRatio: course.imageAspectRatio,
+    imageSize: course.imageSize,
+    imageLayout: course.imageLayout
+  });
+
   return {
     ...course,
     id: course.id,
@@ -51,7 +58,12 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
   useEffect(() => {
     if (currentCourse) {
       const convertedData = convertToFormData(currentCourse);
-      console.log("CourseFormDialog initialized with course:", convertedData);
+      console.log("CourseFormDialog initialized with course image settings:", {
+        imageUrl: convertedData.imageUrl,
+        imageAspectRatio: convertedData.imageAspectRatio,
+        imageSize: convertedData.imageSize,
+        imageLayout: convertedData.imageLayout
+      });
       setFormData(convertedData);
       // Set a new form key to force re-render with fresh data
       setFormKey(Date.now());
@@ -71,7 +83,12 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
     const urlWithoutParams = url.split('?')[0];
     const finalUrl = `${urlWithoutParams}?v=${cacheBust}`;
     
-    console.log("Course media selected:", finalUrl, aspectRatio, size, layout);
+    console.log("Course media selected with settings:", {
+      url: finalUrl, 
+      aspectRatio: aspectRatio || "16/9", 
+      size: size || 100, 
+      layout: layout || "standard"
+    });
     
     if (formData) {
       // Update the formData with the new image URL and settings
@@ -83,7 +100,12 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
         imageLayout: layout || "standard"
       };
       setFormData(updatedFormData);
-      console.log("Updated course form data:", updatedFormData);
+      console.log("Updated course form data with image settings:", {
+        imageUrl: updatedFormData.imageUrl,
+        imageAspectRatio: updatedFormData.imageAspectRatio,
+        imageSize: updatedFormData.imageSize,
+        imageLayout: updatedFormData.imageLayout
+      });
       
       // Show confirmation toast
       toast({

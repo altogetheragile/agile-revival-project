@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface MediaItem {
   name: string;
@@ -72,6 +72,17 @@ export const MediaLibraryProvider: React.FC<MediaLibraryProviderProps> = ({
   const [activeTabPanel, setActiveTabPanel] = useState("browse");
   const [activeTab, setActiveTab] = useState("all");
 
+  // Log when settings are changed to debug persistence issues
+  useEffect(() => {
+    if (selectedImage) {
+      console.log("MediaLibraryContext settings updated:", {
+        aspectRatio: selectedAspectRatio,
+        size: selectedSize,
+        layout: selectedLayout
+      });
+    }
+  }, [selectedImage, selectedAspectRatio, selectedSize, selectedLayout]);
+
   // Handle image selection
   const onSelect = (url: string) => {
     console.log("Image selected:", url);
@@ -81,7 +92,13 @@ export const MediaLibraryProvider: React.FC<MediaLibraryProviderProps> = ({
   // Handle final confirmation
   const handleConfirmSelection = () => {
     if (selectedImage) {
-      console.log("Confirming selection with:", selectedImage, selectedAspectRatio, selectedSize, selectedLayout);
+      console.log("Confirming selection with settings:", {
+        image: selectedImage, 
+        aspectRatio: selectedAspectRatio, 
+        size: selectedSize, 
+        layout: selectedLayout
+      });
+      // Important: Pass all settings to the selectHandler
       selectHandler(selectedImage, selectedAspectRatio, selectedSize, selectedLayout);
       onClose();
     }

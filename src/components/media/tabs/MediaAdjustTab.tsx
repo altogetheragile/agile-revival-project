@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import ImageAdjustmentPanel from "../ImageAdjustmentPanel";
 import { useMediaLibraryContext } from "../context/MediaLibraryContext";
@@ -17,6 +17,15 @@ export const MediaAdjustTab: React.FC = () => {
     setActiveTabPanel,
     handleConfirmSelection
   } = useMediaLibraryContext();
+
+  // Log settings when they change to help debug persistence issues
+  useEffect(() => {
+    console.log("MediaAdjustTab settings:", {
+      aspectRatio: selectedAspectRatio,
+      size: selectedSize,
+      layout: selectedLayout
+    });
+  }, [selectedAspectRatio, selectedSize, selectedLayout]);
 
   return (
     <div>
@@ -48,7 +57,12 @@ export const MediaAdjustTab: React.FC = () => {
         </Button>
         <Button 
           onClick={() => {
-            console.log("Confirming selection:", selectedImage, selectedAspectRatio, selectedSize, selectedLayout);
+            console.log("Confirming selection with settings:", {
+              image: selectedImage,
+              aspectRatio: selectedAspectRatio,
+              size: selectedSize,
+              layout: selectedLayout
+            });
             handleConfirmSelection();
             toast("Image selected", {
               description: "The image has been applied successfully"

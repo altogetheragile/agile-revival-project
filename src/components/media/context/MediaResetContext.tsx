@@ -10,7 +10,7 @@ interface MediaResetContextType {
 
 const MediaResetContext = createContext<MediaResetContextType | undefined>(undefined);
 
-export const MediaResetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const MediaResetProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const [cacheBust, setCacheBust] = useState<string>(() => getGlobalCacheBust() || '1');
 
   // Initialize with the current cache bust value
@@ -43,6 +43,7 @@ export const useMediaReset = (): MediaResetContextType => {
   return context;
 };
 
+// Fixed GlobalResetProvider to render empty fragment as children
 export const GlobalResetProvider: React.FC = () => {
-  return <MediaResetProvider><></></MediaResetProvider>;
+  return <MediaResetProvider><React.Fragment></React.Fragment></MediaResetProvider>;
 };
