@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { File, Image, Music, Video, AlertTriangle, RefreshCw, RefreshCcwDot, Star, Smartphone } from "lucide-react";
