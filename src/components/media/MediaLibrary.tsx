@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 
 // Export the reset function so it can be called from other components or console
-export const resetMediaLibraryData = resetCoursesToInitial;
+export const resetMediaLibraryData = () => resetCoursesToInitial();
 
 // Export the original dialog component as default
 export default MediaLibraryDialog;
