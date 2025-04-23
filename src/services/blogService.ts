@@ -41,7 +41,12 @@ export const createBlogPost = (postData: BlogPostFormData): BlogPost => {
   const newPost: BlogPost = {
     ...postData,
     id: newId,
-    date: postData.date || new Date().toISOString().split('T')[0]
+    date: postData.date || new Date().toISOString().split('T')[0],
+    // Ensure image settings are included
+    imageUrl: postData.imageUrl,
+    imageAspectRatio: postData.imageAspectRatio || "16/9",
+    imageSize: postData.imageSize || 100,
+    imageLayout: postData.imageLayout || "standard"
   };
   
   // Add the new post to the collection and save
@@ -64,7 +69,12 @@ export const updateBlogPost = (id: number, postData: BlogPostFormData): BlogPost
     ...posts[index],
     ...postData,
     id: id, // Ensure ID remains unchanged
-    date: posts[index].date // Keep the original date
+    date: posts[index].date, // Keep the original date
+    // Explicitly ensure image settings are updated
+    imageUrl: postData.imageUrl,
+    imageAspectRatio: postData.imageAspectRatio || posts[index].imageAspectRatio || "16/9",
+    imageSize: postData.imageSize || posts[index].imageSize || 100, 
+    imageLayout: postData.imageLayout || posts[index].imageLayout || "standard"
   };
   
   posts[index] = updatedPost;

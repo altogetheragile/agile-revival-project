@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { BlogPostFormData } from "@/types/blog";
 import MediaLibrary from "@/components/media/MediaLibrary";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Settings } from "lucide-react";
 
@@ -44,9 +44,25 @@ const BlogForm: React.FC<BlogFormProps> = ({
   });
 
   const [mediaLibOpen, setMediaLibOpen] = useState(false);
+  const [formData, setFormData] = useState<BlogPostFormData>(initialData);
+
+  // Update form values when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      Object.entries(initialData).forEach(([key, value]) => {
+        form.setValue(key as any, value);
+      });
+      setFormData(initialData);
+    }
+  }, [initialData, form]);
 
   const handleSubmit = (data: BlogPostFormData) => {
-    onSubmit(data);
+    onSubmit({
+      ...data,
+      imageAspectRatio: data.imageAspectRatio || "16/9",
+      imageSize: data.imageSize || 100,
+      imageLayout: data.imageLayout || "standard"
+    });
   };
 
   const handleRemoveImage = () => {
@@ -54,6 +70,15 @@ const BlogForm: React.FC<BlogFormProps> = ({
     form.setValue("imageAspectRatio", "16/9", { shouldValidate: false });
     form.setValue("imageSize", 100, { shouldValidate: false });
     form.setValue("imageLayout", "standard", { shouldValidate: false });
+    
+    // Update formData state as well
+    setFormData({
+      ...formData,
+      imageUrl: "",
+      imageAspectRatio: "16/9",
+      imageSize: 100,
+      imageLayout: "standard"
+    });
   };
   
   // Parse the aspect ratio string into a number
@@ -67,6 +92,26 @@ const BlogForm: React.FC<BlogFormProps> = ({
   const aspectRatio = form.watch("imageAspectRatio") || "16/9";
   const imageSize = form.watch("imageSize") || 100;
   const imageLayout = form.watch("imageLayout") || "standard";
+
+  // Handle media selection from library
+  const handleMediaSelect = (url: string, aspectRatio?: string, size?: number, layout?: string) => {
+    const updatedFormData = {
+      ...formData,
+      imageUrl: url,
+      imageAspectRatio: aspectRatio || "16/9",
+      imageSize: size || 100,
+      imageLayout: layout || "standard"
+    };
+    
+    // Update form values
+    form.setValue("imageUrl", url, { shouldValidate: true });
+    form.setValue("imageAspectRatio", aspectRatio || "16/9", { shouldValidate: false });
+    form.setValue("imageSize", size || 100, { shouldValidate: false });
+    form.setValue("imageLayout", layout || "standard", { shouldValidate: false });
+    
+    // Update state
+    setFormData(updatedFormData);
+  };
 
   // Render image based on layout and settings
   const renderImage = () => {
@@ -241,12 +286,7 @@ const BlogForm: React.FC<BlogFormProps> = ({
         <MediaLibrary
           open={mediaLibOpen}
           onOpenChange={setMediaLibOpen}
-          onSelect={(url, aspectRatio, size, layout) => {
-            form.setValue("imageUrl", url, { shouldValidate: true });
-            form.setValue("imageAspectRatio", aspectRatio || "16/9", { shouldValidate: false });
-            form.setValue("imageSize", size || 100, { shouldValidate: false });
-            form.setValue("imageLayout", layout || "standard", { shouldValidate: false });
-          }}
+          onSelect={handleMediaSelect}
         />
 
         <FormField

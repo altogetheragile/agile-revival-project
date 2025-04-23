@@ -72,6 +72,21 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
     }
   };
   
+  // Handle the form submission to ensure image settings are included
+  const handleSubmit = (data: CourseFormData) => {
+    // Make sure we preserve all image settings when submitting
+    const submissionData = {
+      ...data,
+      imageUrl: data.imageUrl || formData?.imageUrl,
+      imageAspectRatio: data.imageAspectRatio || formData?.imageAspectRatio || "16/9",
+      imageSize: data.imageSize || formData?.imageSize || 100,
+      imageLayout: data.imageLayout || formData?.imageLayout || "standard"
+    };
+    
+    // Call the original onSubmit with our complete data
+    onSubmit(submissionData);
+  };
+  
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -89,7 +104,7 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
           <ScrollArea className="max-h-[70vh] pr-4">
             <CourseForm 
               initialData={currentCourse ? convertToFormData(currentCourse) : undefined}
-              onSubmit={onSubmit}
+              onSubmit={handleSubmit}
               onCancel={onCancel}
               stayOpenOnSubmit={true}
               onOpenMediaLibrary={() => setIsMediaLibraryOpen(true)}

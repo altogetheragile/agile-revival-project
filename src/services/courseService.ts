@@ -1,3 +1,4 @@
+
 import { Course, CourseFormData, ScheduleCourseFormData } from "@/types/course";
 import { loadCourses, saveCourses } from "@/utils/courseStorage";
 
@@ -52,13 +53,18 @@ export const createCourse = (courseData: CourseFormData): Course => {
   
   const newId = `crs-${String(Date.now()).slice(-6)}`;
   
+  // Ensure image properties are included
   const newCourse: Course = {
     ...courseData,
     id: newId,
     materials: [],
     learningOutcomes: Array.isArray(courseData.learningOutcomes) 
       ? courseData.learningOutcomes 
-      : courseData.learningOutcomes ? [courseData.learningOutcomes] : []
+      : courseData.learningOutcomes ? [courseData.learningOutcomes] : [],
+    imageUrl: courseData.imageUrl || undefined,
+    imageAspectRatio: courseData.imageAspectRatio || "16/9",
+    imageSize: courseData.imageSize || 100,
+    imageLayout: courseData.imageLayout || "standard"
   };
   
   courses.push(newCourse);
@@ -79,6 +85,7 @@ export const createCourseFromTemplate = (templateId: string, scheduleData: Sched
   const newId = `crs-${String(Date.now()).slice(-6)}`;
   
   // Create a new course based on the template, but with scheduled details
+  // Preserve image settings from template
   const newCourse: Course = {
     ...template,
     id: newId,
@@ -89,7 +96,11 @@ export const createCourseFromTemplate = (templateId: string, scheduleData: Sched
     status: scheduleData.status,
     isTemplate: false, // This is now a scheduled course, not a template
     templateId: templateId, // Reference back to the template it was created from
-    materials: []
+    materials: [],
+    imageUrl: template.imageUrl,
+    imageAspectRatio: template.imageAspectRatio,
+    imageSize: template.imageSize,
+    imageLayout: template.imageLayout
   };
   
   courses.push(newCourse);
@@ -109,6 +120,7 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
   
   const existingMaterials = courses[index].materials || [];
   
+  // Ensure image properties are properly preserved
   const updatedCourse: Course = {
     ...courses[index],
     ...courseData,
@@ -118,7 +130,12 @@ export const updateCourse = (id: string, courseData: CourseFormData): Course | n
       ? courseData.learningOutcomes 
       : courseData.learningOutcomes ? [courseData.learningOutcomes] : courses[index].learningOutcomes,
     googleDriveFolderId: courseData.googleDriveFolderId || courses[index].googleDriveFolderId,
-    googleDriveFolderUrl: courseData.googleDriveFolderUrl || courses[index].googleDriveFolderUrl
+    googleDriveFolderUrl: courseData.googleDriveFolderUrl || courses[index].googleDriveFolderUrl,
+    // Explicitly include image settings to ensure they are saved
+    imageUrl: courseData.imageUrl !== undefined ? courseData.imageUrl : courses[index].imageUrl,
+    imageAspectRatio: courseData.imageAspectRatio || courses[index].imageAspectRatio || "16/9",
+    imageSize: courseData.imageSize || courses[index].imageSize || 100,
+    imageLayout: courseData.imageLayout || courses[index].imageLayout || "standard"
   };
   
   courses[index] = updatedCourse;
