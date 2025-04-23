@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -53,13 +54,26 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
     return width / height;
   };
 
-  // Apply changes when user confirms
-  const applyChanges = () => {
-    console.log("Applying changes:", { currentAspectRatio, currentSize, currentLayout });
+  // Apply changes automatically when user changes settings
+  useEffect(() => {
+    console.log("Image adjustment settings changed:", {
+      currentAspectRatio,
+      currentSize,
+      currentLayout
+    });
+    
+    // Auto-apply changes when settings are modified
     onAspectRatioChange(currentAspectRatio);
     onSizeChange(currentSize);
     onLayoutChange(currentLayout);
-  };
+  }, [
+    currentSize, 
+    currentAspectRatio, 
+    currentLayout, 
+    onAspectRatioChange, 
+    onSizeChange, 
+    onLayoutChange
+  ]);
 
   // Handle size slider change
   const handleSizeChange = (value: number[]) => {
@@ -71,8 +85,6 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
     const newSize = value[0];
     console.log("Size changing to:", newSize);
     setCurrentSize(newSize);
-    // Immediately update parent to ensure changes are captured
-    onSizeChange(newSize);
   };
 
   // Handle aspect ratio change
@@ -84,8 +96,6 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
     
     console.log("Aspect ratio changing to:", value);
     setCurrentAspectRatio(value);
-    // Immediately update parent to ensure changes are captured
-    onAspectRatioChange(value);
   };
 
   // Handle layout change
@@ -97,18 +107,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
     
     console.log("Layout changing to:", value);
     setCurrentLayout(value);
-    // Immediately update parent to ensure changes are captured
-    onLayoutChange(value);
   };
-
-  // Apply changes whenever they change (no need for Apply button)
-  useEffect(() => {
-    console.log("Image adjustment settings changed:", {
-      currentAspectRatio,
-      currentSize,
-      currentLayout
-    });
-  }, [currentSize, currentAspectRatio, currentLayout]);
 
   return (
     <div className="space-y-6">
@@ -357,10 +356,7 @@ const ImageAdjustmentPanel: React.FC<ImageAdjustmentPanelProps> = ({
         </div>
       </div>
 
-      {/* Keep this button to maintain backwards compatibility but it now applies changes instantly too */}
-      <div className="flex justify-end">
-        <Button onClick={applyChanges}>Apply Changes</Button>
-      </div>
+      {/* Removing the redundant "Apply Changes" button at the bottom, as changes are now applied automatically */}
     </div>
   );
 };

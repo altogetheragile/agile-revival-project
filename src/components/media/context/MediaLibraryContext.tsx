@@ -102,9 +102,17 @@ export const MediaLibraryProvider: React.FC<MediaLibraryProviderProps> = ({
       });
       
       // Important: Pass all settings to the selectHandler
-      selectHandler(selectedImage, selectedAspectRatio, selectedSize, selectedLayout);
+      selectHandler(
+        selectedImage,
+        selectedAspectRatio,
+        selectedSize,
+        selectedLayout
+      );
       
-      // Show success message and close dialog
+      // Reset selected image after confirmation
+      setSelectedImage(null);
+      
+      // Close dialog
       onClose();
     }
   };
