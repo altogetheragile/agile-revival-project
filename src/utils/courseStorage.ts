@@ -1,4 +1,3 @@
-
 import { Course } from "@/types/course";
 import { initialCourses } from "@/data/initialCourses";
 
@@ -47,6 +46,18 @@ export const getGlobalCacheBust = () => {
     return localStorage.getItem(GLOBAL_CACHE_BUST_KEY) || generateVersionId();
   } catch {
     return generateVersionId();
+  }
+};
+
+// Set global cache bust timestamp - adding this export to fix the issue
+export const setGlobalCacheBust = (value: string) => {
+  try {
+    localStorage.setItem(GLOBAL_CACHE_BUST_KEY, value);
+    console.log(`${logPrefix} Updated global cache bust to: ${value}`);
+    return value;
+  } catch (error) {
+    console.error(`${logPrefix} Failed to update global cache bust:`, error);
+    return null;
   }
 };
 
