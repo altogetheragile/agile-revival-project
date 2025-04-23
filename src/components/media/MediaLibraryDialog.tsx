@@ -3,8 +3,8 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
 import { useToast } from "@/hooks/use-toast";
-import MediaLibraryHeader from "./header/MediaLibraryHeader";
-import StorageErrors from "./errors/StorageErrors";
+import { MediaLibraryHeader } from "./header/MediaLibraryHeader";
+import { StorageErrors } from "./errors/StorageErrors";
 import MediaLibraryTabsContainer from "./MediaLibraryTabsContainer";
 import MediaLibraryContentController from "./MediaLibraryContentController";
 
