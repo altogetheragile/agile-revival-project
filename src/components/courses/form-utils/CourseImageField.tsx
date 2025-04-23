@@ -1,12 +1,14 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Settings } from "lucide-react";
+import { Settings, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+import { getStorageVersion } from "@/utils/courseStorage";
 
 interface CourseImageFieldProps {
   form: UseFormReturn<CourseFormData>;
@@ -14,6 +16,8 @@ interface CourseImageFieldProps {
 }
 
 export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpenMediaLibrary }) => {
+  const [refreshKey, setRefreshKey] = useState<number>(Date.now());
+
   // Log initial values when component mounts
   useEffect(() => {
     const imageUrl = form.getValues("imageUrl");
@@ -38,6 +42,27 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
     form.setValue("imageLayout" as any, "standard", { shouldValidate: false });
   };
 
+  const handleRefreshImage = () => {
+    // Get the current image URL
+    const currentUrl = form.getValues("imageUrl");
+    if (!currentUrl) return;
+
+    // Force a refresh by updating the URL with a new cache-busting parameter
+    const baseUrl = currentUrl.split('?')[0];
+    const newUrl = `${baseUrl}?v=${Date.now()}`;
+    
+    // Update the form value
+    form.setValue("imageUrl", newUrl, { shouldValidate: true });
+    
+    // Update the refresh key to force re-render
+    setRefreshKey(Date.now());
+    
+    // Show toast notification
+    toast.success("Image refreshed", {
+      description: "The image has been refreshed from source."
+    });
+  };
+
   const imageUrl = form.watch("imageUrl");
   const aspectRatio = form.watch("imageAspectRatio" as any) || "16/9";
   const imageSize = form.watch("imageSize" as any) || 100;
@@ -49,7 +74,8 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
       imageUrl,
       aspectRatio,
       imageSize,
-      imageLayout
+      imageLayout,
+      storageVersion: getStorageVersion()
     });
   }, [imageUrl, aspectRatio, imageSize, imageLayout]);
   
@@ -60,9 +86,22 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
     return width / height;
   };
 
+  // Add cache busting to image URL
+  const getImageUrlWithCacheBusting = (url: string) => {
+    if (!url) return "";
+    
+    // Make sure we have a fresh URL with our current refresh key
+    if (url.includes('?')) {
+      return `${url.split('?')[0]}?v=${refreshKey}`;
+    }
+    return `${url}?v=${refreshKey}`;
+  };
+
   // Render image based on layout
   const renderImage = () => {
     if (!imageUrl) return null;
+    
+    const cachedImageUrl = getImageUrlWithCacheBusting(imageUrl);
     
     const imageStyle = {
       width: `${imageSize}%`,
@@ -75,16 +114,28 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
         <div className="w-full" style={imageStyle}>
           {aspectRatio === "auto" ? (
             <img 
-              src={imageUrl}
+              src={cachedImageUrl}
               alt="Preview"
               className="w-full object-contain"
+              key={refreshKey} // Force re-render on refresh
+              onError={(e) => {
+                console.error("Failed to load image:", cachedImageUrl);
+                // Set a fallback or display an error indicator
+                (e.target as HTMLImageElement).src = "/placeholder.svg";
+              }}
             />
           ) : (
             <AspectRatio ratio={getAspectRatioValue(aspectRatio)}>
               <img
-                src={imageUrl}
+                src={cachedImageUrl}
                 alt="Preview"
                 className="w-full h-full object-cover"
+                key={refreshKey} // Force re-render on refresh
+                onError={(e) => {
+                  console.error("Failed to load image:", cachedImageUrl);
+                  // Set a fallback or display an error indicator
+                  (e.target as HTMLImageElement).src = "/placeholder.svg";
+                }}
               />
             </AspectRatio>
           )}
@@ -96,16 +147,18 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
       <div className="w-full" style={imageStyle}>
         {aspectRatio === "auto" ? (
           <img 
-            src={imageUrl}
+            src={cachedImageUrl}
             alt="Preview"
             className="w-full object-contain"
+            key={refreshKey} // Force re-render on refresh
           />
         ) : (
           <AspectRatio ratio={getAspectRatioValue(aspectRatio)}>
             <img
-              src={imageUrl}
+              src={cachedImageUrl}
               alt="Preview"
               className="w-full h-full object-cover"
+              key={refreshKey} // Force re-render on refresh
             />
           </AspectRatio>
         )}
@@ -132,15 +185,27 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                 Choose from Library
               </Button>
               {field.value && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="ml-2 text-red-500 border-red-200"
-                  onClick={handleRemoveImage}
-                >
-                  Remove Image
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="ml-2 text-blue-500 border-blue-200"
+                    onClick={handleRefreshImage}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                    Refresh Image
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="ml-2 text-red-500 border-red-200"
+                    onClick={handleRemoveImage}
+                  >
+                    Remove Image
+                  </Button>
+                </>
               )}
             </FormLabel>
             <FormControl>
@@ -156,6 +221,7 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
                           : "Original ratio"} 
                         {imageSize !== 100 && ` • ${imageSize}% size`}
                         {imageLayout !== "standard" && ` • ${imageLayout} layout`}
+                        <div className="text-xs text-gray-400">v{refreshKey}</div>
                       </div>
                       <Button
                         size="sm"
@@ -172,6 +238,7 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
             </FormControl>
             <FormDescription>
               This image will be shown in course details and listings.
+              {field.value && <span className="text-xs block text-blue-500 cursor-pointer" onClick={handleRefreshImage}>Having trouble seeing image changes? Click "Refresh Image"</span>}
             </FormDescription>
           </FormItem>
         )}

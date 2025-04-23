@@ -3,12 +3,40 @@ import { Course } from "@/types/course";
 import { initialCourses } from "@/data/initialCourses";
 
 const COURSES_STORAGE_KEY = 'agile-trainer-courses';
+const STORAGE_VERSION_KEY = 'agile-trainer-storage-version';
 
 // Add a debug prefix to make logs more identifiable
 const logPrefix = "[CourseStorage]";
 
 // Add a custom event for course data changes
 const COURSES_UPDATED_EVENT = 'courses-data-updated';
+
+// Generate a cache-busting version timestamp
+const generateVersionId = () => {
+  return Date.now().toString();
+};
+
+// Update the version timestamp
+const updateStorageVersion = () => {
+  try {
+    const version = generateVersionId();
+    localStorage.setItem(STORAGE_VERSION_KEY, version);
+    console.log(`${logPrefix} Updated storage version to: ${version}`);
+    return version;
+  } catch (error) {
+    console.error(`${logPrefix} Failed to update storage version:`, error);
+    return null;
+  }
+};
+
+// Get the current version timestamp
+export const getStorageVersion = () => {
+  try {
+    return localStorage.getItem(STORAGE_VERSION_KEY) || generateVersionId();
+  } catch {
+    return generateVersionId();
+  }
+};
 
 export const loadCourses = (): Course[] => {
   try {
@@ -22,6 +50,7 @@ export const loadCourses = (): Course[] => {
       console.log(`${logPrefix} Browser: ${navigator.userAgent}`);
       console.log(`${logPrefix} Browser vendor: ${navigator.vendor}`);
       console.log(`${logPrefix} Platform: ${navigator.platform}`);
+      console.log(`${logPrefix} Storage version: ${getStorageVersion()}`);
       
       // Validate all course data is properly structured
       const validCourses = validateCourses(courses);
@@ -102,6 +131,16 @@ export const saveCourses = (courses: Course[]): void => {
     // Normalize imageUrls to prevent cross-browser inconsistencies
     const normalizedCourses = coursesToSave.map(course => {
       if (course.imageUrl) {
+        // Add cache-busting query param to force image refresh
+        if (course.imageUrl.includes('?v=')) {
+          // Remove old version param if exists
+          course.imageUrl = course.imageUrl.split('?v=')[0];
+        }
+        
+        // Add new version param
+        const version = getStorageVersion();
+        course.imageUrl = `${course.imageUrl}?v=${version}`;
+        
         // Ensure URLs are absolute and properly formatted
         try {
           const url = new URL(course.imageUrl, window.location.origin);
@@ -113,7 +152,12 @@ export const saveCourses = (courses: Course[]): void => {
       return course;
     });
 
+    // Update the storage version to ensure cache busting
+    updateStorageVersion();
+    
+    // Save the courses with updated version
     localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(normalizedCourses));
+    
     console.log(`${logPrefix} Saved courses to localStorage:`, normalizedCourses.length);
     console.log(`${logPrefix} Course image URLs saved:`, normalizedCourses.map(c => ({ id: c.id, imageUrl: c.imageUrl })));
     
@@ -127,17 +171,37 @@ export const saveCourses = (courses: Course[]): void => {
 // Dispatch a custom event when courses are updated
 const dispatchCoursesUpdatedEvent = () => {
   if (typeof window !== 'undefined') {
-    const event = new CustomEvent(COURSES_UPDATED_EVENT);
+    const event = new CustomEvent(COURSES_UPDATED_EVENT, { 
+      detail: { timestamp: Date.now() } 
+    });
     window.dispatchEvent(event);
-    console.log(`${logPrefix} Dispatched courses updated event`);
+    console.log(`${logPrefix} Dispatched courses updated event with timestamp: ${Date.now()}`);
   }
 };
 
 // Reset courses to initial state and optionally reload the page to refresh all data
 export const resetCoursesToInitial = (reloadPage = true): void => {
   try {
-    localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(initialCourses));
-    console.log(`${logPrefix} Reset courses to initial state`);
+    // Apply cache busting to initial courses before saving
+    const versionedInitialCourses = initialCourses.map(course => {
+      if (course.imageUrl) {
+        // Remove any existing version params
+        const baseUrl = course.imageUrl.split('?')[0];
+        // Add new version param
+        return {
+          ...course,
+          imageUrl: `${baseUrl}?v=${Date.now()}`
+        };
+      }
+      return course;
+    });
+    
+    // Update storage version for cache busting
+    updateStorageVersion();
+    
+    // Save the versioned courses
+    localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(versionedInitialCourses));
+    console.log(`${logPrefix} Reset courses to initial state with cache busting`);
     
     // Dispatch the custom event
     dispatchCoursesUpdatedEvent();
@@ -145,7 +209,8 @@ export const resetCoursesToInitial = (reloadPage = true): void => {
     // Reload page if requested
     if (reloadPage && typeof window !== 'undefined') {
       console.log(`${logPrefix} Reloading page to refresh data...`);
-      setTimeout(() => window.location.reload(), 500);
+      // Force a hard reload to clear all caches
+      window.location.href = window.location.href + '?refresh=' + Date.now();
     }
   } catch (error) {
     console.error(`${logPrefix} Error resetting courses:`, error);
@@ -171,11 +236,27 @@ export const setupCourseUpdateListener = (callback: () => void): () => void => {
   if (typeof window === 'undefined') return () => {};
   
   console.log(`${logPrefix} Setting up course update listener`);
-  window.addEventListener(COURSES_UPDATED_EVENT, callback);
+  
+  // Listen for custom event
+  const handleCustomEvent = () => {
+    console.log(`${logPrefix} Course update event received, invoking callback`);
+    callback();
+  };
+  window.addEventListener(COURSES_UPDATED_EVENT, handleCustomEvent);
+  
+  // Also listen for storage events from other tabs/windows
+  const handleStorageChange = (e: StorageEvent) => {
+    if (e.key === COURSES_STORAGE_KEY || e.key === STORAGE_VERSION_KEY) {
+      console.log(`${logPrefix} Course data changed in another tab/window. Reloading...`);
+      window.location.reload();
+    }
+  };
+  window.addEventListener('storage', handleStorageChange);
   
   // Return cleanup function
   return () => {
-    console.log(`${logPrefix} Removing course update listener`);
-    window.removeEventListener(COURSES_UPDATED_EVENT, callback);
+    console.log(`${logPrefix} Removing course update listeners`);
+    window.removeEventListener(COURSES_UPDATED_EVENT, handleCustomEvent);
+    window.removeEventListener('storage', handleStorageChange);
   };
 };
