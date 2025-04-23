@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { File, Image, Music, Video, RefreshCcwDot } from "lucide-react";
+import { File, Image, Music, Video, RefreshCcwDot, RefreshCw } from "lucide-react";
 import { useMediaRefresh } from "@/hooks/useMediaRefresh";
 
 const MediaIcon: React.FC<{ type: string }> = ({ type }) => {
