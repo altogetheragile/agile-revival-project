@@ -99,3 +99,5 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
     </>
   );
 };
+
+export default CourseFormDialog;

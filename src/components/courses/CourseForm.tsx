@@ -132,3 +132,5 @@ const CourseForm: React.FC<CourseFormProps> = ({
     </Form>
   );
 };
+
+export default CourseForm;

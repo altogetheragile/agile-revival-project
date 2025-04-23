@@ -21,7 +21,8 @@ export interface Course {
   googleDriveFolderUrl?: string;
   isTemplate?: boolean;
   templateId?: string;
-  imageUrl?: string; // Add imageUrl property
+  imageUrl?: string;
+  imageAspectRatio?: string; // Add imageAspectRatio property
 }
 
 export interface CourseMaterial {
@@ -41,7 +42,8 @@ export type CourseFormData = Omit<Course, "id"> & {
   googleDriveFolderUrl?: string;
   isTemplate?: boolean;
   templateId?: string;
-  imageUrl?: string; // Add imageUrl property
+  imageUrl?: string;
+  imageAspectRatio?: string; // Add imageAspectRatio property
 };
 
 export interface CourseWithFormData extends Omit<Course, "learningOutcomes"> {

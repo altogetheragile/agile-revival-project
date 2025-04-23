@@ -16,11 +16,11 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
   const handleRemoveImage = () => {
     form.setValue("imageUrl", "", { shouldValidate: true });
     // Also clear the aspect ratio when removing the image
-    form.setValue("imageAspectRatio", undefined, { shouldValidate: false });
+    form.setValue("imageAspectRatio" as any, undefined, { shouldValidate: false });
   };
 
   const imageUrl = form.watch("imageUrl");
-  const aspectRatio = form.watch("imageAspectRatio") || "16/9";
+  const aspectRatio = form.watch("imageAspectRatio" as any) || "16/9";
   
   // Parse the aspect ratio string into a number
   const getAspectRatioValue = (ratio: string): number => {
@@ -93,7 +93,7 @@ export const CourseImageField: React.FC<CourseImageFieldProps> = ({ form, onOpen
       {/* Hidden field to store the aspect ratio */}
       <FormField
         control={form.control}
-        name="imageAspectRatio"
+        name={"imageAspectRatio" as any}
         render={({ field }) => (
           <input type="hidden" {...field} />
         )}
