@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { File, Image, Music, Video, AlertTriangle, RefreshCw, RefreshCcwDot, Star, Smartphone } from "lucide-react";
+import { File, Image, Music, Video, AlertTriangle, RefreshCw, RefreshCcwDot } from "lucide-react";
 import { toast } from "sonner";
-import { getGlobalCacheBust, synchronizeImageUrls, makeThisBrowserMasterSource } from "@/utils/courseStorage";
+import { getGlobalCacheBust } from "@/utils/courseStorage";
 
 interface MediaGalleryProps {
   items: { name: string; url: string; type: string }[];
@@ -30,38 +30,19 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
   // Add state to track refresh keys for each image
   const [refreshKeys, setRefreshKeys] = useState<Record<string, number>>({});
-  // Track if this browser is the master source
-  const [isMasterSource, setIsMasterSource] = useState<boolean>(
-    localStorage.getItem('agile-trainer-master-source') === 'true'
-  );
-  // Track browser ID
-  const [browserId, setBrowserId] = useState<string>(
-    localStorage.getItem('agile-trainer-browser-id') || 'Unknown'
-  );
   
   // Update the global cache bust when it changes in storage
   useEffect(() => {
     const intervalId = setInterval(() => {
       const currentBust = getGlobalCacheBust();
-      const currentMasterStatus = localStorage.getItem('agile-trainer-master-source') === 'true';
-      const currentBrowserId = localStorage.getItem('agile-trainer-browser-id');
-      
       if (currentBust !== globalCacheBust) {
         setGlobalCacheBust(currentBust);
         console.log("Updated gallery cache bust key:", currentBust);
       }
-      
-      if (currentMasterStatus !== isMasterSource) {
-        setIsMasterSource(currentMasterStatus);
-      }
-      
-      if (currentBrowserId && currentBrowserId !== browserId) {
-        setBrowserId(currentBrowserId);
-      }
     }, 2000);
     
     return () => clearInterval(intervalId);
-  }, [globalCacheBust, isMasterSource, browserId]);
+  }, [globalCacheBust]);
   
   // Function to force refresh a specific image
   const refreshImage = (url: string) => {
@@ -93,45 +74,12 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
       description: "All images in the gallery have been refreshed from source."
     });
   };
-
-  // Function to sync images across devices
-  const handleSyncAcrossDevices = () => {
-    toast.success("Synchronizing images", {
-      description: "Making all your devices show the same images. Page will refresh."
-    });
-    
-    setTimeout(() => {
-      synchronizeImageUrls();
-    }, 1000);
-  };
-  
-  // Function to make this browser the master source for images
-  const handleMakeMasterSource = () => {
-    toast.success("Setting Master Source", {
-      description: "This browser is now the authoritative source for images. All other devices will sync to match."
-    });
-    
-    setTimeout(() => {
-      makeThisBrowserMasterSource();
-    }, 1000);
-  };
-
-  // Force a hard reload with cache clearing
-  const forceHardRefresh = () => {
-    toast.success("Hard refresh", {
-      description: "Performing a complete reload with cache clearing."
-    });
-    
-    setTimeout(() => {
-      window.location.reload(true);
-    }, 1000);
-  };
   
   const renderMediaItem = (item: { name: string; url: string; type: string }) => {
     // Apply both individual and global cache busting to the URL
     const refreshKey = refreshKeys[item.url] || 0;
     const baseUrl = item.url.split('?')[0];
-    const cachedUrl = `${baseUrl}?v=${refreshKey || globalCacheBust}-${Date.now().toString().slice(-4)}-${browserId}`;
+    const cachedUrl = `${baseUrl}?v=${refreshKey || globalCacheBust}`;
     
     switch (item.type) {
       case 'image':
@@ -141,11 +89,10 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
               src={cachedUrl} 
               alt={item.name}
               className="w-full aspect-square object-cover rounded-md"
-              key={`${refreshKey || 'global'}-${globalCacheBust}-${browserId}`}
+              key={`${refreshKey || 'global'}-${globalCacheBust}`}
               onError={(e) => {
                 console.error(`Failed to load image: ${cachedUrl}`);
                 console.error(`Browser: ${navigator.userAgent}`);
-                console.error(`Browser ID: ${browserId}`);
                 
                 // Set a fallback image
                 (e.target as HTMLImageElement).src = '/placeholder.svg';
@@ -212,17 +159,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   // Count images for refresh all button
   const imageCount = filteredItems.filter(item => item.type === 'image').length;
 
-  // Check for private browsing mode
-  const isPrivateMode = (() => {
-    try {
-      localStorage.setItem('test', 'test');
-      localStorage.removeItem('test');
-      return false;
-    } catch (e) {
-      return true;
-    }
-  })();
-
   return (
     <div className="border rounded-md p-2 h-[50vh] overflow-y-auto bg-white">
       {loading ? (
@@ -242,32 +178,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
         <>
           {/* Add a refresh all button if we have images */}
           {imageCount > 0 && (
-            <div className="flex justify-end mb-2 gap-2">
-              {isPrivateMode && (
-                <div className="bg-purple-50 border border-purple-300 text-purple-800 rounded px-2 py-0.5 text-xs flex items-center">
-                  <AlertTriangle className="h-3 w-3 mr-1" />
-                  Private/Incognito Mode
-                </div>
-              )}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleMakeMasterSource}
-                className={`text-xs ${isMasterSource ? 'bg-yellow-50 text-yellow-700 border-yellow-300' : 'bg-amber-50 text-amber-700 border-amber-300'}`}
-                disabled={isMasterSource}
-              >
-                <Star className="h-3 w-3 mr-1" />
-                {isMasterSource ? 'Current Master Source' : 'Make Master Source'}
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSyncAcrossDevices}
-                className="text-xs bg-blue-50 text-blue-700 border-blue-300"
-              >
-                <Smartphone className="h-3 w-3 mr-1" />
-                Sync Across Devices
-              </Button>
+            <div className="flex justify-end mb-2">
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -275,33 +186,15 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
                 className="text-xs"
               >
                 <RefreshCcwDot className="h-3 w-3 mr-1" />
-                Refresh All ({imageCount})
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={forceHardRefresh}
-                className="text-xs bg-amber-50 text-amber-700 border-amber-300"
-              >
-                <RefreshCw className="h-3 w-3 mr-1" />
-                Hard Refresh
+                Refresh All Images ({imageCount})
               </Button>
             </div>
           )}
           
-          {/* Show browser ID and debug info */}
-          <div className="mb-2 text-xs text-gray-500 bg-gray-50 p-1 rounded border border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>Browser ID: {browserId.substring(0, 8)}...</div>
-              <div>Cache: {globalCacheBust.substring(0, 8)}...</div>
-              {isMasterSource && <div className="text-yellow-600 font-semibold flex items-center"><Star className="h-3 w-3 mr-1" /> Master Source</div>}
-            </div>
-          </div>
-          
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-2">
             {filteredItems.map((item) => (
               <div
-                key={`${item.url}-${refreshKeys[item.url] || globalCacheBust}-${browserId}`}
+                key={`${item.url}-${refreshKeys[item.url] || globalCacheBust}`}
                 className={`relative group cursor-pointer border rounded-md p-2 hover:bg-gray-50 transition-colors ${
                   selectedImage === item.url ? 'ring-2 ring-agile-purple bg-gray-50' : ''
                 }`}

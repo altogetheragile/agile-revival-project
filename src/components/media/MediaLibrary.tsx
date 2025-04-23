@@ -2,16 +2,14 @@
 import React, { useEffect } from 'react';
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { Button } from "@/components/ui/button";
-import { RefreshCcw, AlertTriangle, Trash, Smartphone, Star, RefreshCw } from "lucide-react";
+import { RefreshCcw, AlertTriangle, Trash } from "lucide-react";
 import { 
   resetCoursesToInitial, 
   verifyStorageIntegrity, 
   setupCourseUpdateListener,
   getStorageVersion,
   getGlobalCacheBust,
-  forceGlobalReset,
-  synchronizeImageUrls,
-  makeThisBrowserMasterSource
+  forceGlobalReset
 } from "@/utils/courseStorage";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
@@ -54,20 +52,6 @@ export const MediaLibraryReset: React.FC = () => {
     }, 500);
   };
 
-  const handleForceHardRefresh = () => {
-    console.log("Forcing hard browser refresh...");
-    toast({
-      title: "Hard refresh",
-      description: "Performing a complete page reload with cache clearing.",
-      variant: "destructive",
-    });
-    
-    setTimeout(() => {
-      // Force a hard reload with cache clearing
-      window.location.reload(true);
-    }, 500);
-  };
-
   const handleNuclearReset = () => {
     console.log("Performing nuclear reset across all browsers...");
     toast({
@@ -80,53 +64,11 @@ export const MediaLibraryReset: React.FC = () => {
       forceGlobalReset();
     }, 1000);
   };
-
-  const handleSynchronizeImages = () => {
-    console.log("Synchronizing images across all devices...");
-    toast({
-      title: "Synchronizing images",
-      description: "Making sure all devices show the same images. Page will refresh.",
-    });
-    
-    setTimeout(() => {
-      synchronizeImageUrls();
-    }, 1000);
-  };
-
-  const handleMakeMasterSource = () => {
-    console.log("Making this browser the master source for images...");
-    toast({
-      title: "Setting Master Source",
-      description: "This browser is now the authoritative source for images. All other devices will sync to match.",
-      variant: "default",
-    });
-    
-    setTimeout(() => {
-      makeThisBrowserMasterSource();
-    }, 1000);
-  };
-
-  // Browser identifier info
-  const getBrowserId = () => {
-    return localStorage.getItem('agile-trainer-browser-id') || 'Not set';
-  };
   
   // Always show the reset section for better troubleshooting
   const storageHasIssues = !verifyStorageIntegrity();
   const storageVersion = getStorageVersion();
   const globalCacheBust = getGlobalCacheBust();
-  const isMasterSource = localStorage.getItem('agile-trainer-master-source') === 'true';
-  const browserId = getBrowserId();
-  const isPrivateMode = (() => {
-    try {
-      // Try to detect private browsing mode
-      localStorage.setItem('test', 'test');
-      localStorage.removeItem('test');
-      return false;
-    } catch (e) {
-      return true;
-    }
-  })();
   
   return (
     <div className="p-4 border border-amber-200 bg-amber-50 rounded-md mb-4">
@@ -136,16 +78,6 @@ export const MediaLibraryReset: React.FC = () => {
             <h3 className="text-amber-800 font-medium flex items-center gap-2">
               {storageHasIssues && <AlertTriangle className="h-4 w-4 text-amber-600" />}
               Browser storage management
-              {isMasterSource && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
-                  <Star className="h-3 w-3 mr-1" /> Master Source
-                </span>
-              )}
-              {isPrivateMode && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 border border-purple-300">
-                  Private/Incognito Mode
-                </span>
-              )}
             </h3>
             <p className="text-amber-700 text-sm">
               {storageHasIssues 
@@ -153,31 +85,10 @@ export const MediaLibraryReset: React.FC = () => {
                 : "Reset course images if you're seeing inconsistent images across browsers."}
             </p>
             <p className="text-amber-600 text-xs mt-1">
-              Storage version: {storageVersion || 'Not set'} | Cache bust: {globalCacheBust || 'Not set'} | Browser ID: {browserId}
-              {isMasterSource && ' | This browser is the master source for images'}
-            </p>
-            <p className="text-amber-600 text-xs mt-1">
-              Browser: {navigator.userAgent.substring(0, 50)}...
+              Storage version: {storageVersion || 'Not set'} | Cache bust: {globalCacheBust || 'Not set'}
             </p>
           </div>
           <div className="flex flex-col gap-2 mt-2">
-            <Button 
-              onClick={handleMakeMasterSource}
-              variant="outline"
-              className={`border-yellow-300 ${isMasterSource ? 'bg-yellow-100 text-yellow-700' : 'text-amber-700 hover:bg-amber-100'}`}
-              disabled={isMasterSource}
-            >
-              <Star className="mr-2 h-4 w-4" />
-              {isMasterSource ? 'Current Master Source' : 'Make This Browser Master Source'}
-            </Button>
-            <Button 
-              onClick={handleSynchronizeImages}
-              variant="outline"
-              className="border-blue-300 text-blue-700 hover:bg-blue-100"
-            >
-              <Smartphone className="mr-2 h-4 w-4" />
-              Sync Images Across Devices
-            </Button>
             <Button 
               onClick={handleReset}
               variant="outline"
@@ -191,16 +102,8 @@ export const MediaLibraryReset: React.FC = () => {
               variant="outline"
               className="border-amber-300 text-amber-700 hover:bg-amber-100"
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCcw className="mr-2 h-4 w-4" />
               Force Browser Refresh
-            </Button>
-            <Button 
-              onClick={handleForceHardRefresh}
-              variant="outline"
-              className="border-amber-400 text-amber-800 hover:bg-amber-100"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Hard Refresh (Clear Cache)
             </Button>
             <Button 
               onClick={handleNuclearReset}
@@ -226,16 +129,14 @@ export const GlobalResetProvider: React.FC = () => {
       window.resetCoursesToInitial = resetCoursesToInitial;
       // @ts-ignore - Expose force global reset function
       window.forceGlobalReset = forceGlobalReset;
-      // @ts-ignore - Expose synchronize images function
-      window.synchronizeImageUrls = synchronizeImageUrls;
-      console.log("Reset functions available. Use resetCoursesToInitial(), forceGlobalReset(), or synchronizeImageUrls() in console to reset course data.");
+      console.log("Reset functions available. Use resetCoursesToInitial() or forceGlobalReset() in console to reset course data.");
       
       // Check for URL parameters that indicate cache busting
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('refresh') || urlParams.has('forceCacheBust') || urlParams.has('forcereset') || urlParams.has('sync')) {
+      if (urlParams.has('refresh') || urlParams.has('forceCacheBust') || urlParams.has('forcereset')) {
         // Show toast notification after page reload
         toast.success("Page refreshed. Image cache should be updated.", {
-          description: "If you still see outdated images, try the Nuclear Reset or Sync buttons.",
+          description: "If you still see outdated images, try the Nuclear Reset button.",
           duration: 5000,
         });
         
@@ -249,8 +150,7 @@ export const GlobalResetProvider: React.FC = () => {
         if (e.key === 'agile-trainer-courses' || 
             e.key === 'agile-trainer-storage-version' || 
             e.key === 'agile-trainer-cache-bust' ||
-            e.key === 'agile-trainer-last-update' ||
-            e.key === 'agile-trainer-master-source') {
+            e.key === 'agile-trainer-last-update') {
           console.log("Course data changed in another tab/window. Reloading...");
           window.location.reload();
         }
