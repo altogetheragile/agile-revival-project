@@ -95,8 +95,8 @@ export const forceGlobalReset = () => {
   window.location.href = window.location.href.split('?')[0] + '?forcereset=' + timestamp;
 };
 
-// Update makeThisBrowserMasterSource to accept an optional force parameter
-export const makeThisBrowserMasterSource = (force?: boolean): void => {
+// Update makeThisBrowserMasterSource to not accept any parameters
+export const makeThisBrowserMasterSource = (): void => {
   console.log("[CourseStorage] This browser is now the MASTER SOURCE for images");
   
   // Generate a browser ID if one doesn't exist yet
@@ -135,8 +135,8 @@ export const makeThisBrowserMasterSource = (force?: boolean): void => {
   window.location.href = window.location.href.split('?')[0] + '?master=' + timestamp;
 };
 
-// Update synchronizeImageUrls to accept an optional force parameter
-export const synchronizeImageUrls = (force?: boolean): void => {
+// Update synchronizeImageUrls to not accept any parameters
+export const synchronizeImageUrls = (): void => {
   // Check if there's a master image record
   const masterRecordStr = localStorage.getItem('agile-trainer-master-image-record');
   
