@@ -1,14 +1,13 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { BlogPostFormData } from "@/types/blog";
 import MediaLibrary from "@/components/media/MediaLibrary";
 import { useState } from "react";
 import { BasicBlogFields } from "./form-utils/BasicBlogFields";
 import { BlogMetaFields } from "./form-utils/BlogMetaFields";
 import BlogImageField from "./form-utils/BlogImageField";
+import { BlogFormActions } from "./form-utils/BlogFormActions";
 
 interface BlogFormProps {
   initialData?: BlogPostFormData;
@@ -63,18 +62,10 @@ const BlogForm: React.FC<BlogFormProps> = ({
           }}
         />
 
-        <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit">
-            {initialData?.id ? 'Update Post' : 'Create Post'}
-          </Button>
-        </div>
+        <BlogFormActions onCancel={onCancel} initialData={initialData} />
       </form>
     </Form>
   );
 };
 
 export default BlogForm;
-
