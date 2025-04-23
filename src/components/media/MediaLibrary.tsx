@@ -1,9 +1,9 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
-import { resetCoursesToInitial, verifyStorageIntegrity } from "@/utils/courseStorage";
+import { resetCoursesToInitial, verifyStorageIntegrity, setupCourseUpdateListener } from "@/utils/courseStorage";
 import { useToast } from "@/hooks/use-toast";
 
 // Export the reset function so it can be called from other components or console
@@ -17,14 +17,12 @@ export const MediaLibraryReset: React.FC = () => {
   const { toast } = useToast();
   
   const handleReset = () => {
-    resetCoursesToInitial();
+    console.log("Resetting course data...");
+    resetCoursesToInitial(true); // This will reload the page
     toast({
       title: "Media data reset",
-      description: "Course image data has been reset to defaults. Please refresh the page.",
+      description: "Course image data has been reset to defaults. Page will refresh automatically.",
     });
-    
-    // Force a page reload to ensure all data is refreshed
-    setTimeout(() => window.location.reload(), 1500);
   };
   
   // Always show the reset button since we're having cross-browser issues
@@ -54,14 +52,30 @@ export const MediaLibraryReset: React.FC = () => {
   );
 };
 
-// Create a component that exposes the reset function globally
+// Create a component that exposes the reset function globally and listens for course data changes
 export const GlobalResetProvider: React.FC = () => {
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Expose the reset function globally
       // @ts-ignore - Intentionally adding to window for debugging
       window.resetCoursesToInitial = resetCoursesToInitial;
       console.log("Reset function available. Use resetCoursesToInitial() in console to reset course data.");
+      
+      // Set up storage event listener to detect changes from other tabs/windows
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'agile-trainer-courses') {
+          console.log("Course data changed in another tab/window. Reloading...");
+          window.location.reload();
+        }
+      };
+      
+      window.addEventListener('storage', handleStorageChange);
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+      };
     }
+    
+    return () => {};
   }, []);
   
   return null;

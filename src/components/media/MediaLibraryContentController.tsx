@@ -1,10 +1,11 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { MediaLibraryFileUploader } from "./MediaLibraryFileUploader";
 import { MediaLibraryTabs } from "./MediaLibraryTabs";
 import { MediaGallery } from "./MediaGallery";
 import ImageAdjustmentPanel from "./ImageAdjustmentPanel";
+import { toast } from "sonner";
 
 interface MediaLibraryContentControllerProps {
   activeTabPanel: string;
@@ -55,8 +56,12 @@ const MediaLibraryContentController: React.FC<MediaLibraryContentControllerProps
   onLayoutChange,
   handleConfirmSelection,
 }) => {
+  // Log selected image for debugging whenever it changes
+  useEffect(() => {
+    console.log("MediaLibraryContentController - Selected image:", selectedImage);
+  }, [selectedImage]);
+
   // Render different content based on the active tab panel
-  // Instead of using TabsContent directly, we'll conditionally render content
   return (
     <div>
       {activeTabPanel === "browse" && (
@@ -91,13 +96,19 @@ const MediaLibraryContentController: React.FC<MediaLibraryContentControllerProps
           {selectedImage && (
             <div className="flex justify-end space-x-2 mt-4">
               <Button 
-                onClick={() => setSelectedImage(null)}
+                onClick={() => {
+                  console.log("Clearing image selection");
+                  setSelectedImage(null);
+                }}
                 variant="outline"
               >
                 Clear Selection
               </Button>
               <Button 
-                onClick={() => setActiveTabPanel("adjust")}
+                onClick={() => {
+                  console.log("Moving to adjust panel");
+                  setActiveTabPanel("adjust");
+                }}
                 variant="default"
               >
                 Adjust Image
@@ -127,13 +138,22 @@ const MediaLibraryContentController: React.FC<MediaLibraryContentControllerProps
           
           <div className="mt-4 flex justify-end space-x-2">
             <Button 
-              onClick={() => setActiveTabPanel("browse")}
+              onClick={() => {
+                console.log("Returning to browse panel");
+                setActiveTabPanel("browse");
+              }}
               variant="outline"
             >
               Back to Browse
             </Button>
             <Button 
-              onClick={handleConfirmSelection}
+              onClick={() => {
+                console.log("Confirming selection:", selectedImage, selectedAspectRatio, selectedSize, selectedLayout);
+                handleConfirmSelection();
+                toast("Image selected", {
+                  description: "The image has been applied successfully"
+                });
+              }}
               variant="default"
               disabled={!selectedImage}
             >

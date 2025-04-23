@@ -7,6 +7,9 @@ const COURSES_STORAGE_KEY = 'agile-trainer-courses';
 // Add a debug prefix to make logs more identifiable
 const logPrefix = "[CourseStorage]";
 
+// Add a custom event for course data changes
+const COURSES_UPDATED_EVENT = 'courses-data-updated';
+
 export const loadCourses = (): Course[] => {
   try {
     const storedCourses = localStorage.getItem(COURSES_STORAGE_KEY);
@@ -27,14 +30,14 @@ export const loadCourses = (): Course[] => {
         return validCourses;
       } else {
         console.warn(`${logPrefix} Course data validation failed, resetting to initial courses`);
-        resetCoursesToInitial();
+        resetCoursesToInitial(false); // Don't reload page on validation failure
         return [...initialCourses];
       }
     }
   } catch (error) {
     console.error(`${logPrefix} Error loading courses from storage:`, error);
     // In case of any error, reset to initial state
-    resetCoursesToInitial();
+    resetCoursesToInitial(false); // Don't reload page on error
   }
   
   // Return initial courses if nothing in storage or error occurred
@@ -113,16 +116,37 @@ export const saveCourses = (courses: Course[]): void => {
     localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(normalizedCourses));
     console.log(`${logPrefix} Saved courses to localStorage:`, normalizedCourses.length);
     console.log(`${logPrefix} Course image URLs saved:`, normalizedCourses.map(c => ({ id: c.id, imageUrl: c.imageUrl })));
+    
+    // Dispatch custom event to notify other components about the data change
+    dispatchCoursesUpdatedEvent();
   } catch (error) {
     console.error(`${logPrefix} Error saving courses to storage:`, error);
   }
 };
 
-// Reset courses to initial state and reload the page to refresh all data
-export const resetCoursesToInitial = (): void => {
+// Dispatch a custom event when courses are updated
+const dispatchCoursesUpdatedEvent = () => {
+  if (typeof window !== 'undefined') {
+    const event = new CustomEvent(COURSES_UPDATED_EVENT);
+    window.dispatchEvent(event);
+    console.log(`${logPrefix} Dispatched courses updated event`);
+  }
+};
+
+// Reset courses to initial state and optionally reload the page to refresh all data
+export const resetCoursesToInitial = (reloadPage = true): void => {
   try {
     localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(initialCourses));
     console.log(`${logPrefix} Reset courses to initial state`);
+    
+    // Dispatch the custom event
+    dispatchCoursesUpdatedEvent();
+    
+    // Reload page if requested
+    if (reloadPage && typeof window !== 'undefined') {
+      console.log(`${logPrefix} Reloading page to refresh data...`);
+      setTimeout(() => window.location.reload(), 500);
+    }
   } catch (error) {
     console.error(`${logPrefix} Error resetting courses:`, error);
   }
@@ -140,4 +164,18 @@ export const verifyStorageIntegrity = (): boolean => {
     console.error(`${logPrefix} Storage integrity check failed:`, e);
     return false;
   }
+};
+
+// Add an event listener setup function for components that need to react to course updates
+export const setupCourseUpdateListener = (callback: () => void): () => void => {
+  if (typeof window === 'undefined') return () => {};
+  
+  console.log(`${logPrefix} Setting up course update listener`);
+  window.addEventListener(COURSES_UPDATED_EVENT, callback);
+  
+  // Return cleanup function
+  return () => {
+    console.log(`${logPrefix} Removing course update listener`);
+    window.removeEventListener(COURSES_UPDATED_EVENT, callback);
+  };
 };

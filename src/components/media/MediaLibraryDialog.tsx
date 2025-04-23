@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs } from "@/components/ui/tabs";
 import { useMediaLibrary } from "@/hooks/storage/useMediaLibrary";
@@ -39,9 +39,16 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Use a callback for fetching to prevent unnecessary re-renders
+  const refreshMedia = useCallback(() => {
+    console.log("Refreshing media library...");
+    fetchMedia();
+  }, [fetchMedia]);
+
   useEffect(() => {
     if (open) {
-      fetchMedia();
+      // Refresh media whenever dialog is opened
+      refreshMedia();
       console.log("MediaLibrary opened with state:", {
         selectedImage,
         selectedAspectRatio,
@@ -50,9 +57,10 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({
         activeTabPanel
       });
     } else {
+      // Reset to browse tab when dialog closes
       setActiveTabPanel("browse");
     }
-  }, [open, fetchMedia]);
+  }, [open, refreshMedia, selectedImage, selectedAspectRatio, selectedSize, selectedLayout, activeTabPanel]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,6 +79,8 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({
             title: "File uploaded",
             description: "Your file has been uploaded successfully",
           });
+          // Refresh the media library after successful upload
+          refreshMedia();
         }
       } catch (err: any) {
         toast({
@@ -88,7 +98,7 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({
   };
 
   const handleRefresh = () => {
-    fetchMedia();
+    refreshMedia();
     toast({
       title: "Refreshing media library",
       description: "Checking for new media files..."
@@ -98,7 +108,6 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({
   const handleSelect = (url: string) => {
     console.log("Image selected:", url);
     setSelectedImage(url);
-    setActiveTabPanel("adjust");
   };
 
   const handleConfirmSelection = () => {
