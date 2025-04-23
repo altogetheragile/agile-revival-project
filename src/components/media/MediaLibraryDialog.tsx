@@ -167,4 +167,3 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({
 };
 
 export default MediaLibraryDialog;
-

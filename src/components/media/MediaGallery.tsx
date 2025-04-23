@@ -27,8 +27,12 @@ const renderMediaItem = (item: { name: string; url: string; type: string }) => {
       return (
         <img 
           src={item.url} 
-          alt={item.name} 
+          alt={item.name}
           className="w-full aspect-square object-cover rounded-md"
+          onError={(e) => {
+            console.error(`Failed to load image: ${item.url}`);
+            (e.target as HTMLImageElement).src = '/placeholder.svg';
+          }}
         />
       );
     case 'audio':
@@ -101,5 +105,5 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
         </div>
       )}
     </div>
-  )
+  );
 };

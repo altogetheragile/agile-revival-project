@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Calendar, Clock, MapPin, Users, Bookmark, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,12 @@ interface CourseCardProps {
 
 const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete, isMobile }) => {
   const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  
+  useEffect(() => {
+    // Reset image error state when course changes
+    setImageError(false);
+  }, [course.imageUrl]);
   
   // Parse the aspect ratio string into a number
   const getAspectRatioValue = (ratio?: string): number => {
@@ -30,9 +36,24 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete, isMob
     return { width: `${course.imageSize}%`, margin: '0 auto' };
   };
   
+  // Handle image loading error
+  const handleImageError = () => {
+    console.error(`Failed to load image for course: ${course.id} - ${course.title}`);
+    setImageError(true);
+  };
+  
   // Render image based on layout
   const renderImage = () => {
-    if (!course.imageUrl) return null;
+    if (!course.imageUrl || imageError) {
+      return (
+        <div className="w-full bg-gray-100 flex items-center justify-center" style={getImageSizeStyle()}>
+          <div className="text-gray-400 p-8 text-center">
+            <Calendar className="mx-auto h-10 w-10 mb-2" />
+            <p>{course.title}</p>
+          </div>
+        </div>
+      );
+    }
     
     const imageStyle = getImageSizeStyle();
     
@@ -43,6 +64,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete, isMob
             src={course.imageUrl} 
             alt={course.title} 
             className="w-full object-contain"
+            onError={handleImageError}
           />
         ) : (
           <AspectRatio ratio={getAspectRatioValue(course.imageAspectRatio)}>
@@ -50,6 +72,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete, isMob
               src={course.imageUrl} 
               alt={course.title} 
               className="w-full h-full object-cover"
+              onError={handleImageError}
             />
           </AspectRatio>
         )}
