@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
@@ -8,16 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 
 // Export the reset function so it can be called from other components or console
 export const resetMediaLibraryData = resetCoursesToInitial;
-
-// Make the reset function globally available for browser console access
-// This ensures the function is accessible in all browsers including Safari
-useEffect(() => {
-  if (typeof window !== 'undefined') {
-    // @ts-ignore - Intentionally adding to window for debugging
-    window.resetCoursesToInitial = resetCoursesToInitial;
-    console.log("Reset function available. Use resetCoursesToInitial() in console to reset course data.");
-  }
-}, []);
 
 // Export the original dialog component as default
 export default MediaLibraryDialog;
@@ -66,7 +56,7 @@ export const MediaLibraryReset: React.FC = () => {
 
 // Create a component that exposes the reset function globally
 export const GlobalResetProvider: React.FC = () => {
-  useEffect(() => {
+  React.useEffect(() => {
     if (typeof window !== 'undefined') {
       // @ts-ignore - Intentionally adding to window for debugging
       window.resetCoursesToInitial = resetCoursesToInitial;
