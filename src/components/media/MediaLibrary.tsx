@@ -16,31 +16,28 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 
-declare global {
-  interface Window {
-    resetCoursesToInitial: typeof resetCoursesToInitial;
-    forceGlobalReset: typeof forceGlobalReset;
-    synchronizeImageUrls: typeof synchronizeImageUrls;
-  }
-}
-
+// Export the reset function so it can be called from other components or console
 export const resetMediaLibraryData = resetCoursesToInitial;
 
+// Export the original dialog component as default
 export default MediaLibraryDialog;
 
+// Create a helper component for resetting data
 export const MediaLibraryReset: React.FC = () => {
   const { toast } = useToast();
   
   const handleReset = () => {
     console.log("Resetting course data with cache busting...");
     
+    // First notify user
     toast({
       title: "Media data reset",
       description: "Course image data has been reset to defaults. Page will refresh automatically.",
     });
     
+    // Wait a moment for the toast to display before reload
     setTimeout(() => {
-      resetCoursesToInitial(true);
+      resetCoursesToInitial(true); // This will reload the page with cache busting
     }, 500);
   };
   
@@ -52,6 +49,7 @@ export const MediaLibraryReset: React.FC = () => {
     });
     
     setTimeout(() => {
+      // Force a hard reload to clear all caches
       window.location.href = window.location.href + '?forceCacheBust=' + Date.now();
     }, 500);
   };
@@ -65,6 +63,7 @@ export const MediaLibraryReset: React.FC = () => {
     });
     
     setTimeout(() => {
+      // Force a hard reload with cache clearing
       window.location.reload(true);
     }, 500);
   };
@@ -89,7 +88,6 @@ export const MediaLibraryReset: React.FC = () => {
       description: "Making sure all devices show the same images. Page will refresh.",
     });
     
-    // Remove the argument that was causing the error
     setTimeout(() => {
       synchronizeImageUrls();
     }, 1000);
@@ -103,16 +101,17 @@ export const MediaLibraryReset: React.FC = () => {
       variant: "default",
     });
     
-    // Remove the argument that was causing the error
     setTimeout(() => {
       makeThisBrowserMasterSource();
     }, 1000);
   };
 
+  // Browser identifier info
   const getBrowserId = () => {
     return localStorage.getItem('agile-trainer-browser-id') || 'Not set';
   };
   
+  // Always show the reset section for better troubleshooting
   const storageHasIssues = !verifyStorageIntegrity();
   const storageVersion = getStorageVersion();
   const globalCacheBust = getGlobalCacheBust();
@@ -120,6 +119,7 @@ export const MediaLibraryReset: React.FC = () => {
   const browserId = getBrowserId();
   const isPrivateMode = (() => {
     try {
+      // Try to detect private browsing mode
       localStorage.setItem('test', 'test');
       localStorage.removeItem('test');
       return false;
@@ -217,25 +217,34 @@ export const MediaLibraryReset: React.FC = () => {
   );
 };
 
+// Create a component that exposes the reset function globally and listens for course data changes
 export const GlobalResetProvider: React.FC = () => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Expose the reset function globally
+      // @ts-ignore - Intentionally adding to window for debugging
       window.resetCoursesToInitial = resetCoursesToInitial;
+      // @ts-ignore - Expose force global reset function
       window.forceGlobalReset = forceGlobalReset;
+      // @ts-ignore - Expose synchronize images function
       window.synchronizeImageUrls = synchronizeImageUrls;
       console.log("Reset functions available. Use resetCoursesToInitial(), forceGlobalReset(), or synchronizeImageUrls() in console to reset course data.");
       
+      // Check for URL parameters that indicate cache busting
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('refresh') || urlParams.has('forceCacheBust') || urlParams.has('forcereset') || urlParams.has('sync')) {
+        // Show toast notification after page reload
         toast.success("Page refreshed. Image cache should be updated.", {
           description: "If you still see outdated images, try the Nuclear Reset or Sync buttons.",
           duration: 5000,
         });
         
+        // Clean up URL by removing the refresh parameter
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
       }
       
+      // Listen for storage changes from other tabs/windows
       const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'agile-trainer-courses' || 
             e.key === 'agile-trainer-storage-version' || 
