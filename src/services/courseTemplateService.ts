@@ -23,8 +23,8 @@ export const createCourseFromTemplate = (templateId: string, scheduleData: Sched
   
   const newId = `crs-${String(Date.now()).slice(-6)}`;
   
-  // Apply cache busting to image URL
-  const imageUrlWithCache = applyCacheBustToImage(template.imageUrl);
+  // Apply cache busting to image URL if it exists
+  const imageUrlWithCache = template.imageUrl ? applyCacheBustToImage(template.imageUrl) : undefined;
   
   // Create a new course based on the template
   const newCourse: Course = {
@@ -34,7 +34,7 @@ export const createCourseFromTemplate = (templateId: string, scheduleData: Sched
     location: scheduleData.location,
     instructor: scheduleData.instructor,
     spotsAvailable: scheduleData.spotsAvailable,
-    status: scheduleData.status,
+    status: scheduleData.status || 'draft',
     isTemplate: false,
     templateId: templateId,
     materials: [],

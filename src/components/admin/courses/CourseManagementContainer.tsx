@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { CourseManagementHeader } from "./CourseManagementHeader";
@@ -38,11 +37,9 @@ export const CourseManagementContainer: React.FC = () => {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Course | null>(null);
   
-  // Media library state
   const [mediaLibOpen, setMediaLibOpen] = useState(false);
   const [formData, setFormData] = useState<Course | null>(null);
 
-  // Filter to only show template courses
   const templateCourses = courses.filter(course => course.isTemplate === true);
 
   const handleAddCourse = () => {
@@ -71,23 +68,21 @@ export const CourseManagementContainer: React.FC = () => {
   };
 
   const handlePreviewTemplate = (template: Course) => {
-    // Implementation for previewing a template
     toast({
       title: "Previewing template",
       description: `Now previewing "${template.title}"`,
     });
-    // You would typically open a preview dialog or navigate to a preview page here
   };
 
-  const handleScheduleSubmit = (data: ScheduleCourseFormData) => {
+  const handleScheduleSubmit = async (data: ScheduleCourseFormData) => {
     if (!selectedTemplate) return;
 
     try {
-      const scheduledCourse = createCourseFromTemplate(selectedTemplate.id, data);
+      const scheduledCourse = await createCourseFromTemplate(selectedTemplate.id, data);
       
       toast({
         title: "Course scheduled",
-        description: `${scheduledCourse.title} has been scheduled for ${data.dates}.`,
+        description: `${scheduledCourse.title} has been scheduled.`,
       });
       
       setScheduleDialogOpen(false);
@@ -101,7 +96,6 @@ export const CourseManagementContainer: React.FC = () => {
     }
   };
 
-  // Handle media selection
   const handleMediaSelect = (url: string, aspectRatio?: string, size?: number, layout?: string) => {
     if (currentCourse) {
       setFormData({
@@ -145,7 +139,7 @@ export const CourseManagementContainer: React.FC = () => {
       </div>
       
       <CourseTable 
-        courses={templateCourses}
+        courses={courses}
         onEdit={handleEditCourse} 
         onDelete={handleDeleteConfirm}
         onViewRegistrations={handleViewRegistrations}

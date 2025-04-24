@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData } from "@/types/course";
@@ -5,7 +6,7 @@ import { getAllCourses, createCourse, updateCourse, deleteCourse } from "@/servi
 import { forceGlobalReset } from "@/utils/courseStorage";
 
 export const useCourseManagement = () => {
-  const [courses, setCourses] = useState<Course[]>(getAllCourses());
+  const [courses, setCourses] = useState<Course[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
@@ -13,23 +14,29 @@ export const useCourseManagement = () => {
   const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
   const [viewingRegistrations, setViewingRegistrations] = useState(false);
   const { toast } = useToast();
-  
-  // Refresh timer to periodically update courses list
+
+  // Load templates on mount and periodically refresh
   useEffect(() => {
+    const loadCourses = () => {
+      const allCourses = getAllCourses();
+      // Filter to only show template courses in the management view
+      const templateCourses = allCourses.filter(course => course.isTemplate === true);
+      setCourses(templateCourses);
+    };
+
     // Initial load
-    setCourses(getAllCourses());
+    loadCourses();
     
-    // Refresh every 5 seconds to ensure we have the latest data
-    const intervalId = setInterval(() => {
-      setCourses(getAllCourses());
-    }, 5000);
-    
+    // Refresh every 5 seconds
+    const intervalId = setInterval(loadCourses, 5000);
     return () => clearInterval(intervalId);
   }, []);
 
-  // Refresh courses list when something changes
+  // Reload courses when form or dialog state changes
   useEffect(() => {
-    setCourses(getAllCourses());
+    const allCourses = getAllCourses();
+    const templateCourses = allCourses.filter(course => course.isTemplate === true);
+    setCourses(templateCourses);
   }, [isFormOpen, isConfirmDialogOpen]);
 
   const filteredCourses = courses.filter(course => {
@@ -43,43 +50,33 @@ export const useCourseManagement = () => {
 
   const handleFormSubmit = async (data: CourseFormData) => {
     try {
-      // Handle Google Drive folder information
-      const googleDriveData = {
-        googleDriveFolderId: data.googleDriveFolderId,
-        googleDriveFolderUrl: data.googleDriveFolderUrl
-      };
-
-      // Set isTemplate to true for courses managed in Course Management
+      // Always set isTemplate to true for courses managed here
       const templateData = {
         ...data,
         isTemplate: true
       };
-      
+
       if (currentCourse) {
-        const updated = updateCourse(currentCourse.id, {
-          ...templateData,
-          ...googleDriveData
-        });
-        
+        const updated = updateCourse(currentCourse.id, templateData);
         if (updated) {
-          setCourses(getAllCourses());
-          setCurrentCourse(updated); // Update the current course to reflect changes
+          const allCourses = getAllCourses();
+          const templateCourses = allCourses.filter(course => course.isTemplate === true);
+          setCourses(templateCourses);
+          setCurrentCourse(updated);
           toast({
             title: "Template updated",
             description: `"${data.title}" has been updated successfully.`
           });
         }
       } else {
-        const created = createCourse({
-          ...templateData,
-          ...googleDriveData
-        });
-        
-        setCourses(getAllCourses());
-        setCurrentCourse(created); // Set the new course as the current course
+        const created = createCourse(templateData);
+        const allCourses = getAllCourses();
+        const templateCourses = allCourses.filter(course => course.isTemplate === true);
+        setCourses(templateCourses);
+        setCurrentCourse(created);
         toast({
           title: "Template created",
-          description: `"${created.title}" has been ${data.status === 'published' ? 'published' : 'saved as draft'}.`
+          description: `"${created.title}" has been created successfully.`
         });
       }
     } catch (error) {
@@ -95,7 +92,9 @@ export const useCourseManagement = () => {
   const handleDelete = () => {
     if (deleteCourseId) {
       if (deleteCourse(deleteCourseId)) {
-        setCourses(getAllCourses());
+        const allCourses = getAllCourses();
+        const templateCourses = allCourses.filter(course => course.isTemplate === true);
+        setCourses(templateCourses);
         toast({
           title: "Template deleted",
           description: "The course template has been removed successfully."
@@ -105,8 +104,7 @@ export const useCourseManagement = () => {
       setDeleteCourseId(null);
     }
   };
-  
-  // Add a reset function to force a global cache reset
+
   const handleForceReset = () => {
     forceGlobalReset();
     toast({
