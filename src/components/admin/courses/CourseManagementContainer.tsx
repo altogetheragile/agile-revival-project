@@ -61,6 +61,12 @@ export const CourseManagementContainer: React.FC = () => {
     setSelectedTemplate(template);
     setScheduleDialogOpen(true);
   };
+  
+  // Added a new handler function for viewing registrations that accepts a Course
+  const handleViewRegistrations = (course: Course) => {
+    setCurrentCourse(course);
+    setViewingRegistrations(true);
+  };
 
   const handleScheduleSubmit = async (data: any) => {
     if (!selectedTemplate) {
@@ -145,7 +151,7 @@ export const CourseManagementContainer: React.FC = () => {
           courses={courses}
           onEdit={handleEditCourse} 
           onDelete={handleDeleteConfirm}
-          onViewRegistrations={setViewingRegistrations}
+          onViewRegistrations={handleViewRegistrations}
           onScheduleCourse={handleScheduleCourse}
         />
       )}
@@ -172,3 +178,4 @@ export const CourseManagementContainer: React.FC = () => {
     </div>
   );
 };
+
