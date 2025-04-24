@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext } from 'react';
 import { toast } from 'sonner';
+import { getGlobalCacheBust } from '@/utils/cacheBusting';
 
 interface MediaResetContextType {
   resetMedia: () => void;
@@ -10,7 +11,7 @@ interface MediaResetContextType {
 const MediaResetContext = createContext<MediaResetContextType | undefined>(undefined);
 
 export const MediaResetProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
-  const [cacheBust, setCacheBust] = useState<string>(Date.now().toString());
+  const [cacheBust, setCacheBust] = useState<string>(getGlobalCacheBust());
 
   const resetMedia = () => {
     const newCacheBust = Date.now().toString();

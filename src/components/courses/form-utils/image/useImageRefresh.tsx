@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { getStorageVersion, getGlobalCacheBust } from "@/utils/courseStorage";
+import { getGlobalCacheBust } from "@/utils/cacheBusting";
 import { toast } from "sonner";
 import { UseFormReturn } from "react-hook-form";
 
@@ -12,21 +12,6 @@ interface UseImageRefreshProps {
 export const useImageRefresh = ({ form, imageUrlField }: UseImageRefreshProps) => {
   const [refreshKey, setRefreshKey] = useState<number>(Date.now());
   const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
-
-  // Periodically check for global cache bust changes
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      const currentBust = getGlobalCacheBust();
-      if (currentBust !== globalCacheBust) {
-        setGlobalCacheBust(currentBust);
-        console.log("Updated course image field with new cache bust key:", currentBust);
-        // Force a re-render of the image
-        setRefreshKey(Date.now());
-      }
-    }, 2000);
-    
-    return () => clearInterval(intervalId);
-  }, [globalCacheBust]);
 
   // Handle removing image
   const handleRemoveImage = useCallback(() => {

@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { getGlobalCacheBust } from "@/utils/courseStorage";
+import { getGlobalCacheBust } from "@/utils/cacheBusting";
 import { toast } from "sonner";
 
 // Define TypeScript interfaces for better type safety
@@ -35,23 +35,6 @@ export const useMediaRefresh = (options: MediaRefreshOptions = {}): MediaRefresh
   
   const [globalCacheBust, setGlobalCacheBust] = useState<string>(getGlobalCacheBust());
   const [refreshKeys, setRefreshKeys] = useState<RefreshKeys>({});
-
-  // Check for global cache bust changes
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      try {
-        const currentBust = getGlobalCacheBust();
-        if (currentBust !== globalCacheBust) {
-          setGlobalCacheBust(currentBust);
-          console.log("Updated media refresh with new cache bust key:", currentBust);
-        }
-      } catch (error) {
-        console.error("Error checking for cache bust updates:", error);
-      }
-    }, pollingInterval);
-    
-    return () => clearInterval(intervalId);
-  }, [globalCacheBust, pollingInterval]);
 
   // Refresh a single image
   const refreshImage = useCallback((url: string): void => {

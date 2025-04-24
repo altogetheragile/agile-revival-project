@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCourseById } from "@/services/courseService";
 import { Calendar, Clock, MapPin, Users, ArrowLeft, BookOpen, Target, GraduationCap, Clock3 } from "lucide-react";
@@ -10,12 +10,33 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import RegistrationDialog from "@/components/courses/RegistrationDialog";
+import { Course } from "@/types/course";
 
 const CourseDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const course = id ? getCourseById(id) : undefined;
+  const [course, setCourse] = useState<Course | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [registrationOpen, setRegistrationOpen] = useState(false);
+
+  // Fetch course data
+  useEffect(() => {
+    const loadCourse = async () => {
+      if (!id) return;
+      
+      try {
+        setIsLoading(true);
+        const courseData = await getCourseById(id);
+        setCourse(courseData);
+      } catch (error) {
+        console.error("Error fetching course details:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadCourse();
+  }, [id]);
 
   // Convert price string to use £ symbol
   const formatPrice = (price: string | undefined) => {
@@ -32,6 +53,22 @@ const CourseDetails = () => {
     if (!level) return "All Levels";
     return level.charAt(0).toUpperCase() + level.slice(1).replace('-', ' ');
   };
+
+  // If loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow pt-24 container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center py-16">
+            <h1 className="text-3xl font-bold mb-4">Loading Course Details...</h1>
+          </div>
+        </main>
+        <Footer />
+        <ScrollToTop />
+      </div>
+    );
+  }
 
   // If course is not found
   if (!course) {

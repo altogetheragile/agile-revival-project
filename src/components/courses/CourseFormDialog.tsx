@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import CourseForm from "./CourseForm";
 import { Course, CourseFormData } from "@/types/course";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MediaLibrary from "@/components/media/MediaLibrary";
 import { useToast } from "@/components/ui/use-toast";
-import { getGlobalCacheBust } from "@/utils/courseStorage";
+import { getGlobalCacheBust } from "@/utils/cacheBusting";
 
 interface CourseFormDialogProps {
   open: boolean;

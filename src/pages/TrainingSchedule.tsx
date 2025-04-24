@@ -15,17 +15,18 @@ import { DeleteConfirmationDialog } from "@/components/admin/users/DeleteConfirm
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { forceGlobalReset } from "@/utils/courseStorage";
+import { toast } from "sonner";
 
 const TrainingSchedule = () => {
   // Updated to use string type for CourseCategory
   const [selectedTab, setSelectedTab] = useState<CourseCategory>("all");
   const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
   const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   
   // Simplified admin check - always true for demo purposes
   const isAdmin = true;
@@ -41,13 +42,21 @@ const TrainingSchedule = () => {
     return () => clearInterval(intervalId);
   }, []);
 
+  const refreshCourses = async () => {
+    try {
+      setIsLoading(true);
+      const scheduledCourses = await getScheduledCourses();
+      setCourses(scheduledCourses);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const filteredCourses = selectedTab === "all" 
     ? courses 
     : courses.filter(course => course.category === selectedTab);
-
-  const refreshCourses = () => {
-    setCourses(getScheduledCourses());
-  };
 
   const handleEditCourse = (course: Course) => {
     setCurrentCourse(course);
@@ -59,14 +68,14 @@ const TrainingSchedule = () => {
     setIsConfirmDialogOpen(true);
   };
 
-  const handleFormSubmit = (data: CourseFormData) => {
+  const handleFormSubmit = async (data: CourseFormData) => {
     if (!currentCourse) return;
 
     try {
-      const updated = updateCourse(currentCourse.id, data);
+      const updated = await updateCourse(currentCourse.id, data);
       if (updated) {
-        refreshCourses();
-        toast({
+        await refreshCourses();
+        uiToast({
           title: "Course updated",
           description: `"${data.title}" has been updated successfully.`
         });
@@ -75,7 +84,7 @@ const TrainingSchedule = () => {
       setCurrentCourse(null);
     } catch (error) {
       console.error("Error updating course:", error);
-      toast({
+      uiToast({
         title: "Error",
         description: "There was a problem updating the course.",
         variant: "destructive"
@@ -83,35 +92,46 @@ const TrainingSchedule = () => {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteCourseId) {
-      if (deleteCourse(deleteCourseId)) {
-        refreshCourses();
-        toast({
-          title: "Course deleted",
-          description: "The course has been removed successfully."
+      try {
+        const success = await deleteCourse(deleteCourseId);
+        if (success) {
+          await refreshCourses();
+          uiToast({
+            title: "Course deleted",
+            description: "The course has been removed successfully."
+          });
+        }
+      } catch (error) {
+        console.error("Error deleting course:", error);
+        uiToast({
+          title: "Error",
+          description: "There was a problem deleting the course.",
+          variant: "destructive"
         });
+      } finally {
+        setIsConfirmDialogOpen(false);
+        setDeleteCourseId(null);
       }
-      setIsConfirmDialogOpen(false);
-      setDeleteCourseId(null);
     }
   };
   
-  const handleManualRefresh = () => {
-    refreshCourses();
-    toast({
-      title: "Refreshed",
-      description: "Course data has been refreshed from storage."
+  const handleManualRefresh = async () => {
+    await refreshCourses();
+    toast.success("Refreshed", {
+      description: "Course data has been refreshed from the database."
     });
   };
   
-  // Add a reset function to force a global cache reset
+  // Add a reset function to force a global cache reset and page reload
   const handleForceReset = () => {
-    forceGlobalReset();
-    toast({
-      title: "Cache reset",
-      description: "The course data cache has been reset. The page will reload."
+    toast.success("Cache reset", {
+      description: "The page will reload to refresh data."
     });
+    
+    // Force reload the current page
+    window.location.reload();
   };
 
   return (
@@ -139,7 +159,7 @@ const TrainingSchedule = () => {
               className="text-blue-600 border-blue-300 hover:bg-blue-50"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
-              Reset Cache & Reload
+              Reset & Reload
             </Button>
           </div>
           
@@ -149,12 +169,18 @@ const TrainingSchedule = () => {
             filteredCourses={filteredCourses}
           />
           
-          <CourseScheduleView 
-            courses={filteredCourses} 
-            isAdmin={isAdmin} // Always pass true to enable editing
-            onEdit={handleEditCourse}
-            onDelete={handleDeleteCourse}
-          />
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">Loading courses...</p>
+            </div>
+          ) : (
+            <CourseScheduleView 
+              courses={filteredCourses} 
+              isAdmin={isAdmin} // Always pass true to enable editing
+              onEdit={handleEditCourse}
+              onDelete={handleDeleteCourse}
+            />
+          )}
           
           <CustomTrainingCTA />
 

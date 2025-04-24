@@ -1,47 +1,42 @@
 
 import { Course, CourseMaterial } from "@/types/course";
-import { loadCourses, saveCourses } from "@/utils/courseStorage";
+import { supabase } from "@/integrations/supabase/client";
+import { getCourseById, updateCourse } from "./courseService";
 
-export const addCourseMaterial = (courseId: string, material: CourseMaterial): Course | null => {
-  const courses = loadCourses();
-  const index = courses.findIndex(course => course.id === courseId);
-  
-  if (index === -1) {
+export const addCourseMaterial = async (courseId: string, material: CourseMaterial): Promise<Course | null> => {
+  // Get the current course
+  const course = await getCourseById(courseId);
+  if (!course) {
     return null;
   }
   
-  const course = courses[index];
+  // Add the material to the course
   const materials = [...(course.materials || []), material];
   
-  const updatedCourse: Course = {
+  // Update the course with the new materials
+  const updatedCourse = await updateCourse(courseId, {
     ...course,
     materials
-  };
-  
-  courses[index] = updatedCourse;
-  saveCourses(courses);
+  });
   
   return updatedCourse;
 };
 
-export const removeCourseMaterial = (courseId: string, materialId: string): Course | null => {
-  const courses = loadCourses();
-  const index = courses.findIndex(course => course.id === courseId);
-  
-  if (index === -1) {
+export const removeCourseMaterial = async (courseId: string, materialId: string): Promise<Course | null> => {
+  // Get the current course
+  const course = await getCourseById(courseId);
+  if (!course) {
     return null;
   }
   
-  const course = courses[index];
+  // Filter out the material to be removed
   const materials = (course.materials || []).filter(m => m.id !== materialId);
   
-  const updatedCourse: Course = {
+  // Update the course with the filtered materials
+  const updatedCourse = await updateCourse(courseId, {
     ...course,
     materials
-  };
-  
-  courses[index] = updatedCourse;
-  saveCourses(courses);
+  });
   
   return updatedCourse;
 };

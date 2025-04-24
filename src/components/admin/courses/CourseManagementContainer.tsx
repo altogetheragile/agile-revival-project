@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { CourseManagementHeader } from "./CourseManagementHeader";
 import { CourseTable } from "./CourseTable";
@@ -10,12 +11,13 @@ import ScheduleCourseDialog from "@/components/courses/ScheduleCourseDialog";
 import { useToast } from "@/components/ui/use-toast";
 import { createCourseFromTemplate } from "@/services/courseService";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
 import MediaLibrary from "@/components/media/MediaLibrary";
 
 export const CourseManagementContainer: React.FC = () => {
   const {
     courses,
+    isLoading,
     searchTerm,
     setSearchTerm,
     isFormOpen,
@@ -40,7 +42,7 @@ export const CourseManagementContainer: React.FC = () => {
   const [mediaLibOpen, setMediaLibOpen] = useState(false);
   const [formData, setFormData] = useState<Course | null>(null);
 
-  const templateCourses = courses.filter(course => course.isTemplate === true);
+  const templateCourses = courses;
 
   const handleAddCourse = () => {
     setCurrentCourse(null);
@@ -80,10 +82,12 @@ export const CourseManagementContainer: React.FC = () => {
     try {
       const scheduledCourse = await createCourseFromTemplate(selectedTemplate.id, data);
       
-      toast({
-        title: "Course scheduled",
-        description: `${scheduledCourse.title} has been scheduled.`,
-      });
+      if (scheduledCourse) {
+        toast({
+          title: "Course scheduled",
+          description: `${scheduledCourse.title} has been scheduled.`,
+        });
+      }
       
       setScheduleDialogOpen(false);
     } catch (error) {
@@ -134,18 +138,25 @@ export const CourseManagementContainer: React.FC = () => {
           className="text-blue-600 border-blue-300 hover:bg-blue-50"
         >
           <RefreshCw className="mr-2 h-4 w-4" />
-          Reset Cache & Reload
+          Refresh Data
         </Button>
       </div>
       
-      <CourseTable 
-        courses={courses}
-        onEdit={handleEditCourse} 
-        onDelete={handleDeleteConfirm}
-        onViewRegistrations={handleViewRegistrations}
-        onScheduleCourse={handleScheduleCourse}
-        onPreviewTemplate={handlePreviewTemplate}
-      />
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+          <span className="ml-3 text-gray-500">Loading course templates...</span>
+        </div>
+      ) : (
+        <CourseTable 
+          courses={courses}
+          onEdit={handleEditCourse} 
+          onDelete={handleDeleteConfirm}
+          onViewRegistrations={handleViewRegistrations}
+          onScheduleCourse={handleScheduleCourse}
+          onPreviewTemplate={handlePreviewTemplate}
+        />
+      )}
       
       <CourseFormDialog
         open={isFormOpen}
