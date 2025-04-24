@@ -11,6 +11,7 @@ interface CourseFormActionsProps {
   stayOpenOnSubmit?: boolean;
   isTemplate?: boolean;
   onPreview?: () => void;
+  disablePreview?: boolean;
 }
 
 export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
@@ -19,7 +20,8 @@ export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
   isDraft,
   stayOpenOnSubmit = false,
   isTemplate = false,
-  onPreview
+  onPreview,
+  disablePreview = false
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,7 +38,7 @@ export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
         </Button>
       </DialogClose>
 
-      {isTemplate && (
+      {(isTemplate || onPreview) && !disablePreview && (
         <Button 
           type="button" 
           variant="outline" 

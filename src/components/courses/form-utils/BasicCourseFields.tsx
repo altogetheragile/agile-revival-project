@@ -5,13 +5,30 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
+import { Button } from "@/components/ui/button";
+import { ImageIcon } from "lucide-react";
 
 interface BasicCourseFieldsProps {
   form: UseFormReturn<CourseFormData>;
   readOnly?: boolean;
+  onOpenMediaLibrary?: () => void;
 }
 
-export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form, readOnly = false }) => {
+export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ 
+  form, 
+  readOnly = false,
+  onOpenMediaLibrary
+}) => {
+  const handleImageButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onOpenMediaLibrary) {
+      onOpenMediaLibrary();
+    }
+  };
+
+  // Get the current image URL from the form
+  const imageUrl = form.watch("imageUrl");
+
   return (
     <div className="space-y-4">
       <FormField
@@ -57,6 +74,43 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form, read
           </FormItem>
         )}
       />
+
+      {/* Image selector field */}
+      {!readOnly && onOpenMediaLibrary && (
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Course Image</FormLabel>
+              <div className="flex flex-col space-y-2">
+                {imageUrl && (
+                  <div className="relative w-full h-48 mb-2 overflow-hidden rounded-md border border-gray-300">
+                    <img 
+                      src={imageUrl} 
+                      alt="Course preview" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleImageButtonClick}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <ImageIcon className="h-4 w-4" />
+                  {imageUrl ? "Change Image" : "Select Image"}
+                </Button>
+              </div>
+              <FormDescription>
+                Select an image for the course. Recommended size: 1200x630px.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
     </div>
   );
 };
