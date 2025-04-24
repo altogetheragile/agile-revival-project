@@ -1,4 +1,3 @@
-
 import { Course, CourseFormData } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
 import { applyImageSettings } from "./courseImageService";
@@ -38,18 +37,30 @@ const mapDbToCourse = (dbCourse: any): Course => {
 // Get all courses
 export const getAllCourses = async (): Promise<Course[]> => {
   try {
+    console.log("Fetching all courses...");
     const { data: courses, error } = await supabase
       .from('courses')
       .select('*');
       
     if (error) {
       console.error("Error fetching courses:", error);
+      
+      // Check for specific error types
+      if (error.message?.includes('infinite recursion detected')) {
+        console.error("RLS policy recursion error detected");
+        toast.error("Database permission issue", {
+          description: "Unable to access courses due to a permission configuration issue."
+        });
+        return [];
+      }
+      
       toast.error("Failed to load courses", {
         description: error.message
       });
       return [];
     }
     
+    console.log(`Successfully fetched ${courses.length} courses`);
     return courses.map(mapDbToCourse);
   } catch (err) {
     console.error("Unexpected error fetching courses:", err);
