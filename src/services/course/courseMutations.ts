@@ -26,7 +26,7 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
       return null;
     }
     
-    toast.success("Course created successfully");
+    toast.success(newCourse.is_template ? "Template created successfully" : "Course created successfully");
     return mapDbToCourse(data);
   } catch (err) {
     console.error("Unexpected error creating course:", err);
@@ -44,6 +44,7 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
 
     console.log("Updating course with ID:", id);
     console.log("Update data:", updates);
+    console.log("Is template:", updates.is_template);
 
     const { data, error } = await supabase
       .from('courses')
@@ -60,7 +61,7 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       return null;
     }
     
-    toast.success("Course updated successfully");
+    toast.success(updates.is_template ? "Template updated successfully" : "Course updated successfully");
     return mapDbToCourse(data);
   } catch (err) {
     console.error("Unexpected error updating course:", err);

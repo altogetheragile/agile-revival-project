@@ -91,6 +91,34 @@ export const getScheduledCourses = async (): Promise<Course[]> => {
   }
 };
 
+// Get course templates
+export const getCourseTemplates = async (): Promise<Course[]> => {
+  try {
+    console.log("Fetching course templates...");
+    const { data: templates, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('is_template', true);
+      
+    if (error) {
+      console.error("Error fetching course templates:", error);
+      toast.error("Failed to load course templates", {
+        description: error.message
+      });
+      return [];
+    }
+    
+    console.log(`Successfully fetched ${templates.length} course templates`);
+    return templates.map(mapDbToCourse);
+  } catch (err) {
+    console.error("Unexpected error fetching course templates:", err);
+    toast.error("Failed to load course templates", {
+      description: "There was an unexpected error loading the templates."
+    });
+    return [];
+  }
+};
+
 // Get a course by ID
 export const getCourseById = async (id: string): Promise<Course | undefined> => {
   try {

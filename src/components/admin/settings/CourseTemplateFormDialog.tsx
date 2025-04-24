@@ -3,14 +3,14 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CourseForm from "@/components/courses/CourseForm";
-import { CourseFormData, CourseTemplate } from "@/types/course";
+import { CourseFormData, CourseTemplate, Course } from "@/types/course";
 import CourseTemplatePreview from "./CourseTemplatePreview";
 import MediaLibrary from "@/components/media/MediaLibrary";
 
 interface CourseTemplateFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentTemplate: CourseTemplate | null;
+  currentTemplate: Course | null;
   onSubmit: (data: CourseFormData) => void;
   onCancel: () => void;
 }
@@ -31,29 +31,10 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
   const [formData, setFormData] = useState<CourseFormData | null>(null);
 
   // Convert template to course form data for editing
-  const templateToCourseFormData = (template: CourseTemplate): CourseFormData => {
+  const templateToCourseFormData = (template: Course): CourseFormData => {
     return {
-      title: template.title,
-      description: template.description,
-      category: template.category,
-      price: template.price,
-      dates: "",
-      location: "",
-      instructor: "",
-      spotsAvailable: 12,
-      learningOutcomes: template.learningOutcomes,
-      prerequisites: template.prerequisites,
-      targetAudience: template.targetAudience,
-      duration: template.duration,
-      skillLevel: template.skillLevel,
-      format: template.format,
-      status: template.status,
-      templateId: template.id,
-      isTemplate: true,
-      imageUrl: template.imageUrl,
-      imageAspectRatio: template.imageAspectRatio,
-      imageSize: template.imageSize,
-      imageLayout: template.imageLayout
+      ...template,
+      isTemplate: true
     };
   };
 
@@ -106,12 +87,12 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
               initialData={currentTemplate ? templateToCourseFormData(currentTemplate) : {
                 title: "",
                 description: "",
-                dates: "",
-                location: "",
-                instructor: "",
+                dates: "Template - No Dates",
+                location: "To Be Determined",
+                instructor: "To Be Assigned",
                 price: "£",
                 category: "scrum",
-                spotsAvailable: 12,
+                spotsAvailable: 0,
                 isTemplate: true,
                 status: "draft"
               }}
@@ -143,16 +124,17 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
             ...(prevData || {}),
             title: prevData?.title || "",
             description: prevData?.description || "",
-            dates: prevData?.dates || "",
-            location: prevData?.location || "",
-            instructor: prevData?.instructor || "",
+            dates: prevData?.dates || "Template - No Dates",
+            location: prevData?.location || "To Be Determined",
+            instructor: prevData?.instructor || "To Be Assigned",
             price: prevData?.price || "",
             category: prevData?.category || "scrum",
-            spotsAvailable: prevData?.spotsAvailable || 12,
+            spotsAvailable: prevData?.spotsAvailable || 0,
             imageUrl: url,
             imageAspectRatio: aspectRatio || "16/9",
             imageSize: size || 100,
-            imageLayout: layout || "standard"
+            imageLayout: layout || "standard",
+            isTemplate: true
           }));
           setMediaLibOpen(false);
         }}

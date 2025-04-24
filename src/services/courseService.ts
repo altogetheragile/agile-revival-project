@@ -3,7 +3,8 @@ export {
   getAllCourses,
   getCoursesByCategory,
   getCourseById,
-  getScheduledCourses
+  getScheduledCourses,
+  getCourseTemplates
 } from './course/courseQueries';
 
 export {
@@ -14,7 +15,6 @@ export {
 
 export { addCourseMaterial, removeCourseMaterial } from './courseMaterialService';
 export { 
-  getCourseTemplates,
   getCoursesByTemplateId,
   createCourseFromTemplate 
 } from './courseTemplateService';
