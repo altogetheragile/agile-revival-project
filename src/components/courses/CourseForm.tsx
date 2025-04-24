@@ -59,7 +59,8 @@ const CourseForm: React.FC<CourseFormProps> = ({
   isTemplate = false,
   onOpenMediaLibrary,
   formData,
-  setFormData
+  setFormData,
+  onPreview
 }) => {
   // Initialize the form with either formData (if provided) or initialData
   const form = useForm<CourseFormData>({
@@ -161,6 +162,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
           isDraft={form.watch("status") === "draft"}
           stayOpenOnSubmit={stayOpenOnSubmit}
           isTemplate={isTemplate}
+          onPreview={onPreview}
         />
       </form>
     </Form>

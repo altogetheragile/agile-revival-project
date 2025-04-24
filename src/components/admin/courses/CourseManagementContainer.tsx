@@ -70,6 +70,15 @@ export const CourseManagementContainer: React.FC = () => {
     setScheduleDialogOpen(true);
   };
 
+  const handlePreviewTemplate = (template: Course) => {
+    // Implementation for previewing a template
+    toast({
+      title: "Previewing template",
+      description: `Now previewing "${template.title}"`,
+    });
+    // You would typically open a preview dialog or navigate to a preview page here
+  };
+
   const handleScheduleSubmit = (data: ScheduleCourseFormData) => {
     if (!selectedTemplate) return;
 
@@ -141,6 +150,7 @@ export const CourseManagementContainer: React.FC = () => {
         onDelete={handleDeleteConfirm}
         onViewRegistrations={handleViewRegistrations}
         onScheduleCourse={handleScheduleCourse}
+        onPreviewTemplate={handlePreviewTemplate}
       />
       
       <CourseFormDialog
