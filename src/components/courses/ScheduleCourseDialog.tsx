@@ -16,6 +16,8 @@ interface ScheduleCourseDialogProps {
   template: Course | null;
   onSubmit: (data: ScheduleCourseFormData) => void;
   onCancel: () => void;
+  // Add the missing prop
+  onOpenMediaLibrary?: () => void;
 }
 
 const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({

@@ -138,13 +138,22 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
         open={mediaLibOpen}
         onOpenChange={setMediaLibOpen}
         onSelect={(url, aspectRatio, size, layout) => {
-          setFormData({
-            ...formData || {},
+          // Fix the type issue by providing required properties
+          setFormData(prevData => ({
+            ...(prevData || {}),
+            title: prevData?.title || "",
+            description: prevData?.description || "",
+            dates: prevData?.dates || "",
+            location: prevData?.location || "",
+            instructor: prevData?.instructor || "",
+            price: prevData?.price || "",
+            category: prevData?.category || "scrum",
+            spotsAvailable: prevData?.spotsAvailable || 12,
             imageUrl: url,
-            imageAspectRatio: aspectRatio,
-            imageSize: size,
-            imageLayout: layout
-          });
+            imageAspectRatio: aspectRatio || "16/9",
+            imageSize: size || 100,
+            imageLayout: layout || "standard"
+          }));
           setMediaLibOpen(false);
         }}
       />

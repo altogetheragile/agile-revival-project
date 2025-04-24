@@ -27,6 +27,8 @@ interface CourseFormProps {
   onOpenMediaLibrary?: () => void;
   formData?: CourseFormData | null;
   setFormData?: Dispatch<SetStateAction<CourseFormData | null>>;
+  // Add the missing prop
+  onPreview?: () => void;
 }
 
 const CourseForm: React.FC<CourseFormProps> = ({

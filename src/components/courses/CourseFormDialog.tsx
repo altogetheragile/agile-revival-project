@@ -15,6 +15,10 @@ interface CourseFormDialogProps {
   currentCourse: Course | null;
   onSubmit: (data: CourseFormData) => void;
   onCancel: () => void;
+  // Add the missing props
+  onOpenMediaLibrary?: () => void;
+  formData?: Course | null;
+  setFormData?: React.Dispatch<React.SetStateAction<Course | null>>;
 }
 
 // Convert Course to CourseFormData for the form
