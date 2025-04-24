@@ -1,6 +1,4 @@
-
 // Types for our various settings
-import { CourseTemplate } from "@/types/course";
 import { CourseCategoryConfig } from "@/constants/courseCategories";
 
 export type GeneralSettings = {
@@ -74,7 +72,6 @@ export type AllSettings = {
   interface: InterfaceSettings;
   user: UserSettings;
   security: SecuritySettings;
-  courseTemplates?: CourseTemplate[];
   courseCategories?: CourseCategoryConfig[];
   skillLevels?: { value: string; label: string }[];
   services?: any[];

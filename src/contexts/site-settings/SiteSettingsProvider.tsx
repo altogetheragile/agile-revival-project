@@ -42,7 +42,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         const newSettings = { ...defaultSettings };
         try {
           data.forEach(setting => {
-            if (setting.key in newSettings) {
+            if (setting.key in newSettings && setting.key !== 'courseTemplates') {
               const currentValue = newSettings[setting.key];
               const newValue = setting.value;
               if (
