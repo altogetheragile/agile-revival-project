@@ -26,6 +26,9 @@ export const MediaResetProvider: React.FC<{ children?: React.ReactNode }> = ({ c
   );
 };
 
+// Export MediaResetProvider as GlobalResetProvider for backward compatibility
+export const GlobalResetProvider = MediaResetProvider;
+
 export const useMediaReset = (): MediaResetContextType => {
   const context = useContext(MediaResetContext);
   if (context === undefined) {
@@ -33,4 +36,3 @@ export const useMediaReset = (): MediaResetContextType => {
   }
   return context;
 };
-
