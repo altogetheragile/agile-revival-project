@@ -16,7 +16,11 @@ const fallbackTemplates: Course[] = [
     status: "published",
     isTemplate: true,
     price: "£995",
-    spotsAvailable: 12
+    spotsAvailable: 12,
+    // Adding the missing required properties
+    dates: "TBD",
+    location: "London",
+    instructor: "Alun Davies-Baker"
   },
   {
     id: "template-002",
@@ -29,7 +33,11 @@ const fallbackTemplates: Course[] = [
     status: "published",
     isTemplate: true,
     price: "£995",
-    spotsAvailable: 12
+    spotsAvailable: 12,
+    // Adding the missing required properties
+    dates: "TBD",
+    location: "London",
+    instructor: "Alun Davies-Baker"
   }
 ];
 
