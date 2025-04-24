@@ -9,7 +9,7 @@ import CourseRegistrations from "./CourseRegistrations";
 import { useCourseManagement } from "@/hooks/useCourseManagement";
 import ScheduleCourseDialog from "@/components/courses/ScheduleCourseDialog";
 import { useToast } from "@/components/ui/use-toast";
-import { createCourseFromTemplate } from "@/services/courseService";
+import { createCourseFromTemplate } from "@/services/courseTemplateService";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Loader2, AlertTriangle } from "lucide-react";
 import MediaLibrary from "@/components/media/MediaLibrary";
@@ -40,6 +40,7 @@ export const CourseManagementContainer: React.FC = () => {
   const { toast } = useToast();
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Course | null>(null);
+  const [isScheduling, setIsScheduling] = useState(false);
   
   const [mediaLibOpen, setMediaLibOpen] = useState(false);
   const [formData, setFormData] = useState<Course | null>(null);
@@ -67,6 +68,7 @@ export const CourseManagementContainer: React.FC = () => {
   };
 
   const handleScheduleCourse = (template: Course) => {
+    console.log("Scheduling course from template:", template);
     setSelectedTemplate(template);
     setScheduleDialogOpen(true);
   };
@@ -79,9 +81,19 @@ export const CourseManagementContainer: React.FC = () => {
   };
 
   const handleScheduleSubmit = async (data: ScheduleCourseFormData) => {
-    if (!selectedTemplate) return;
+    if (!selectedTemplate) {
+      toast({
+        title: "Error",
+        description: "No template selected for scheduling",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
+      setIsScheduling(true);
+      console.log("Submitting schedule data:", data);
+      
       const scheduledCourse = await createCourseFromTemplate(selectedTemplate.id, data);
       
       if (scheduledCourse) {
@@ -89,9 +101,11 @@ export const CourseManagementContainer: React.FC = () => {
           title: "Course scheduled",
           description: `${scheduledCourse.title} has been scheduled.`,
         });
+        
+        // After successful scheduling, close the dialog and refresh the course list
+        setScheduleDialogOpen(false);
+        handleForceReset();
       }
-      
-      setScheduleDialogOpen(false);
     } catch (error: any) {
       console.error("Error scheduling course:", error);
       toast({
@@ -99,6 +113,8 @@ export const CourseManagementContainer: React.FC = () => {
         description: error?.message || "There was a problem scheduling the course.",
         variant: "destructive"
       });
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -139,7 +155,7 @@ export const CourseManagementContainer: React.FC = () => {
           onClick={handleForceReset}
           className="text-blue-600 border-blue-300 hover:bg-blue-50"
         >
-          <RefreshCw className="mr-2 h-4 w-4" />
+          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           Refresh Data
         </Button>
       </div>
@@ -204,6 +220,7 @@ export const CourseManagementContainer: React.FC = () => {
         onSubmit={handleScheduleSubmit}
         onCancel={() => setScheduleDialogOpen(false)}
         onOpenMediaLibrary={() => setMediaLibOpen(true)}
+        isSubmitting={isScheduling}
       />
 
       <MediaLibrary

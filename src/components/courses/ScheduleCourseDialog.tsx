@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { CourseScheduleFields } from "./form-utils/CourseScheduleFields";
 import MediaLibrary from "@/components/media/MediaLibrary";
+import { Loader2 } from "lucide-react";
 
 interface ScheduleCourseDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface ScheduleCourseDialogProps {
   onSubmit: (data: ScheduleCourseFormData) => void;
   onCancel: () => void;
   onOpenMediaLibrary?: () => void;
+  isSubmitting?: boolean;
 }
 
 const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({
@@ -26,7 +28,8 @@ const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({
   template,
   onSubmit,
   onCancel,
-  onOpenMediaLibrary
+  onOpenMediaLibrary,
+  isSubmitting = false
 }) => {
   const form = useForm<ScheduleCourseFormData>({
     defaultValues: {
@@ -49,11 +52,29 @@ const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({
     });
   };
 
+  // Reset form when template changes
+  React.useEffect(() => {
+    if (template && open) {
+      form.reset({
+        templateId: template.id,
+        dates: "",
+        location: "London",
+        instructor: "Alun Davies-Baker",
+        spotsAvailable: 12,
+        status: "draft"
+      });
+    }
+  }, [template, form, open]);
+
   if (!template) return null;
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={(isOpen) => {
+        if (!isSubmitting) {
+          onOpenChange(isOpen);
+        }
+      }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Schedule Course: {template.title}</DialogTitle>
@@ -131,10 +152,27 @@ const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({
               />
               
               <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={onCancel}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={onCancel}
+                  disabled={isSubmitting}
+                >
                   Cancel
                 </Button>
-                <Button type="submit">Schedule Course</Button>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Scheduling...
+                    </>
+                  ) : (
+                    "Schedule Course"
+                  )}
+                </Button>
               </div>
             </form>
           </Form>
