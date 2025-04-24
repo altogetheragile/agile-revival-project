@@ -13,8 +13,9 @@ export function useAuthState() {
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     console.log(`Checking admin status for user: ${userId}`);
     try {
-      const { data, error } = await supabase.rpc('is_admin', {
-        user_id: userId
+      const { data, error } = await supabase.rpc('has_role', {
+        _user_id: userId,
+        _role: 'admin'
       });
 
       console.log('Admin check result:', { data, error });

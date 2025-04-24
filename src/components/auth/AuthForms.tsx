@@ -54,7 +54,7 @@ export default function AuthForms() {
         description: "Signing in...",
       });
       
-      await signIn();
+      await signIn(email, password);
       
       // Force refresh to make sure any admin status is correctly picked up
       window.location.href = '/';
@@ -74,7 +74,7 @@ export default function AuthForms() {
     });
     
     try {
-      await signUp();
+      await signUp(email, password, firstName, lastName);
       toast({
         title: "Registration successful",
         description: "Please check your email to verify your account.",
