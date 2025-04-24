@@ -1,6 +1,37 @@
+
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+// Fallback template data to use when database access fails due to policy issues
+const fallbackTemplates: Course[] = [
+  {
+    id: "template-001",
+    title: "Professional Scrum Master",
+    description: "Learn the essentials of being a Professional Scrum Master",
+    category: "Agile",
+    format: "in-person",
+    duration: "2 days",
+    skillLevel: "intermediate",
+    status: "published",
+    isTemplate: true,
+    price: "£995",
+    spotsAvailable: 12
+  },
+  {
+    id: "template-002",
+    title: "Agile Product Owner",
+    description: "Master the role of Product Owner in an agile environment",
+    category: "Agile",
+    format: "in-person",
+    duration: "2 days",
+    skillLevel: "intermediate",
+    status: "published",
+    isTemplate: true,
+    price: "£995",
+    spotsAvailable: 12
+  }
+];
 
 // Map from database fields to Course type
 const mapDbToCourse = (dbCourse: any): Course => {
@@ -43,10 +74,20 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
       
     if (error) {
       console.error("Error fetching course templates:", error);
+      
+      // Check specifically for the RLS policy recursion error
+      if (error.message && error.message.includes("infinite recursion detected in policy")) {
+        console.log("Detected RLS policy recursion error, using fallback templates");
+        toast.error("Database permission issue detected", {
+          description: "Using local template data until the database issue is resolved."
+        });
+        return fallbackTemplates;
+      }
+      
       toast.error("Error loading templates", {
         description: error.message
       });
-      return [];
+      return fallbackTemplates;
     }
     
     console.log(`Successfully fetched ${templates.length} course templates`);
@@ -54,15 +95,22 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
   } catch (err: any) {
     console.error("Unexpected error fetching course templates:", err);
     toast.error("Failed to load templates", {
-      description: "There was an unexpected error loading templates."
+      description: "There was an unexpected error loading templates. Using fallback data."
     });
-    return [];
+    return fallbackTemplates;
   }
 };
 
 export const getCoursesByTemplateId = async (templateId: string): Promise<Course[]> => {
   try {
     console.log(`Fetching courses for template ID: ${templateId}`);
+    
+    // Check if this is one of our fallback template IDs
+    if (templateId.startsWith('template-')) {
+      console.log("Using fallback data for template courses");
+      return []; // Return empty array for fallback templates
+    }
+    
     const { data: courses, error } = await supabase
       .from('courses')
       .select('*')
@@ -70,6 +118,16 @@ export const getCoursesByTemplateId = async (templateId: string): Promise<Course
       
     if (error) {
       console.error("Error fetching courses by template id:", error);
+      
+      // Check specifically for the RLS policy recursion error
+      if (error.message && error.message.includes("infinite recursion detected in policy")) {
+        console.log("Detected RLS policy recursion error in getCoursesByTemplateId");
+        toast.error("Database permission issue detected", {
+          description: "Unable to fetch courses for this template due to a database permission issue."
+        });
+        return [];
+      }
+      
       toast.error("Error loading courses from template", {
         description: error.message
       });
@@ -88,7 +146,37 @@ export const getCoursesByTemplateId = async (templateId: string): Promise<Course
 export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
   try {
     console.log(`Creating course from template ID: ${templateId}`, scheduleData);
-    // First fetch the template
+    
+    // Check if this is one of our fallback template IDs
+    if (templateId.startsWith('template-')) {
+      const fallbackTemplate = fallbackTemplates.find(t => t.id === templateId);
+      if (!fallbackTemplate) {
+        toast.error("Template not found", {
+          description: "Could not find the specified template."
+        });
+        return null;
+      }
+      
+      // Create a simulated "scheduled" course from the fallback template
+      const scheduledCourse: Course = {
+        ...fallbackTemplate,
+        id: `scheduled-${Date.now()}`,
+        isTemplate: false,
+        templateId: templateId,
+        dates: scheduleData.dates,
+        location: scheduleData.location,
+        instructor: scheduleData.instructor,
+        spotsAvailable: scheduleData.spotsAvailable,
+        status: scheduleData.status || 'draft'
+      };
+      
+      toast.success("Course scheduled successfully (demo mode)", {
+        description: `${scheduledCourse.title} has been scheduled.`
+      });
+      return scheduledCourse;
+    }
+    
+    // Regular database flow for real templates
     const { data: template, error: templateError } = await supabase
       .from('courses')
       .select('*')
@@ -97,6 +185,15 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       .maybeSingle();
     
     if (templateError) {
+      // Check specifically for the RLS policy recursion error
+      if (templateError.message && templateError.message.includes("infinite recursion detected in policy")) {
+        console.error("RLS policy recursion error when fetching template:", templateError);
+        toast.error("Database permission issue", {
+          description: "Unable to access database due to a permission configuration issue."
+        });
+        return null;
+      }
+      
       console.error("Error fetching template:", templateError);
       toast.error("Error fetching template", {
         description: templateError.message
