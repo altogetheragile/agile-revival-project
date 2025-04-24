@@ -11,13 +11,15 @@ import ScheduleCourseDialog from "@/components/courses/ScheduleCourseDialog";
 import { useToast } from "@/components/ui/use-toast";
 import { createCourseFromTemplate } from "@/services/courseService";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Loader2 } from "lucide-react";
+import { RefreshCw, Loader2, AlertTriangle } from "lucide-react";
 import MediaLibrary from "@/components/media/MediaLibrary";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export const CourseManagementContainer: React.FC = () => {
   const {
     courses,
     isLoading,
+    loadError,
     searchTerm,
     setSearchTerm,
     isFormOpen,
@@ -90,11 +92,11 @@ export const CourseManagementContainer: React.FC = () => {
       }
       
       setScheduleDialogOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error scheduling course:", error);
       toast({
         title: "Error",
-        description: "There was a problem scheduling the course.",
+        description: error?.message || "There was a problem scheduling the course.",
         variant: "destructive"
       });
     }
@@ -141,6 +143,26 @@ export const CourseManagementContainer: React.FC = () => {
           Refresh Data
         </Button>
       </div>
+      
+      {loadError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error loading courses</AlertTitle>
+          <AlertDescription>
+            {loadError}
+            <div className="mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleForceReset}
+                className="bg-red-50 text-red-800 hover:bg-red-100"
+              >
+                <RefreshCw className="mr-1 h-3 w-3" /> Try Again
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
       
       {isLoading ? (
         <div className="flex items-center justify-center py-12">

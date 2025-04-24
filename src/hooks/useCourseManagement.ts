@@ -14,6 +14,7 @@ export const useCourseManagement = () => {
   const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
   const [viewingRegistrations, setViewingRegistrations] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { toast: uiToast } = useToast();
 
   // Load courses on mount and periodically refresh
@@ -21,12 +22,22 @@ export const useCourseManagement = () => {
     const loadCourses = async () => {
       try {
         setIsLoading(true);
+        setLoadError(null);
         const allCourses = await getAllCourses();
+        
+        if (!allCourses || allCourses.length === 0) {
+          console.log("No courses loaded or empty array returned");
+        } else {
+          console.log(`Loaded ${allCourses.length} courses successfully`);
+        }
+        
         // Filter to only show template courses in the management view
         const templateCourses = allCourses.filter(course => course.isTemplate === true);
+        console.log(`Filtered to ${templateCourses.length} template courses`);
         setCourses(templateCourses);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error loading courses:", error);
+        setLoadError(error?.message || "Failed to load courses");
       } finally {
         setIsLoading(false);
       }
@@ -44,11 +55,13 @@ export const useCourseManagement = () => {
   useEffect(() => {
     const refreshCourses = async () => {
       try {
+        setLoadError(null);
         const allCourses = await getAllCourses();
         const templateCourses = allCourses.filter(course => course.isTemplate === true);
         setCourses(templateCourses);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error refreshing courses:", error);
+        setLoadError(error?.message || "Failed to refresh courses");
       }
     };
 
@@ -66,15 +79,22 @@ export const useCourseManagement = () => {
 
   const handleFormSubmit = async (data: CourseFormData) => {
     try {
+      console.log("Submitting course form data:", data);
+      
       // Always set isTemplate to true for courses managed here
       const templateData = {
         ...data,
         isTemplate: true
       };
+      
+      console.log("Using template data:", templateData);
 
       if (currentCourse) {
+        console.log("Updating existing course:", currentCourse.id);
         const updated = await updateCourse(currentCourse.id, templateData);
+        
         if (updated) {
+          console.log("Course updated successfully:", updated);
           const allCourses = await getAllCourses();
           const templateCourses = allCourses.filter(course => course.isTemplate === true);
           setCourses(templateCourses);
@@ -85,8 +105,11 @@ export const useCourseManagement = () => {
           });
         }
       } else {
+        console.log("Creating new course");
         const created = await createCourse(templateData);
+        
         if (created) {
+          console.log("Course created successfully:", created);
           const allCourses = await getAllCourses();
           const templateCourses = allCourses.filter(course => course.isTemplate === true);
           setCourses(templateCourses);
@@ -97,11 +120,11 @@ export const useCourseManagement = () => {
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error handling course submission:", error);
       uiToast({
         title: "Error",
-        description: "There was a problem saving the course template.",
+        description: error?.message || "There was a problem saving the course template.",
         variant: "destructive"
       });
     }
@@ -120,11 +143,11 @@ export const useCourseManagement = () => {
             description: "The course template has been removed successfully."
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error deleting course:", error);
         uiToast({
           title: "Error",
-          description: "There was a problem deleting the template.",
+          description: error?.message || "There was a problem deleting the template.",
           variant: "destructive"
         });
       } finally {
@@ -158,6 +181,7 @@ export const useCourseManagement = () => {
     viewingRegistrations,
     setViewingRegistrations,
     isLoading,
+    loadError,
     handleFormSubmit,
     handleDelete,
     handleForceReset

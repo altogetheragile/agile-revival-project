@@ -44,14 +44,18 @@ export const getAllCourses = async (): Promise<Course[]> => {
       
     if (error) {
       console.error("Error fetching courses:", error);
-      toast.error("Failed to load courses");
+      toast.error("Failed to load courses", {
+        description: error.message
+      });
       return [];
     }
     
     return courses.map(mapDbToCourse);
   } catch (err) {
     console.error("Unexpected error fetching courses:", err);
-    toast.error("Failed to load courses");
+    toast.error("Failed to load courses", {
+      description: "There was an unexpected error loading courses."
+    });
     return [];
   }
 };
@@ -90,14 +94,18 @@ export const getCourseById = async (id: string): Promise<Course | undefined> => 
       
     if (error) {
       console.error("Error fetching course by id:", error);
-      toast.error("Failed to load course");
+      toast.error("Failed to load course", {
+        description: error.message
+      });
       return undefined;
     }
     
     return course ? mapDbToCourse(course) : undefined;
   } catch (err) {
     console.error("Unexpected error fetching course:", err);
-    toast.error("Failed to load course");
+    toast.error("Failed to load course", {
+      description: "There was an unexpected error loading the course."
+    });
     return undefined;
   }
 };
@@ -184,6 +192,9 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
   try {
     const newCourse = mapCourseToDb(courseData);
     
+    console.log("Creating course with data:", newCourse);
+    console.log("Is template:", newCourse.is_template);
+    
     const { data, error } = await supabase
       .from('courses')
       .insert([newCourse])
@@ -192,7 +203,9 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
       
     if (error) {
       console.error("Error creating course:", error);
-      toast.error("Failed to create course");
+      toast.error("Failed to create course", {
+        description: error.message
+      });
       return null;
     }
     
@@ -200,7 +213,9 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
     return mapDbToCourse(data);
   } catch (err) {
     console.error("Unexpected error creating course:", err);
-    toast.error("Failed to create course");
+    toast.error("Failed to create course", {
+      description: "There was an unexpected error creating the course."
+    });
     return null;
   }
 };
@@ -209,6 +224,9 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
 export const updateCourse = async (id: string, courseData: CourseFormData): Promise<Course | null> => {
   try {
     const updates = mapCourseToDb(courseData);
+
+    console.log("Updating course with ID:", id);
+    console.log("Update data:", updates);
 
     const { data, error } = await supabase
       .from('courses')
@@ -219,7 +237,9 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       
     if (error) {
       console.error("Error updating course:", error);
-      toast.error("Failed to update course");
+      toast.error("Failed to update course", {
+        description: error.message
+      });
       return null;
     }
     
@@ -227,7 +247,9 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
     return mapDbToCourse(data);
   } catch (err) {
     console.error("Unexpected error updating course:", err);
-    toast.error("Failed to update course");
+    toast.error("Failed to update course", {
+      description: "There was an unexpected error updating the course."
+    });
     return null;
   }
 };
@@ -264,4 +286,3 @@ export {
   getCoursesByTemplateId,
   createCourseFromTemplate 
 } from './courseTemplateService';
-

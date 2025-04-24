@@ -1,6 +1,7 @@
 
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Map from database fields to Course type
 const mapDbToCourse = (dbCourse: any): Course => {
@@ -34,69 +35,109 @@ const mapDbToCourse = (dbCourse: any): Course => {
 };
 
 export const getCourseTemplates = async (): Promise<Course[]> => {
-  const { data: templates, error } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('is_template', true);
+  try {
+    const { data: templates, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('is_template', true);
+      
+    if (error) {
+      console.error("Error fetching course templates:", error);
+      toast.error("Error loading templates", {
+        description: error.message
+      });
+      return [];
+    }
     
-  if (error) {
-    console.error("Error fetching course templates:", error);
+    return templates.map(mapDbToCourse);
+  } catch (err) {
+    console.error("Unexpected error fetching course templates:", err);
+    toast.error("Failed to load templates", {
+      description: "There was an unexpected error loading templates."
+    });
     return [];
   }
-  
-  return templates.map(mapDbToCourse);
 };
 
 export const getCoursesByTemplateId = async (templateId: string): Promise<Course[]> => {
-  const { data: courses, error } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('template_id', templateId);
+  try {
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('template_id', templateId);
+      
+    if (error) {
+      console.error("Error fetching courses by template id:", error);
+      toast.error("Error loading courses from template", {
+        description: error.message
+      });
+      return [];
+    }
     
-  if (error) {
-    console.error("Error fetching courses by template id:", error);
+    return courses.map(mapDbToCourse);
+  } catch (err) {
+    console.error("Unexpected error fetching courses by template id:", err);
+    toast.error("Failed to load courses from template");
     return [];
   }
-  
-  return courses.map(mapDbToCourse);
 };
 
 export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
-  // First fetch the template
-  const { data: template, error: templateError } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('id', templateId)
-    .single();
-  
-  if (templateError || !template) {
-    console.error("Error fetching template:", templateError);
-    return null;
-  }
-  
-  // Create a new course based on the template
-  const newCourse = {
-    ...template,
-    id: undefined, // Let the database generate a new ID
-    dates: scheduleData.dates,
-    location: scheduleData.location,
-    instructor: scheduleData.instructor,
-    spots_available: scheduleData.spotsAvailable,
-    status: scheduleData.status || 'draft',
-    is_template: false,
-    template_id: templateId,
-  };
-  
-  const { data: createdCourse, error: createError } = await supabase
-    .from('courses')
-    .insert([newCourse])
-    .select()
-    .single();
+  try {
+    // First fetch the template
+    const { data: template, error: templateError } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('id', templateId)
+      .maybeSingle();
     
-  if (createError) {
-    console.error("Error creating course from template:", createError);
+    if (templateError) {
+      console.error("Error fetching template:", templateError);
+      toast.error("Error fetching template", {
+        description: templateError.message
+      });
+      return null;
+    }
+    
+    if (!template) {
+      toast.error("Template not found");
+      return null;
+    }
+    
+    // Create a new course based on the template
+    const newCourse = {
+      ...template,
+      id: undefined, // Let the database generate a new ID
+      dates: scheduleData.dates,
+      location: scheduleData.location,
+      instructor: scheduleData.instructor,
+      spots_available: scheduleData.spotsAvailable,
+      status: scheduleData.status || 'draft',
+      is_template: false,
+      template_id: templateId,
+    };
+    
+    const { data: createdCourse, error: createError } = await supabase
+      .from('courses')
+      .insert([newCourse])
+      .select()
+      .single();
+      
+    if (createError) {
+      console.error("Error creating course from template:", createError);
+      toast.error("Failed to create course", {
+        description: createError.message
+      });
+      return null;
+    }
+    
+    toast.success("Course scheduled successfully");
+    return mapDbToCourse(createdCourse);
+  } catch (error) {
+    console.error("Unexpected error creating course from template:", error);
+    toast.error("Failed to schedule course", {
+      description: "There was an unexpected error scheduling the course."
+    });
     return null;
   }
-  
-  return mapDbToCourse(createdCourse);
 };
