@@ -44,19 +44,36 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
       
     if (error) {
       console.error("Error fetching course templates:", error);
-      toast.error("Error loading templates", {
-        description: error.message
-      });
+      
+      // More descriptive error message for RLS issues
+      if (error.message && error.message.includes("infinite recursion")) {
+        toast.error("Database permission error", {
+          description: "There's a problem with the database permissions. Please contact an administrator."
+        });
+      } else {
+        toast.error("Error loading templates", {
+          description: error.message
+        });
+      }
       return [];
     }
     
     console.log(`Successfully fetched ${templates.length} course templates`);
     return templates.map(mapDbToCourse);
-  } catch (err) {
+  } catch (err: any) {
     console.error("Unexpected error fetching course templates:", err);
-    toast.error("Failed to load templates", {
-      description: "There was an unexpected error loading templates."
-    });
+    
+    // Check for RLS permission error in the caught exception
+    const errorMessage = err?.message || "There was an unexpected error";
+    if (errorMessage.includes("infinite recursion")) {
+      toast.error("Database permission error", {
+        description: "There's a problem with user permissions in the database. Please contact an administrator."
+      });
+    } else {
+      toast.error("Failed to load templates", {
+        description: "There was an unexpected error loading templates."
+      });
+    }
     return [];
   }
 };
@@ -71,17 +88,34 @@ export const getCoursesByTemplateId = async (templateId: string): Promise<Course
       
     if (error) {
       console.error("Error fetching courses by template id:", error);
-      toast.error("Error loading courses from template", {
-        description: error.message
-      });
+      
+      // Check for RLS errors
+      if (error.message && error.message.includes("infinite recursion")) {
+        toast.error("Database permission error", {
+          description: "There's a problem with user permissions. Please contact an administrator."
+        });
+      } else {
+        toast.error("Error loading courses from template", {
+          description: error.message
+        });
+      }
       return [];
     }
     
     console.log(`Successfully fetched ${courses.length} courses from template ID: ${templateId}`);
     return courses.map(mapDbToCourse);
-  } catch (err) {
+  } catch (err: any) {
     console.error("Unexpected error fetching courses by template id:", err);
-    toast.error("Failed to load courses from template");
+    
+    // Check for RLS errors
+    const errorMessage = err?.message || "There was an unexpected error";
+    if (errorMessage.includes("infinite recursion")) {
+      toast.error("Database permission error", {
+        description: "There's a problem with database permissions. Please contact an administrator."
+      });
+    } else {
+      toast.error("Failed to load courses from template");
+    }
     return [];
   }
 };
@@ -99,9 +133,17 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     
     if (templateError) {
       console.error("Error fetching template:", templateError);
-      toast.error("Error fetching template", {
-        description: templateError.message
-      });
+      
+      // Check for RLS errors
+      if (templateError.message && templateError.message.includes("infinite recursion")) {
+        toast.error("Database permission error", {
+          description: "There's a problem with user permissions. Please contact an administrator."
+        });
+      } else {
+        toast.error("Error fetching template", {
+          description: templateError.message
+        });
+      }
       return null;
     }
     
@@ -138,9 +180,17 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       
     if (createError) {
       console.error("Error creating course from template:", createError);
-      toast.error("Failed to create course", {
-        description: createError.message
-      });
+      
+      // Check for RLS errors
+      if (createError.message && createError.message.includes("infinite recursion")) {
+        toast.error("Database permission error", {
+          description: "There's a problem with user permissions when creating courses. Please contact an administrator."
+        });
+      } else {
+        toast.error("Failed to create course", {
+          description: createError.message
+        });
+      }
       return null;
     }
     
@@ -151,9 +201,18 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     return mapDbToCourse(createdCourse);
   } catch (error: any) {
     console.error("Unexpected error creating course from template:", error);
-    toast.error("Failed to schedule course", {
-      description: "There was an unexpected error scheduling the course."
-    });
+    
+    // Check for RLS errors
+    const errorMessage = error?.message || "There was an unexpected error";
+    if (errorMessage.includes("infinite recursion")) {
+      toast.error("Database permission issue", {
+        description: "There's a problem with user role permissions in the database. Please contact an administrator."
+      });
+    } else {
+      toast.error("Failed to schedule course", {
+        description: "There was an unexpected error scheduling the course."
+      });
+    }
     return null;
   }
 };
