@@ -1,7 +1,6 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext } from 'react';
 import { toast } from 'sonner';
-import { getGlobalCacheBust, setGlobalCacheBust } from '@/utils/courseStorage';
 
 interface MediaResetContextType {
   resetMedia: () => void;
@@ -11,17 +10,10 @@ interface MediaResetContextType {
 const MediaResetContext = createContext<MediaResetContextType | undefined>(undefined);
 
 export const MediaResetProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
-  const [cacheBust, setCacheBust] = useState<string>(() => getGlobalCacheBust() || '1');
-
-  // Initialize with the current cache bust value
-  useEffect(() => {
-    setCacheBust(getGlobalCacheBust() || '1');
-  }, []);
+  const [cacheBust, setCacheBust] = useState<string>(Date.now().toString());
 
   const resetMedia = () => {
-    // Generate a new timestamp for cache busting
     const newCacheBust = Date.now().toString();
-    setGlobalCacheBust(newCacheBust);
     setCacheBust(newCacheBust);
     toast.success('Media cache reset', {
       description: 'All images will now reload with fresh data'
@@ -43,7 +35,6 @@ export const useMediaReset = (): MediaResetContextType => {
   return context;
 };
 
-// Fixed GlobalResetProvider to render empty fragment as children
 export const GlobalResetProvider: React.FC = () => {
   return <MediaResetProvider><React.Fragment></React.Fragment></MediaResetProvider>;
 };

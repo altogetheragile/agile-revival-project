@@ -1,47 +1,88 @@
 
 import { Course, CourseFormData } from "@/types/course";
-import { loadCourses, saveCourses } from "@/utils/courseStorage";
+import { supabase } from "@/integrations/supabase/client";
 import { applyImageSettings } from "./courseImageService";
 
 // Get all courses
-export const getAllCourses = (): Course[] => {
-  return loadCourses();
+export const getAllCourses = async (): Promise<Course[]> => {
+  const { data: courses, error } = await supabase
+    .from('courses')
+    .select('*');
+    
+  if (error) {
+    console.error("Error fetching courses:", error);
+    return [];
+  }
+  
+  return courses;
 };
 
 // Get courses by category
-export const getCoursesByCategory = (category: string): Course[] => {
-  const courses = loadCourses();
-  // Only return non-template courses for the public view
-  const nonTemplates = courses.filter(course => !course.isTemplate);
-  return category === 'all' ? nonTemplates : nonTemplates.filter(course => course.category === category);
+export const getCoursesByCategory = async (category: string): Promise<Course[]> => {
+  const { data: courses, error } = await supabase
+    .from('courses')
+    .select('*')
+    .eq('is_template', false);
+    
+  if (error) {
+    console.error("Error fetching courses by category:", error);
+    return [];
+  }
+  
+  return category === 'all' ? courses : courses.filter(course => course.category === category);
 };
 
 // Get a course by ID
-export const getCourseById = (id: string): Course | undefined => {
-  const courses = loadCourses();
-  return courses.find(course => course.id === id);
+export const getCourseById = async (id: string): Promise<Course | undefined> => {
+  const { data: course, error } = await supabase
+    .from('courses')
+    .select('*')
+    .eq('id', id)
+    .single();
+    
+  if (error) {
+    console.error("Error fetching course by id:", error);
+    return undefined;
+  }
+  
+  return course;
 };
 
 // Get all scheduled (non-template) courses
-export const getScheduledCourses = (): Course[] => {
-  const courses = loadCourses();
-  return courses.filter(course => !course.isTemplate && (course.status === 'published' || course.status === 'draft'));
+export const getScheduledCourses = async (): Promise<Course[]> => {
+  const { data: courses, error } = await supabase
+    .from('courses')
+    .select('*')
+    .eq('is_template', false)
+    .in('status', ['published', 'draft']);
+    
+  if (error) {
+    console.error("Error fetching scheduled courses:", error);
+    return [];
+  }
+  
+  return courses;
 };
 
 // Get published courses only
-export const getPublishedCourses = (): Course[] => {
-  const courses = loadCourses();
-  return courses.filter(course => course.status === 'published' && !course.isTemplate);
+export const getPublishedCourses = async (): Promise<Course[]> => {
+  const { data: courses, error } = await supabase
+    .from('courses')
+    .select('*')
+    .eq('is_template', false)
+    .eq('status', 'published');
+    
+  if (error) {
+    console.error("Error fetching published courses:", error);
+    return [];
+  }
+  
+  return courses;
 };
 
 // Create a new course
-export const createCourse = (courseData: CourseFormData): Course => {
-  const courses = loadCourses();
-  const newId = `crs-${String(Date.now()).slice(-6)}`;
-  
-  // Create the new course with image settings
-  const newCourse: Course = {
-    id: newId,
+export const createCourse = async (courseData: CourseFormData): Promise<Course | null> => {
+  const newCourse = {
     title: courseData.title || "",
     description: courseData.description || "",
     dates: courseData.dates || "",
@@ -49,87 +90,92 @@ export const createCourse = (courseData: CourseFormData): Course => {
     instructor: courseData.instructor || "",
     price: courseData.price || "",
     category: courseData.category || "",
-    spotsAvailable: courseData.spotsAvailable || 0,
+    spots_available: courseData.spotsAvailable || 0,
     status: courseData.status,
-    isTemplate: courseData.isTemplate || false,
+    is_template: courseData.isTemplate || false,
     materials: [],
-    learningOutcomes: Array.isArray(courseData.learningOutcomes) 
+    learning_outcomes: Array.isArray(courseData.learningOutcomes) 
       ? courseData.learningOutcomes 
       : courseData.learningOutcomes ? [courseData.learningOutcomes] : [],
     prerequisites: courseData.prerequisites,
-    targetAudience: courseData.targetAudience,
+    target_audience: courseData.targetAudience,
     duration: courseData.duration,
-    skillLevel: courseData.skillLevel,
+    skill_level: courseData.skillLevel,
     format: courseData.format,
-    googleDriveFolderId: courseData.googleDriveFolderId,
-    googleDriveFolderUrl: courseData.googleDriveFolderUrl,
-    templateId: courseData.templateId,
+    google_drive_folder_id: courseData.googleDriveFolderId,
+    google_drive_folder_url: courseData.googleDriveFolderUrl,
+    template_id: courseData.templateId,
     ...applyImageSettings({}, courseData)
   };
   
-  courses.push(newCourse);
-  saveCourses(courses);
-  
-  return newCourse;
-};
-
-// Update an existing course
-export const updateCourse = (id: string, courseData: CourseFormData): Course | null => {
-  const courses = loadCourses();
-  const index = courses.findIndex(course => course.id === id);
-  
-  if (index === -1) {
-    console.error("Failed to update course: Course not found with ID", id);
+  const { data, error } = await supabase
+    .from('courses')
+    .insert([newCourse])
+    .select()
+    .single();
+    
+  if (error) {
+    console.error("Error creating course:", error);
     return null;
   }
   
-  const existingCourse = courses[index];
-  const existingMaterials = existingCourse.materials || [];
-  
-  // Create updated course with explicit image property handling
-  const updatedCourse: Course = {
-    ...existingCourse,
-    title: courseData.title !== undefined ? courseData.title : existingCourse.title,
-    description: courseData.description !== undefined ? courseData.description : existingCourse.description,
-    dates: courseData.dates !== undefined ? courseData.dates : existingCourse.dates,
-    location: courseData.location !== undefined ? courseData.location : existingCourse.location,
-    instructor: courseData.instructor !== undefined ? courseData.instructor : existingCourse.instructor,
-    price: courseData.price !== undefined ? courseData.price : existingCourse.price,
-    category: courseData.category !== undefined ? courseData.category : existingCourse.category,
-    spotsAvailable: courseData.spotsAvailable !== undefined ? courseData.spotsAvailable : existingCourse.spotsAvailable,
-    status: courseData.status !== undefined ? courseData.status : existingCourse.status,
-    isTemplate: courseData.isTemplate !== undefined ? courseData.isTemplate : existingCourse.isTemplate,
-    materials: existingMaterials,
-    learningOutcomes: Array.isArray(courseData.learningOutcomes) 
+  return data;
+};
+
+// Update an existing course
+export const updateCourse = async (id: string, courseData: CourseFormData): Promise<Course | null> => {
+  const updates = {
+    title: courseData.title,
+    description: courseData.description,
+    dates: courseData.dates,
+    location: courseData.location,
+    instructor: courseData.instructor,
+    price: courseData.price,
+    category: courseData.category,
+    spots_available: courseData.spotsAvailable,
+    status: courseData.status,
+    is_template: courseData.isTemplate,
+    learning_outcomes: Array.isArray(courseData.learningOutcomes) 
       ? courseData.learningOutcomes 
-      : courseData.learningOutcomes ? [courseData.learningOutcomes] : existingCourse.learningOutcomes,
-    prerequisites: courseData.prerequisites !== undefined ? courseData.prerequisites : existingCourse.prerequisites,
-    targetAudience: courseData.targetAudience !== undefined ? courseData.targetAudience : existingCourse.targetAudience,
-    duration: courseData.duration !== undefined ? courseData.duration : existingCourse.duration,
-    skillLevel: courseData.skillLevel !== undefined ? courseData.skillLevel : existingCourse.skillLevel,
-    format: courseData.format !== undefined ? courseData.format : existingCourse.format,
-    googleDriveFolderId: courseData.googleDriveFolderId !== undefined ? courseData.googleDriveFolderId : existingCourse.googleDriveFolderId,
-    googleDriveFolderUrl: courseData.googleDriveFolderUrl !== undefined ? courseData.googleDriveFolderUrl : existingCourse.googleDriveFolderUrl,
-    templateId: courseData.templateId !== undefined ? courseData.templateId : existingCourse.templateId,
-    ...applyImageSettings(existingCourse, courseData)
+      : courseData.learningOutcomes ? [courseData.learningOutcomes] : undefined,
+    prerequisites: courseData.prerequisites,
+    target_audience: courseData.targetAudience,
+    duration: courseData.duration,
+    skill_level: courseData.skillLevel,
+    format: courseData.format,
+    google_drive_folder_id: courseData.googleDriveFolderId,
+    google_drive_folder_url: courseData.googleDriveFolderUrl,
+    template_id: courseData.templateId,
+    ...applyImageSettings({ imageUrl: undefined }, courseData)
   };
+
+  const { data, error } = await supabase
+    .from('courses')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error("Error updating course:", error);
+    return null;
+  }
   
-  courses[index] = updatedCourse;
-  saveCourses(courses);
-  
-  return updatedCourse;
+  return data;
 };
 
 // Delete a course
-export const deleteCourse = (id: string): boolean => {
-  const courses = loadCourses();
-  const filteredCourses = courses.filter(course => course.id !== id);
-  
-  if (filteredCourses.length === courses.length) {
+export const deleteCourse = async (id: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('courses')
+    .delete()
+    .eq('id', id);
+    
+  if (error) {
+    console.error("Error deleting course:", error);
     return false;
   }
   
-  saveCourses(filteredCourses);
   return true;
 };
 
