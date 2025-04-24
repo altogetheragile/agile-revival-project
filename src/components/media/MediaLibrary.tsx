@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import MediaLibraryDialog from "./MediaLibraryDialog";
 import { toast } from "sonner";
 import { MediaResetProvider } from "./context/MediaResetContext";
+import { applyCacheBustToImage } from "@/services/courseImageService";
 
 interface MediaLibraryProps {
   open: boolean;
@@ -30,11 +31,21 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
     size?: number, 
     layout?: string
   ) => {
-    console.log("MediaLibrary: Image selected", { url, aspectRatio, size, layout });
-    setSelectedUrl(url);
+    // Apply cache busting to ensure image is fresh
+    const cachedUrl = applyCacheBustToImage(url);
     
-    // Call the parent's onSelect handler
-    onSelect(url, aspectRatio, size, layout);
+    console.log("MediaLibrary: Image selected", { 
+      originalUrl: url,
+      cachedUrl,
+      aspectRatio, 
+      size, 
+      layout 
+    });
+    
+    setSelectedUrl(cachedUrl);
+    
+    // Call the parent's onSelect handler with the cache-busted URL
+    onSelect(cachedUrl, aspectRatio, size, layout);
     
     // Close the dialog
     onOpenChange(false);

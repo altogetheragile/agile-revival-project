@@ -29,13 +29,16 @@ export const CourseImagePreview: React.FC<CourseImagePreviewProps> = ({
     width: `${imageSize}%`,
     maxWidth: '100%',
   };
+  
+  // Use the imageUrl directly, with an additional key to force refresh when needed
+  const displayUrl = `${imageUrl}${refreshKey ? `&_k=${refreshKey}` : ''}`;
 
   // Render image
   return (
     <div className="w-full" style={imageStyle}>
       {aspectRatio === "auto" ? (
         <img 
-          src={imageUrl}
+          src={displayUrl}
           alt="Preview"
           className="w-full object-contain"
           key={refreshKey}
@@ -57,7 +60,7 @@ export const CourseImagePreview: React.FC<CourseImagePreviewProps> = ({
       ) : (
         <AspectRatio ratio={getAspectRatioValue(aspectRatio)}>
           <img
-            src={imageUrl}
+            src={displayUrl}
             alt="Preview"
             className="w-full h-full object-cover"
             key={refreshKey}

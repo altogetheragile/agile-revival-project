@@ -5,8 +5,9 @@ const COURSES_UPDATED_EVENT = 'courses-data-updated';
 
 export const dispatchCoursesUpdatedEvent = () => {
   if (typeof window !== 'undefined') {
+    const cacheBust = getGlobalCacheBust();
     const event = new CustomEvent(COURSES_UPDATED_EVENT, { 
-      detail: { timestamp: Date.now(), cacheBust: getGlobalCacheBust() } 
+      detail: { timestamp: Date.now(), cacheBust: cacheBust } 
     });
     window.dispatchEvent(event);
     console.log('[Storage] Dispatched courses updated event:', Date.now());
@@ -35,6 +36,7 @@ export const setupCourseUpdateListener = (callback: () => void): () => void => {
         e.key === 'agile-trainer-cache-bust' || 
         e.key === 'agile-trainer-last-update') {
       console.log('[Storage] Course data changed in another tab/window. Reloading...');
+      // Force a full page reload to ensure all data is in sync
       window.location.reload();
     }
   };

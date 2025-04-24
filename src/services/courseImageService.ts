@@ -2,8 +2,12 @@
 import { getGlobalCacheBust } from "@/utils/courseStorage";
 import { CourseImageSettings } from "@/types/courseImage";
 
+// Apply cache busting only to images that don't already have it
 export const applyCacheBustToImage = (imageUrl: string | undefined): string => {
   if (!imageUrl) return "";
+  
+  // If the URL already has a cache bust parameter, return it as is
+  if (imageUrl.includes('?v=')) return imageUrl;
   
   // Strip any existing cache busting params
   const baseUrl = imageUrl.split('?')[0];
@@ -16,7 +20,7 @@ export const applyImageSettings = (
   currentSettings: CourseImageSettings,
   newSettings: Partial<CourseImageSettings>
 ): CourseImageSettings => {
-  // Apply cache busting if image URL has changed
+  // Apply cache busting if image URL has changed and doesn't already have cache busting
   const imageUrlWithCache = newSettings.imageUrl !== currentSettings.imageUrl ? 
     applyCacheBustToImage(newSettings.imageUrl) : newSettings.imageUrl || currentSettings.imageUrl;
 

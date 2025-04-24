@@ -38,7 +38,7 @@ export const useImageRefresh = ({ form, imageUrlField }: UseImageRefreshProps) =
     form.setValue("imageLayout" as any, "standard", { shouldValidate: false });
   }, [form, imageUrlField]);
 
-  // Handle refreshing image
+  // Handle refreshing image - applies a new cache bust parameter
   const handleRefreshImage = useCallback(() => {
     // Get the current image URL
     const currentUrl = form.getValues(imageUrlField);
@@ -61,14 +61,13 @@ export const useImageRefresh = ({ form, imageUrlField }: UseImageRefreshProps) =
     });
   }, [form, imageUrlField]);
 
-  // Add cache busting to image URL
+  // Return the image URL exactly as stored - don't re-apply cache busting
   const getImageUrlWithCacheBusting = useCallback((url: string) => {
     if (!url) return "";
     
-    // Use both specific refresh key and global cache bust
-    const baseUrl = url.split('?')[0];
-    return `${baseUrl}?v=${refreshKey}-${globalCacheBust}`;
-  }, [refreshKey, globalCacheBust]);
+    // Just return the URL as is - already has cache busting from storage
+    return url;
+  }, []);
 
   return {
     refreshKey,

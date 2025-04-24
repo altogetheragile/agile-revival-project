@@ -16,12 +16,12 @@ export const loadCourses = (): Course[] => {
       const validCourses = validateCourses(courses);
       
       if (validCourses) {
-        const coursesWithCacheBust = applyCacheBusting(validCourses);
-        return coursesWithCacheBust;
+        // Don't apply cache busting on load - use the stored URLs as-is
+        return validCourses;
       } else {
         console.warn('[Storage] Course data validation failed, resetting to initial courses');
         resetCoursesToInitial(false);
-        return [...initialCourses];
+        return applyCacheBusting([...initialCourses]);
       }
     }
   } catch (error) {
@@ -32,6 +32,7 @@ export const loadCourses = (): Course[] => {
   return applyCacheBusting([...initialCourses]);
 };
 
+// Apply cache busting only for initial courses or on full reset
 const applyCacheBusting = (courses: Course[]): Course[] => {
   const cacheBust = getGlobalCacheBust();
   return courses.map(course => {
@@ -66,8 +67,10 @@ export const saveCourses = (courses: Course[]): void => {
 
     updateStorageVersion();
     
+    // Don't modify image URLs that already have cache busting
+    // Only apply cache busting to new or modified images without it
     const normalizedCourses = coursesToSave.map(course => {
-      if (course.imageUrl) {
+      if (course.imageUrl && !course.imageUrl.includes('?v=')) {
         const baseUrl = course.imageUrl.split('?')[0];
         const cacheBust = getGlobalCacheBust();
         course.imageUrl = `${baseUrl}?v=${cacheBust}`;
