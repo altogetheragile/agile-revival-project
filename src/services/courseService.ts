@@ -2,7 +2,8 @@
 export { 
   getAllCourses,
   getCoursesByCategory,
-  getCourseById
+  getCourseById,
+  getScheduledCourses
 } from './course/courseQueries';
 
 export {

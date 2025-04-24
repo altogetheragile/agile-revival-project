@@ -63,6 +63,34 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
   }
 };
 
+// Get scheduled (non-template) courses
+export const getScheduledCourses = async (): Promise<Course[]> => {
+  try {
+    console.log("Fetching scheduled courses...");
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('is_template', false);
+      
+    if (error) {
+      console.error("Error fetching scheduled courses:", error);
+      toast.error("Failed to load scheduled courses", {
+        description: error.message
+      });
+      return [];
+    }
+    
+    console.log(`Successfully fetched ${courses.length} scheduled courses`);
+    return courses.map(mapDbToCourse);
+  } catch (err) {
+    console.error("Unexpected error fetching scheduled courses:", err);
+    toast.error("Failed to load scheduled courses", {
+      description: "There was an unexpected error loading the courses."
+    });
+    return [];
+  }
+};
+
 // Get a course by ID
 export const getCourseById = async (id: string): Promise<Course | undefined> => {
   try {
