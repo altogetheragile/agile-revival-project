@@ -1,7 +1,7 @@
 
 import { Course } from "@/types/course";
 import { initialCourses } from "@/data/initialCourses";
-import { getGlobalCacheBust, updateStorageVersion, setGlobalCacheBust } from './storage/cacheBusting';
+import { getGlobalCacheBust, updateStorageVersion, setGlobalCacheBust, getStorageVersion } from './storage/cacheBusting';
 import { dispatchCoursesUpdatedEvent, setupCourseUpdateListener } from './storage/storageEvents';
 import { validateCourses, verifyStorageIntegrity } from './storage/storageValidation';
 
@@ -126,5 +126,6 @@ export {
   getGlobalCacheBust,
   setGlobalCacheBust,
   setupCourseUpdateListener,
-  verifyStorageIntegrity
+  verifyStorageIntegrity,
+  getStorageVersion
 };
