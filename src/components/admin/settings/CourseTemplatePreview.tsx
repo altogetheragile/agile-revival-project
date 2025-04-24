@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,28 @@ export const CourseTemplatePreview: React.FC<CourseTemplatePreviewProps> = ({
   onOpenChange,
   template
 }) => {
-  if (!template) return null;
+  // Local state to ensure we always use the latest template data
+  const [previewData, setPreviewData] = useState<CourseTemplate | null>(null);
+  
+  // Update local state whenever the template prop changes
+  useEffect(() => {
+    if (template) {
+      // Add a cache-busting parameter to the image URL if it exists
+      let updatedTemplate = {...template};
+      
+      if (updatedTemplate.imageUrl) {
+        const timestamp = Date.now();
+        const baseUrl = updatedTemplate.imageUrl.split('?')[0];
+        updatedTemplate.imageUrl = `${baseUrl}?cache=${timestamp}`;
+      }
+      
+      setPreviewData(updatedTemplate);
+    } else {
+      setPreviewData(null);
+    }
+  }, [template, open]);
+
+  if (!previewData) return null;
 
   // Format skill level for display
   const formatSkillLevel = (level?: string) => {
@@ -31,17 +52,18 @@ export const CourseTemplatePreview: React.FC<CourseTemplatePreviewProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>Preview: {template.title}</DialogTitle>
+          <DialogTitle>Preview: {previewData.title}</DialogTitle>
         </DialogHeader>
         <ScrollArea className="max-h-[70vh] pr-4">
           <div className="bg-white rounded-lg overflow-hidden">
-            {template.imageUrl && (
+            {previewData.imageUrl && (
               <div className="w-full h-64 bg-gray-100">
                 <AspectRatio ratio={16/9}>
                   <img 
-                    src={template.imageUrl} 
-                    alt={template.title} 
+                    src={previewData.imageUrl} 
+                    alt={previewData.title} 
                     className="w-full h-full object-cover"
+                    key={previewData.imageUrl} // Key helps React recognize this as a new image
                   />
                 </AspectRatio>
               </div>
@@ -49,18 +71,18 @@ export const CourseTemplatePreview: React.FC<CourseTemplatePreviewProps> = ({
             
             <div className="p-6 bg-agile-purple/10">
               <div className="flex justify-between items-start">
-                <h1 className="text-2xl font-bold text-agile-purple-dark">{template.title}</h1>
-                <div className="text-xl font-bold">{template.price}</div>
+                <h1 className="text-2xl font-bold text-agile-purple-dark">{previewData.title}</h1>
+                <div className="text-xl font-bold">{previewData.price}</div>
               </div>
               
               <div className="mt-2 flex items-center gap-2 text-gray-600">
                 <Calendar className="h-4 w-4" /> Example Date
               </div>
               
-              {template.skillLevel && (
+              {previewData.skillLevel && (
                 <div className="mt-2">
                   <Badge variant="outline" className="bg-white">
-                    {formatSkillLevel(template.skillLevel)}
+                    {formatSkillLevel(previewData.skillLevel)}
                   </Badge>
                 </div>
               )}
@@ -68,7 +90,7 @@ export const CourseTemplatePreview: React.FC<CourseTemplatePreviewProps> = ({
             
             <div className="p-6">
               <h2 className="text-lg font-semibold mb-3">About This Course</h2>
-              <p className="text-gray-700 mb-6">{template.description}</p>
+              <p className="text-gray-700 mb-6">{previewData.description}</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="bg-gray-50 p-4 rounded-lg">
@@ -84,16 +106,16 @@ export const CourseTemplatePreview: React.FC<CourseTemplatePreviewProps> = ({
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-agile-purple" />
-                      <span>Duration: {template.duration || "Not specified"}</span>
+                      <span>Duration: {previewData.duration || "Not specified"}</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold mb-3">What You'll Learn</h3>
-                  {template.learningOutcomes && template.learningOutcomes.length > 0 ? (
+                  {previewData.learningOutcomes && previewData.learningOutcomes.length > 0 ? (
                     <ul className="list-disc list-inside space-y-1 text-gray-700">
-                      {template.learningOutcomes.map((outcome, index) => (
+                      {previewData.learningOutcomes.map((outcome, index) => (
                         <li key={index}>{outcome}</li>
                       ))}
                     </ul>
@@ -103,19 +125,19 @@ export const CourseTemplatePreview: React.FC<CourseTemplatePreviewProps> = ({
                 </div>
               </div>
               
-              {(template.targetAudience || template.prerequisites) && (
+              {(previewData.targetAudience || previewData.prerequisites) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  {template.targetAudience && (
+                  {previewData.targetAudience && (
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h3 className="font-semibold mb-3">Target Audience</h3>
-                      <p className="text-gray-700">{template.targetAudience}</p>
+                      <p className="text-gray-700">{previewData.targetAudience}</p>
                     </div>
                   )}
                   
-                  {template.prerequisites && (
+                  {previewData.prerequisites && (
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h3 className="font-semibold mb-3">Prerequisites</h3>
-                      <p className="text-gray-700">{template.prerequisites}</p>
+                      <p className="text-gray-700">{previewData.prerequisites}</p>
                     </div>
                   )}
                 </div>

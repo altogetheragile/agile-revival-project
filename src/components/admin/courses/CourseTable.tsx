@@ -3,7 +3,7 @@ import { Course } from "@/types/course";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Edit, Trash2, Users, Calendar } from "lucide-react";
+import { Edit, Trash2, Users, Calendar, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface CourseTableProps {
@@ -12,6 +12,7 @@ interface CourseTableProps {
   onDelete: (course: Course) => void;
   onViewRegistrations: (course: Course) => void;
   onScheduleCourse: (template: Course) => void;
+  onPreviewTemplate?: (template: Course) => void;
 }
 
 export const CourseTable = ({ 
@@ -19,7 +20,8 @@ export const CourseTable = ({
   onEdit, 
   onDelete, 
   onViewRegistrations,
-  onScheduleCourse
+  onScheduleCourse,
+  onPreviewTemplate
 }: CourseTableProps) => {
   const getFormatBadge = (format?: string) => {
     switch (format) {
@@ -78,6 +80,19 @@ export const CourseTable = ({
                   <Edit className="h-4 w-4 mr-1" />
                   Edit
                 </Button>
+                
+                {onPreviewTemplate && (
+                  <Button
+                    onClick={() => onPreviewTemplate(course)}
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2 text-purple-600"
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    Preview
+                  </Button>
+                )}
+                
                 <Button
                   onClick={() => onScheduleCourse(course)}
                   size="sm"

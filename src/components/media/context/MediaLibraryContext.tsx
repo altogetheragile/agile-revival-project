@@ -71,6 +71,9 @@ export const MediaLibraryProvider: React.FC<MediaLibraryProviderProps> = ({
   // Tab state
   const [activeTabPanel, setActiveTabPanel] = useState("browse");
   const [activeTab, setActiveTab] = useState("all");
+  
+  // Cache busting for selected images
+  const [cacheBustKey, setCacheBustKey] = useState<string>(Date.now().toString());
 
   // Log when settings are changed to debug persistence issues
   useEffect(() => {
@@ -78,15 +81,28 @@ export const MediaLibraryProvider: React.FC<MediaLibraryProviderProps> = ({
       console.log("MediaLibraryContext settings updated:", {
         aspectRatio: selectedAspectRatio,
         size: selectedSize,
-        layout: selectedLayout
+        layout: selectedLayout,
+        cacheBustKey
       });
     }
-  }, [selectedImage, selectedAspectRatio, selectedSize, selectedLayout]);
+  }, [selectedImage, selectedAspectRatio, selectedSize, selectedLayout, cacheBustKey]);
+
+  // Reset selections when dialog is closed
+  useEffect(() => {
+    // Generate a new cache bust key whenever the media library is opened
+    setCacheBustKey(Date.now().toString());
+  }, [items]);
 
   // Handle image selection
   const onSelect = (url: string) => {
     console.log("Image selected:", url);
-    setSelectedImage(url);
+    
+    // Add cache busting parameter to ensure the image is fresh
+    const baseUrl = url.split('?')[0];
+    const cacheBustedUrl = `${baseUrl}?v=${cacheBustKey}`;
+    
+    setSelectedImage(cacheBustedUrl);
+    
     // Automatically move to the adjust tab when an image is selected
     setActiveTabPanel("adjust");
   };
@@ -114,6 +130,7 @@ export const MediaLibraryProvider: React.FC<MediaLibraryProviderProps> = ({
       
       // Reset to browse tab for next use
       setActiveTabPanel("browse");
+      setActiveTab("all");
       
       // Close dialog
       onClose();
