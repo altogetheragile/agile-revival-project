@@ -1,41 +1,42 @@
 
-import { createContext, useContext } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
+import { useAuthState } from '@/hooks/useAuthState';
+import { useAuthMethods } from '@/hooks/useAuthMethods';
+import { User, Session } from '@supabase/supabase-js';
 
-// Create a simplified version of the context with no auth functionality
 interface AuthContextType {
-  user: null;
-  session: null;
-  signIn: () => Promise<void>;
-  signUp: () => Promise<void>;
+  user: User | null;
+  session: Session | null;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
-  refreshAdminStatus: () => Promise<boolean>;
   isAuthReady: boolean;
+  refreshAdminStatus: (userId: string) => Promise<boolean>;
 }
 
-// Create a dummy context with no functionality
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  session: null,
-  signIn: async () => {},
-  signUp: async () => {},
-  signOut: async () => {},
-  isAdmin: false,
-  refreshAdminStatus: async () => false,
-  isAuthReady: true
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Simplified provider with no authentication functionality
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const { user, session, isAdmin, isLoading, isAdminChecked, checkAdminStatus } = useAuthState();
+  const { signIn, signUp, signOut } = useAuthMethods();
+
+  // Authorization is ready when we've finished loading and checked admin status
+  const isAuthReady = !isLoading && isAdminChecked;
+
+  const refreshAdminStatus = async (userId: string) => {
+    return await checkAdminStatus(userId);
+  };
+
   const contextValue: AuthContextType = {
-    user: null,
-    session: null,
-    signIn: async () => {},
-    signUp: async () => {},
-    signOut: async () => {},
-    isAdmin: false,
-    refreshAdminStatus: async () => false,
-    isAuthReady: true
+    user,
+    session,
+    signIn,
+    signUp,
+    signOut,
+    isAdmin,
+    isAuthReady,
+    refreshAdminStatus
   };
 
   return (

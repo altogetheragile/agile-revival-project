@@ -11,34 +11,30 @@ export function useAuthState() {
   const [isAdminChecked, setIsAdminChecked] = useState(false);
 
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
-    console.log(`DETAILED Admin Check - Checking admin status for user: ${userId}`);
+    console.log(`Checking admin status for user: ${userId}`);
     try {
-      const { data, error } = await supabase.rpc('has_role', {
-        user_id: userId,
-        required_role: 'admin'
+      const { data, error } = await supabase.rpc('is_admin', {
+        user_id: userId
       });
 
-      console.log('DETAILED Admin Check - Raw query result:', { data, error });
+      console.log('Admin check result:', { data, error });
 
       if (error) {
-        console.error('DETAILED Admin Check - Error checking admin status:', error);
+        console.error('Error checking admin status:', error);
         setIsAdmin(false);
         setIsAdminChecked(true);
         return false;
       }
 
       const hasAdminRole = !!data;
-      console.log(`DETAILED Admin Check - Final admin status for ${userId}:`, { 
-        hasAdminRole, 
-        userEmail: userId,
-      });
+      console.log(`Admin status for ${userId}: ${hasAdminRole ? 'admin' : 'not admin'}`);
       
       setIsAdmin(hasAdminRole);
       setIsAdminChecked(true);
       
       return hasAdminRole;
     } catch (error) {
-      console.error('DETAILED Admin Check - Exception checking admin status:', error);
+      console.error('Exception checking admin status:', error);
       setIsAdmin(false);
       setIsAdminChecked(true);
       return false;
@@ -72,8 +68,7 @@ export function useAuthState() {
           setTimeout(async () => {
             if (!isMounted) return;
             try {
-              const adminStatus = await checkAdminStatus(currentSession.user.id);
-              console.log(`Admin status for ${currentSession.user.email} (${currentSession.user.app_metadata?.provider || 'email'}): ${adminStatus ? 'admin' : 'not admin'}`);
+              await checkAdminStatus(currentSession.user.id);
               if (isMounted) {
                 setIsLoading(false);
               }
@@ -116,8 +111,7 @@ export function useAuthState() {
           if (!isMounted) return;
           try {
             console.log(`Checking admin status with ${checkDelay}ms delay for provider: ${currentSession.user.app_metadata?.provider || 'email'}`);
-            const adminStatus = await checkAdminStatus(currentSession.user.id);
-            console.log(`Initial admin status set to ${adminStatus ? 'admin' : 'not admin'} for ${currentSession.user?.email} (${currentSession.user.app_metadata?.provider || 'email'})`);
+            await checkAdminStatus(currentSession.user.id);
             if (isMounted) {
               setIsLoading(false);
             }
