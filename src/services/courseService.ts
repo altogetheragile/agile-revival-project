@@ -2,6 +2,7 @@
 import { Course, CourseFormData } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
 import { applyImageSettings } from "./courseImageService";
+import { toast } from "sonner";
 
 // Map from database fields to Course type
 const mapDbToCourse = (dbCourse: any): Course => {
@@ -36,80 +37,115 @@ const mapDbToCourse = (dbCourse: any): Course => {
 
 // Get all courses
 export const getAllCourses = async (): Promise<Course[]> => {
-  const { data: courses, error } = await supabase
-    .from('courses')
-    .select('*');
+  try {
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select('*');
+      
+    if (error) {
+      console.error("Error fetching courses:", error);
+      toast.error("Failed to load courses");
+      return [];
+    }
     
-  if (error) {
-    console.error("Error fetching courses:", error);
+    return courses.map(mapDbToCourse);
+  } catch (err) {
+    console.error("Unexpected error fetching courses:", err);
+    toast.error("Failed to load courses");
     return [];
   }
-  
-  return courses.map(mapDbToCourse);
 };
 
 // Get courses by category
 export const getCoursesByCategory = async (category: string): Promise<Course[]> => {
-  const { data: courses, error } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('is_template', false);
+  try {
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('is_template', false);
+      
+    if (error) {
+      console.error("Error fetching courses by category:", error);
+      toast.error("Failed to load courses");
+      return [];
+    }
     
-  if (error) {
-    console.error("Error fetching courses by category:", error);
+    const mappedCourses = courses.map(mapDbToCourse);
+    return category === 'all' ? mappedCourses : mappedCourses.filter(course => course.category === category);
+  } catch (err) {
+    console.error("Unexpected error fetching courses by category:", err);
+    toast.error("Failed to load courses");
     return [];
   }
-  
-  const mappedCourses = courses.map(mapDbToCourse);
-  return category === 'all' ? mappedCourses : mappedCourses.filter(course => course.category === category);
 };
 
 // Get a course by ID
 export const getCourseById = async (id: string): Promise<Course | undefined> => {
-  const { data: course, error } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
+  try {
+    const { data: course, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+      
+    if (error) {
+      console.error("Error fetching course by id:", error);
+      toast.error("Failed to load course");
+      return undefined;
+    }
     
-  if (error) {
-    console.error("Error fetching course by id:", error);
+    return course ? mapDbToCourse(course) : undefined;
+  } catch (err) {
+    console.error("Unexpected error fetching course:", err);
+    toast.error("Failed to load course");
     return undefined;
   }
-  
-  return course ? mapDbToCourse(course) : undefined;
 };
 
 // Get all scheduled (non-template) courses
 export const getScheduledCourses = async (): Promise<Course[]> => {
-  const { data: courses, error } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('is_template', false)
-    .in('status', ['published', 'draft']);
+  try {
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('is_template', false)
+      .in('status', ['published', 'draft']);
+      
+    if (error) {
+      console.error("Error fetching scheduled courses:", error);
+      toast.error("Failed to load scheduled courses");
+      return [];
+    }
     
-  if (error) {
-    console.error("Error fetching scheduled courses:", error);
+    return courses.map(mapDbToCourse);
+  } catch (err) {
+    console.error("Unexpected error fetching scheduled courses:", err);
+    toast.error("Failed to load scheduled courses");
     return [];
   }
-  
-  return courses.map(mapDbToCourse);
 };
 
 // Get published courses only
 export const getPublishedCourses = async (): Promise<Course[]> => {
-  const { data: courses, error } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('is_template', false)
-    .eq('status', 'published');
+  try {
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('is_template', false)
+      .eq('status', 'published');
+      
+    if (error) {
+      console.error("Error fetching published courses:", error);
+      toast.error("Failed to load published courses");
+      return [];
+    }
     
-  if (error) {
-    console.error("Error fetching published courses:", error);
+    return courses.map(mapDbToCourse);
+  } catch (err) {
+    console.error("Unexpected error fetching published courses:", err);
+    toast.error("Failed to load published courses");
     return [];
   }
-  
-  return courses.map(mapDbToCourse);
 };
 
 // Map from Course type to database fields
@@ -145,54 +181,78 @@ const mapCourseToDb = (courseData: CourseFormData) => {
 
 // Create a new course
 export const createCourse = async (courseData: CourseFormData): Promise<Course | null> => {
-  const newCourse = mapCourseToDb(courseData);
-  
-  const { data, error } = await supabase
-    .from('courses')
-    .insert([newCourse])
-    .select()
-    .single();
+  try {
+    const newCourse = mapCourseToDb(courseData);
     
-  if (error) {
-    console.error("Error creating course:", error);
+    const { data, error } = await supabase
+      .from('courses')
+      .insert([newCourse])
+      .select()
+      .single();
+      
+    if (error) {
+      console.error("Error creating course:", error);
+      toast.error("Failed to create course");
+      return null;
+    }
+    
+    toast.success("Course created successfully");
+    return mapDbToCourse(data);
+  } catch (err) {
+    console.error("Unexpected error creating course:", err);
+    toast.error("Failed to create course");
     return null;
   }
-  
-  return mapDbToCourse(data);
 };
 
 // Update an existing course
 export const updateCourse = async (id: string, courseData: CourseFormData): Promise<Course | null> => {
-  const updates = mapCourseToDb(courseData);
+  try {
+    const updates = mapCourseToDb(courseData);
 
-  const { data, error } = await supabase
-    .from('courses')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('courses')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error("Error updating course:", error);
+      toast.error("Failed to update course");
+      return null;
+    }
     
-  if (error) {
-    console.error("Error updating course:", error);
+    toast.success("Course updated successfully");
+    return mapDbToCourse(data);
+  } catch (err) {
+    console.error("Unexpected error updating course:", err);
+    toast.error("Failed to update course");
     return null;
   }
-  
-  return mapDbToCourse(data);
 };
 
 // Delete a course
 export const deleteCourse = async (id: string): Promise<boolean> => {
-  const { error } = await supabase
-    .from('courses')
-    .delete()
-    .eq('id', id);
+  try {
+    const { error } = await supabase
+      .from('courses')
+      .delete()
+      .eq('id', id);
+      
+    if (error) {
+      console.error("Error deleting course:", error);
+      toast.error("Failed to delete course");
+      return false;
+    }
     
-  if (error) {
-    console.error("Error deleting course:", error);
+    toast.success("Course deleted successfully");
+    return true;
+  } catch (err) {
+    console.error("Unexpected error deleting course:", err);
+    toast.error("Failed to delete course");
     return false;
   }
-  
-  return true;
 };
 
 // Re-export course material operations
@@ -204,3 +264,4 @@ export {
   getCoursesByTemplateId,
   createCourseFromTemplate 
 } from './courseTemplateService';
+

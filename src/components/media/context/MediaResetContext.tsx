@@ -16,9 +16,7 @@ export const MediaResetProvider: React.FC<{ children?: React.ReactNode }> = ({ c
   const resetMedia = () => {
     const newCacheBust = Date.now().toString();
     setCacheBust(newCacheBust);
-    toast.success('Media cache reset', {
-      description: 'All images will now reload with fresh data'
-    });
+    toast.success('Media cache reset');
   };
 
   return (
@@ -36,6 +34,3 @@ export const useMediaReset = (): MediaResetContextType => {
   return context;
 };
 
-export const GlobalResetProvider: React.FC = () => {
-  return <MediaResetProvider><React.Fragment></React.Fragment></MediaResetProvider>;
-};
