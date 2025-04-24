@@ -14,8 +14,8 @@ export function useAuthState() {
     console.log(`Checking admin status for user: ${userId}`);
     try {
       const { data, error } = await supabase.rpc('has_role', {
-        _user_id: userId,
-        _role: 'admin'
+        user_id: userId,
+        required_role: 'admin'
       });
 
       console.log('Admin check result:', { data, error });
