@@ -76,6 +76,9 @@ const CourseForm: React.FC<CourseFormProps> = ({
   }, [formData, form]);
 
   const [mediaLibOpen, setMediaLibOpen] = useState(false);
+  
+  // Check if this is a published non-template course
+  const isPublishedCourse = !isTemplate && initialData?.status === "published";
 
   const handleSubmit = (data: CourseFormData) => {
     // Process learning outcomes if provided as a string
@@ -86,44 +89,68 @@ const CourseForm: React.FC<CourseFormProps> = ({
         .filter(item => item.length > 0);
     }
     
-    onSubmit({
-      ...data,
-      spotsAvailable: Number(data.spotsAvailable),
-      isTemplate: isTemplate
-    });
+    // If it's a published course, only allow specific fields to be updated
+    if (isPublishedCourse && initialData) {
+      const updatedData = {
+        ...initialData,
+        // Only allow these fields to be updated for published courses
+        dates: data.dates,
+        location: data.location,
+        instructor: data.instructor,
+        price: data.price,
+        spotsAvailable: Number(data.spotsAvailable),
+        status: data.status
+      };
+      
+      onSubmit(updatedData);
+    } else {
+      // For templates or draft courses, allow full editing
+      onSubmit({
+        ...data,
+        spotsAvailable: Number(data.spotsAvailable),
+        isTemplate: isTemplate
+      });
+    }
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <BasicCourseFields form={form} />
+        {/* Always editable fields */}
+        <BasicCourseFields form={form} readOnly={isPublishedCourse} />
         <CourseScheduleFields form={form} />
         <CourseInstructorPriceFields form={form} />
-        <CourseCategoryFields form={form} />
         <CourseStatusField form={form} />
-        <CourseDetailsFields form={form} />
-        <CourseFormatFields form={form} />
-        <LearningOutcomeField form={form} />
-        <CourseGoogleDriveSection courseId={initialData?.id} />
         
-        <CourseImageField 
-          form={form}
-          onOpenMediaLibrary={onOpenMediaLibrary || (() => setMediaLibOpen(true))}
-        />
+        {/* Fields that are non-editable for published courses */}
+        {(!isPublishedCourse) && (
+          <>
+            <CourseCategoryFields form={form} />
+            <CourseDetailsFields form={form} />
+            <CourseFormatFields form={form} />
+            <LearningOutcomeField form={form} />
+            <CourseGoogleDriveSection courseId={initialData?.id} />
+            
+            <CourseImageField 
+              form={form}
+              onOpenMediaLibrary={onOpenMediaLibrary || (() => setMediaLibOpen(true))}
+            />
 
-        {!onOpenMediaLibrary && (
-          <MediaLibrary
-            open={mediaLibOpen}
-            onOpenChange={setMediaLibOpen}
-            onSelect={(url, aspectRatio, size, layout) => {
-              form.setValue("imageUrl", url, { shouldValidate: true });
-              form.setValue("imageAspectRatio", aspectRatio || "16/9", { shouldValidate: false });
-              form.setValue("imageSize", size || 100, { shouldValidate: false });
-              form.setValue("imageLayout", layout || "standard", { shouldValidate: false });
-              console.log("Direct form update with URL:", url, "ratio:", aspectRatio, "size:", size, "layout:", layout);
-              setMediaLibOpen(false);
-            }}
-          />
+            {!onOpenMediaLibrary && (
+              <MediaLibrary
+                open={mediaLibOpen}
+                onOpenChange={setMediaLibOpen}
+                onSelect={(url, aspectRatio, size, layout) => {
+                  form.setValue("imageUrl", url, { shouldValidate: true });
+                  form.setValue("imageAspectRatio", aspectRatio || "16/9", { shouldValidate: false });
+                  form.setValue("imageSize", size || 100, { shouldValidate: false });
+                  form.setValue("imageLayout", layout || "standard", { shouldValidate: false });
+                  console.log("Direct form update with URL:", url, "ratio:", aspectRatio, "size:", size, "layout:", layout);
+                  setMediaLibOpen(false);
+                }}
+              />
+            )}
+          </>
         )}
 
         <CourseFormActions 
@@ -131,6 +158,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
           isEditing={!!initialData.id}
           isDraft={form.watch("status") === "draft"}
           stayOpenOnSubmit={stayOpenOnSubmit}
+          isTemplate={isTemplate}
         />
       </form>
     </Form>

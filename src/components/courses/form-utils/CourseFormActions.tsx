@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import { DialogClose } from "@/components/ui/dialog";
-import { Save, Send } from "lucide-react";
+import { Save, Send, Eye } from "lucide-react";
+import { useState } from "react";
 
 interface CourseFormActionsProps {
   onCancel: () => void;
@@ -9,6 +10,7 @@ interface CourseFormActionsProps {
   isDraft: boolean;
   stayOpenOnSubmit?: boolean;
   isTemplate?: boolean;
+  onPreview?: () => void;
 }
 
 export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
@@ -17,7 +19,15 @@ export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
   isDraft,
   stayOpenOnSubmit = false,
   isTemplate = false,
+  onPreview
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = (e: React.MouseEvent) => {
+    setIsSubmitting(true);
+    // The form will handle the actual submission
+  };
+
   return (
     <div className="flex justify-end space-x-2 pt-4">
       <DialogClose asChild>
@@ -26,11 +36,25 @@ export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
         </Button>
       </DialogClose>
 
+      {isTemplate && (
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+          onClick={onPreview}
+        >
+          <Eye className="mr-2 h-4 w-4" />
+          Preview Template
+        </Button>
+      )}
+
       {stayOpenOnSubmit ? (
         // If we're staying open, use regular buttons
         <Button 
           type="submit" 
           className="ml-auto bg-green-600 hover:bg-green-700 text-white"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
         >
           <Save className="mr-2 h-4 w-4" />
           {isEditing ? "Save Changes" : "Save"}

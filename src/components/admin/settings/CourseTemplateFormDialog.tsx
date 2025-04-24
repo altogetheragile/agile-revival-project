@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CourseForm from "@/components/courses/CourseForm";
 import { CourseFormData, CourseTemplate } from "@/types/course";
+import CourseTemplatePreview from "./CourseTemplatePreview";
 
 interface CourseTemplateFormDialogProps {
   open: boolean;
@@ -20,6 +21,10 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
   onSubmit,
   onCancel
 }) => {
+  // State to track preview dialog
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState<CourseTemplate | null>(null);
+
   // Convert template to course form data for editing
   const templateToCourseFormData = (template: CourseTemplate): CourseFormData => {
     return {
@@ -39,41 +44,86 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       format: template.format,
       status: template.status,
       templateId: template.id,
-      isTemplate: true
+      isTemplate: true,
+      imageUrl: template.imageUrl,
+      imageAspectRatio: template.imageAspectRatio,
+      imageSize: template.imageSize,
+      imageLayout: template.imageLayout
     };
   };
 
+  // Handle preview request
+  const handlePreview = () => {
+    // Get current form values
+    const formValues = document.querySelector('form')?.elements;
+    if (!formValues) return;
+    
+    // Create a preview template from the current form values
+    const previewTemplate: CourseTemplate = {
+      id: currentTemplate?.id || 'preview-template',
+      title: (formValues.namedItem('title') as HTMLInputElement)?.value || 'Untitled Course',
+      description: (formValues.namedItem('description') as HTMLTextAreaElement)?.value || '',
+      category: (formValues.namedItem('category') as HTMLInputElement)?.value || '',
+      price: (formValues.namedItem('price') as HTMLInputElement)?.value || '',
+      learningOutcomes: (formValues.namedItem('learningOutcomes') as HTMLTextAreaElement)?.value
+        .split('\n')
+        .filter(line => line.trim().length > 0),
+      prerequisites: (formValues.namedItem('prerequisites') as HTMLTextAreaElement)?.value || '',
+      targetAudience: (formValues.namedItem('targetAudience') as HTMLTextAreaElement)?.value || '',
+      duration: (formValues.namedItem('duration') as HTMLInputElement)?.value || '',
+      skillLevel: (formValues.namedItem('skillLevel') as HTMLSelectElement)?.value as any || 'all-levels',
+      format: (formValues.namedItem('format') as HTMLSelectElement)?.value || '',
+      status: 'draft',
+      imageUrl: currentTemplate?.imageUrl || '',
+      imageAspectRatio: currentTemplate?.imageAspectRatio,
+      imageSize: currentTemplate?.imageSize,
+      imageLayout: currentTemplate?.imageLayout
+    };
+    
+    setPreviewData(previewTemplate);
+    setPreviewOpen(true);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>
-            {currentTemplate ? `Edit Template: ${currentTemplate.title}` : "Add New Course Template"}
-          </DialogTitle>
-          <DialogDescription>
-            Define the course details that will be used as a template for scheduling course instances.
-          </DialogDescription>
-        </DialogHeader>
-        <ScrollArea className="max-h-[70vh] pr-4">
-          <CourseForm
-            initialData={currentTemplate ? templateToCourseFormData(currentTemplate) : {
-              title: "",
-              description: "",
-              dates: "",
-              location: "",
-              instructor: "",
-              price: "£",
-              category: "scrum",
-              spotsAvailable: 12,
-              isTemplate: true,
-              status: "draft"
-            }}
-            onSubmit={onSubmit}
-            onCancel={onCancel}
-          />
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>
+              {currentTemplate ? `Edit Template: ${currentTemplate.title}` : "Add New Course Template"}
+            </DialogTitle>
+            <DialogDescription>
+              Define the course details that will be used as a template for scheduling course instances.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] pr-4">
+            <CourseForm
+              initialData={currentTemplate ? templateToCourseFormData(currentTemplate) : {
+                title: "",
+                description: "",
+                dates: "",
+                location: "",
+                instructor: "",
+                price: "£",
+                category: "scrum",
+                spotsAvailable: 12,
+                isTemplate: true,
+                status: "draft"
+              }}
+              onSubmit={onSubmit}
+              onCancel={onCancel}
+              stayOpenOnSubmit={true}
+              isTemplate={true}
+            />
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+      
+      <CourseTemplatePreview
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        template={previewData}
+      />
+    </>
   );
 };
-

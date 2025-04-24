@@ -44,8 +44,13 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({
     
     setSelectedUrl(cachedUrl);
     
-    // Call the parent's onSelect handler with the cache-busted URL
-    onSelect(cachedUrl, aspectRatio, size, layout);
+    // Call the parent's onSelect handler with the cache-busted URL and all image settings
+    onSelect(
+      cachedUrl, 
+      aspectRatio || "16/9", 
+      size !== undefined ? size : 100,
+      layout || "standard"
+    );
     
     // Close the dialog
     onOpenChange(false);
