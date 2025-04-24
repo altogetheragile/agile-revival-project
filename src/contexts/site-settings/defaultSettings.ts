@@ -1,4 +1,3 @@
-
 import { AllSettings } from './types';
 import { COURSE_CATEGORIES } from '@/constants/courseCategories';
 
@@ -53,7 +52,6 @@ export const defaultSettings: AllSettings = {
     { value: "advanced", label: "Advanced" },
     { value: "all-levels", label: "All Levels" },
   ],
-  // Services array
   services: [
     {
       icon: "Compass",
@@ -92,7 +90,6 @@ export const defaultSettings: AllSettings = {
       url: "/services/custom-coaching"
     }
   ],
-  // Default pages structure
   pages: [
     {
       id: "home",
