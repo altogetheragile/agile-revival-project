@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import CourseForm from "@/components/courses/CourseForm";
 import { CourseFormData, CourseTemplate } from "@/types/course";
 import CourseTemplatePreview from "./CourseTemplatePreview";
+import MediaLibrary from "@/components/media/MediaLibrary";
 
 interface CourseTemplateFormDialogProps {
   open: boolean;
@@ -24,6 +25,10 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
   // State to track preview dialog
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<CourseTemplate | null>(null);
+  
+  // State for media library
+  const [mediaLibOpen, setMediaLibOpen] = useState(false);
+  const [formData, setFormData] = useState<CourseFormData | null>(null);
 
   // Convert template to course form data for editing
   const templateToCourseFormData = (template: CourseTemplate): CourseFormData => {
@@ -74,7 +79,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       skillLevel: (formValues.namedItem('skillLevel') as HTMLSelectElement)?.value as any || 'all-levels',
       format: (formValues.namedItem('format') as HTMLSelectElement)?.value || '',
       status: 'draft',
-      imageUrl: currentTemplate?.imageUrl || '',
+      imageUrl: (formValues.namedItem('imageUrl') as HTMLInputElement)?.value || '',
       imageAspectRatio: currentTemplate?.imageAspectRatio,
       imageSize: currentTemplate?.imageSize,
       imageLayout: currentTemplate?.imageLayout
@@ -114,6 +119,10 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
               onCancel={onCancel}
               stayOpenOnSubmit={true}
               isTemplate={true}
+              onOpenMediaLibrary={() => setMediaLibOpen(true)}
+              formData={formData}
+              setFormData={setFormData}
+              onPreview={handlePreview}
             />
           </ScrollArea>
         </DialogContent>
@@ -123,6 +132,21 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
         open={previewOpen}
         onOpenChange={setPreviewOpen}
         template={previewData}
+      />
+
+      <MediaLibrary
+        open={mediaLibOpen}
+        onOpenChange={setMediaLibOpen}
+        onSelect={(url, aspectRatio, size, layout) => {
+          setFormData({
+            ...formData || {},
+            imageUrl: url,
+            imageAspectRatio: aspectRatio,
+            imageSize: size,
+            imageLayout: layout
+          });
+          setMediaLibOpen(false);
+        }}
       />
     </>
   );

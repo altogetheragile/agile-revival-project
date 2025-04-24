@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { createCourseFromTemplate } from "@/services/courseService";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import MediaLibrary from "@/components/media/MediaLibrary";
 
 export const CourseManagementContainer: React.FC = () => {
   const {
@@ -36,6 +37,10 @@ export const CourseManagementContainer: React.FC = () => {
   const { toast } = useToast();
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Course | null>(null);
+  
+  // Media library state
+  const [mediaLibOpen, setMediaLibOpen] = useState(false);
+  const [formData, setFormData] = useState<Course | null>(null);
 
   // Filter to only show template courses
   const templateCourses = courses.filter(course => course.isTemplate === true);
@@ -87,6 +92,20 @@ export const CourseManagementContainer: React.FC = () => {
     }
   };
 
+  // Handle media selection
+  const handleMediaSelect = (url: string, aspectRatio?: string, size?: number, layout?: string) => {
+    if (currentCourse) {
+      setFormData({
+        ...currentCourse,
+        imageUrl: url,
+        imageAspectRatio: aspectRatio || "16/9",
+        imageSize: size || 100,
+        imageLayout: layout || "standard"
+      });
+    }
+    setMediaLibOpen(false);
+  };
+
   if (viewingRegistrations && currentCourse) {
     return (
       <CourseRegistrations 
@@ -130,6 +149,9 @@ export const CourseManagementContainer: React.FC = () => {
         currentCourse={currentCourse}
         onSubmit={handleFormSubmit}
         onCancel={() => setIsFormOpen(false)}
+        onOpenMediaLibrary={() => setMediaLibOpen(true)}
+        formData={formData}
+        setFormData={setFormData}
       />
 
       <DeleteConfirmationDialog 
@@ -144,6 +166,13 @@ export const CourseManagementContainer: React.FC = () => {
         template={selectedTemplate}
         onSubmit={handleScheduleSubmit}
         onCancel={() => setScheduleDialogOpen(false)}
+        onOpenMediaLibrary={() => setMediaLibOpen(true)}
+      />
+
+      <MediaLibrary
+        open={mediaLibOpen}
+        onOpenChange={setMediaLibOpen}
+        onSelect={handleMediaSelect}
       />
     </div>
   );
