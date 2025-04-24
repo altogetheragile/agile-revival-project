@@ -18,10 +18,23 @@ export default function AuthenticatedView() {
       window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleAdminDashboard = () => {
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have admin privileges.",
+        variant: "destructive",
+      });
+      return;
+    }
     navigate('/admin');
   };
 
@@ -31,7 +44,7 @@ export default function AuthenticatedView() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserCheck className="h-6 w-6 text-green-500" />
-            Welcome
+            Welcome {user?.email}
           </CardTitle>
           <CardDescription>
             You're now viewing a simplified page without authentication.
@@ -50,8 +63,8 @@ export default function AuthenticatedView() {
           
           <Button 
             onClick={handleAdminDashboard}
-            variant="default"
-            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700"
+            variant={isAdmin ? "default" : "outline"}
+            className={`w-full flex items-center justify-center gap-2 ${isAdmin ? "bg-purple-600 hover:bg-purple-700" : "text-gray-500"}`}
           >
             <LayoutDashboard className="h-4 w-4" />
             Admin Dashboard

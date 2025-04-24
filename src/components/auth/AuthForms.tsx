@@ -35,6 +35,10 @@ export default function AuthForms() {
       message = "Email already registered. Please use another email or try logging in.";
     } else if (error.message?.includes('invalid')) {
       message = "Invalid email or password. Please check your credentials and try again.";
+    } else if (error.message?.includes('violates row-level security policy')) { 
+      message = "Permission error. Your account may not have the right access level.";
+    } else if (error.message?.includes('infinite recursion detected')) {
+      message = "System error detected. Please contact support.";
     }
     
     setErrorMessage(message);
