@@ -68,6 +68,9 @@ export interface CourseTemplate {
   format?: string; // Changed from string literal to any string
   status?: "draft" | "published";
   imageUrl?: string; // Add imageUrl property
+  imageAspectRatio?: string;  // Added missing property
+  imageSize?: number;  // Added missing property
+  imageLayout?: string;  // Added missing property
 }
 
 // New interface for scheduling a course from a template
