@@ -12,6 +12,15 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
     console.log("Creating course with data:", newCourse);
     console.log("Is template:", newCourse.is_template);
     
+    // Ensure required fields for templates
+    if (newCourse.is_template) {
+      // Ensure template required fields have defaults
+      newCourse.dates = newCourse.dates || "Template - No Dates";
+      newCourse.location = newCourse.location || "To Be Determined";
+      newCourse.instructor = newCourse.instructor || "To Be Assigned";
+      newCourse.spots_available = newCourse.spots_available || 0;
+    }
+    
     const { data, error } = await supabase
       .from('courses')
       .insert([newCourse])
@@ -45,6 +54,15 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
     console.log("Updating course with ID:", id);
     console.log("Update data:", updates);
     console.log("Is template:", updates.is_template);
+
+    // Ensure required fields for templates
+    if (updates.is_template) {
+      // Ensure template required fields have defaults
+      updates.dates = updates.dates || "Template - No Dates";
+      updates.location = updates.location || "To Be Determined";
+      updates.instructor = updates.instructor || "To Be Assigned";
+      updates.spots_available = updates.spots_available || 0;
+    }
 
     const { data, error } = await supabase
       .from('courses')

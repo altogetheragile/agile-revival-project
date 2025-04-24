@@ -32,9 +32,15 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
 
   // Convert template to course form data for editing
   const templateToCourseFormData = (template: Course): CourseFormData => {
+    console.log("Converting template to form data:", template);
     return {
       ...template,
-      isTemplate: true
+      isTemplate: true, // Always ensure this is set to true for templates
+      // Provide defaults for required fields
+      dates: template.dates || "Template - No Dates",
+      location: template.location || "To Be Determined",
+      instructor: template.instructor || "To Be Assigned",
+      spotsAvailable: template.spotsAvailable || 0
     };
   };
 
@@ -93,13 +99,21 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
                 price: "£",
                 category: "scrum",
                 spotsAvailable: 0,
-                isTemplate: true,
+                isTemplate: true, // Explicitly set isTemplate to true
                 status: "draft"
               }}
-              onSubmit={onSubmit}
+              onSubmit={(data) => {
+                // Ensure isTemplate is always true before submitting
+                const templateData = {
+                  ...data,
+                  isTemplate: true
+                };
+                console.log("Submitting template data:", templateData);
+                onSubmit(templateData);
+              }}
               onCancel={onCancel}
               stayOpenOnSubmit={true}
-              isTemplate={true}
+              isTemplate={true} // Always pass isTemplate as true
               onOpenMediaLibrary={() => setMediaLibOpen(true)}
               formData={formData}
               setFormData={setFormData}
@@ -134,7 +148,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
             imageAspectRatio: aspectRatio || "16/9",
             imageSize: size || 100,
             imageLayout: layout || "standard",
-            isTemplate: true
+            isTemplate: true // Always ensure this is true
           }));
           setMediaLibOpen(false);
         }}

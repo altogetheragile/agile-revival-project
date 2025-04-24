@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +25,7 @@ export const CourseTemplatesSettings = () => {
     setIsLoading(true);
     try {
       const courseTemplates = await getCourseTemplates();
+      console.log("Loaded templates:", courseTemplates);
       setTemplates(courseTemplates);
     } catch (error) {
       console.error("Error loading templates:", error);
@@ -49,6 +49,7 @@ export const CourseTemplatesSettings = () => {
   };
 
   const handleEditTemplate = (template: Course) => {
+    console.log("Editing template:", template);
     setCurrentTemplate(template);
     setIsFormOpen(true);
   };
@@ -80,7 +81,9 @@ export const CourseTemplatesSettings = () => {
 
   const handleFormSubmit = async (data: CourseFormData) => {
     try {
-      // Ensure required fields have default values
+      console.log("Form submitted with data:", data);
+      
+      // Ensure required fields have default values and isTemplate is true
       const templateData: CourseFormData = {
         ...data,
         isTemplate: true,
@@ -90,8 +93,11 @@ export const CourseTemplatesSettings = () => {
         instructor: data.instructor || "To Be Assigned",
         spotsAvailable: data.spotsAvailable || 0,
       };
+      
+      console.log("Processed template data:", templateData);
 
       if (currentTemplate) {
+        console.log("Updating existing template with ID:", currentTemplate.id);
         const updated = await updateCourse(currentTemplate.id, templateData);
         if (updated) {
           await loadTemplates();
@@ -102,6 +108,7 @@ export const CourseTemplatesSettings = () => {
           });
         }
       } else {
+        console.log("Creating new template");
         const created = await createCourse(templateData);
         if (created) {
           await loadTemplates();
@@ -124,6 +131,7 @@ export const CourseTemplatesSettings = () => {
 
   const handleScheduleSubmit = async (data: CourseFormData) => {
     try {
+      // Ensure this is not marked as a template
       const courseData: CourseFormData = {
         ...data,
         templateId: currentTemplate?.id,
