@@ -35,84 +35,71 @@ export const CourseTable = ({
   };
 
   const getStatusBadge = (status?: string) => {
-    return status === 'published' ? 
-      <Badge variant="default" className="bg-green-600">Published</Badge> :
-      <Badge variant="outline" className="text-gray-600">Draft</Badge>;
+    if (status === 'published') {
+      return <Badge className="bg-green-100 text-green-800 border-green-300">Published</Badge>;
+    }
+    return <Badge variant="outline" className="bg-gray-50 text-gray-600">Draft</Badge>;
   };
 
+  if (!courses.length) {
+    return (
+      <Card className="p-6 text-center text-gray-500">
+        No course templates found. Add your first template to get started.
+      </Card>
+    );
+  }
+
   return (
-    <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Format</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="w-[180px]">Actions</TableHead>
+    <div className="rounded-md border overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Title</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Format</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {courses.map(course => (
+            <TableRow key={course.id}>
+              <TableCell className="font-medium">{course.title}</TableCell>
+              <TableCell>{course.category}</TableCell>
+              <TableCell>{getFormatBadge(course.format)}</TableCell>
+              <TableCell>{getStatusBadge(course.status)}</TableCell>
+              <TableCell className="flex gap-2">
+                <Button
+                  onClick={() => onEdit(course)}
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2 text-blue-600"
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+                <Button
+                  onClick={() => onScheduleCourse(course)}
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2 text-green-600"
+                >
+                  <Calendar className="h-4 w-4 mr-1" />
+                  Schedule
+                </Button>
+                <Button
+                  onClick={() => onDelete(course)}
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2 text-red-600"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {courses.length > 0 ? (
-              courses.map((course) => (
-                <TableRow key={course.id}>
-                  <TableCell className="font-medium">{course.title}</TableCell>
-                  <TableCell className="capitalize">{course.category}</TableCell>
-                  <TableCell>{getFormatBadge(course.format)}</TableCell>
-                  <TableCell>{getStatusBadge(course.status)}</TableCell>
-                  <TableCell>{course.price}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => onScheduleCourse(course)}
-                        title="Schedule Course"
-                        className="text-green-600"
-                      >
-                        <Calendar size={16} />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => onViewRegistrations(course)}
-                        title="View Registrations"
-                      >
-                        <Users size={16} />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => onEdit(course)}
-                        title="Edit Template"
-                      >
-                        <Edit size={16} />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="text-destructive" 
-                        onClick={() => onDelete(course)}
-                        title="Delete Template"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  No course templates found. Click "Add New Template" to create one.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </Card>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };

@@ -80,9 +80,9 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       format: (formValues.namedItem('format') as HTMLSelectElement)?.value || '',
       status: 'draft',
       imageUrl: (formValues.namedItem('imageUrl') as HTMLInputElement)?.value || '',
-      imageAspectRatio: currentTemplate?.imageAspectRatio,
-      imageSize: currentTemplate?.imageSize,
-      imageLayout: currentTemplate?.imageLayout
+      imageAspectRatio: currentTemplate?.imageAspectRatio || "16/9",
+      imageSize: currentTemplate?.imageSize || 100,
+      imageLayout: currentTemplate?.imageLayout || "standard"
     };
     
     setPreviewData(previewTemplate);

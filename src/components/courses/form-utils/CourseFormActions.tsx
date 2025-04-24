@@ -30,6 +30,13 @@ export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
     // The form will handle the actual submission
   };
 
+  const handlePreview = (e: React.MouseEvent) => {
+    e.preventDefault();  // Prevent form submission
+    if (onPreview) {
+      onPreview();
+    }
+  };
+
   return (
     <div className="flex justify-end space-x-2 pt-4">
       <DialogClose asChild>
@@ -43,7 +50,7 @@ export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
           type="button" 
           variant="outline" 
           className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
-          onClick={onPreview}
+          onClick={handlePreview}
         >
           <Eye className="mr-2 h-4 w-4" />
           Preview Template

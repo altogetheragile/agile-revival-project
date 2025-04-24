@@ -112,6 +112,9 @@ export const MediaLibraryProvider: React.FC<MediaLibraryProviderProps> = ({
       // Reset selected image after confirmation
       setSelectedImage(null);
       
+      // Reset to browse tab for next use
+      setActiveTabPanel("browse");
+      
       // Close dialog
       onClose();
     }
