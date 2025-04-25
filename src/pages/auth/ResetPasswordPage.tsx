@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -7,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { AlertCircle, CheckCircle, Loader2, Shield } from 'lucide-react';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
 
@@ -24,19 +22,15 @@ export default function ResetPasswordPage() {
   const { toast } = useToast();
   const { updatePassword } = useAuthMethods();
 
-  // Get access token from URL parameters
   useEffect(() => {
     const hash = window.location.hash;
     const query = new URLSearchParams(location.search);
     const email = query.get('email');
     
-    // Check if we have an access token or hash fragment
     if (hash && hash.includes('access_token=')) {
       setHasAccessToken(true);
       setTokenError(null);
     } else if (!email) {
-      // If there's no access token in the URL, and no email (for the request form)
-      // then there's something wrong
       setTokenError('Invalid or missing reset password token. Please request a new password reset.');
     } else {
       setTokenError(null);
@@ -47,7 +41,6 @@ export default function ResetPasswordPage() {
     console.log('Email in URL:', email);
   }, [location]);
 
-  // Form validation
   const validateForm = () => {
     if (newPassword.length < 8) {
       setError('Password must be at least 8 characters long');
@@ -61,7 +54,6 @@ export default function ResetPasswordPage() {
     return true;
   };
 
-  // Handle password reset submission
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -74,7 +66,6 @@ export default function ResetPasswordPage() {
     try {
       console.log('Attempting to update password with hasAccessToken:', hasAccessToken);
       
-      // Attempt to update the password
       await updatePassword(newPassword);
       
       setSuccess(true);
@@ -83,14 +74,12 @@ export default function ResetPasswordPage() {
         description: "Your password has been successfully reset",
       });
       
-      // Redirect to login page after a delay
       setTimeout(() => {
         navigate('/auth');
       }, 3000);
     } catch (error: any) {
       console.error('Error resetting password:', error);
       
-      // Handle specific error cases with more user-friendly messages
       if (error.message?.includes('invalid') || error.message?.includes('expired')) {
         setError('Your password reset link has expired or is invalid. Please request a new password reset.');
       } else if (error.message?.includes('session')) {
@@ -109,7 +98,6 @@ export default function ResetPasswordPage() {
     }
   };
 
-  // If we only have an email query parameter and no token, show the reset request form
   const query = new URLSearchParams(location.search);
   const email = query.get('email');
   
@@ -239,7 +227,6 @@ export default function ResetPasswordPage() {
   );
 }
 
-// Component to handle cases where we only have an email but no token
 function RequestPasswordResetForm({ email }: { email: string }) {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -255,30 +242,36 @@ function RequestPasswordResetForm({ email }: { email: string }) {
     try {
       console.log('Attempting to resend password reset link to:', email);
       
-      // Use enhanced resetPassword from useAuthMethods
-      await resetPassword(email);
+      const result = await resetPassword(email);
       
+      console.log('Reset password result:', result);
       setResetEmailSent(true);
+      
       toast({
         title: "Email Sent",
-        description: "A new password reset link has been sent to your email",
+        description: "A new password reset link has been sent to your email. Please check your inbox and spam folders.",
+        duration: 8000,
       });
     } catch (err: any) {
       console.error('Failed to send reset email:', err);
       
-      // Provide user-friendly error message
+      let errorMessage = 'Failed to send reset email. Please try again later.';
+      
       if (err.message?.includes('timeout') || err.message?.includes('network')) {
-        setError('The request timed out. Please try again in a moment.');
+        errorMessage = 'The request timed out. Please try again in a moment.';
       } else if (err.message?.includes('rate limit') || err.message?.includes('too many requests')) {
-        setError('Too many attempts. Please wait a few minutes before trying again.');
-      } else {
-        setError(err.message || 'Failed to send reset email. Please try again later.');
+        errorMessage = 'Too many attempts. Please wait a few minutes before trying again.';
+      } else if (err.message) {
+        errorMessage = err.message;
       }
+      
+      setError(errorMessage);
       
       toast({
         title: "Error",
-        description: err.message || 'Failed to send reset email',
+        description: errorMessage,
         variant: "destructive",
+        duration: 8000,
       });
     } finally {
       setIsSubmitting(false);
@@ -305,12 +298,14 @@ function RequestPasswordResetForm({ email }: { email: string }) {
             <Alert className="bg-green-50 border-green-200">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-700">
-                A new password reset link has been sent to {email}. Please check your email inbox.
+                <p className="font-medium">A new password reset link has been sent to {email}.</p>
+                <p className="mt-2">Please check your email inbox to complete the password reset process.</p>
                 <p className="mt-2 text-sm">
-                  Note: If you don't receive the email within a few minutes:
+                  <strong>Important:</strong> The link in the email will expire in 24 hours. If you don't see the email:
                   <ul className="list-disc pl-5 mt-1">
                     <li>Check your spam/junk folder</li>
-                    <li>Verify you used the correct email address</li>
+                    <li>Make sure {email} is the correct email address</li>
+                    <li>Try resending the link if needed</li>
                   </ul>
                 </p>
                 <div className="mt-4">
@@ -337,7 +332,7 @@ function RequestPasswordResetForm({ email }: { email: string }) {
               <Alert>
                 <AlertDescription>
                   <p>Your reset link is invalid or has expired.</p>
-                  <p className="mt-2">We can send a new password reset link to <strong>{email}</strong></p>
+                  <p className="mt-2">We can send a new password reset link to: <strong>{email}</strong></p>
                 </AlertDescription>
               </Alert>
               

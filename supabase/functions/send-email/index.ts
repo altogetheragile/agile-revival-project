@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { renderAsync } from 'npm:@react-email/components@0.0.22';
@@ -75,7 +74,7 @@ serve(async (req) => {
       });
     }
 
-    // Detect if this is a password reset request (either from our custom form or from Supabase)
+    // Detect if this is a password reset request
     const isPasswordReset = 
       req.url.includes('reset-password') || 
       body.type === 'reset_password' ||
@@ -90,7 +89,6 @@ serve(async (req) => {
       console.log('Sending password reset email');
       
       // Extract user email - try different possible locations
-      // For Supabase auth webhook format
       let email = body.email || (body.user && body.user.email);
       
       // Fallback for direct API calls
@@ -98,7 +96,7 @@ serve(async (req) => {
         email = body.recipient;
       }
       
-      // Extract action link - if from Supabase
+      // Extract action link - if from Supabase or our custom link
       let actionLink = '';
       if (body.action_link) {
         actionLink = body.action_link;
@@ -122,9 +120,14 @@ serve(async (req) => {
       
       console.log(`Sending password reset email to ${email}`);
       
+      // Generate email HTML content with a more reliable approach
       let html = '';
       try {
-        // Try to render the template, with a 6s timeout
+        // First try to render the React template with a reasonable timeout
+        const renderTimeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Email rendering timed out after 8 seconds')), 8000)
+        );
+        
         const renderPromise = renderAsync(
           ResetPasswordEmail({ 
             actionLink,
@@ -132,52 +135,129 @@ serve(async (req) => {
           })
         );
         
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Email rendering timed out')), 6000);
-        });
-        
-        html = await Promise.race([renderPromise, timeoutPromise]);
-        console.log('Successfully rendered email template');
+        // Race between rendering and timeout
+        html = await Promise.race([renderPromise, renderTimeoutPromise]);
+        console.log('Successfully rendered React email template');
       } catch (renderError) {
-        console.error('Failed to render email template:', renderError);
-        // Fallback to plain text
+        console.error('Failed to render React email template, using fallback template:', renderError);
+        
+        // Fallback to a simple HTML template that's guaranteed to work
         html = `
+          <!DOCTYPE html>
           <html>
+            <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Reset Your Password</title>
+              <style>
+                body { 
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  line-height: 1.6;
+                  color: #333;
+                  padding: 20px;
+                  max-width: 600px;
+                  margin: 0 auto;
+                }
+                .container {
+                  border: 1px solid #eaeaea;
+                  border-radius: 8px;
+                  padding: 40px 20px;
+                  margin-top: 20px;
+                }
+                h1 { margin-top: 0; color: #333; }
+                .button {
+                  display: inline-block;
+                  background-color: #2563eb;
+                  color: white;
+                  font-weight: bold;
+                  text-decoration: none;
+                  padding: 12px 24px;
+                  border-radius: 4px;
+                  margin: 20px 0;
+                }
+                .link-container {
+                  margin: 20px 0;
+                  padding: 10px;
+                  background-color: #f5f5f5;
+                  border-radius: 4px;
+                  word-break: break-all;
+                }
+                .footer {
+                  margin-top: 30px;
+                  font-size: 14px;
+                  color: #666;
+                }
+              </style>
+            </head>
             <body>
-              <h1>Password Reset Request</h1>
-              <p>You requested a password reset for your account. Click the link below to reset your password:</p>
-              <p><a href="${actionLink}">Reset your password</a></p>
-              <p>This link will expire in 24 hours.</p>
-              <p>If you didn't request this, you can safely ignore this email.</p>
-              <p>Link URL: ${actionLink}</p>
+              <div class="container">
+                <h1>Reset Your Password</h1>
+                <p>Hello,</p>
+                <p>We received a request to reset the password for your account. Click the button below to reset your password:</p>
+                
+                <a href="${actionLink}" class="button">Reset Your Password</a>
+                
+                <p>If the button above doesn't work, you can also copy and paste this link into your browser:</p>
+                <div class="link-container">
+                  <a href="${actionLink}">${actionLink}</a>
+                </div>
+                
+                <p>This password reset link will expire in 24 hours.</p>
+                <p>If you didn't request a password reset, you can safely ignore this email.</p>
+                
+                <div class="footer">
+                  <p>If you have any questions, please contact our support team.</p>
+                </div>
+              </div>
             </body>
           </html>
         `;
       }
       
-      // Send the email with a slightly longer timeout
+      // Send the email with a more reliable approach and longer timeout
       try {
-        const sendTimeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Email sending timed out')), 10000);
-        });
+        console.log('Sending email to:', email);
+        
+        // Set a longer timeout for the sending operation
+        const sendTimeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Email sending timed out after 15 seconds')), 15000)
+        );
         
         const sendPromise = resend.emails.send({
           from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
           to: [email],
-          subject: 'Reset Your Password',
+          subject: 'Reset Your Password - AltogetherAgile',
           html: html,
         });
         
+        // Race between sending and timeout
         const result = await Promise.race([sendPromise, sendTimeoutPromise]);
         console.log('Email sent successfully:', result);
         
-        return new Response(JSON.stringify(result), {
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Password reset email sent successfully',
+          data: result
+        }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200
         });
-      } catch (sendError) {
+      } catch (sendError: any) {
         console.error('Email sending error:', sendError);
-        throw sendError;
+        
+        // Return a more detailed error for debugging
+        return new Response(JSON.stringify({
+          error: true,
+          message: sendError.message || 'Failed to send email',
+          details: {
+            errorType: typeof sendError,
+            errorString: String(sendError),
+            email: email,
+            timestamp: new Date().toISOString()
+          }
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        });
       }
     } else {
       // For a welcome email or other generic emails
@@ -230,7 +310,7 @@ serve(async (req) => {
         status: 200
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Email sending error:', error);
     return new Response(JSON.stringify({ 
       error: {
