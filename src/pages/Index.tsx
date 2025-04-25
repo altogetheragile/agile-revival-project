@@ -43,7 +43,7 @@ export default function Index() {
       <JumboHero />
       
       {showServices && (
-        <ServicesSection id="services" />
+        <ServicesSection />
       )}
       
       {showFeaturedCourses && (
@@ -59,7 +59,7 @@ export default function Index() {
       )}
       
       {showAbout && (
-        <AboutSection id="about" />
+        <AboutSection />
       )}
       
       {showBlog && (
@@ -67,8 +67,9 @@ export default function Index() {
       )}
       
       {showContact && (
-        <ContactSection id="contact" />
+        <ContactSection />
       )}
     </MainLayout>
   );
 }
+
