@@ -3,6 +3,8 @@ import { Course, CourseFormData } from "@/types/course";
 
 // Map from database fields to Course type
 export const mapDbToCourse = (dbCourse: any): Course => {
+  console.log("Mapping DB course to frontend:", dbCourse);
+  
   return {
     id: dbCourse.id,
     title: dbCourse.title,
@@ -34,7 +36,18 @@ export const mapDbToCourse = (dbCourse: any): Course => {
 
 // Map from Course type to database fields
 export const mapCourseToDb = (courseData: CourseFormData) => {
-  return {
+  console.log("Mapping frontend course to DB:", courseData);
+  
+  // Convert learning outcomes to array if it's a string
+  let learningOutcomes = courseData.learningOutcomes;
+  if (typeof learningOutcomes === 'string') {
+    learningOutcomes = learningOutcomes.split('\n')
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
+  }
+
+  // Create the DB object with all fields properly mapped
+  const dbObject = {
     title: courseData.title || "",
     description: courseData.description || "",
     dates: courseData.dates || "",
@@ -44,10 +57,8 @@ export const mapCourseToDb = (courseData: CourseFormData) => {
     category: courseData.category || "",
     spots_available: courseData.spotsAvailable || 0,
     status: courseData.status || "draft",
-    is_template: courseData.isTemplate || false,
-    learning_outcomes: Array.isArray(courseData.learningOutcomes) 
-      ? courseData.learningOutcomes 
-      : courseData.learningOutcomes ? [courseData.learningOutcomes] : [],
+    is_template: courseData.isTemplate === true ? true : false,
+    learning_outcomes: Array.isArray(learningOutcomes) ? learningOutcomes : [],
     prerequisites: courseData.prerequisites || null,
     target_audience: courseData.targetAudience || null,
     duration: courseData.duration || null,
@@ -61,4 +72,7 @@ export const mapCourseToDb = (courseData: CourseFormData) => {
     image_size: courseData.imageSize !== undefined ? courseData.imageSize : 100,
     image_layout: courseData.imageLayout || "standard"
   };
+
+  console.log("Final DB object:", dbObject);
+  return dbObject;
 };

@@ -21,20 +21,25 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
       newCourse.instructor = newCourse.instructor || "To Be Assigned";
       newCourse.spots_available = newCourse.spots_available || 0;
     }
+
+    // Log the complete object being sent to the database
+    console.log("Full course object being sent to database:", JSON.stringify(newCourse, null, 2));
     
     const { data, error } = await supabase
       .from('courses')
-      .insert([newCourse])
+      .insert(newCourse)
       .select()
       .single();
       
     if (error) {
+      console.error("Error creating course:", error);
       return handleError(error, "Failed to create course") && null;
     }
     
     showSuccess(newCourse.is_template ? "Template created successfully" : "Course created successfully");
     return mapDbToCourse(data);
   } catch (err) {
+    console.error("Unexpected error in createCourse:", err);
     handleError(err, "Failed to create course");
     return null;
   }
@@ -58,6 +63,9 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       updates.spots_available = updates.spots_available || 0;
     }
 
+    // Log the complete object being sent to the database
+    console.log("Full update object being sent to database:", JSON.stringify(updates, null, 2));
+
     const { data, error } = await supabase
       .from('courses')
       .update(updates)
@@ -66,12 +74,14 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       .single();
       
     if (error) {
+      console.error("Error updating course:", error);
       return handleError(error, "Failed to update course") && null;
     }
     
     showSuccess(updates.is_template ? "Template updated successfully" : "Course updated successfully");
     return mapDbToCourse(data);
   } catch (err) {
+    console.error("Unexpected error in updateCourse:", err);
     handleError(err, "Failed to update course");
     return null;
   }

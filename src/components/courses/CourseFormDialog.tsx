@@ -93,16 +93,36 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
       layout: layout || "standard"
     });
     
-    if (formData) {
-      // Update the formData with the new image URL and settings
+    // Update the formData with the new image URL and settings
+    setFormData(prevData => {
+      if (!prevData) {
+        // Create new form data if none exists
+        const newData: CourseFormData = {
+          title: "",
+          description: "",
+          dates: "",
+          location: "",
+          instructor: "",
+          price: "",
+          category: "scrum",
+          spotsAvailable: 0,
+          imageUrl: finalUrl,
+          imageAspectRatio: aspectRatio || "16/9",
+          imageSize: size || 100,
+          imageLayout: layout || "standard"
+        };
+        return newData;
+      }
+      
+      // Update existing form data
       const updatedFormData = {
-        ...formData,
+        ...prevData,
         imageUrl: finalUrl,
         imageAspectRatio: aspectRatio || "16/9",
         imageSize: size || 100,
         imageLayout: layout || "standard"
       };
-      setFormData(updatedFormData);
+      
       console.log("Updated course form data with image settings:", {
         imageUrl: updatedFormData.imageUrl,
         imageAspectRatio: updatedFormData.imageAspectRatio,
@@ -110,16 +130,20 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
         imageLayout: updatedFormData.imageLayout
       });
       
-      // Show confirmation toast
-      toast({
-        title: "Image settings updated",
-        description: "The image and its settings have been applied to the course."
-      });
-    }
+      return updatedFormData;
+    });
+    
+    // Show confirmation toast
+    toast({
+      title: "Image settings updated",
+      description: "The image and its settings have been applied to the course."
+    });
   };
   
   // Handle the form submission to ensure image settings are included
   const handleSubmit = (data: CourseFormData) => {
+    console.log("Form submitted with data:", data);
+    
     // Make sure we preserve all image settings when submitting
     const submissionData = {
       ...data,

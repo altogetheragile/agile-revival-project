@@ -41,6 +41,17 @@ const AdminDashboard = () => {
       navigate('/unauthorized');
     }
   }, [isAuthReady, isAdmin, user, navigate, toast]);
+
+  // Log state for debugging purposes
+  useEffect(() => {
+    console.log("Admin Dashboard State:", { 
+      currentTab, 
+      isChecking, 
+      isAuthReady, 
+      isAdmin: isAdmin || false,
+      hasUser: !!user 
+    });
+  }, [currentTab, isChecking, isAuthReady, isAdmin, user]);
   
   return (
     <div className="min-h-screen flex flex-col">
