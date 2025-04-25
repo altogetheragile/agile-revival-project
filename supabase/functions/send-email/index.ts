@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { renderAsync } from 'npm:@react-email/components@0.0.22';
@@ -9,7 +8,7 @@ const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
 // Get the sender email from environment variable or default to the Resend testing email
 const SENDER_EMAIL = Deno.env.get('SENDER_EMAIL') || 'onboarding@resend.dev';
-const SENDER_NAME = Deno.env.get('SENDER_NAME') || 'Your Company';
+const SENDER_NAME = Deno.env.get('SENDER_NAME') || 'AltogetherAgile';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,6 +30,29 @@ serve(async (req) => {
     } catch (error) {
       console.log('Failed to parse JSON body:', error.message);
       body = {};
+    }
+
+    // Check if this is a test email request
+    if (body.type === 'test') {
+      console.log('Sending test email');
+      const testResult = await resend.emails.send({
+        from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
+        to: [body.recipient || SENDER_EMAIL],
+        subject: 'Test Email from AltogetherAgile',
+        html: `
+          <h1>Test Email</h1>
+          <p>This is a test email from your AltogetherAgile website.</p>
+          <p>If you're receiving this, your email configuration is working correctly!</p>
+          <p>Sent at: ${new Date().toISOString()}</p>
+        `,
+      });
+      
+      console.log('Test email result:', testResult);
+      
+      return new Response(JSON.stringify(testResult), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
     }
 
     // Detect if this is a password reset request (either from our custom form or from Supabase)
