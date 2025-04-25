@@ -1,13 +1,12 @@
 
 import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from "@/components/ui/label";
 import { Button } from '@/components/ui/button';
 import { useResetPassword } from '@/hooks/useResetPassword';
 import { ResetPasswordSuccess } from './ResetPasswordSuccess';
 import { ResetPasswordAlert } from './ResetPasswordAlert';
 import { ResetPasswordActions } from './ResetPasswordActions';
-import { Loader2 } from 'lucide-react';
+import { EmailInput } from './EmailInput';
+import { ResetPasswordHelpText } from './ResetPasswordHelpText';
 
 interface ResetPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
@@ -74,24 +73,13 @@ export default function ResetPasswordForm({
         onSwitchToLogin={onSwitchToLogin}
       />
       
-      <div className="space-y-2">
-        <Label htmlFor="email">Email Address</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="Enter your email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full"
-          disabled={isLoading}
-          autoComplete="email"
-        />
-      </div>
+      <EmailInput
+        email={email}
+        onChange={setEmail}
+        disabled={isLoading}
+      />
       
-      <div className="text-sm text-gray-500 mb-4">
-        Enter your email address and we'll send you instructions to reset your password.
-      </div>
+      <ResetPasswordHelpText />
       
       <ResetPasswordActions
         isLoading={isLoading}
