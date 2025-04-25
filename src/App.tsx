@@ -22,6 +22,8 @@ import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 import { AuthProvider } from "@/contexts/AuthContext";
 import AuthPage from "@/pages/auth/AuthPage";
 import StorageInitializer from "@/components/media/StorageInitializer";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import UnauthorizedPage from "./pages/UnauthorizedPage";
 
 // Create a client with sensible default options
 const queryClient = new QueryClient({
@@ -58,24 +60,29 @@ const App = () => (
               <ScrollToTop />
               <StorageInitializer />
               <Routes>
+                {/* Public routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/training-schedule" element={<TrainingSchedule />} />
                 <Route path="/course/:id" element={<CourseDetails />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
-                
-                {/* Admin route now accessible without protection */}
-                <Route path="/admin" element={<AdminDashboard />} />
-                
                 <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
-                
+                <Route path="/unauthorized" element={<UnauthorizedPage />} />
                 <Route path="/services/leadership-coaching" element={<LeadershipCoaching />} />
                 <Route path="/services/team-coaching" element={<TeamCoaching />} />
                 <Route path="/services/agile-facilitation" element={<AgileFacilitation />} />
                 <Route path="/services/performance-metrics" element={<PerformanceMetrics />} />
                 <Route path="/services/custom-coaching" element={<CustomCoaching />} />
                 
+                {/* Protected admin route */}
+                <Route path="/admin" element={
+                  <ProtectedRoute requiredRoles={["admin"]}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } />
+                
+                {/* 404 page */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AuthProvider>
