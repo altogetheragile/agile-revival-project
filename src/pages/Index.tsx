@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import JumboHero from '@/components/home/JumboHero';
@@ -18,7 +17,6 @@ export default function Index() {
   const { isAuthReady } = useAuth();
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   
-  // Set page as loaded after a delay to ensure components render
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsPageLoaded(true);
@@ -27,7 +25,6 @@ export default function Index() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Show sections based on site settings
   const showServices = settings.home?.showServices !== false;
   const showFeaturedCourses = settings.home?.showFeaturedCourses !== false;
   const showTestimonials = settings.home?.showTestimonials !== false;
@@ -43,7 +40,7 @@ export default function Index() {
       <JumboHero />
       
       {showServices && (
-        <ServicesSection />
+        <ServicesSection id="services" />
       )}
       
       {showFeaturedCourses && (
@@ -59,7 +56,7 @@ export default function Index() {
       )}
       
       {showAbout && (
-        <AboutSection />
+        <AboutSection id="about" />
       )}
       
       {showBlog && (
@@ -67,9 +64,8 @@ export default function Index() {
       )}
       
       {showContact && (
-        <ContactSection />
+        <ContactSection id="contact" />
       )}
     </MainLayout>
   );
 }
-

@@ -62,12 +62,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Updated colors for a green, nature-focused theme
 				agile: {
-					purple: '#4CAF50', // Changed to green
-					'purple-dark': '#2E7D32', // Darker green
-					'purple-light': '#E8F5E9', // Light green (keep for reference)
-					'mid-light': '#BBFFC3', // Slightly darker light green
+					purple: '#9b87f5',
+					'purple-dark': '#7E69AB',
+					'purple-light': '#D6BCFA',
+					'mid-light': '#E5DEFF'
 				}
 			},
 			borderRadius: {

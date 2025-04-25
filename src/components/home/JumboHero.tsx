@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 const JumboHero = () => {
   return (
-    <section className="min-h-[80vh] relative flex items-center">
+    <section className="min-h-[70vh] relative flex items-center">
       {/* Background with overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center"
@@ -13,7 +13,7 @@ const JumboHero = () => {
           backgroundImage: "url('https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=2000&q=80')",
         }}
       >
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/30" />
       </div>
 
       {/* Content */}
