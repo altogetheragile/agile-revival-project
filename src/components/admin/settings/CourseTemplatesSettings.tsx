@@ -1,161 +1,37 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { Course, CourseFormData } from "@/types/course";
-import { createCourse, updateCourse, deleteCourse, getCourseTemplates } from "@/services/courseService";
-
-// New components
+import { Course } from "@/types/course";
 import { CourseTemplateCard } from "./CourseTemplateCard";
 import { CourseTemplateFormDialog } from "./CourseTemplateFormDialog";
 import { ScheduleCourseFromTemplateDialog } from "./ScheduleCourseFromTemplateDialog";
+import { EmptyTemplateState } from "./templates/EmptyTemplateState";
+import { TemplateLoadingState } from "./templates/TemplateLoadingState";
+import { useCourseTemplateManagement } from "@/hooks/useCourseTemplateManagement";
 
 export const CourseTemplatesSettings = () => {
-  const { toast } = useToast();
-  const [templates, setTemplates] = useState<Course[]>([]);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentTemplate, setCurrentTemplate] = useState<Course | null>(null);
-  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const loadTemplates = async () => {
-    setIsLoading(true);
-    try {
-      const courseTemplates = await getCourseTemplates();
-      console.log("Loaded templates:", courseTemplates);
-      setTemplates(courseTemplates);
-    } catch (error) {
-      console.error("Error loading templates:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem loading the course templates.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    templates,
+    isLoading,
+    isFormOpen,
+    setIsFormOpen,
+    currentTemplate,
+    isScheduleDialogOpen,
+    setIsScheduleDialogOpen,
+    handleAddTemplate,
+    handleEditTemplate,
+    handleDeleteTemplate,
+    handleScheduleCourse,
+    handleFormSubmit,
+    loadTemplates
+  } = useCourseTemplateManagement();
 
   useEffect(() => {
     loadTemplates();
   }, []);
-
-  const handleAddTemplate = () => {
-    setCurrentTemplate(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditTemplate = (template: Course) => {
-    console.log("Editing template:", template);
-    setCurrentTemplate(template);
-    setIsFormOpen(true);
-  };
-
-  const handleDeleteTemplate = async (templateId: string) => {
-    try {
-      const success = await deleteCourse(templateId);
-      if (success) {
-        await loadTemplates();
-        toast({
-          title: "Template deleted",
-          description: "The course template has been removed successfully."
-        });
-      }
-    } catch (error) {
-      console.error("Error deleting template:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem deleting the course template.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleScheduleCourse = (template: Course) => {
-    setCurrentTemplate(template);
-    setIsScheduleDialogOpen(true);
-  };
-
-  const handleFormSubmit = async (data: CourseFormData) => {
-    try {
-      console.log("Form submitted with data:", data);
-      
-      // Ensure required fields have default values and isTemplate is true
-      const templateData: CourseFormData = {
-        ...data,
-        isTemplate: true,
-        // Add defaults for required fields in the database
-        dates: data.dates || "Template - No Dates",
-        location: data.location || "To Be Determined",
-        instructor: data.instructor || "To Be Assigned",
-        spotsAvailable: data.spotsAvailable || 0,
-      };
-      
-      console.log("Processed template data:", templateData);
-
-      if (currentTemplate) {
-        console.log("Updating existing template with ID:", currentTemplate.id);
-        const updated = await updateCourse(currentTemplate.id, templateData);
-        if (updated) {
-          await loadTemplates();
-          setIsFormOpen(false);
-          toast({
-            title: "Template updated",
-            description: `"${data.title}" has been updated successfully.`
-          });
-        }
-      } else {
-        console.log("Creating new template");
-        const created = await createCourse(templateData);
-        if (created) {
-          await loadTemplates();
-          setIsFormOpen(false);
-          toast({
-            title: "Template created",
-            description: `"${data.title}" has been created successfully.`
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error saving template:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem saving the course template.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleScheduleSubmit = async (data: CourseFormData) => {
-    try {
-      // Ensure this is not marked as a template
-      const courseData: CourseFormData = {
-        ...data,
-        templateId: currentTemplate?.id,
-        isTemplate: false
-      };
-      
-      const scheduled = await createCourse(courseData);
-      
-      if (scheduled) {
-        setIsScheduleDialogOpen(false);
-        toast({
-          title: "Course scheduled",
-          description: `"${data.title}" has been scheduled successfully.`
-        });
-      }
-    } catch (error) {
-      console.error("Error scheduling course:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem scheduling the course.",
-        variant: "destructive"
-      });
-    }
-  };
 
   return (
     <Card>
@@ -167,17 +43,9 @@ export const CourseTemplatesSettings = () => {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-500"></div>
-          </div>
+          <TemplateLoadingState />
         ) : templates.length === 0 ? (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>No templates found</AlertTitle>
-            <AlertDescription>
-              You haven't created any course templates yet. Add your first template to get started.
-            </AlertDescription>
-          </Alert>
+          <EmptyTemplateState />
         ) : (
           <ScrollArea className="h-[400px]">
             <div className="space-y-4">
@@ -199,7 +67,7 @@ export const CourseTemplatesSettings = () => {
           <Plus className="h-4 w-4 mr-1" /> Add Template
         </Button>
       </CardFooter>
-      {/* Template Form Dialog */}
+
       <CourseTemplateFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
@@ -207,12 +75,12 @@ export const CourseTemplatesSettings = () => {
         onSubmit={handleFormSubmit}
         onCancel={() => setIsFormOpen(false)}
       />
-      {/* Schedule Course Dialog */}
+
       <ScheduleCourseFromTemplateDialog
         open={isScheduleDialogOpen}
         onOpenChange={setIsScheduleDialogOpen}
         template={currentTemplate}
-        onSubmit={handleScheduleSubmit}
+        onSubmit={handleFormSubmit}
         onCancel={() => setIsScheduleDialogOpen(false)}
       />
     </Card>
