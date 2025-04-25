@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Course, CourseFormData } from '@/types/course';
+import { Course, CourseFormData, ScheduleCourseFormData } from '@/types/course';
 import { createCourseFromTemplate } from '@/services/courseTemplateService'; 
 import { toast } from 'sonner';
 import { useToast } from '@/hooks/use-toast';
@@ -21,12 +21,21 @@ export const useScheduleCourse = (onSuccess?: () => void) => {
 
     try {
       setIsScheduling(true);
-      const scheduledCourse = await createCourseFromTemplate(templateId, data);
+      // Convert CourseFormData to ScheduleCourseFormData
+      const scheduleData: ScheduleCourseFormData = {
+        templateId: templateId,
+        dates: data.dates || "",
+        location: data.location || "",
+        instructor: data.instructor || "",
+        spotsAvailable: data.spotsAvailable || 0,
+        status: data.status
+      };
+      
+      const scheduledCourse = await createCourseFromTemplate(templateId, scheduleData);
       
       if (scheduledCourse) {
-        toast({
-          title: "Course scheduled",
-          description: `${scheduledCourse.title} has been scheduled.`,
+        toast("Course scheduled", {
+          description: `${scheduledCourse.title} has been scheduled.`
         });
         
         if (onSuccess) {
@@ -38,10 +47,8 @@ export const useScheduleCourse = (onSuccess?: () => void) => {
       return null;
     } catch (error: any) {
       console.error("Error scheduling course:", error);
-      toast({
-        title: "Error",
-        description: error?.message || "There was a problem scheduling the course.",
-        variant: "destructive"
+      toast("Error", {
+        description: error?.message || "There was a problem scheduling the course."
       });
       return null;
     } finally {

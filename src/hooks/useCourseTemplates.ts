@@ -21,10 +21,8 @@ export const useCourseTemplates = () => {
       setTemplates(courseTemplates);
     } catch (error) {
       console.error("Error loading templates:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem loading the course templates.",
-        variant: "destructive"
+      toast("Error", {
+        description: "There was a problem loading the course templates."
       });
     } finally {
       setIsLoading(false);
@@ -51,17 +49,14 @@ export const useCourseTemplates = () => {
       const success = await deleteCourse(templateId);
       if (success) {
         await loadTemplates();
-        toast({
-          title: "Template deleted",
+        toast("Template deleted", {
           description: "The course template has been removed successfully."
         });
       }
     } catch (error) {
       console.error("Error deleting template:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem deleting the course template.",
-        variant: "destructive"
+      toast("Error", {
+        description: "There was a problem deleting the course template."
       });
     }
   };
