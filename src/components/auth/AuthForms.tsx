@@ -1,8 +1,6 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
 import ResetPasswordForm from './reset-password/ResetPasswordForm';
@@ -100,11 +98,7 @@ export default function AuthForms() {
         description: "Sending password reset email...",
       });
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      
-      if (error) throw error;
+      await resetPassword(email);
       
       setResetEmailSent(true);
       toast({

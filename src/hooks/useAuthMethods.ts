@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -50,49 +49,22 @@ export function useAuthMethods() {
     
     console.log('Sign out successful');
   };
-  
+
   const resetPassword = async (email: string) => {
     console.log('Requesting password reset for:', email);
     const resetUrl = `${window.location.origin}/reset-password`;
     console.log('Reset URL:', resetUrl);
     
-    try {
-      // First attempt: Use Supabase's built-in password reset (uses SMTP)
-      const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: resetUrl
-      });
-      
-      if (supabaseError) {
-        console.error('Supabase password reset error:', supabaseError);
-        // Don't throw error yet, try the edge function as backup
-      } else {
-        console.log('Supabase password reset request successful');
-        return; // Success, no need for backup method
-      }
-      
-      // Backup: Try our edge function with Resend if Supabase method fails
-      console.log('Attempting backup password reset method via edge function');
-      const { data, error: functionError } = await supabase.functions.invoke('send-email', {
-        body: {
-          type: 'reset_password',
-          email,
-          actionLink: resetUrl,
-          recipient: email
-        }
-      });
-      
-      if (functionError) {
-        console.error('Edge function password reset error:', functionError);
-        // If we got this far, both methods failed
-        throw functionError || supabaseError;
-      }
-      
-      console.log('Edge function password reset successful:', data);
-      
-    } catch (error) {
-      console.error('Password reset error (all methods failed):', error);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: resetUrl
+    });
+    
+    if (error) {
+      console.error('Password reset error:', error);
       throw error;
     }
+    
+    console.log('Password reset request successful');
   };
 
   const updatePassword = async (newPassword: string) => {
