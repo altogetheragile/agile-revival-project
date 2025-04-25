@@ -4,12 +4,15 @@ import { Link, useLocation } from 'react-router-dom';
 import DesktopNav from './DesktopNav';
 import MobileNav from './MobileNav';
 import { useSiteSettings } from '@/contexts/site-settings';
+import { useAuth } from '@/contexts/AuthContext';
+import UserAvatar from '@/components/user/UserAvatar';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const { settings, isLoading } = useSiteSettings();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -106,20 +109,29 @@ const Navbar = () => {
           {siteNameContent}
         </Link>
         
-        {/* Desktop Navigation */}
-        <DesktopNav 
-          handleHashLinkClick={handleHashLinkClick}
-          handleFullPageLinkClick={handleFullPageLinkClick}
-        />
-        
-        {/* Mobile Navigation */}
-        <MobileNav 
-          isMenuOpen={isMenuOpen}
-          toggleMenu={toggleMenu}
-          closeMenu={closeMenu}
-          handleHashLinkClick={handleHashLinkClick}
-          handleFullPageLinkClick={handleFullPageLinkClick}
-        />
+        <div className="flex items-center gap-4">
+          {/* User Avatar for authenticated users */}
+          {user && (
+            <div className="hidden md:block">
+              <UserAvatar />
+            </div>
+          )}
+          
+          {/* Desktop Navigation */}
+          <DesktopNav 
+            handleHashLinkClick={handleHashLinkClick}
+            handleFullPageLinkClick={handleFullPageLinkClick}
+          />
+          
+          {/* Mobile Navigation */}
+          <MobileNav 
+            isMenuOpen={isMenuOpen}
+            toggleMenu={toggleMenu}
+            closeMenu={closeMenu}
+            handleHashLinkClick={handleHashLinkClick}
+            handleFullPageLinkClick={handleFullPageLinkClick}
+          />
+        </div>
       </div>
     </nav>
   );

@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LoginForm from '@/components/auth/LoginForm';
@@ -8,6 +7,7 @@ import ResetPasswordForm from '@/components/auth/reset-password/ResetPasswordFor
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { Shield } from 'lucide-react';
 
 export type AuthMode = 'login' | 'signup' | 'reset';
 
@@ -19,17 +19,27 @@ export default function AuthContainer() {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp } = useAuth();
+  const { user, signIn, signUp, isAdmin } = useAuth();
   const { toast } = useToast();
   
   const from = (location.state as { from?: string })?.from || "/";
+
+  useEffect(() => {
+    if (user) {
+      if (isAdmin && from.includes('/admin')) {
+        navigate('/admin');
+        return;
+      }
+      
+      navigate(from);
+    }
+  }, [user, isAdmin, navigate, from]);
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
     try {
       await signIn(email, password);
-      navigate(from);
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
     } finally {
@@ -70,9 +80,18 @@ export default function AuthContainer() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Welcome</CardTitle>
-          <CardDescription>Sign in to access protected areas</CardDescription>
+        <CardHeader className="space-y-3">
+          <div className="flex justify-center">
+            <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-agile-purple/10">
+              <Shield className="h-6 w-6 text-agile-purple" />
+            </div>
+          </div>
+          <CardTitle className="text-center text-2xl">Welcome</CardTitle>
+          <CardDescription className="text-center">
+            {authMode === 'login' ? "Sign in to access your account" :
+             authMode === 'signup' ? "Create an account to get started" :
+             "Reset your password"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={authMode} onValueChange={(value) => setAuthMode(value as AuthMode)}>
