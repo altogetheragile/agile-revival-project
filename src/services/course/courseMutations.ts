@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Course, CourseFormData } from "@/types/course";
 import { toast } from "sonner";
 import { mapDbToCourse, mapCourseToDb } from "./courseMappers";
-import { handleError, showSuccess } from "@/utils/errorHandler";
 
 // Create a new course
 export const createCourse = async (courseData: CourseFormData): Promise<Course | null> => {
@@ -33,14 +32,19 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
       
     if (error) {
       console.error("Error creating course:", error);
-      return handleError(error, "Failed to create course") && null;
+      toast.error("Failed to create course", {
+        description: error.message
+      });
+      return null;
     }
     
-    showSuccess(newCourse.is_template ? "Template created successfully" : "Course created successfully");
+    toast.success(newCourse.is_template ? "Template created successfully" : "Course created successfully");
     return mapDbToCourse(data);
   } catch (err) {
     console.error("Unexpected error in createCourse:", err);
-    handleError(err, "Failed to create course");
+    toast.error("Failed to create course", {
+      description: err instanceof Error ? err.message : "Unknown error occurred"
+    });
     return null;
   }
 };
@@ -75,14 +79,19 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       
     if (error) {
       console.error("Error updating course:", error);
-      return handleError(error, "Failed to update course") && null;
+      toast.error("Failed to update course", {
+        description: error.message
+      });
+      return null;
     }
     
-    showSuccess(updates.is_template ? "Template updated successfully" : "Course updated successfully");
+    toast.success(updates.is_template ? "Template updated successfully" : "Course updated successfully");
     return mapDbToCourse(data);
   } catch (err) {
     console.error("Unexpected error in updateCourse:", err);
-    handleError(err, "Failed to update course");
+    toast.error("Failed to update course", {
+      description: err instanceof Error ? err.message : "Unknown error occurred"
+    });
     return null;
   }
 };
@@ -96,13 +105,18 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
       .eq('id', id);
       
     if (error) {
-      return handleError(error, "Failed to delete course") && false;
+      toast.error("Failed to delete course", {
+        description: error.message
+      });
+      return false;
     }
     
-    showSuccess("Course deleted successfully");
+    toast.success("Course deleted successfully");
     return true;
   } catch (err) {
-    handleError(err, "Failed to delete course");
+    toast.error("Failed to delete course", {
+      description: err instanceof Error ? err.message : "Unknown error occurred"
+    });
     return false;
   }
 };

@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { Course, CourseFormData } from '@/types/course';
 import { getCourseTemplates, createCourse, updateCourse, deleteCourse } from '@/services/courseService';
 import { toast } from 'sonner';
-import { useToast } from '@/hooks/use-toast';
 
 export const useCourseTemplates = () => {
   const [templates, setTemplates] = useState<Course[]>([]);
@@ -11,7 +10,6 @@ export const useCourseTemplates = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState<Course | null>(null);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
-  const { toast: uiToast } = useToast();
   
   const loadTemplates = async () => {
     setIsLoading(true);
@@ -21,8 +19,8 @@ export const useCourseTemplates = () => {
       setTemplates(courseTemplates);
     } catch (error) {
       console.error("Error loading templates:", error);
-      toast("Error", {
-        description: "There was a problem loading the course templates."
+      toast.error("Error loading templates", {
+        description: error instanceof Error ? error.message : "Failed to load course templates"
       });
     } finally {
       setIsLoading(false);
@@ -49,14 +47,12 @@ export const useCourseTemplates = () => {
       const success = await deleteCourse(templateId);
       if (success) {
         await loadTemplates();
-        toast("Template deleted", {
-          description: "The course template has been removed successfully."
-        });
+        toast.success("Template deleted successfully");
       }
     } catch (error) {
       console.error("Error deleting template:", error);
-      toast("Error", {
-        description: "There was a problem deleting the course template."
+      toast.error("Error deleting template", {
+        description: error instanceof Error ? error.message : "Failed to delete template"
       });
     }
   };
@@ -89,10 +85,7 @@ export const useCourseTemplates = () => {
         if (updated) {
           await loadTemplates();
           setIsFormOpen(false);
-          uiToast({
-            title: "Template updated",
-            description: `"${data.title}" has been updated successfully.`
-          });
+          toast.success("Template updated successfully");
         }
       } else {
         console.log("Creating new template");
@@ -100,18 +93,13 @@ export const useCourseTemplates = () => {
         if (created) {
           await loadTemplates();
           setIsFormOpen(false);
-          uiToast({
-            title: "Template created",
-            description: `"${data.title}" has been created successfully.`
-          });
+          toast.success("Template created successfully");
         }
       }
     } catch (error: any) {
       console.error("Error saving template:", error);
-      uiToast({
-        title: "Error",
-        description: "There was a problem saving the course template.",
-        variant: "destructive"
+      toast.error("Error saving template", {
+        description: error?.message || "Failed to save the template"
       });
     }
   };

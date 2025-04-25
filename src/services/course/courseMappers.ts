@@ -57,7 +57,7 @@ export const mapCourseToDb = (courseData: CourseFormData) => {
     category: courseData.category || "",
     spots_available: courseData.spotsAvailable || 0,
     status: courseData.status || "draft",
-    is_template: courseData.isTemplate === true ? true : false,
+    is_template: Boolean(courseData.isTemplate),
     learning_outcomes: Array.isArray(learningOutcomes) ? learningOutcomes : [],
     prerequisites: courseData.prerequisites || null,
     target_audience: courseData.targetAudience || null,
