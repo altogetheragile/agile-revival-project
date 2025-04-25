@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Course, CourseFormData } from '@/types/course';
 import { getCourseTemplates, createCourse, updateCourse, deleteCourse } from '@/services/courseService';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useCourseTemplates = () => {
   const [templates, setTemplates] = useState<Course[]>([]);
@@ -10,10 +11,18 @@ export const useCourseTemplates = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState<Course | null>(null);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const { user, isAdmin, isAuthReady } = useAuth();
   
   const loadTemplates = async () => {
     setIsLoading(true);
     try {
+      console.log("Loading templates with auth status:", { 
+        isAuthenticated: !!user, 
+        userId: user?.id,
+        isAdmin, 
+        isAuthReady 
+      });
+      
       const courseTemplates = await getCourseTemplates();
       console.log("Loaded templates:", courseTemplates);
       setTemplates(courseTemplates);
@@ -28,21 +37,44 @@ export const useCourseTemplates = () => {
   };
 
   useEffect(() => {
-    loadTemplates();
-  }, []);
+    if (isAuthReady) {
+      loadTemplates();
+    }
+  }, [isAuthReady]);
 
   const handleAddTemplate = () => {
+    if (!isAdmin) {
+      toast.error("Permission denied", {
+        description: "Only administrators can add course templates"
+      });
+      return;
+    }
+    
     setCurrentTemplate(null);
     setIsFormOpen(true);
   };
 
   const handleEditTemplate = (template: Course) => {
+    if (!isAdmin) {
+      toast.error("Permission denied", {
+        description: "Only administrators can edit course templates"
+      });
+      return;
+    }
+    
     console.log("Editing template:", template);
     setCurrentTemplate(template);
     setIsFormOpen(true);
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
+    if (!isAdmin) {
+      toast.error("Permission denied", {
+        description: "Only administrators can delete course templates"
+      });
+      return;
+    }
+    
     try {
       const success = await deleteCourse(templateId);
       if (success) {
@@ -64,7 +96,22 @@ export const useCourseTemplates = () => {
 
   const handleFormSubmit = async (data: CourseFormData) => {
     try {
+      if (!user) {
+        toast.error("Authentication required", {
+          description: "You must be logged in to perform this action"
+        });
+        return;
+      }
+      
+      if (!isAdmin) {
+        toast.error("Permission denied", {
+          description: "Only administrators can save course templates"
+        });
+        return;
+      }
+      
       console.log("Form submitted with data:", data);
+      console.log("Auth status:", { userId: user?.id, isAdmin, isAuthReady });
       
       // Ensure required fields have default values and isTemplate is true
       const templateData: CourseFormData = {
@@ -117,6 +164,8 @@ export const useCourseTemplates = () => {
     handleDeleteTemplate,
     handleScheduleCourse,
     handleFormSubmit,
-    loadTemplates
+    loadTemplates,
+    isAdmin,
+    isAuthenticated: !!user
   };
 };

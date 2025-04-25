@@ -4,12 +4,16 @@ import { Link, useLocation } from 'react-router-dom';
 import DesktopNav from './DesktopNav';
 import MobileNav from './MobileNav';
 import { useSiteSettings } from '@/contexts/site-settings';
+import { useAuth } from '@/contexts/AuthContext';
+import { Badge } from '@/components/ui/badge';
+import { UserCircle, ShieldCheck } from 'lucide-react';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const { settings, isLoading } = useSiteSettings();
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -106,6 +110,23 @@ const Navbar = () => {
           {siteNameContent}
         </Link>
         
+        {/* User Authentication Status */}
+        {user && (
+          <div className="hidden md:flex items-center gap-2 text-sm mr-4">
+            <div className="flex items-center">
+              <UserCircle className="h-4 w-4 mr-1 text-gray-600" />
+              <span className="text-gray-700">{user.email}</span>
+            </div>
+            
+            {isAdmin && (
+              <Badge className="bg-purple-100 text-purple-800 border-purple-200 flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3" />
+                Admin
+              </Badge>
+            )}
+          </div>
+        )}
+        
         {/* Desktop Navigation */}
         <DesktopNav 
           handleHashLinkClick={handleHashLinkClick}
@@ -119,6 +140,8 @@ const Navbar = () => {
           closeMenu={closeMenu}
           handleHashLinkClick={handleHashLinkClick}
           handleFullPageLinkClick={handleFullPageLinkClick}
+          isAdmin={isAdmin}
+          userEmail={user?.email}
         />
       </div>
     </nav>

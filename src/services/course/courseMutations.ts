@@ -11,6 +11,10 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
     
     console.log("Creating course with data:", newCourse);
     console.log("Is template:", newCourse.is_template);
+    console.log("Auth status:", { 
+      session: await supabase.auth.getSession(),
+      isLoggedIn: !!(await supabase.auth.getUser()).data.user
+    });
     
     // Ensure required fields for templates
     if (newCourse.is_template) {
@@ -32,9 +36,21 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
       
     if (error) {
       console.error("Error creating course:", error);
-      toast.error("Failed to create course", {
-        description: error.message
-      });
+      
+      // Check for specific error types
+      if (error.code === '42501') {
+        toast.error("Permission denied", {
+          description: "You don't have sufficient permissions to create courses"
+        });
+      } else if (error.code === '23505') {
+        toast.error("Duplicate entry", {
+          description: "A course with these details already exists"
+        });
+      } else {
+        toast.error("Failed to create course", {
+          description: error.message
+        });
+      }
       return null;
     }
     
@@ -57,6 +73,10 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
     console.log("Updating course with ID:", id);
     console.log("Update data:", updates);
     console.log("Is template:", updates.is_template);
+    console.log("Auth status:", { 
+      session: await supabase.auth.getSession(),
+      isLoggedIn: !!(await supabase.auth.getUser()).data.user
+    });
 
     // Ensure required fields for templates
     if (updates.is_template) {
@@ -79,9 +99,17 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       
     if (error) {
       console.error("Error updating course:", error);
-      toast.error("Failed to update course", {
-        description: error.message
-      });
+      
+      // Check for specific error types
+      if (error.code === '42501') {
+        toast.error("Permission denied", {
+          description: "You don't have sufficient permissions to update courses"
+        });
+      } else {
+        toast.error("Failed to update course", {
+          description: error.message
+        });
+      }
       return null;
     }
     
@@ -99,21 +127,37 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
 // Delete a course
 export const deleteCourse = async (id: string): Promise<boolean> => {
   try {
+    console.log("Deleting course with ID:", id);
+    console.log("Auth status:", { 
+      session: await supabase.auth.getSession(),
+      isLoggedIn: !!(await supabase.auth.getUser()).data.user
+    });
+    
     const { error } = await supabase
       .from('courses')
       .delete()
       .eq('id', id);
       
     if (error) {
-      toast.error("Failed to delete course", {
-        description: error.message
-      });
+      console.error("Error deleting course:", error);
+      
+      // Check for specific error types
+      if (error.code === '42501') {
+        toast.error("Permission denied", {
+          description: "You don't have sufficient permissions to delete courses"
+        });
+      } else {
+        toast.error("Failed to delete course", {
+          description: error.message
+        });
+      }
       return false;
     }
     
     toast.success("Course deleted successfully");
     return true;
   } catch (err) {
+    console.error("Unexpected error in deleteCourse:", err);
     toast.error("Failed to delete course", {
       description: err instanceof Error ? err.message : "Unknown error occurred"
     });
