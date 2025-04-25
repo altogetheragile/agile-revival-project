@@ -16,11 +16,6 @@ export function useResetPassword() {
       setIsSubmitting(true);
       console.log(`Initiating password reset for: ${email}`);
       
-      toast({
-        title: "Processing",
-        description: "Sending password reset email...",
-      });
-      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
@@ -31,11 +26,6 @@ export function useResetPassword() {
       }
       
       console.log('Password reset request successful');
-      toast({
-        title: "Email Sent",
-        description: "If an account exists with this email, you'll receive reset instructions shortly.",
-      });
-      
       setLocalResetEmailSent(true);
       return { success: true };
       

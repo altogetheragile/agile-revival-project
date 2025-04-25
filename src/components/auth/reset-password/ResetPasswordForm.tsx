@@ -7,6 +7,7 @@ import { useResetPassword } from '@/hooks/useResetPassword';
 import { ResetPasswordSuccess } from './ResetPasswordSuccess';
 import { ResetPasswordAlert } from './ResetPasswordAlert';
 import { ResetPasswordActions } from './ResetPasswordActions';
+import { Loader2 } from 'lucide-react';
 
 interface ResetPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
@@ -24,7 +25,7 @@ export default function ResetPasswordForm({
 }: ResetPasswordFormProps) {
   const [email, setEmail] = useState('');
   const [retryCount, setRetryCount] = useState(0);
-  const [timeoutError, setTimeoutError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const {
     isSubmitting,
     setIsSubmitting,
@@ -43,20 +44,20 @@ export default function ResetPasswordForm({
     if (isSubmitting || externalLoading) return;
     
     setIsSubmitting(true);
-    setTimeoutError(null);
+    setError(null);
     
     try {
       await handleResetPassword(email);
       setRetryCount(0);
     } catch (error: any) {
-      setTimeoutError(error.message || "An unexpected error occurred");
+      setError(error.message || "An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const isLoading = externalLoading || isSubmitting;
-  const displayError = timeoutError || externalError || resetError;
+  const displayError = error || externalError || resetError;
   const buttonText = isLoading ? 'Processing...' : 'Send Reset Link';
   const showSuccess = resetEmailSent || localResetEmailSent;
 
