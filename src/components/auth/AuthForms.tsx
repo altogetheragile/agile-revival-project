@@ -1,51 +1,21 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import LoginForm from './LoginForm';
-import SignupForm from './SignupForm';
-import ResetPasswordForm from './reset-password/ResetPasswordForm';
-import GoogleSignInButton from './GoogleSignInButton';
-import AuthDivider from './AuthDivider';
+import { useAuthError } from '@/hooks/useAuthError';
+import { AuthFormProvider } from '@/contexts/AuthFormContext';
 import { AuthMode } from './AuthContainer';
+import LoginView from './views/LoginView';
+import SignupView from './views/SignupView';
+import ResetPasswordView from './views/ResetPasswordView';
 
 export default function AuthForms() {
   const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { signIn, signUp, resetPassword } = useAuth();
   const { toast } = useToast();
-
-  const handleError = (error: any) => {
-    console.error('Authentication error:', error);
-    
-    let message = error.message || "An error occurred during authentication";
-    
-    if (error.status === 504 || error.message?.includes('timeout')) {
-      message = "The server is taking too long to respond. Please try again later.";
-    } else if (error.message?.includes('Failed to fetch')) {
-      message = "Network error. Please check your internet connection.";
-    } else if (error.message?.includes('provider is not enabled')) {
-      message = "Google authentication is not properly configured. Please check your Supabase settings.";
-    } else if (error.message?.includes('popup blocked')) {
-      message = "Pop-up blocked. Please allow pop-ups for this website and try again.";
-    } else if (error.message?.includes('already registered')) {
-      message = "Email already registered. Please use another email or try logging in.";
-    } else if (error.message?.includes('invalid')) {
-      message = "Invalid email or password. Please check your credentials and try again.";
-    } else if (error.message?.includes('violates row-level security policy')) { 
-      message = "Permission error. Your account may not have the right access level.";
-    } else if (error.message?.includes('infinite recursion detected')) {
-      message = "System error detected. Please contact support.";
-    }
-    
-    setErrorMessage(message);
-    toast({
-      title: "Error",
-      description: message,
-      variant: "destructive",
-    });
-  };
+  const { errorMessage, handleError, setErrorMessage } = useAuthError();
 
   const handleSignIn = async (email: string, password: string) => {
     try {
@@ -57,8 +27,6 @@ export default function AuthForms() {
       });
       
       await signIn(email, password);
-      
-      // Force refresh to make sure any admin status is correctly picked up
       window.location.href = '/';
     } catch (error: any) {
       handleError(error);
@@ -70,12 +38,13 @@ export default function AuthForms() {
   const handleSignUp = async (email: string, password: string, firstName: string, lastName: string) => {
     setLoading(true);
     setErrorMessage(null);
-    toast({
-      title: "Processing",
-      description: "Creating your account...",
-    });
     
     try {
+      toast({
+        title: "Processing",
+        description: "Creating your account...",
+      });
+      
       await signUp(email, password, firstName, lastName);
       toast({
         title: "Registration successful",
@@ -99,8 +68,8 @@ export default function AuthForms() {
       });
       
       await resetPassword(email);
-      
       setResetEmailSent(true);
+      
       toast({
         title: "Password reset requested",
         description: "If an account exists with this email, you'll receive password reset instructions.",
@@ -112,61 +81,34 @@ export default function AuthForms() {
     }
   };
 
-  const renderForm = () => {
-    const commonProps = {
-      loading,
-      error: errorMessage,
-    };
-
-    if (mode === 'login') {
-      return (
-        <div className="space-y-4">
-          <GoogleSignInButton 
-            mode="login"
-            loading={loading}
-            onError={handleError}
-          />
-          <AuthDivider />
-          <LoginForm
-            onSubmit={handleSignIn}
-            onSwitchToSignup={() => setMode('signup')}
-            onSwitchToReset={() => {
-              setMode('reset');
-              setResetEmailSent(false);
-            }}
-            {...commonProps}
-          />
-        </div>
-      );
-    }
-
-    if (mode === 'signup') {
-      return (
-        <div className="space-y-4">
-          <GoogleSignInButton 
-            mode="signup"
-            loading={loading}
-            onError={handleError}
-          />
-          <AuthDivider />
-          <SignupForm
-            onSubmit={handleSignUp}
-            onSwitchToLogin={() => setMode('login')}
-            {...commonProps}
-          />
-        </div>
-      );
-    }
-
-    return (
-      <ResetPasswordForm
-        onSubmit={handleResetPassword}
-        onSwitchToLogin={() => setMode('login')}
-        resetEmailSent={resetEmailSent}
-        {...commonProps}
-      />
-    );
+  const formContextValue = {
+    mode,
+    setMode,
+    loading,
+    setLoading
   };
 
-  return renderForm();
+  return (
+    <AuthFormProvider value={formContextValue}>
+      {mode === 'login' && (
+        <LoginView
+          onSubmit={handleSignIn}
+          error={errorMessage}
+        />
+      )}
+      {mode === 'signup' && (
+        <SignupView
+          onSubmit={handleSignUp}
+          error={errorMessage}
+        />
+      )}
+      {mode === 'reset' && (
+        <ResetPasswordView
+          onSubmit={handleResetPassword}
+          error={errorMessage}
+          resetEmailSent={resetEmailSent}
+        />
+      )}
+    </AuthFormProvider>
+  );
 }
