@@ -30,7 +30,7 @@ export default function ResetPasswordForm({
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const { toast } = useToast();
   
-  const REQUEST_TIMEOUT = 20000;
+  const REQUEST_TIMEOUT = 25000; // Increased timeout to 25 seconds
 
   useEffect(() => {
     if (timeoutError) {
@@ -102,6 +102,19 @@ export default function ResetPasswordForm({
     } catch (error: any) {
       console.error('Password reset API error:', error);
       
+      // Make sure we handle specific error cases
+      if (error.message?.toLowerCase().includes('invalid user') || 
+          error.message?.toLowerCase().includes('user not found')) {
+        // Don't expose whether an email exists or not for security
+        console.log('User not found, but still showing generic success for security');
+        toast({
+          title: "Email Sent",
+          description: "If an account exists with this email, you'll receive reset instructions shortly.",
+        });
+        setLocalResetEmailSent(true);
+        return { success: true };
+      }
+      
       if (error.message?.includes('timeout') || error.message === '{}') {
         toast({
           title: "Request Processing",
@@ -141,6 +154,7 @@ export default function ResetPasswordForm({
         duration: 6000,
       });
       
+      // Even with timeout, the request might still complete on the server
       setLocalResetEmailSent(true);
     }, REQUEST_TIMEOUT);
     

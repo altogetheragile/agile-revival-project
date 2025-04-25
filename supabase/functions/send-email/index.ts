@@ -124,7 +124,7 @@ serve(async (req) => {
       
       let html = '';
       try {
-        // Try to render the template, with a 4s timeout
+        // Try to render the template, with a 6s timeout
         const renderPromise = renderAsync(
           ResetPasswordEmail({ 
             actionLink,
@@ -133,10 +133,11 @@ serve(async (req) => {
         );
         
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Email rendering timed out')), 4000);
+          setTimeout(() => reject(new Error('Email rendering timed out')), 6000);
         });
         
         html = await Promise.race([renderPromise, timeoutPromise]);
+        console.log('Successfully rendered email template');
       } catch (renderError) {
         console.error('Failed to render email template:', renderError);
         // Fallback to plain text
@@ -147,6 +148,7 @@ serve(async (req) => {
               <p>You requested a password reset for your account. Click the link below to reset your password:</p>
               <p><a href="${actionLink}">Reset your password</a></p>
               <p>If you didn't request this, you can safely ignore this email.</p>
+              <p>Link URL: ${actionLink}</p>
             </body>
           </html>
         `;
@@ -155,7 +157,7 @@ serve(async (req) => {
       // Send the email with a slightly longer timeout
       try {
         const sendTimeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Email sending timed out')), 8000);
+          setTimeout(() => reject(new Error('Email sending timed out')), 10000);
         });
         
         const sendPromise = resend.emails.send({

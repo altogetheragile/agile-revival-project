@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertCircle, CheckCircle, Loader2, Shield } from 'lucide-react';
+import { useAuthMethods } from '@/hooks/useAuthMethods';
 
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState('');
@@ -17,22 +18,33 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [tokenError, setTokenError] = useState<string | null>(null);
+  const [hasAccessToken, setHasAccessToken] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { updatePassword } = useAuthMethods();
 
   // Get access token from URL parameters
   useEffect(() => {
     const hash = window.location.hash;
     const query = new URLSearchParams(location.search);
+    const email = query.get('email');
     
-    // If there's no access token in the URL, and no email (for the request form)
-    // then there's something wrong
-    if (!hash && !query.get('email')) {
+    // Check if we have an access token or hash fragment
+    if (hash && hash.includes('access_token=')) {
+      setHasAccessToken(true);
+      setTokenError(null);
+    } else if (!email) {
+      // If there's no access token in the URL, and no email (for the request form)
+      // then there's something wrong
       setTokenError('Invalid or missing reset password token. Please request a new password reset.');
     } else {
       setTokenError(null);
     }
+
+    console.log('URL hash:', hash);
+    console.log('Has access token:', hash && hash.includes('access_token='));
+    console.log('Email in URL:', email);
   }, [location]);
 
   // Form validation
@@ -60,36 +72,33 @@ export default function ResetPasswordPage() {
     setLoading(true);
     
     try {
-      // Check if we have the access token in the URL hash
-      const accessToken = window.location.hash.replace('#access_token=', '');
+      console.log('Attempting to update password with hasAccessToken:', hasAccessToken);
       
-      if (accessToken) {
-        // We have a token in the URL, use the updateUser method
-        const { error } = await supabase.auth.updateUser({
-          password: newPassword
-        });
-        
-        if (error) {
-          throw error;
-        }
-        
-        setSuccess(true);
-        toast({
-          title: "Password updated",
-          description: "Your password has been successfully reset",
-        });
-        
-        // Redirect to login page after a delay
-        setTimeout(() => {
-          navigate('/auth');
-        }, 3000);
-      } else {
-        // No token in URL, show error
-        setError('Invalid or expired reset link. Please request a new password reset.');
-      }
+      // Attempt to update the password
+      await updatePassword(newPassword);
+      
+      setSuccess(true);
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully reset",
+      });
+      
+      // Redirect to login page after a delay
+      setTimeout(() => {
+        navigate('/auth');
+      }, 3000);
     } catch (error: any) {
       console.error('Error resetting password:', error);
-      setError(error.message || 'Failed to reset password. Please try again.');
+      
+      // Handle specific error cases with more user-friendly messages
+      if (error.message?.includes('invalid') || error.message?.includes('expired')) {
+        setError('Your password reset link has expired or is invalid. Please request a new password reset.');
+      } else if (error.message?.includes('session')) {
+        setError('No active session found. Please request a new password reset link.');
+      } else {
+        setError(error.message || 'Failed to reset password. Please try again.');
+      }
+      
       toast({
         title: "Error",
         description: error.message || 'Failed to reset password',
@@ -104,7 +113,7 @@ export default function ResetPasswordPage() {
   const query = new URLSearchParams(location.search);
   const email = query.get('email');
   
-  if (email && !window.location.hash) {
+  if (email && !hasAccessToken) {
     return <RequestPasswordResetForm email={email} />;
   }
 
@@ -237,15 +246,17 @@ function RequestPasswordResetForm({ email }: { email: string }) {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { resetPassword } = useAuthMethods();
 
   const handleResendResetLink = async () => {
     setIsSubmitting(true);
+    setError(null);
+    
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      console.log('Attempting to resend password reset link to:', email);
       
-      if (error) throw error;
+      // Use enhanced resetPassword from useAuthMethods
+      await resetPassword(email);
       
       setResetEmailSent(true);
       toast({
@@ -253,7 +264,17 @@ function RequestPasswordResetForm({ email }: { email: string }) {
         description: "A new password reset link has been sent to your email",
       });
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset email');
+      console.error('Failed to send reset email:', err);
+      
+      // Provide user-friendly error message
+      if (err.message?.includes('timeout') || err.message?.includes('network')) {
+        setError('The request timed out. Please try again in a moment.');
+      } else if (err.message?.includes('rate limit') || err.message?.includes('too many requests')) {
+        setError('Too many attempts. Please wait a few minutes before trying again.');
+      } else {
+        setError(err.message || 'Failed to send reset email. Please try again later.');
+      }
+      
       toast({
         title: "Error",
         description: err.message || 'Failed to send reset email',

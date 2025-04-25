@@ -19,10 +19,8 @@ interface ResetPasswordEmailProps {
 }
 
 export default function ResetPasswordEmail({ actionLink, email }: ResetPasswordEmailProps) {
-  // Determine the base URL from environment variables or default to production URL
-  const baseUrl = process.env.PUBLIC_URL || 'https://altogetheragile.com';
-  
-  // Get the full reset link - either from the provided actionLink or construct one
+  // Use the provided actionLink or fall back to a constructed one
+  const baseUrl = Deno.env.get('PUBLIC_URL') || 'https://altogetheragile.com';
   const resetLink = actionLink || `${baseUrl}/reset-password?email=${encodeURIComponent(email)}`;
   
   return (
