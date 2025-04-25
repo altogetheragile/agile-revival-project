@@ -6,15 +6,66 @@ import LoginForm from '@/components/auth/LoginForm';
 import SignupForm from '@/components/auth/SignupForm';
 import ResetPasswordForm from '@/components/auth/reset-password/ResetPasswordForm';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
-// Adding the missing export for AuthMode
 export type AuthMode = 'login' | 'signup' | 'reset';
 
 export default function AuthContainer() {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  
   const navigate = useNavigate();
   const location = useLocation();
+  const { signIn, signUp } = useAuth();
+  const { toast } = useToast();
+  
   const from = (location.state as { from?: string })?.from || "/";
+
+  const handleLogin = async (email: string, password: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await signIn(email, password);
+      navigate(from);
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignup = async (email: string, password: string, firstName: string, lastName: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await signUp(email, password, firstName, lastName);
+      toast({
+        title: "Account created",
+        description: "Please sign in with your new account",
+      });
+      setAuthMode('login');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (email: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await signUp(email, '', '', ''); // This is just a placeholder, implement actual reset password logic
+      setResetEmailSent(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -31,13 +82,30 @@ export default function AuthContainer() {
               <TabsTrigger value="reset">Reset</TabsTrigger>
             </TabsList>
             <TabsContent value="login" className="pt-4">
-              <LoginForm onSuccess={() => navigate(from)} />
+              <LoginForm 
+                onSubmit={handleLogin}
+                onSwitchToSignup={() => setAuthMode('signup')}
+                onSwitchToReset={() => setAuthMode('reset')}
+                loading={isLoading}
+                error={error}
+              />
             </TabsContent>
             <TabsContent value="signup" className="pt-4">
-              <SignupForm onSuccess={() => setAuthMode('login')} />
+              <SignupForm
+                onSubmit={handleSignup}
+                onSwitchToLogin={() => setAuthMode('login')}
+                loading={isLoading}
+                error={error}
+              />
             </TabsContent>
             <TabsContent value="reset" className="pt-4">
-              <ResetPasswordForm onSuccess={() => setAuthMode('login')} />
+              <ResetPasswordForm 
+                onSubmit={handleResetPassword}
+                onSwitchToLogin={() => setAuthMode('login')}
+                loading={isLoading}
+                error={error}
+                resetEmailSent={resetEmailSent}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

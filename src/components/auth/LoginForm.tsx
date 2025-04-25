@@ -25,30 +25,15 @@ export default function LoginForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login form submitted with:", { email });
-    try {
-      await onSubmit(email.trim(), password); // Trim whitespace from email
-    } catch (error) {
-      console.error("Login form submission error:", error);
-    }
+    await onSubmit(email.trim(), password);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <Alert variant="destructive" className="animate-in fade-in-50">
+        <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {error}
-            <p className="mt-2 text-sm">
-              If you continue experiencing issues:
-              <ul className="list-disc pl-5 mt-1">
-                <li>Check your internet connection</li>
-                <li>Verify your email and password are correct</li>
-                <li>Try again in a few moments if there are server issues</li>
-              </ul>
-            </p>
-          </AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       
