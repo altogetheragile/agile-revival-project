@@ -35,15 +35,34 @@ serve(async (req) => {
     // Check if this is a test email request
     if (body.type === 'test') {
       console.log('Sending test email');
+      
+      // Determine the recipient - either specified or fallback to sender
+      const recipient = body.recipient || SENDER_EMAIL;
+      console.log(`Sending test email to ${recipient} from ${SENDER_EMAIL}`);
+      
+      // Include more detailed information in the test email
       const testResult = await resend.emails.send({
         from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
-        to: [body.recipient || SENDER_EMAIL],
+        to: [recipient],
         subject: 'Test Email from AltogetherAgile',
         html: `
           <h1>Test Email</h1>
           <p>This is a test email from your AltogetherAgile website.</p>
           <p>If you're receiving this, your email configuration is working correctly!</p>
-          <p>Sent at: ${new Date().toISOString()}</p>
+          <hr />
+          <h2>Email Configuration Details:</h2>
+          <ul>
+            <li><strong>Sender Email:</strong> ${SENDER_EMAIL}</li>
+            <li><strong>Sender Name:</strong> ${SENDER_NAME}</li>
+            <li><strong>Recipient:</strong> ${recipient}</li>
+            <li><strong>Sent at:</strong> ${new Date().toISOString()}</li>
+          </ul>
+          <p>If you're experiencing delivery issues:</p>
+          <ol>
+            <li>Verify your domain at <a href="https://resend.com/domains">Resend Domains</a></li>
+            <li>Make sure your SENDER_EMAIL secret matches your verified domain</li>
+            <li>Check if you've exceeded your free tier limits</li>
+          </ol>
         `,
       });
       
@@ -200,8 +219,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Email sending error:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
-      hint: 'The request failed but your password reset might still be processing. Check your email in a few minutes.'
+      error: {
+        message: error.message,
+        hint: 'The request failed but your password reset might still be processing. Check your email in a few minutes.'
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500
