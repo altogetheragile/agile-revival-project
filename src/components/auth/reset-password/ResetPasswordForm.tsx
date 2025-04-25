@@ -3,9 +3,12 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from "@/components/ui/label";
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { ResetPasswordAlert } from './ResetPasswordAlert';
-import { ResetPasswordActions } from './ResetPasswordActions';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, Loader2, XCircle } from "lucide-react";
+import { useResetPassword } from '@/hooks/useResetPassword';
+import { ResetPasswordSuccess } from './ResetPasswordSuccess';
+
+const REQUEST_TIMEOUT = 20000;
 
 interface ResetPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
@@ -16,85 +19,108 @@ interface ResetPasswordFormProps {
 }
 
 export default function ResetPasswordForm({ 
-  onSubmit, 
   onSwitchToLogin, 
   loading: externalLoading, 
   error: externalError,
   resetEmailSent 
 }: ResetPasswordFormProps) {
   const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [localResetEmailSent, setLocalResetEmailSent] = useState(resetEmailSent);
-  const { toast } = useToast();
+  const [retryCount, setRetryCount] = useState(0);
+  const [timeoutError, setTimeoutError] = useState<string | null>(null);
+  
+  const {
+    isSubmitting,
+    setIsSubmitting,
+    error: resetError,
+    setError,
+    localResetEmailSent,
+    setLocalResetEmailSent,
+    abortController,
+    setAbortController,
+    handleResetPassword,
+    cancelRequest
+  } = useResetPassword();
+
+  const handleRetry = async () => {
+    setRetryCount(prev => prev + 1);
+    return handleSubmit(new Event('retry') as any);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting || externalLoading) return;
     
     setIsSubmitting(true);
-    setError(null);
+    setTimeoutError(null);
+    
+    const controller = new AbortController();
+    setAbortController(controller);
+    
+    const timeoutId = setTimeout(() => {
+      controller.abort('timeout');
+      setTimeoutError("Request timed out. The server might be busy but your request may still be processed. Please check your email in a few minutes.");
+      setIsSubmitting(false);
+      setLocalResetEmailSent(true);
+    }, REQUEST_TIMEOUT);
     
     try {
-      await onSubmit(email);
-      
-      setLocalResetEmailSent(true);
-      toast({
-        title: "Email Sent",
-        description: "If an account exists with this email, you'll receive reset instructions shortly.",
-      });
+      await handleResetPassword(email);
+      clearTimeout(timeoutId);
+      setRetryCount(0);
     } catch (error: any) {
-      console.error('Password reset error:', error);
+      clearTimeout(timeoutId);
       
-      // Customize error message based on the error
-      let errorMessage = error.message || 'Failed to send reset email';
-      
-      if (errorMessage.includes("User not found")) {
-        // Don't expose whether a user exists or not for security
-        errorMessage = "If an account exists with this email, you'll receive reset instructions shortly.";
-        
-        // Still mark as sent for security reasons (don't reveal if account exists)
-        setLocalResetEmailSent(true);
-        
-        toast({
-          title: "Email Sent",
-          description: errorMessage
-        });
+      if (error.message?.includes('Network') || error.message?.includes('time') || error.message === '{}') {
+        setTimeoutError("The request timed out. The server might be busy, but your request may still be processed. Please check your email or try again.");
       } else {
-        setError(errorMessage);
-        
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        setTimeoutError(error.message || "An unexpected error occurred");
       }
     } finally {
+      clearTimeout(timeoutId);
       setIsSubmitting(false);
+      setAbortController(null);
     }
   };
 
   const isLoading = externalLoading || isSubmitting;
-  const displayError = error || externalError;
+  const displayError = timeoutError || externalError || resetError;
+  const buttonText = isLoading ? 'Processing...' : 'Send Reset Link';
   const showSuccess = resetEmailSent || localResetEmailSent;
 
   if (showSuccess) {
-    return (
-      <ResetPasswordAlert 
-        success={true}
-        onSwitchToLogin={onSwitchToLogin}
-        retryCount={0}
-      />
-    );
+    return <ResetPasswordSuccess onSwitchToLogin={onSwitchToLogin} />;
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <ResetPasswordAlert 
-        error={displayError}
-        retryCount={0}
-        onSwitchToLogin={onSwitchToLogin}
-      />
+      {displayError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {displayError}
+            {retryCount > 0 && (
+              <p className="mt-2 text-sm">
+                Tips to resolve:
+                <ul className="list-disc pl-5 mt-1">
+                  <li>Wait a few moments and try again</li>
+                  <li>Check your internet connection</li>
+                  <li>If the issue persists, please contact support</li>
+                </ul>
+              </p>
+            )}
+            {(displayError.includes('timeout') || displayError.includes('busy')) && (
+              <Button 
+                type="button" 
+                onClick={handleRetry} 
+                className="mt-2 bg-amber-500 hover:bg-amber-600 text-white"
+                size="sm"
+              >
+                Try Again
+              </Button>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="space-y-2">
         <Label htmlFor="email">Email Address</Label>
@@ -115,11 +141,35 @@ export default function ResetPasswordForm({
         Enter your email address and we'll send you instructions to reset your password.
       </div>
       
-      <ResetPasswordActions 
-        isLoading={isLoading}
-        buttonText="Send Reset Link"
-        loadingText="Sending Email..."
-      />
+      <div>
+        {isLoading ? (
+          <div className="flex space-x-2">
+            <Button 
+              type="button" 
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+              onClick={cancelRequest}
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              className="w-full"
+              disabled={true}
+            >
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {buttonText}
+            </Button>
+          </div>
+        ) : (
+          <Button 
+            type="submit" 
+            className="w-full bg-green-600 hover:bg-green-700 transition-colors"
+          >
+            {buttonText}
+          </Button>
+        )}
+      </div>
       
       <div className="text-center">
         <Button
