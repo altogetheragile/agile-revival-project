@@ -19,8 +19,6 @@ interface ResetPasswordEmailProps {
 }
 
 export default function ResetPasswordEmail({ actionLink, email }: ResetPasswordEmailProps) {
-  const baseUrl = "https://your-website.com";
-  
   return (
     <Html>
       <Head />
@@ -48,7 +46,9 @@ export default function ResetPasswordEmail({ actionLink, email }: ResetPasswordE
               </Section>
             ) : (
               <Text style={text}>
-                Please use the password reset link provided in your app to complete the process.
+                <Link href={`${process.env.PUBLIC_URL || 'https://altogetheragile.com'}/reset-password?email=${encodeURIComponent(email)}`} style={linkStyle}>
+                  Click here to reset your password
+                </Link>
               </Text>
             )}
             
@@ -91,6 +91,11 @@ const text = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '16px 0',
+};
+
+const linkStyle = {
+  color: '#2563eb',
+  textDecoration: 'underline',
 };
 
 const btnContainer = {

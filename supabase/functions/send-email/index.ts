@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { renderAsync } from 'npm:@react-email/components@0.0.22';
@@ -103,7 +104,17 @@ serve(async (req) => {
         actionLink = body.action_link;
       } else if (body.link) {
         actionLink = body.link;
+      } else if (body.resetLink) {
+        actionLink = body.resetLink;
       }
+      
+      // Create a fallback action link if none was provided
+      if (!actionLink && email) {
+        const baseUrl = Deno.env.get('PUBLIC_URL') || 'https://altogetheragile.com';
+        actionLink = `${baseUrl}/reset-password?email=${encodeURIComponent(email)}`;
+      }
+      
+      console.log('Action link for reset email:', actionLink || 'No action link provided');
       
       if (!email) {
         throw new Error('No recipient email found in request');

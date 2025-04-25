@@ -55,6 +55,9 @@ export default function ResetPasswordForm({
         description: "Sending password reset email. This may take a moment...",
       });
       
+      // Generate a reset link for the email
+      const resetLink = `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`;
+      
       // First try the standard Supabase method
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
@@ -71,7 +74,8 @@ export default function ResetPasswordForm({
               type: 'reset_password',
               email: email,
               recipient: email,
-              template: 'reset_password'
+              template: 'reset_password',
+              resetLink: resetLink
             }
           });
           
