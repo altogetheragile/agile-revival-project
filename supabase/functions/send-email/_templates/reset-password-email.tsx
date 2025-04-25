@@ -68,8 +68,7 @@ export default function ResetPasswordEmail({ actionLink, email }: ResetPasswordE
             </Text>
             
             <Text style={noteStyle}>
-              Note: Password reset links contain a security token that will expire for your protection. 
-              If you see an "expired token" message, simply request a new reset link and use it immediately.
+              Note: If you see an "expired token" message when trying to use this link, simply request a new reset link and use it immediately.
             </Text>
             
             <Text style={footer}>

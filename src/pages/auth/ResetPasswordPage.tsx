@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -34,15 +35,20 @@ export default function ResetPasswordPage() {
         const hash = window.location.hash;
         const query = new URLSearchParams(location.search);
         const email = query.get('email');
+        const token = query.get('token');
+        const type = query.get('type');
         
         // Log token detection attempt
         console.log('Token detection attempt:', { 
           hasHash: !!hash, 
           hashLength: hash?.length,
           hashContainsToken: hash?.includes('access_token='),
-          hasEmail: !!email
+          hasEmail: !!email,
+          hasToken: !!token,
+          type: type
         });
         
+        // Case 1: Hash contains access token (standard Supabase auth flow)
         if (hash && hash.includes('access_token=')) {
           console.log('Found access_token in URL hash, confirming token...');
           setHasAccessToken(true);
@@ -58,12 +64,43 @@ export default function ResetPasswordPage() {
           } else if (data.session) {
             console.log('Valid session detected:', data.session.expires_at);
           }
-        } else if (email) {
+        } 
+        // Case 2: URL has token and type parameters (recovery email link)
+        else if (token && type === 'recovery') {
+          console.log('Found token and type in URL, validating recovery flow');
+          
+          try {
+            // Verify that this token is valid using Supabase's verifyOTP method
+            const { data, error } = await supabase.auth.verifyOtp({
+              token,
+              type: 'recovery',
+              email: email || undefined
+            });
+            
+            if (error) {
+              console.error('Error verifying recovery token:', error);
+              setTokenError('Your password reset link has expired or is invalid. Please request a new password reset.');
+              setHasAccessToken(false);
+            } else if (data.session) {
+              console.log('Valid recovery session established');
+              setHasAccessToken(true);
+              setTokenError(null);
+            }
+          } catch (verifyError) {
+            console.error('Exception during OTP verification:', verifyError);
+            setTokenError('Error verifying your reset token. Please request a new password reset.');
+            setHasAccessToken(false);
+          }
+        }
+        // Case 3: Only email is present (our custom flow)
+        else if (email) {
           // If we only have email, this is likely a custom reset request
           console.log('No token found, but email is present:', email);
           setHasAccessToken(false);
           setTokenError(null);
-        } else {
+        } 
+        // Case 4: No useful parameters
+        else {
           console.log('Neither token nor email found in URL');
           setTokenError('Invalid or missing reset password token. Please request a new password reset.');
           setHasAccessToken(false);
@@ -177,7 +214,7 @@ export default function ResetPasswordPage() {
           </div>
           <CardTitle className="text-center text-2xl">Reset Password</CardTitle>
           <CardDescription className="text-center">
-            Enter your new password below
+            {hasAccessToken ? "Enter your new password below" : "Request a new password reset link"}
           </CardDescription>
         </CardHeader>
         
@@ -216,7 +253,7 @@ export default function ResetPasswordPage() {
                 </div>
               </AlertDescription>
             </Alert>
-          ) : (
+          ) : hasAccessToken ? (
             <form onSubmit={handleResetPassword} className="space-y-4">
               {error && (
                 <Alert variant="destructive">
@@ -281,6 +318,19 @@ export default function ResetPasswordPage() {
                 </Button>
               </div>
             </form>
+          ) : (
+            <div className="text-center p-6">
+              <p className="mb-4">This reset link is either invalid or has expired.</p>
+              <p className="mb-4">Please return to the login page and request a new password reset.</p>
+              
+              <Button
+                type="button"
+                onClick={() => navigate('/auth')}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Go to Sign In
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -303,9 +353,8 @@ function RequestPasswordResetForm({ email }: { email: string }) {
     try {
       console.log('Attempting to resend password reset link to:', email);
       
-      const result = await resetPassword(email);
+      await resetPassword(email);
       
-      console.log('Reset password result:', result);
       setResetEmailSent(true);
       
       toast({

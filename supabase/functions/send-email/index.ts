@@ -103,23 +103,26 @@ serve(async (req) => {
       
       console.log(`Recipient email for reset: ${email}`);
       
-      // Extract or construct action link
-      let actionLink = body.action_link || body.link || body.resetLink || body.actionLink;
+      // Generate a reset token if one wasn't provided
+      const resetToken = body.token || crypto.randomUUID();
       
-      if (!actionLink) {
-        const baseUrl = Deno.env.get('PUBLIC_URL') || req.headers.get('origin') || 'https://altogetheragile.com';
-        actionLink = `${baseUrl}/reset-password?email=${encodeURIComponent(email)}`;
-        console.log('Generated fallback action link:', actionLink);
-      } else {
-        console.log('Using provided action link:', actionLink);
-      }
+      // Construct the direct reset URL using the origin and token
+      const origin = req.headers.get('origin') || Deno.env.get('PUBLIC_URL') || 'https://altogetheragile.com';
+      
+      // Get the hash fragment from the request (if any)
+      const hash = body.hash || '';
+      
+      // Generate the reset link - we'll now include a hash parameter and token for Auth API compatibility
+      const resetLink = `${origin}/reset-password?token=${resetToken}&type=recovery&email=${encodeURIComponent(email)}${hash ? `#${hash}` : ''}`;
+      
+      console.log('Generated reset link:', resetLink);
       
       // Generate email HTML content
       let html = '';
       try {
         html = await renderAsync(
           ResetPasswordEmail({ 
-            actionLink,
+            actionLink: resetLink,
             email
           })
         );
