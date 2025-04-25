@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -19,9 +18,6 @@ export function useResetPassword() {
       // Create a new abort controller for this request
       const controller = new AbortController();
       setAbortController(controller);
-      
-      // We need both approaches to work together - the built-in Supabase method
-      // and our custom edge function as fallback
       
       toast({
         title: "Processing",
@@ -55,8 +51,7 @@ export function useResetPassword() {
               recipient: email,
               template: 'reset_password',
               resetLink: resetLink
-            },
-            signal: controller.signal
+            }
           });
           
           if (edgeFunctionResponse.error) {
@@ -65,8 +60,8 @@ export function useResetPassword() {
           }
           
           console.log('Password reset via edge function response:', edgeFunctionResponse);
-        } catch (edgeError) {
-          if (edgeError.name === 'AbortError') {
+        } catch (edgeError: any) {
+          if (controller.signal.aborted) {
             console.log('Reset password request was aborted');
             throw new Error('Request cancelled');
           }
@@ -87,7 +82,6 @@ export function useResetPassword() {
     } catch (error: any) {
       console.error('Password reset API error:', error);
       
-      // Network timeouts often return empty objects or timeout messages
       if (error.message?.includes('timeout') || error.message === '{}') {
         toast({
           title: "Request Processing",
