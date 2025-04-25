@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +24,7 @@ import AuthPage from "@/pages/auth/AuthPage";
 import StorageInitializer from "@/components/media/StorageInitializer";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 // Create a client with sensible default options
 const queryClient = new QueryClient({
@@ -34,18 +36,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-// Simple placeholder for the reset password page
-const ResetPasswordPage = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold mb-4">Reset Password</h1>
-        <p>Password reset functionality has been removed from this application.</p>
-      </div>
-    </div>
-  );
-};
 
 const App = () => (
   <ErrorBoundary>

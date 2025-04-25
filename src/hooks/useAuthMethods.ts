@@ -50,10 +50,40 @@ export function useAuthMethods() {
     
     console.log('Sign out successful');
   };
+  
+  const resetPassword = async (email: string) => {
+    console.log('Requesting password reset for:', email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    
+    if (error) {
+      console.error('Password reset request error:', error);
+      throw error;
+    }
+    
+    console.log('Password reset email sent successfully');
+  };
+  
+  const updatePassword = async (newPassword: string) => {
+    console.log('Updating password');
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    
+    if (error) {
+      console.error('Password update error:', error);
+      throw error;
+    }
+    
+    console.log('Password updated successfully');
+  };
 
   return {
     signIn,
     signUp,
-    signOut
+    signOut,
+    resetPassword,
+    updatePassword
   };
 }

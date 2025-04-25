@@ -19,6 +19,12 @@ interface ResetPasswordEmailProps {
 }
 
 export default function ResetPasswordEmail({ actionLink, email }: ResetPasswordEmailProps) {
+  // Determine the base URL from environment variables or default to production URL
+  const baseUrl = process.env.PUBLIC_URL || 'https://altogetheragile.com';
+  
+  // Get the full reset link - either from the provided actionLink or construct one
+  const resetLink = actionLink || `${baseUrl}/reset-password?email=${encodeURIComponent(email)}`;
+  
   return (
     <Html>
       <Head />
@@ -35,22 +41,24 @@ export default function ResetPasswordEmail({ actionLink, email }: ResetPasswordE
               If you did not make this request, you can safely ignore this email.
             </Text>
             
-            {actionLink ? (
-              <Section style={btnContainer}>
-                <Button
-                  style={button}
-                  href={actionLink}
-                >
-                  Reset Your Password
-                </Button>
-              </Section>
-            ) : (
-              <Text style={text}>
-                <Link href={`${process.env.PUBLIC_URL || 'https://altogetheragile.com'}/reset-password?email=${encodeURIComponent(email)}`} style={linkStyle}>
-                  Click here to reset your password
-                </Link>
-              </Text>
-            )}
+            <Section style={btnContainer}>
+              <Button
+                style={button}
+                href={resetLink}
+              >
+                Reset Your Password
+              </Button>
+            </Section>
+            
+            <Text style={text}>
+              If the button above doesn't work, you can also copy and paste this link into your browser:
+            </Text>
+            
+            <Text style={linkContainer}>
+              <Link href={resetLink} style={linkStyle}>
+                {resetLink}
+              </Link>
+            </Text>
             
             <Text style={text}>
               This password reset link will expire in 24 hours. If you need to request a new password reset, please visit our website.
@@ -96,6 +104,15 @@ const text = {
 const linkStyle = {
   color: '#2563eb',
   textDecoration: 'underline',
+  wordBreak: 'break-all' as const,
+};
+
+const linkContainer = {
+  margin: '16px 0',
+  padding: '12px',
+  backgroundColor: '#f0f0f0',
+  borderRadius: '4px',
+  wordBreak: 'break-all' as const,
 };
 
 const btnContainer = {
