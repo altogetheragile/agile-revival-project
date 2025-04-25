@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -18,11 +19,28 @@ const AdminDashboard = () => {
   const [isChecking, setIsChecking] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isAdmin, isAuthReady } = useAuth();
+  const { isAdmin, isAuthReady, user } = useAuth();
   
   useEffect(() => {
     setIsChecking(false);
-  }, []);
+    
+    // Check if user is authenticated and admin
+    if (isAuthReady && !user) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to access the admin dashboard",
+        variant: "destructive",
+      });
+      navigate('/auth', { state: { from: '/admin' } });
+    } else if (isAuthReady && !isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You do not have admin privileges to access this page",
+        variant: "destructive",
+      });
+      navigate('/unauthorized');
+    }
+  }, [isAuthReady, isAdmin, user, navigate, toast]);
   
   return (
     <div className="min-h-screen flex flex-col">

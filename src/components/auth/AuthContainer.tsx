@@ -1,31 +1,45 @@
 
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Home } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LoginForm } from '@/components/auth/LoginForm';
+import { SignupForm } from '@/components/auth/SignupForm';
+import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // Adding the missing export for AuthMode
 export type AuthMode = 'login' | 'signup' | 'reset';
 
 export default function AuthContainer() {
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string })?.from || "/";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Welcome</CardTitle>
-          <CardDescription>This application no longer requires authentication.</CardDescription>
+          <CardDescription>Sign in to access protected areas</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center space-y-4">
-          <Button 
-            onClick={() => navigate('/')}
-            variant="default"
-            className="w-full flex items-center justify-center gap-2"
-          >
-            <Home className="h-4 w-4" />
-            Go to Home Page
-          </Button>
+        <CardContent>
+          <Tabs value={authMode} onValueChange={(value) => setAuthMode(value as AuthMode)}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Sign up</TabsTrigger>
+              <TabsTrigger value="reset">Reset</TabsTrigger>
+            </TabsList>
+            <TabsContent value="login" className="pt-4">
+              <LoginForm onSuccess={() => navigate(from)} />
+            </TabsContent>
+            <TabsContent value="signup" className="pt-4">
+              <SignupForm onSuccess={() => setAuthMode('login')} />
+            </TabsContent>
+            <TabsContent value="reset" className="pt-4">
+              <ResetPasswordForm onSuccess={() => setAuthMode('login')} />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
