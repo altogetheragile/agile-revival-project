@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Course, CourseFormData, ScheduleCourseFormData } from '@/types/course';
-import { createCourseFromTemplate } from '@/services/courseTemplateService'; 
+import { createCourseFromTemplate } from '@/services/courseService';
 import { toast } from 'sonner';
 import { useToast } from '@/hooks/use-toast';
 

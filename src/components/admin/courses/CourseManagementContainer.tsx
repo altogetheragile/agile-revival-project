@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Course } from "@/types/course";
 import { CourseManagementHeader } from "./CourseManagementHeader";
@@ -11,7 +10,7 @@ import { CourseErrorAlert } from "./CourseErrorAlert";
 import { CourseDialogs } from "./CourseDialogs";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
-import { createCourseFromTemplate } from "@/services/courseTemplateService";
+import { createCourseFromTemplate } from "@/services/courseService";
 
 export const CourseManagementContainer: React.FC = () => {
   const {
@@ -62,7 +61,6 @@ export const CourseManagementContainer: React.FC = () => {
     setScheduleDialogOpen(true);
   };
   
-  // Added a new handler function for viewing registrations that accepts a Course
   const handleViewRegistrations = (course: Course) => {
     setCurrentCourse(course);
     setViewingRegistrations(true);
@@ -178,4 +176,3 @@ export const CourseManagementContainer: React.FC = () => {
     </div>
   );
 };
-
