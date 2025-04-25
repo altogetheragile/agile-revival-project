@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -56,16 +57,36 @@ export function useAuthMethods() {
     const resetUrl = `${baseUrl}/reset-password`;
     console.log('Reset URL:', resetUrl);
     
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: resetUrl
-    });
-    
-    if (error) {
+    try {
+      // First, trigger Supabase's password reset to generate the token
+      const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: resetUrl
+      });
+      
+      if (supabaseError) {
+        console.error('Supabase password reset error:', supabaseError);
+        throw supabaseError;
+      }
+      
+      // Now, trigger our edge function to send the email via Resend
+      const { error: functionError } = await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'reset_password',
+          email,
+          resetLink: resetUrl
+        }
+      });
+      
+      if (functionError) {
+        console.error('Edge function error:', functionError);
+        throw functionError;
+      }
+      
+      console.log('Password reset request successful');
+    } catch (error) {
       console.error('Password reset error:', error);
       throw error;
     }
-    
-    console.log('Password reset request successful');
   };
 
   const updatePassword = async (newPassword: string) => {
