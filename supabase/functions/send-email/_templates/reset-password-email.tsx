@@ -23,19 +23,24 @@ export default function ResetPasswordEmail({ actionLink, email }: ResetPasswordE
   const baseUrl = Deno.env.get('PUBLIC_URL') || 'https://altogetheragile.com';
   const resetLink = actionLink || `${baseUrl}/reset-password?email=${encodeURIComponent(email)}`;
   
+  // Current timestamp for cache busting in logs
+  const timestamp = new Date().toISOString();
+  console.log(`Generating reset password email for ${email} at ${timestamp}`);
+  console.log(`Using reset link: ${resetLink}`);
+  
   return (
     <Html>
       <Head />
-      <Preview>Reset your password</Preview>
+      <Preview>Reset your AltogetherAgile password</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section>
-            <Heading style={h1}>Password Reset</Heading>
+            <Heading style={h1}>Reset Your Password</Heading>
             <Text style={text}>
               Hello,
             </Text>
             <Text style={text}>
-              We received a request to reset the password for your account ({email}).
+              We received a request to reset the password for your AltogetherAgile account ({email}).
               If you did not make this request, you can safely ignore this email.
             </Text>
             
@@ -63,7 +68,7 @@ export default function ResetPasswordEmail({ actionLink, email }: ResetPasswordE
             </Text>
             
             <Text style={noteStyle}>
-              Note: Password reset links contain a security token that will expire quickly for your protection. 
+              Note: Password reset links contain a security token that will expire for your protection. 
               If you see an "expired token" message, simply request a new reset link and use it immediately.
             </Text>
             
@@ -105,14 +110,14 @@ const text = {
 };
 
 const noteStyle = {
-  color: '#E63946',
+  color: '#664d03',
   fontSize: '14px',
   lineHeight: '1.6',
   margin: '16px 0',
   padding: '12px',
-  backgroundColor: '#FFF',
+  backgroundColor: '#fff3cd',
   borderRadius: '4px',
-  border: '1px solid #FFCCD5',
+  border: '1px solid #ffecb5',
 };
 
 const linkStyle = {

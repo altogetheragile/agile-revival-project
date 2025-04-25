@@ -5,9 +5,14 @@ import { Loader2 } from "lucide-react";
 interface ResetPasswordActionsProps {
   isLoading: boolean;
   buttonText: string;
+  loadingText?: string;
 }
 
-export function ResetPasswordActions({ isLoading, buttonText }: ResetPasswordActionsProps) {
+export function ResetPasswordActions({ 
+  isLoading, 
+  buttonText,
+  loadingText 
+}: ResetPasswordActionsProps) {
   return (
     <Button 
       type="submit" 
@@ -17,7 +22,7 @@ export function ResetPasswordActions({ isLoading, buttonText }: ResetPasswordAct
       {isLoading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          {buttonText}
+          {loadingText || buttonText}
         </>
       ) : buttonText}
     </Button>

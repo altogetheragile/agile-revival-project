@@ -45,13 +45,30 @@ export default function ResetPasswordForm({
       });
     } catch (error: any) {
       console.error('Password reset error:', error);
-      setError(error.message || 'Failed to send reset email');
       
-      toast({
-        title: "Error",
-        description: error.message || 'Failed to send reset email',
-        variant: "destructive",
-      });
+      // Customize error message based on the error
+      let errorMessage = error.message || 'Failed to send reset email';
+      
+      if (errorMessage.includes("User not found")) {
+        // Don't expose whether a user exists or not for security
+        errorMessage = "If an account exists with this email, you'll receive reset instructions shortly.";
+        
+        // Still mark as sent for security reasons (don't reveal if account exists)
+        setLocalResetEmailSent(true);
+        
+        toast({
+          title: "Email Sent",
+          description: errorMessage
+        });
+      } else {
+        setError(errorMessage);
+        
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -100,7 +117,8 @@ export default function ResetPasswordForm({
       
       <ResetPasswordActions 
         isLoading={isLoading}
-        buttonText={isLoading ? 'Sending...' : 'Send Reset Link'}
+        buttonText="Send Reset Link"
+        loadingText="Sending Email..."
       />
       
       <div className="text-center">

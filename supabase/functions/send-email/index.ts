@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { renderAsync } from 'npm:@react-email/components@0.0.22';
@@ -32,6 +33,12 @@ serve(async (req) => {
       body = {};
     }
 
+    // Log additional diagnostic information
+    console.log('Request URL:', req.url);
+    console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
+    console.log('Using sender email:', SENDER_EMAIL);
+    console.log('Using sender name:', SENDER_NAME);
+    
     // Check if this is a test email request
     if (body.type === 'test') {
       console.log('Sending test email');
@@ -81,41 +88,31 @@ serve(async (req) => {
       (body.template && body.template === 'reset_password');
     
     // Log details to help debug
-    console.log('Request URL:', req.url);
     console.log('Is password reset:', isPasswordReset);
     
     // For a password reset email
     if (isPasswordReset) {
       console.log('Sending password reset email');
       
-      let email = body.email || (body.user && body.user.email);
-      if (!email && body.recipient) {
-        email = body.recipient;
-      }
-      
-      let actionLink = '';
-      if (body.action_link) {
-        actionLink = body.action_link;
-        console.log('Using Supabase-provided action_link for reset');
-      } else if (body.link) {
-        actionLink = body.link;
-      } else if (body.resetLink) {
-        actionLink = body.resetLink;
-      }
-      
-      if (!actionLink && email) {
-        const baseUrl = Deno.env.get('PUBLIC_URL') || 'https://altogetheragile.com';
-        actionLink = `${baseUrl}/reset-password?email=${encodeURIComponent(email)}`;
-        console.log('Generated fallback action link:', actionLink);
-      }
-      
-      console.log('Action link for reset email:', actionLink || 'No action link provided');
+      // Extract email from different possible locations in the request
+      let email = body.email || (body.user && body.user.email) || body.recipient;
       
       if (!email) {
-        throw new Error('No recipient email found in request');
+        throw new Error('No recipient email found in password reset request');
       }
       
-      console.log(`Sending password reset email to ${email}`);
+      console.log(`Recipient email for reset: ${email}`);
+      
+      // Extract or construct action link
+      let actionLink = body.action_link || body.link || body.resetLink || body.actionLink;
+      
+      if (!actionLink) {
+        const baseUrl = Deno.env.get('PUBLIC_URL') || req.headers.get('origin') || 'https://altogetheragile.com';
+        actionLink = `${baseUrl}/reset-password?email=${encodeURIComponent(email)}`;
+        console.log('Generated fallback action link:', actionLink);
+      } else {
+        console.log('Using provided action link:', actionLink);
+      }
       
       // Generate email HTML content
       let html = '';
@@ -140,7 +137,7 @@ serve(async (req) => {
         html: html,
       });
       
-      console.log('Email sent successfully:', result);
+      console.log('Password reset email sent result:', result);
       
       return new Response(JSON.stringify({
         success: true,
