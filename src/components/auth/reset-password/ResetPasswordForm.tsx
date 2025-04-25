@@ -30,8 +30,7 @@ export default function ResetPasswordForm({
     setIsSubmitting,
     error: resetError,
     localResetEmailSent,
-    handleResetPassword,
-    cancelRequest
+    handleResetPassword
   } = useResetPassword();
 
   const handleRetry = async () => {
@@ -50,11 +49,7 @@ export default function ResetPasswordForm({
       await handleResetPassword(email);
       setRetryCount(0);
     } catch (error: any) {
-      if (error.message?.includes('Network') || error.message?.includes('time') || error.message === '{}') {
-        setTimeoutError("The request timed out. The server might be busy, but your request may still be processed. Please check your email or try again.");
-      } else {
-        setTimeoutError(error.message || "An unexpected error occurred");
-      }
+      setTimeoutError(error.message || "An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }
