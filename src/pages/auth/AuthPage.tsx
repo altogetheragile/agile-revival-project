@@ -2,9 +2,9 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LoginForm } from "@/components/auth/LoginForm";
-import { SignupForm } from "@/components/auth/SignupForm";
-import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
+import LoginForm from "@/components/auth/LoginForm";
+import SignupForm from "@/components/auth/SignupForm";
+import ResetPasswordForm from "@/components/auth/reset-password/ResetPasswordForm";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function AuthPage() {
