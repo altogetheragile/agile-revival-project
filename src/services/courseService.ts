@@ -17,4 +17,5 @@ export { addCourseMaterial, removeCourseMaterial } from './courseMaterialService
 export { 
   getCoursesByTemplateId,
   createCourseFromTemplate 
-} from './courseTemplateService';
+} from './templates';
+
