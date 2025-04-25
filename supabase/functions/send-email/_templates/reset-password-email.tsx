@@ -59,7 +59,7 @@ export default function ResetPasswordEmail({ actionLink, email }: ResetPasswordE
             </Text>
             
             <Text style={text}>
-              This password reset link will expire in 24 hours. If you need to request a new password reset, please visit our website.
+              This password reset link will expire in 24 hours. Please use it as soon as possible.
             </Text>
             
             <Text style={footer}>

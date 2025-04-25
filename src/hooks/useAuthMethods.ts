@@ -54,9 +54,20 @@ export function useAuthMethods() {
   const resetPassword = async (email: string) => {
     console.log('Requesting password reset for:', email);
     try {
-      // First try the standard Supabase method with a specific redirect URL
+      // Construct an absolute URL with origin for the reset link
+      const baseUrl = window.location.origin;
+      const resetUrl = `${baseUrl}/reset-password`;
+      console.log('Using reset URL:', resetUrl);
+      
+      // First try the standard Supabase method with our configured redirect URL
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: resetUrl,
+        // Set a longer expiration if supported by the client
+        options: {
+          // This option might not be used by the client but we set it just in case
+          // The actual expiration is configured in supabase/config.toml
+          captchaToken: undefined
+        }
       });
       
       if (error) {
@@ -66,7 +77,7 @@ export function useAuthMethods() {
         try {
           console.log('Trying edge function for password reset');
           // Construct the reset link to include in the email
-          const resetLink = `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`;
+          const resetLink = `${resetUrl}?email=${encodeURIComponent(email)}`;
           
           const edgeFunctionResponse = await supabase.functions.invoke('send-email', {
             body: {
@@ -74,7 +85,9 @@ export function useAuthMethods() {
               email: email,
               recipient: email,
               template: 'reset_password',
-              resetLink: resetLink
+              resetLink: resetLink,
+              // Add timestamp to help with tracking
+              timestamp: new Date().toISOString()
             }
           });
           

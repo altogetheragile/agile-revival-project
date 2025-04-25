@@ -147,6 +147,7 @@ serve(async (req) => {
               <h1>Password Reset Request</h1>
               <p>You requested a password reset for your account. Click the link below to reset your password:</p>
               <p><a href="${actionLink}">Reset your password</a></p>
+              <p>This link will expire in 24 hours.</p>
               <p>If you didn't request this, you can safely ignore this email.</p>
               <p>Link URL: ${actionLink}</p>
             </body>
