@@ -62,12 +62,6 @@ export function useAuthMethods() {
       // First try the standard Supabase method with our configured redirect URL
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: resetUrl,
-        // Set a longer expiration if supported by the client
-        options: {
-          // This option might not be used by the client but we set it just in case
-          // The actual expiration is configured in supabase/config.toml
-          captchaToken: undefined
-        }
       });
       
       if (error) {
