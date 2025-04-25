@@ -59,7 +59,12 @@ export default function ResetPasswordEmail({ actionLink, email }: ResetPasswordE
             </Text>
             
             <Text style={text}>
-              This password reset link will expire in 24 hours. Please use it as soon as possible.
+              <strong>Important:</strong> This password reset link will expire in 24 hours. Please use it as soon as possible.
+            </Text>
+            
+            <Text style={noteStyle}>
+              Note: Password reset links contain a security token that will expire quickly for your protection. 
+              If you see an "expired token" message, simply request a new reset link and use it immediately.
             </Text>
             
             <Text style={footer}>
@@ -97,6 +102,17 @@ const text = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '16px 0',
+};
+
+const noteStyle = {
+  color: '#E63946',
+  fontSize: '14px',
+  lineHeight: '1.6',
+  margin: '16px 0',
+  padding: '12px',
+  backgroundColor: '#FFF',
+  borderRadius: '4px',
+  border: '1px solid #FFCCD5',
 };
 
 const linkStyle = {

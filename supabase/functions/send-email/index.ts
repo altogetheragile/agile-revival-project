@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { renderAsync } from 'npm:@react-email/components@0.0.22';
@@ -96,10 +97,12 @@ serve(async (req) => {
         email = body.recipient;
       }
       
-      // Extract action link - if from Supabase or our custom link
+      // Extract action link - prioritize the official Supabase action_link
       let actionLink = '';
       if (body.action_link) {
+        // This is the key change - prioritize Supabase's action_link which contains the token
         actionLink = body.action_link;
+        console.log('Using Supabase-provided action_link for reset');
       } else if (body.link) {
         actionLink = body.link;
       } else if (body.resetLink) {
@@ -110,6 +113,7 @@ serve(async (req) => {
       if (!actionLink && email) {
         const baseUrl = Deno.env.get('PUBLIC_URL') || 'https://altogetheragile.com';
         actionLink = `${baseUrl}/reset-password?email=${encodeURIComponent(email)}`;
+        console.log('Generated fallback action link (no token):', actionLink);
       }
       
       console.log('Action link for reset email:', actionLink || 'No action link provided');

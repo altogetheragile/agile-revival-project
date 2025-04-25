@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { AlertCircle, CheckCircle, Loader2, Shield } from 'lucide-react';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState('');
@@ -17,28 +18,66 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [hasAccessToken, setHasAccessToken] = useState(false);
+  const [isTokenChecking, setIsTokenChecking] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { updatePassword } = useAuthMethods();
 
   useEffect(() => {
-    const hash = window.location.hash;
-    const query = new URLSearchParams(location.search);
-    const email = query.get('email');
+    // This function checks if the URL contains a valid access token
+    const checkForToken = async () => {
+      setIsTokenChecking(true);
+      
+      try {
+        // Get both hash and query parameters
+        const hash = window.location.hash;
+        const query = new URLSearchParams(location.search);
+        const email = query.get('email');
+        
+        // Log token detection attempt
+        console.log('Token detection attempt:', { 
+          hasHash: !!hash, 
+          hashLength: hash?.length,
+          hashContainsToken: hash?.includes('access_token='),
+          hasEmail: !!email
+        });
+        
+        if (hash && hash.includes('access_token=')) {
+          console.log('Found access_token in URL hash, confirming token...');
+          setHasAccessToken(true);
+          setTokenError(null);
+          
+          // The Supabase client will automatically process this token
+          // But we can try to validate it too
+          const { data, error } = await supabase.auth.getSession();
+          if (error) {
+            console.error('Error validating session from hash:', error);
+            setTokenError('Your password reset link has expired or is invalid. Please request a new password reset.');
+            setHasAccessToken(false);
+          } else if (data.session) {
+            console.log('Valid session detected:', data.session.expires_at);
+          }
+        } else if (email) {
+          // If we only have email, this is likely a custom reset request
+          console.log('No token found, but email is present:', email);
+          setHasAccessToken(false);
+          setTokenError(null);
+        } else {
+          console.log('Neither token nor email found in URL');
+          setTokenError('Invalid or missing reset password token. Please request a new password reset.');
+          setHasAccessToken(false);
+        }
+      } catch (err: any) {
+        console.error('Error during token detection:', err);
+        setTokenError('Error processing reset token. Please request a new password reset.');
+        setHasAccessToken(false);
+      } finally {
+        setIsTokenChecking(false);
+      }
+    };
     
-    if (hash && hash.includes('access_token=')) {
-      setHasAccessToken(true);
-      setTokenError(null);
-    } else if (!email) {
-      setTokenError('Invalid or missing reset password token. Please request a new password reset.');
-    } else {
-      setTokenError(null);
-    }
-
-    console.log('URL hash:', hash);
-    console.log('Has access token:', hash && hash.includes('access_token='));
-    console.log('Email in URL:', email);
+    checkForToken();
   }, [location]);
 
   const validateForm = () => {
@@ -101,8 +140,30 @@ export default function ResetPasswordPage() {
   const query = new URLSearchParams(location.search);
   const email = query.get('email');
   
-  if (email && !hasAccessToken) {
+  // If we have email but no access token, show the request form
+  if (email && !hasAccessToken && !isTokenChecking) {
     return <RequestPasswordResetForm email={email} />;
+  }
+
+  // If we're still checking for token, show loading state
+  if (isTokenChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-3 text-center">
+            <div className="flex justify-center">
+              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-agile-purple/10">
+                <Loader2 className="h-6 w-6 text-agile-purple animate-spin" />
+              </div>
+            </div>
+            <CardTitle className="text-center text-2xl">Verifying Reset Link</CardTitle>
+            <CardDescription className="text-center">
+              Please wait while we verify your password reset link...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
   }
 
   return (

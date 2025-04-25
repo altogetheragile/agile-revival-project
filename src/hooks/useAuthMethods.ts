@@ -54,52 +54,43 @@ export function useAuthMethods() {
   const resetPassword = async (email: string) => {
     console.log('Requesting password reset for:', email);
     try {
-      // Construct an absolute URL with origin for the reset link
+      // Construct the redirect URL for consistency
       const baseUrl = window.location.origin;
       const resetUrl = `${baseUrl}/reset-password`;
-      console.log('Using reset URL:', resetUrl);
+      console.log('Reset URL being used:', resetUrl);
       
-      // First try the direct edge function approach for more reliability
-      console.log('Using edge function for password reset');
+      // Use Supabase's built-in password reset with redirectTo
+      console.log('Using Supabase built-in password reset');
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: resetUrl
+      });
+      
+      if (error) {
+        console.error('Password reset error from Supabase:', error);
+        throw error;
+      }
+      
+      // If successful, also try to trigger our custom email for better deliverability
       try {
-        // Construct the reset link to include in the email
-        const resetLink = `${resetUrl}?email=${encodeURIComponent(email)}`;
-        
-        const edgeFunctionResponse = await supabase.functions.invoke('send-email', {
+        console.log('Also sending via edge function for better deliverability');
+        await supabase.functions.invoke('send-email', {
           body: {
             type: 'reset_password',
             email: email,
             recipient: email,
             template: 'reset_password',
-            resetLink: resetLink,
-            // Add timestamp to help with tracking
+            // Note: We don't specify resetLink here as we want the edge function
+            // to use the Supabase-generated reset link if possible
             timestamp: new Date().toISOString()
           }
         });
-        
-        if (edgeFunctionResponse.error) {
-          throw new Error(edgeFunctionResponse.error.message || 'Error sending email via edge function');
-        }
-        
-        console.log('Password reset via edge function response:', edgeFunctionResponse);
-        return { success: true, method: 'edge_function' };
       } catch (edgeError: any) {
-        console.error('Edge function password reset error:', edgeError);
-        
-        // Fall back to standard Supabase method if edge function fails
-        console.log('Falling back to standard Supabase reset method');
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: resetUrl
-        });
-        
-        if (error) {
-          console.error('Password reset request error from Supabase:', error);
-          throw error;
-        }
-        
-        console.log('Password reset request successful via Supabase');
-        return { success: true, method: 'supabase' };
+        // Just log this error but don't fail - the official Supabase reset should still work
+        console.warn('Edge function additional email failed but Supabase reset should work:', edgeError);
       }
+      
+      console.log('Password reset request successful');
+      return { success: true, method: 'supabase' };
     } catch (error: any) {
       console.error('Password reset request failed:', error);
       throw error;
@@ -111,6 +102,10 @@ export function useAuthMethods() {
     try {
       // Check if we have a valid session before updating
       const { data: sessionData } = await supabase.auth.getSession();
+      
+      console.log('Session check for password update:', 
+        sessionData.session ? 'Session found' : 'No active session');
+      
       if (!sessionData.session) {
         throw new Error('No active session found. Please request a new password reset link.');
       }
