@@ -1,5 +1,6 @@
 
-export { 
+import { createCourse, updateCourse, deleteCourse } from './course/courseMutations';
+import { 
   getAllCourses,
   getCoursesByCategory,
   getCourseById,
@@ -7,15 +8,31 @@ export {
   getCourseTemplates
 } from './course/courseQueries';
 
-export {
-  createCourse,
-  updateCourse,
-  deleteCourse
-} from './course/courseMutations';
-
-export { addCourseMaterial, removeCourseMaterial } from './courseMaterialService';
-export { 
+import { addCourseMaterial, removeCourseMaterial } from './courseMaterialService';
+import { 
   getCoursesByTemplateId,
   createCourseFromTemplate 
 } from './templates';
 
+// Re-export all course-related functionality
+export { 
+  // Course queries
+  getAllCourses,
+  getCoursesByCategory,
+  getCourseById,
+  getScheduledCourses,
+  getCourseTemplates,
+  
+  // Course mutations
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  
+  // Course material operations
+  addCourseMaterial, 
+  removeCourseMaterial,
+  
+  // Template-related operations
+  getCoursesByTemplateId,
+  createCourseFromTemplate 
+};

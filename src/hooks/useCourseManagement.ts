@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData } from "@/types/course";
@@ -20,6 +21,8 @@ export const useCourseManagement = () => {
     try {
       setIsLoading(true);
       setLoadError(null);
+      
+      console.log("Loading all courses...");
       const allCourses = await getAllCourses();
       
       if (!allCourses || allCourses.length === 0) {
@@ -28,7 +31,7 @@ export const useCourseManagement = () => {
         console.log(`Loaded ${allCourses.length} courses successfully`);
       }
       
-      // Filter to only show template courses in the management view
+      // In the management view, we're only showing templates
       const templateCourses = allCourses.filter(course => course.isTemplate === true);
       console.log(`Filtered to ${templateCourses.length} template courses`);
       setCourses(templateCourses);
@@ -51,7 +54,7 @@ export const useCourseManagement = () => {
   useEffect(() => {
     loadCourses();
     
-    // Refresh every 30 seconds instead of 5 seconds
+    // Refresh every 30 seconds
     const intervalId = setInterval(loadCourses, 30000);
     return () => clearInterval(intervalId);
   }, [loadCourses]);
@@ -83,7 +86,7 @@ export const useCourseManagement = () => {
         
         if (updated) {
           console.log("Course updated successfully:", updated);
-          await loadCourses(); // Use the loadCourses function instead of fetching directly
+          await loadCourses();
           setCurrentCourse(updated);
           uiToast({
             title: "Template updated",
@@ -97,7 +100,7 @@ export const useCourseManagement = () => {
         
         if (created) {
           console.log("Course created successfully:", created);
-          await loadCourses(); // Use the loadCourses function instead of fetching directly
+          await loadCourses();
           setCurrentCourse(created);
           uiToast({
             title: "Template created",
@@ -130,7 +133,7 @@ export const useCourseManagement = () => {
       try {
         const success = await deleteCourse(deleteCourseId);
         if (success) {
-          await loadCourses(); // Use the loadCourses function instead of fetching directly
+          await loadCourses();
           uiToast({
             title: "Template deleted",
             description: "The course template has been removed successfully."
@@ -164,7 +167,7 @@ export const useCourseManagement = () => {
       description: "The course data has been refreshed from the database."
     });
     
-    loadCourses(); // Use loadCourses instead of forcing page reload
+    loadCourses();
   };
 
   return {
@@ -186,6 +189,6 @@ export const useCourseManagement = () => {
     handleFormSubmit,
     handleDelete,
     handleForceReset,
-    refreshCourses: loadCourses // Export the refresh function
+    refreshCourses: loadCourses
   };
 };

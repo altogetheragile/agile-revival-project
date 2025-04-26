@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Course, CourseFormData } from "@/types/course";
 import { toast } from "sonner";
@@ -86,6 +87,40 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
 
 export const updateCourse = async (id: string, courseData: CourseFormData): Promise<Course | null> => {
   try {
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error("User not authenticated");
+      toast.error("Authentication required", {
+        description: "You must be logged in to perform this action."
+      });
+      return null;
+    }
+
+    // If this is a template, verify admin role
+    if (courseData.isTemplate) {
+      const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
+        user_id: user.id,
+        required_role: 'admin'
+      });
+
+      if (roleError) {
+        console.error("Error checking admin role:", roleError);
+        toast.error("Permission check failed", {
+          description: "Unable to verify admin permissions."
+        });
+        return null;
+      }
+
+      if (!isAdmin) {
+        console.error("User lacks admin role:", user.id);
+        toast.error("Access denied", {
+          description: "Admin privileges required to manage templates."
+        });
+        return null;
+      }
+    }
+    
     const updates = mapCourseToDb(courseData);
 
     console.log("Updating course with ID:", id);
@@ -132,6 +167,55 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
 
 export const deleteCourse = async (id: string): Promise<boolean> => {
   try {
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error("User not authenticated");
+      toast.error("Authentication required", {
+        description: "You must be logged in to perform this action."
+      });
+      return false;
+    }
+
+    // First get the course to check if it's a template
+    const { data: course, error: fetchError } = await supabase
+      .from('courses')
+      .select('is_template')
+      .eq('id', id)
+      .maybeSingle();
+      
+    if (fetchError) {
+      console.error("Error fetching course for deletion:", fetchError);
+      toast.error("Failed to delete course", {
+        description: fetchError.message
+      });
+      return false;
+    }
+
+    // If it's a template, verify admin role
+    if (course?.is_template) {
+      const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
+        user_id: user.id,
+        required_role: 'admin'
+      });
+
+      if (roleError) {
+        console.error("Error checking admin role:", roleError);
+        toast.error("Permission check failed", {
+          description: "Unable to verify admin permissions."
+        });
+        return false;
+      }
+
+      if (!isAdmin) {
+        console.error("User lacks admin role:", user.id);
+        toast.error("Access denied", {
+          description: "Admin privileges required to delete templates."
+        });
+        return false;
+      }
+    }
+    
     const { error } = await supabase
       .from('courses')
       .delete()
@@ -144,7 +228,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
       return false;
     }
     
-    toast.success("Course deleted successfully");
+    toast.success(course?.is_template ? "Template deleted successfully" : "Course deleted successfully");
     return true;
   } catch (err) {
     toast.error("Failed to delete course", {

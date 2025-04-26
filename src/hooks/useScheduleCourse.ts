@@ -1,54 +1,40 @@
 
 import { useState } from 'react';
-import { Course, CourseFormData, ScheduleCourseFormData } from '@/types/course';
-import { createCourseFromTemplate } from '@/services/courseService';
 import { toast } from 'sonner';
-import { useToast } from '@/hooks/use-toast';
+import { createCourseFromTemplate } from '@/services/courseService';
+import { ScheduleCourseFormData } from '@/types/course';
 
 export const useScheduleCourse = (onSuccess?: () => void) => {
   const [isScheduling, setIsScheduling] = useState(false);
-  const { toast: uiToast } = useToast();
-  
-  const scheduleCourse = async (templateId: string, data: CourseFormData) => {
-    if (!templateId) {
-      uiToast({
-        title: "Error",
-        description: "No template selected for scheduling",
-        variant: "destructive"
-      });
-      return null;
-    }
 
+  const scheduleCourse = async (templateId: string, data: ScheduleCourseFormData) => {
     try {
       setIsScheduling(true);
-      // Convert CourseFormData to ScheduleCourseFormData
-      const scheduleData: ScheduleCourseFormData = {
-        templateId: templateId,
-        dates: data.dates || "",
-        location: data.location || "",
-        instructor: data.instructor || "",
-        spotsAvailable: data.spotsAvailable || 0,
-        status: data.status
-      };
+      console.log("Scheduling course from template:", templateId, data);
       
-      const scheduledCourse = await createCourseFromTemplate(templateId, scheduleData);
+      const scheduledCourse = await createCourseFromTemplate(templateId, {
+        templateId,
+        dates: data.dates,
+        location: data.location,
+        instructor: data.instructor,
+        spotsAvailable: Number(data.spotsAvailable),
+        status: data.status || 'draft'
+      });
       
       if (scheduledCourse) {
-        toast("Course scheduled", {
+        toast.success("Course scheduled successfully", {
           description: `${scheduledCourse.title} has been scheduled.`
         });
-        
         if (onSuccess) {
           onSuccess();
         }
-        
         return scheduledCourse;
       }
       return null;
     } catch (error: any) {
       console.error("Error scheduling course:", error);
-      toast("Error", {
-        description: error?.message || "There was a problem scheduling the course."
+      toast.error("Failed to schedule course", {
+        description: error?.message || "An unexpected error occurred"
       });
       return null;
     } finally {
@@ -56,8 +42,5 @@ export const useScheduleCourse = (onSuccess?: () => void) => {
     }
   };
 
-  return {
-    scheduleCourse,
-    isScheduling
-  };
+  return { scheduleCourse, isScheduling };
 };
