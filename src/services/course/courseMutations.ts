@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Course, CourseFormData } from "@/types/course";
 import { toast } from "sonner";
@@ -7,7 +6,10 @@ import { mapDbToCourse, mapCourseToDb } from "./courseMappers";
 // Create a new course
 export const createCourse = async (courseData: CourseFormData): Promise<Course | null> => {
   try {
-    const newCourse = mapCourseToDb(courseData);
+    const newCourse = {
+      ...mapCourseToDb(courseData),
+      created_by: (await supabase.auth.getUser()).data.user?.id
+    };
     
     console.log("Creating course with data:", newCourse);
     console.log("Is template:", newCourse.is_template);

@@ -1,4 +1,3 @@
-
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -79,6 +78,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       status: scheduleData.status || 'draft',
       is_template: false,
       template_id: templateId,
+      created_by: (await supabase.auth.getUser()).data.user?.id,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
