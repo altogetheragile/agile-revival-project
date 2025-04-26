@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Loader2, XCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuthMethods } from '@/hooks/useAuthMethods';
 
 interface ResetPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
@@ -29,7 +29,6 @@ export default function ResetPasswordForm({
   const [localResetEmailSent, setLocalResetEmailSent] = useState(resetEmailSent);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const { toast } = useToast();
-  const { resetPassword } = useAuthMethods();
   
   // Maximum timeout increased to 20 seconds for better chances of success
   const REQUEST_TIMEOUT = 20000;
@@ -63,8 +62,38 @@ export default function ResetPasswordForm({
         description: "Sending password reset email. This may take a moment...",
       });
       
-      // Call the resetPassword function
-      await resetPassword(email);
+      // First try the standard Supabase method
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        console.error('Password reset error from Supabase:', error);
+        
+        // If Supabase fails, try our custom edge function as backup
+        try {
+          console.log('Trying direct edge function call for password reset');
+          const edgeFunctionResponse = await supabase.functions.invoke('send-email', {
+            body: {
+              type: 'reset_password',
+              email: email,
+              recipient: email,
+              template: 'reset_password',
+              resetLink: resetLink
+            }
+          });
+          
+          if (edgeFunctionResponse.error) {
+            throw new Error(edgeFunctionResponse.error.message || 'Error sending email via edge function');
+          }
+          
+          console.log('Password reset via edge function response:', edgeFunctionResponse);
+        } catch (edgeError) {
+          console.error('Edge function password reset error:', edgeError);
+          // If both methods fail, throw the original error
+          throw error;
+        }
+      }
       
       console.log('Password reset request successful');
       toast({
