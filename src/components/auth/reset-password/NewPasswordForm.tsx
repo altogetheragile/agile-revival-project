@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
@@ -39,6 +39,12 @@ export function NewPasswordForm({ error, setError, onSuccess }: NewPasswordFormP
     setIsSubmitting(true);
 
     try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error('No active session found. Please request a new password reset link.');
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
@@ -49,14 +55,16 @@ export function NewPasswordForm({ error, setError, onSuccess }: NewPasswordFormP
         title: "Password updated",
         description: "Your password has been successfully updated.",
       });
+      
       onSuccess();
       navigate('/auth');
     } catch (err: any) {
       console.error('Error updating password:', err);
-      setError(err.message || 'Failed to update password');
       
       if (err.message.includes('invalid token')) {
         setError('Your password reset link has expired. Please request a new one.');
+      } else {
+        setError(err.message || 'Failed to update password');
       }
     } finally {
       setIsSubmitting(false);
