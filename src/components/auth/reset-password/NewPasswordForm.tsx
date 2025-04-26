@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
+import { toast } from 'sonner';
 
 const passwordSchema = z.object({
   password: z
@@ -51,16 +52,28 @@ export function NewPasswordForm({ error, setError, onSuccess }: NewPasswordFormP
     setError(null);
     
     try {
+      console.log("[Password Reset] Attempting to update password");
       await updatePassword(data.password);
+      console.log("[Password Reset] Password updated successfully");
+      
       setIsComplete(true);
       onSuccess();
       
+      toast.success("Password reset successful", {
+        description: "Your password has been updated. You will be redirected to the login page."
+      });
+      
+      // Delay navigation to allow the success message to be shown
       setTimeout(() => {
         navigate('/auth');
       }, 5000);
     } catch (err: any) {
-      console.error('Password update error:', err);
+      console.error('[Password Reset] Error:', err);
       setError(err.message || 'Failed to update password. Please try again.');
+      
+      toast.error("Password reset failed", {
+        description: err.message || "There was a problem updating your password."
+      });
     } finally {
       setIsSubmitting(false);
     }
