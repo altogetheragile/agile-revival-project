@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -52,7 +53,10 @@ export function useAuthMethods() {
 
   const resetPassword = async (email: string) => {
     console.log('Requesting password reset for:', email);
-    const resetUrl = `${window.location.origin}/reset-password`;
+    
+    // Get the current URL for redirection
+    const origin = window.location.origin;
+    const resetUrl = `${origin}/reset-password`;
     console.log('Reset URL:', resetUrl);
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {

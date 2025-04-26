@@ -1,31 +1,13 @@
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { useAuthMethods } from '@/hooks/useAuthMethods';
-import { toast } from 'sonner';
-
-const passwordSchema = z.object({
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
-  confirmPassword: z.string(),
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type PasswordFormValues = z.infer<typeof passwordSchema>;
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, CheckCircle } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 interface NewPasswordFormProps {
   error: string | null;
@@ -34,126 +16,99 @@ interface NewPasswordFormProps {
 }
 
 export function NewPasswordForm({ error, setError, onSuccess }: NewPasswordFormProps) {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
   const navigate = useNavigate();
-  const { updatePassword } = useAuthMethods();
-  
-  const form = useForm<PasswordFormValues>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      password: '',
-      confirmPassword: '',
-    },
-  });
+  const { toast } = useToast();
 
-  const onSubmit = async (data: PasswordFormValues) => {
-    setIsSubmitting(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
-    
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      console.log("[Password Reset] Attempting to update password");
-      await updatePassword(data.password);
-      console.log("[Password Reset] Password updated successfully");
-      
-      setIsComplete(true);
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully updated.",
+      });
       onSuccess();
-      
-      toast.success("Password reset successful", {
-        description: "Your password has been updated. You will be redirected to the login page."
-      });
-      
-      // Delay navigation to allow the success message to be shown
-      setTimeout(() => {
-        navigate('/auth');
-      }, 5000);
+      navigate('/auth');
     } catch (err: any) {
-      console.error('[Password Reset] Error:', err);
-      setError(err.message || 'Failed to update password. Please try again.');
+      console.error('Error updating password:', err);
+      setError(err.message || 'Failed to update password');
       
-      toast.error("Password reset failed", {
-        description: err.message || "There was a problem updating your password."
-      });
+      if (err.message.includes('invalid token')) {
+        setError('Your password reset link has expired. Please request a new one.');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isComplete) {
-    return (
-      <Alert className="bg-green-50 border-green-200">
-        <CheckCircle className="h-4 w-4 text-green-600" />
-        <AlertDescription className="text-green-700">
-          <p className="font-medium">Your password has been reset successfully!</p>
-          <p className="mt-2">You will be redirected to the login page shortly. Please sign in with your new password.</p>
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   return (
-    <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>New Password</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="password" 
-                    placeholder="Enter your new password" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="password" 
-                    placeholder="Confirm your new password" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <Button 
-            type="submit" 
-            className="w-full bg-green-600 hover:bg-green-700"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              'Set New Password'
-            )}
-          </Button>
-        </form>
-      </Form>
-    </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="new-password">New Password</Label>
+        <Input
+          id="new-password"
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          required
+          className="w-full"
+          disabled={isSubmitting}
+          placeholder="Enter your new password"
+          minLength={6}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="confirm-password">Confirm New Password</Label>
+        <Input
+          id="confirm-password"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+          className="w-full"
+          disabled={isSubmitting}
+          placeholder="Confirm your new password"
+          minLength={6}
+        />
+      </div>
+
+      <Button
+        type="submit"
+        className="w-full bg-green-600 hover:bg-green-700"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? 'Updating Password...' : 'Update Password'}
+      </Button>
+    </form>
   );
 }
