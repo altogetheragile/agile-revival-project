@@ -13,6 +13,7 @@ export function useAuthState() {
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     console.log(`Checking admin status for user: ${userId}`);
     try {
+      // Using RPC call to has_role function to prevent RLS recursion issues
       const { data, error } = await supabase.rpc('has_role', {
         user_id: userId,
         required_role: 'admin'
@@ -27,6 +28,7 @@ export function useAuthState() {
         return false;
       }
 
+      // Ensure we treat the response correctly as a boolean
       const hasAdminRole = !!data;
       console.log(`Admin status for ${userId}: ${hasAdminRole ? 'admin' : 'not admin'}`);
       
@@ -66,6 +68,7 @@ export function useAuthState() {
           setIsAdminChecked(false);
           setIsAdmin(false);
           
+          // Added delay to ensure Supabase has fully processed the authentication
           setTimeout(async () => {
             if (!isMounted) return;
             try {
@@ -79,7 +82,7 @@ export function useAuthState() {
                 setIsLoading(false);
               }
             }
-          }, 100);
+          }, 300); // Increased delay to give more time for roles to be properly synchronized
         } else {
           console.log("No authenticated user, clearing admin status");
           setIsAdmin(false);
@@ -106,7 +109,7 @@ export function useAuthState() {
         console.log(`Found existing session for: ${currentSession.user.email}, id: ${currentSession.user.id}, provider: ${currentSession.user.app_metadata?.provider || 'email'}`);
         
         const isGoogleAuth = currentSession.user.app_metadata?.provider === 'google';
-        const checkDelay = isGoogleAuth ? 10 : 100;
+        const checkDelay = isGoogleAuth ? 300 : 500; // Increased delays for more reliable role checking
         
         setTimeout(async () => {
           if (!isMounted) return;

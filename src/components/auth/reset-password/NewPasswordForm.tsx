@@ -1,76 +1,85 @@
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { useNavigate } from 'react-router-dom';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
-import { useToast } from '@/hooks/use-toast';
+
+const passwordSchema = z.object({
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+  confirmPassword: z.string(),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 interface NewPasswordFormProps {
-  onSuccess: () => void;
   error: string | null;
   setError: (error: string | null) => void;
+  onSuccess: () => void;
 }
 
-export function NewPasswordForm({ onSuccess, error, setError }: NewPasswordFormProps) {
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+export function NewPasswordForm({ error, setError, onSuccess }: NewPasswordFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
   const navigate = useNavigate();
   const { updatePassword } = useAuthMethods();
-  const { toast } = useToast();
+  
+  const form = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
-  const validateForm = () => {
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters long');
-      return false;
-    }
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return false;
-    }
+  const onSubmit = async (data: PasswordFormValues) => {
+    setIsSubmitting(true);
     setError(null);
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    
-    setLoading(true);
     
     try {
-      await updatePassword(newPassword);
-      
-      toast({
-        title: "Password updated",
-        description: "Your password has been successfully reset",
-      });
-      
+      await updatePassword(data.password);
+      setIsComplete(true);
       onSuccess();
       
       setTimeout(() => {
         navigate('/auth');
-      }, 3000);
-    } catch (error: any) {
-      console.error('Error resetting password:', error);
-      setError(error.message || 'Failed to reset password. Please try again.');
-      
-      toast({
-        title: "Error",
-        description: error.message || 'Failed to reset password',
-        variant: "destructive",
-      });
+      }, 5000);
+    } catch (err: any) {
+      console.error('Password update error:', err);
+      setError(err.message || 'Failed to update password. Please try again.');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
+  if (isComplete) {
+    return (
+      <Alert className="bg-green-50 border-green-200">
+        <CheckCircle className="h-4 w-4 text-green-600" />
+        <AlertDescription className="text-green-700">
+          <p className="font-medium">Your password has been reset successfully!</p>
+          <p className="mt-2">You will be redirected to the login page shortly. Please sign in with your new password.</p>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="space-y-4">
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -78,61 +87,60 @@ export function NewPasswordForm({ onSuccess, error, setError }: NewPasswordFormP
         </Alert>
       )}
       
-      <div className="space-y-2">
-        <Label htmlFor="new-password">New Password</Label>
-        <Input
-          id="new-password"
-          type="password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          required
-          disabled={loading}
-          placeholder="Enter your new password"
-          className="w-full"
-          autoComplete="new-password"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="confirm-password">Confirm Password</Label>
-        <Input
-          id="confirm-password"
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          disabled={loading}
-          placeholder="Confirm your new password"
-          className="w-full"
-          autoComplete="new-password"
-        />
-      </div>
-      
-      <Button
-        type="submit"
-        className="w-full bg-green-600 hover:bg-green-700"
-        disabled={loading}
-      >
-        {loading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Updating Password...
-          </>
-        ) : (
-          'Reset Password'
-        )}
-      </Button>
-      
-      <div className="text-center mt-4">
-        <Button
-          type="button"
-          variant="link"
-          onClick={() => navigate('/auth')}
-          className="text-green-600"
-        >
-          Back to Sign In
-        </Button>
-      </div>
-    </form>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>New Password</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="password" 
+                    placeholder="Enter your new password" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="password" 
+                    placeholder="Confirm your new password" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <Button 
+            type="submit" 
+            className="w-full bg-green-600 hover:bg-green-700"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              'Set New Password'
+            )}
+          </Button>
+        </form>
+      </Form>
+    </div>
   );
 }
