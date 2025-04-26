@@ -3,12 +3,45 @@ import { Course, CourseFormData } from "@/types/course";
 import { toast } from "sonner";
 import { mapDbToCourse, mapCourseToDb } from "./courseMappers";
 
-// Create a new course
 export const createCourse = async (courseData: CourseFormData): Promise<Course | null> => {
   try {
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error("User not authenticated");
+      toast.error("Authentication required", {
+        description: "You must be logged in to perform this action."
+      });
+      return null;
+    }
+
+    // If this is a template, verify admin role
+    if (courseData.isTemplate) {
+      const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
+        user_id: user.id,
+        required_role: 'admin'
+      });
+
+      if (roleError) {
+        console.error("Error checking admin role:", roleError);
+        toast.error("Permission check failed", {
+          description: "Unable to verify admin permissions."
+        });
+        return null;
+      }
+
+      if (!isAdmin) {
+        console.error("User lacks admin role:", user.id);
+        toast.error("Access denied", {
+          description: "Admin privileges required to create templates."
+        });
+        return null;
+      }
+    }
+
     const newCourse = {
       ...mapCourseToDb(courseData),
-      created_by: (await supabase.auth.getUser()).data.user?.id
+      created_by: user.id
     };
     
     console.log("Creating course with data:", newCourse);
@@ -51,7 +84,6 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
   }
 };
 
-// Update an existing course
 export const updateCourse = async (id: string, courseData: CourseFormData): Promise<Course | null> => {
   try {
     const updates = mapCourseToDb(courseData);
@@ -98,7 +130,6 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
   }
 };
 
-// Delete a course
 export const deleteCourse = async (id: string): Promise<boolean> => {
   try {
     const { error } = await supabase

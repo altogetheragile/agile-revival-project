@@ -1,3 +1,4 @@
+
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -8,6 +9,39 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
   try {
     console.log(`Creating course from template ID: ${templateId}`, scheduleData);
     
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error("User not authenticated");
+      toast.error("Authentication required", {
+        description: "You must be logged in to perform this action."
+      });
+      return null;
+    }
+    
+    // Verify admin role using RPC function
+    const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
+      user_id: user.id,
+      required_role: 'admin'
+    });
+
+    if (roleError) {
+      console.error("Error checking admin role:", roleError);
+      toast.error("Permission check failed", {
+        description: "Unable to verify admin permissions."
+      });
+      return null;
+    }
+
+    if (!isAdmin) {
+      console.error("User lacks admin role:", user.id);
+      toast.error("Access denied", {
+        description: "Admin privileges required to manage templates."
+      });
+      return null;
+    }
+    
+    // Continue with existing template handling
     if (templateId.startsWith('template-')) {
       const fallbackTemplate = fallbackTemplates.find(t => t.id === templateId);
       if (!fallbackTemplate) {
@@ -78,7 +112,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       status: scheduleData.status || 'draft',
       is_template: false,
       template_id: templateId,
-      created_by: (await supabase.auth.getUser()).data.user?.id,
+      created_by: user.id, // Use verified user ID
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
