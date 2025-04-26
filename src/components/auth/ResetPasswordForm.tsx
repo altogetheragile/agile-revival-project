@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, XCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
@@ -62,13 +63,8 @@ export default function ResetPasswordForm({
         description: "Sending password reset email. This may take a moment...",
       });
       
-      // First try the standard Supabase method
-      const { error } = await resetPassword(email);
-      
-      if (error) {
-        console.error('Password reset error from Supabase:', error);
-        throw error;
-      }
+      // Call the resetPassword function
+      await resetPassword(email);
       
       console.log('Password reset request successful');
       toast({
