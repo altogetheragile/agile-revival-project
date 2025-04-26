@@ -72,11 +72,14 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
 
   const handleFormSubmit = async (data: CourseFormData) => {
     if (template) {
-      // Use our new hook to handle the scheduling
+      // Fix: Only pass properties that match the ScheduleCourseFormData interface
       await scheduleCourse(template.id, {
-        ...data,
-        isTemplate: false,
-        templateId: template.id
+        templateId: template.id,
+        dates: data.dates,
+        location: data.location,
+        instructor: data.instructor,
+        spotsAvailable: Number(data.spotsAvailable),
+        status: data.status as "draft" | "published" || "draft"
       });
     }
     // Also call the parent's onSubmit for backward compatibility
