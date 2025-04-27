@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,7 @@ import { AlertCircle, CheckCircle, Loader2, XCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { ResetPasswordAlert } from './ResetPasswordAlert';
 import { ResetPasswordSuccess } from './ResetPasswordSuccess';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 interface ResetPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
@@ -24,6 +23,7 @@ export function ResetPasswordForm({
   error: externalError,
   resetEmailSent: externalResetEmailSent
 }: ResetPasswordFormProps) {
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [retryCount, setRetryCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,17 +31,14 @@ export function ResetPasswordForm({
   const [localResetEmailSent, setLocalResetEmailSent] = useState(externalResetEmailSent);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   
-  // Maximum timeout increased to 20 seconds for better chances of success
   const REQUEST_TIMEOUT = 20000;
 
-  // Clear timeout error when email changes
   useEffect(() => {
     if (timeoutError) {
       setTimeoutError(null);
     }
   }, [email]);
   
-  // Cleanup function for any pending requests
   useEffect(() => {
     return () => {
       if (abortController) {
@@ -50,7 +47,6 @@ export function ResetPasswordForm({
     };
   }, [abortController]);
 
-  // Update local state when external props change
   useEffect(() => {
     if (externalResetEmailSent !== localResetEmailSent) {
       setLocalResetEmailSent(externalResetEmailSent);
@@ -69,24 +65,19 @@ export function ResetPasswordForm({
     setIsSubmitting(true);
     setTimeoutError(null);
     
-    // Create a new abort controller for this request
     const controller = new AbortController();
     setAbortController(controller);
     
-    // Set a timeout to abort the request after specified timeout
     const timeoutId = setTimeout(() => {
       controller.abort('timeout');
       setTimeoutError("Request timed out. The server might be busy but your request may still be processed. Please check your email in a few minutes.");
       setIsSubmitting(false);
       
-      // Even though it timed out, we'll show a toast suggesting to check email
       toast({
-        title: "Request Processing",
         description: "Your request is being processed but is taking longer than expected. Please check your email in a few minutes.",
         duration: 6000,
       });
       
-      // Assume it might have worked despite the timeout
       setLocalResetEmailSent(true);
     }, REQUEST_TIMEOUT);
     
@@ -97,7 +88,6 @@ export function ResetPasswordForm({
       clearTimeout(timeoutId);
       setRetryCount(0);
       
-      // Show success even if the parent component hasn't updated
       setLocalResetEmailSent(true);
     } catch (error: any) {
       console.log('Error in ResetPasswordForm:', error);
@@ -116,7 +106,6 @@ export function ResetPasswordForm({
     }
   };
 
-  // Allow user to cancel a pending request
   const handleCancel = () => {
     if (abortController) {
       abortController.abort('canceled by user');
@@ -130,7 +119,6 @@ export function ResetPasswordForm({
   const displayError = timeoutError || externalError;
   const buttonText = isLoading ? 'Processing...' : 'Send Reset Link';
   
-  // Use either the prop value or local state
   const showSuccess = externalResetEmailSent || localResetEmailSent;
 
   if (showSuccess) {

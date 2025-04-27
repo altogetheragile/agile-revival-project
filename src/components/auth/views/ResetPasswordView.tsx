@@ -10,7 +10,6 @@ interface ResetPasswordViewProps {
 }
 
 export default function ResetPasswordView({ 
-  onSubmit, 
   error, 
   resetEmailSent 
 }: ResetPasswordViewProps) {
@@ -22,14 +21,11 @@ export default function ResetPasswordView({
     initiatePasswordReset
   } = usePasswordReset();
 
-  // Wrapper function to convert the return type from Promise<{success, error}> to Promise<void>
   const handleSubmit = async (email: string): Promise<void> => {
     try {
       await initiatePasswordReset(email);
-      // We're ignoring the return value since the parent component expects Promise<void>
     } catch (error) {
       console.error('Error in ResetPasswordView.handleSubmit:', error);
-      // Error is already handled by the hook
     }
   };
 
