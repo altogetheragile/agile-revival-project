@@ -8,15 +8,13 @@ import { AuthMode } from './AuthContainer';
 import LoginView from './views/LoginView';
 import SignupView from './views/SignupView';
 import ResetPasswordView from './views/ResetPasswordView';
-import { usePasswordReset } from '@/hooks/usePasswordReset';
 
 export default function AuthForms() {
   const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
   const { errorMessage, handleError, setErrorMessage } = useAuthError();
-  const { initiatePasswordReset } = usePasswordReset();
 
   const handleSignIn = async (email: string, password: string) => {
     try {
@@ -56,7 +54,7 @@ export default function AuthForms() {
     setErrorMessage(null);
     
     try {
-      const result = await initiatePasswordReset(email);
+      const result = await resetPassword(email);
       
       if (!result.success && result.error) {
         throw result.error;
