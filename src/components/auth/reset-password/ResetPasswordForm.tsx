@@ -1,10 +1,13 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, XCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { ResetPasswordAlert } from './ResetPasswordAlert';
+import { ResetPasswordSuccess } from './ResetPasswordSuccess';
+import { toast } from 'sonner';
 
 interface ResetPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
@@ -17,13 +20,43 @@ interface ResetPasswordFormProps {
 export function ResetPasswordForm({ 
   onSubmit, 
   onSwitchToLogin, 
-  loading, 
-  error,
-  resetEmailSent 
+  loading: externalLoading, 
+  error: externalError,
+  resetEmailSent: externalResetEmailSent
 }: ResetPasswordFormProps) {
   const [email, setEmail] = useState('');
   const [retryCount, setRetryCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeoutError, setTimeoutError] = useState<string | null>(null);
+  const [localResetEmailSent, setLocalResetEmailSent] = useState(externalResetEmailSent);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
   
+  // Maximum timeout increased to 20 seconds for better chances of success
+  const REQUEST_TIMEOUT = 20000;
+
+  // Clear timeout error when email changes
+  useEffect(() => {
+    if (timeoutError) {
+      setTimeoutError(null);
+    }
+  }, [email]);
+  
+  // Cleanup function for any pending requests
+  useEffect(() => {
+    return () => {
+      if (abortController) {
+        abortController.abort();
+      }
+    };
+  }, [abortController]);
+
+  // Update local state when external props change
+  useEffect(() => {
+    if (externalResetEmailSent !== localResetEmailSent) {
+      setLocalResetEmailSent(externalResetEmailSent);
+    }
+  }, [externalResetEmailSent]);
+
   const handleRetry = async () => {
     setRetryCount(prev => prev + 1);
     return handleSubmit(new Event('retry') as any);
@@ -31,75 +64,87 @@ export function ResetPasswordForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;
+    if (isSubmitting || externalLoading) return;
+    
+    setIsSubmitting(true);
+    setTimeoutError(null);
+    
+    // Create a new abort controller for this request
+    const controller = new AbortController();
+    setAbortController(controller);
+    
+    // Set a timeout to abort the request after specified timeout
+    const timeoutId = setTimeout(() => {
+      controller.abort('timeout');
+      setTimeoutError("Request timed out. The server might be busy but your request may still be processed. Please check your email in a few minutes.");
+      setIsSubmitting(false);
+      
+      // Even though it timed out, we'll show a toast suggesting to check email
+      toast({
+        title: "Request Processing",
+        description: "Your request is being processed but is taking longer than expected. Please check your email in a few minutes.",
+        duration: 6000,
+      });
+      
+      // Assume it might have worked despite the timeout
+      setLocalResetEmailSent(true);
+    }, REQUEST_TIMEOUT);
     
     try {
+      console.log(`Attempting password reset for ${email} (attempt ${retryCount + 1})`);
       await onSubmit(email);
-    } catch (error) {
-      console.error('Error in ResetPasswordForm:', error);
+      
+      clearTimeout(timeoutId);
+      setRetryCount(0);
+      
+      // Show success even if the parent component hasn't updated
+      setLocalResetEmailSent(true);
+    } catch (error: any) {
+      console.log('Error in ResetPasswordForm:', error);
+      
+      clearTimeout(timeoutId);
+      
+      if (error.message?.includes('Network') || error.message?.includes('time') || error.message === '{}') {
+        setTimeoutError("The request timed out. The server might be busy, but your request may still be processed. Please check your email or try again.");
+      } else {
+        setTimeoutError(error.message || "An unexpected error occurred");
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      setIsSubmitting(false);
+      setAbortController(null);
     }
   };
 
-  if (resetEmailSent) {
-    return (
-      <Alert className="bg-green-50 border-green-200">
-        <CheckCircle className="h-4 w-4 text-green-600" />
-        <AlertDescription className="text-green-700">
-          <p className="font-medium">Password reset link sent</p>
-          <p className="mt-2">If an account exists with this email, you'll receive password reset instructions shortly.</p>
-          <p className="mt-2 text-sm">
-            Please check both your inbox and spam folders. If you don't receive an email within a few minutes:
-          </p>
-          <ul className="list-disc pl-5 mt-1 text-sm">
-            <li>Check your spam/junk folder</li>
-            <li>Verify you entered the correct email address</li>
-            <li>Try requesting another reset link</li>
-          </ul>
-          <div className="mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onSwitchToLogin}
-              className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
-            >
-              Back to Sign In
-            </Button>
-          </div>
-        </AlertDescription>
-      </Alert>
-    );
+  // Allow user to cancel a pending request
+  const handleCancel = () => {
+    if (abortController) {
+      abortController.abort('canceled by user');
+      setTimeoutError("Request canceled");
+    }
+    setIsSubmitting(false);
+    setAbortController(null);
+  };
+
+  const isLoading = externalLoading || isSubmitting;
+  const displayError = timeoutError || externalError;
+  const buttonText = isLoading ? 'Processing...' : 'Send Reset Link';
+  
+  // Use either the prop value or local state
+  const showSuccess = externalResetEmailSent || localResetEmailSent;
+
+  if (showSuccess) {
+    return <ResetPasswordSuccess onSwitchToLogin={onSwitchToLogin} />;
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {error}
-            {retryCount > 0 && (
-              <p className="mt-2 text-sm">
-                Tips to resolve:
-                <ul className="list-disc pl-5 mt-1">
-                  <li>Wait a few moments and try again</li>
-                  <li>Check your internet connection</li>
-                  <li>If the issue persists, please contact support</li>
-                </ul>
-              </p>
-            )}
-            {(error.includes('timeout') || error.includes('busy')) && (
-              <Button 
-                type="button" 
-                onClick={handleRetry} 
-                className="mt-2 bg-amber-500 hover:bg-amber-600 text-white"
-                size="sm"
-              >
-                Try Again
-              </Button>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
+      <ResetPasswordAlert 
+        error={displayError}
+        retryCount={retryCount}
+        onRetry={handleRetry}
+        onSwitchToLogin={onSwitchToLogin}
+      />
       
       <div className="space-y-2">
         <Label htmlFor="email">Email Address</Label>
@@ -111,7 +156,7 @@ export function ResetPasswordForm({
           onChange={(e) => setEmail(e.target.value)}
           required
           className="w-full"
-          disabled={loading}
+          disabled={isLoading}
           autoComplete="email"
         />
       </div>
@@ -121,20 +166,33 @@ export function ResetPasswordForm({
       </div>
       
       <div>
-        <Button 
-          type="submit" 
-          className="w-full bg-green-600 hover:bg-green-700 transition-colors"
-          disabled={loading}
-        >
-          {loading ? (
-            <>
+        {isLoading ? (
+          <div className="flex space-x-2">
+            <Button 
+              type="button" 
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+              onClick={handleCancel}
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              className="w-full"
+              disabled={true}
+            >
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending...
-            </>
-          ) : (
-            'Send Reset Link'
-          )}
-        </Button>
+              {buttonText}
+            </Button>
+          </div>
+        ) : (
+          <Button 
+            type="submit" 
+            className="w-full bg-green-600 hover:bg-green-700 transition-colors"
+          >
+            {buttonText}
+          </Button>
+        )}
       </div>
       
       <div className="text-center">
@@ -142,7 +200,7 @@ export function ResetPasswordForm({
           type="button"
           variant="link"
           onClick={onSwitchToLogin}
-          disabled={loading}
+          disabled={isLoading}
           className="text-green-600 hover:text-green-700"
         >
           Back to Sign In

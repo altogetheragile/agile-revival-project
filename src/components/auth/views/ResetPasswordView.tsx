@@ -1,5 +1,5 @@
 
-import { useResetPassword } from '@/hooks/useResetPassword';
+import { usePasswordReset } from '@/hooks/usePasswordReset';
 import { ResetPasswordForm } from '../reset-password/ResetPasswordForm';
 import { useAuthForm } from '@/contexts/AuthFormContext';
 
@@ -16,18 +16,21 @@ export default function ResetPasswordView({
 }: ResetPasswordViewProps) {
   const { loading, setMode } = useAuthForm();
   const {
-    handleResetPassword,
     isSubmitting,
     error: resetError,
-    localResetEmailSent
-  } = useResetPassword();
+    localResetEmailSent,
+    initiatePasswordReset
+  } = usePasswordReset();
 
   // Wrapper function to convert the return type from Promise<{success, error}> to Promise<void>
   const handleSubmit = async (email: string): Promise<void> => {
-    const result = await handleResetPassword(email);
-    // We're ignoring the return value since the parent component expects Promise<void>
-    // The hook already handles setting error states and success states internally
-    return;
+    try {
+      await initiatePasswordReset(email);
+      // We're ignoring the return value since the parent component expects Promise<void>
+    } catch (error) {
+      console.error('Error in ResetPasswordView.handleSubmit:', error);
+      // Error is already handled by the hook
+    }
   };
 
   return (
