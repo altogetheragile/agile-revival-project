@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,25 @@ export function EmailTester() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("test");
 
+  const validateEmail = (email: string) => {
+    if (!email.trim()) {
+      return "Please enter a recipient email address";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return "Please enter a valid email address";
+    }
+    return null;
+  };
+
   const sendTestEmail = async () => {
+    const validationError = validateEmail(recipient);
+    if (validationError) {
+      setLastError(validationError);
+      toast.error(validationError);
+      return;
+    }
+
     try {
       setSending(true);
       setLastError(null);
@@ -30,26 +47,30 @@ export function EmailTester() {
       
       if (error) throw error;
       
-      toast("Test email sent successfully! Please check your inbox or spam folder.");
+      toast.success("Test email sent successfully! Please check your inbox or spam folder.");
       setShowEmailInfo(true);
+      setLastError(null);
       
       console.log('Standard test email sent through edge function');
     } catch (error: any) {
       console.error('Failed to send test email:', error);
-      setLastError(error.message || "Failed to send email");
-      toast("Failed to send email: " + (error.message || "Unknown error"));
+      const errorMessage = error.message || "Failed to send email";
+      setLastError(errorMessage);
+      toast.error("Failed to send email: " + errorMessage);
     } finally {
       setSending(false);
     }
   };
   
   const sendTestPasswordReset = async () => {
+    const validationError = validateEmail(recipient);
+    if (validationError) {
+      setLastError(validationError);
+      toast.error(validationError);
+      return;
+    }
+
     try {
-      if (!recipient) {
-        toast("Please enter a recipient email address");
-        return;
-      }
-      
       setSending(true);
       setLastError(null);
       
@@ -60,14 +81,16 @@ export function EmailTester() {
       
       if (supabaseError) throw supabaseError;
       
-      toast("Password reset email sent. Check your inbox or spam folder.");
+      toast.success("Password reset email sent. Check your inbox or spam folder.");
       setShowEmailInfo(true);
+      setLastError(null);
       
       console.log('Password reset test completed');
     } catch (error: any) {
       console.error('Failed to send password reset test:', error);
-      setLastError(error.message || "Unknown error");
-      toast("Failed to send password reset email: " + (error.message || "Unknown error"));
+      const errorMessage = error.message || "Failed to send password reset email";
+      setLastError(errorMessage);
+      toast.error("Failed to send password reset email: " + errorMessage);
     } finally {
       setSending(false);
     }
@@ -128,7 +151,7 @@ export function EmailTester() {
               />
               <Button 
                 onClick={sendTestEmail}
-                disabled={sending}
+                disabled={sending || !recipient.trim()}
               >
                 {sending ? 'Sending...' : 'Send Test Email'}
               </Button>
@@ -155,7 +178,7 @@ export function EmailTester() {
               />
               <Button 
                 onClick={sendTestPasswordReset}
-                disabled={sending || !recipient}
+                disabled={sending || !recipient.trim()}
                 variant="secondary"
               >
                 {sending ? 'Sending...' : 'Test Password Reset'}
