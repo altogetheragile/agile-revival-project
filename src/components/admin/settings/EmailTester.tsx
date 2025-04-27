@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,6 @@ export function EmailTester() {
   const [recipient, setRecipient] = useState('');
   const [showEmailInfo, setShowEmailInfo] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
-  const [testPasswordReset, setTestPasswordReset] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("test");
 
   const sendTestEmail = async () => {
@@ -24,28 +24,20 @@ export function EmailTester() {
       setSending(true);
       setLastError(null);
       
-      // Use Supabase to send a test email directly through Mailgun
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        recipient || 'test@example.com', 
-        {
-          redirectTo: `${window.location.origin}/reset-password`
-        }
-      );
+      const { error } = await supabase.functions.invoke('send-test-email', {
+        body: { recipient }
+      });
       
       if (error) throw error;
       
-      toast("Test email sent. Please check your inbox or spam folder.");
-      
-      console.log('Email sent through Supabase auth system');
+      toast("Test email sent successfully! Please check your inbox or spam folder.");
       setShowEmailInfo(true);
+      
+      console.log('Standard test email sent through edge function');
     } catch (error: any) {
       console.error('Failed to send test email:', error);
-      
-      let errorMessage = error.message || "Unknown error";
-      
-      setLastError(errorMessage);
-      
-      toast.error("Failed to send email: " + errorMessage);
+      setLastError(error.message || "Failed to send email");
+      toast("Failed to send email: " + (error.message || "Unknown error"));
     } finally {
       setSending(false);
     }
@@ -54,15 +46,13 @@ export function EmailTester() {
   const sendTestPasswordReset = async () => {
     try {
       if (!recipient) {
-        toast.error("Please enter a recipient email address");
+        toast("Please enter a recipient email address");
         return;
       }
       
       setSending(true);
       setLastError(null);
-      setTestPasswordReset(true);
       
-      // Use Supabase's built-in password reset
       const resetUrl = `${window.location.origin}/reset-password`;
       const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(recipient, {
         redirectTo: resetUrl
@@ -71,18 +61,15 @@ export function EmailTester() {
       if (supabaseError) throw supabaseError;
       
       toast("Password reset email sent. Check your inbox or spam folder.");
-      
       setShowEmailInfo(true);
-      console.log('Password reset test completed');
       
+      console.log('Password reset test completed');
     } catch (error: any) {
       console.error('Failed to send password reset test:', error);
       setLastError(error.message || "Unknown error");
-      
-      toast.error("Failed to send password reset email: " + (error.message || "Unknown error"));
+      toast("Failed to send password reset email: " + (error.message || "Unknown error"));
     } finally {
       setSending(false);
-      setTestPasswordReset(false);
     }
   };
 
@@ -91,7 +78,7 @@ export function EmailTester() {
       <h3 className="text-lg font-semibold">Test Email Configuration</h3>
       
       {lastError && (
-        <Alert variant="destructive" className="mb-4">
+        <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Email Error</AlertTitle>
           <AlertDescription className="space-y-2">
@@ -109,7 +96,7 @@ export function EmailTester() {
       )}
       
       {showEmailInfo && !lastError && (
-        <Alert variant="default" className="mb-4">
+        <Alert variant="default">
           <Info className="h-4 w-4" />
           <AlertTitle>Email Sent!</AlertTitle>
           <AlertDescription>
@@ -147,7 +134,7 @@ export function EmailTester() {
               </Button>
             </div>
             <p className="text-sm text-gray-500">
-              This will send a test email using Supabase's email service (Mailgun).
+              This will send a test email using Mailgun through Supabase.
             </p>
           </div>
         </TabsContent>
@@ -155,7 +142,7 @@ export function EmailTester() {
         <TabsContent value="password-reset" className="mt-4">
           <div className="flex flex-col gap-4">
             <p className="text-sm text-gray-700">
-              Test the password reset email flow specifically. This will attempt to send a real password reset email.
+              Test the password reset email flow specifically. This will send a real password reset email.
             </p>
             <div className="flex flex-col md:flex-row gap-4">
               <Input
