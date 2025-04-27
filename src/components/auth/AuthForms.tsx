@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -15,6 +16,7 @@ export default function AuthForms() {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const { signIn, signUp } = useAuth();
   const { errorMessage, handleError, setErrorMessage } = useAuthError();
+  const { initiatePasswordReset } = usePasswordReset();
 
   const handleSignIn = async (email: string, password: string) => {
     try {
@@ -54,8 +56,6 @@ export default function AuthForms() {
     setErrorMessage(null);
     
     try {
-      toast.loading("Sending reset link...");
-      const { initiatePasswordReset } = usePasswordReset();
       const result = await initiatePasswordReset(email);
       
       if (!result.success && result.error) {
