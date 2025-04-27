@@ -22,9 +22,12 @@ export default function ResetPasswordView({
     localResetEmailSent
   } = useResetPassword();
 
-  // Either use the hook's reset handler or the parent's handler
-  const handleSubmit = async (email: string) => {
-    return handleResetPassword(email);
+  // Wrapper function to convert the return type from Promise<{success, error}> to Promise<void>
+  const handleSubmit = async (email: string): Promise<void> => {
+    const result = await handleResetPassword(email);
+    // We're ignoring the return value since the parent component expects Promise<void>
+    // The hook already handles setting error states and success states internally
+    return;
   };
 
   return (
