@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -26,15 +25,22 @@ export function usePasswordReset() {
       // Try direct Supabase method first with timeout handling
       let supabaseError;
       try {
-        const result = await Promise.race([
+        // Adding proper type annotation for the Promise.race result
+        const result: { data: any, error: any } | Error = await Promise.race([
           supabase.auth.resetPasswordForEmail(email, {
             redirectTo: resetUrl,
           }),
-          new Promise((_, reject) => 
+          new Promise<Error>((_, reject) => 
             setTimeout(() => reject(new Error('Supabase password reset timed out')), 5000)
           )
         ]);
         
+        // Check if the result is an Error object from the timeout
+        if (result instanceof Error) {
+          throw result;
+        }
+        
+        // Now TypeScript knows this is the Supabase result with error property
         supabaseError = result.error;
         
         if (!supabaseError) {
