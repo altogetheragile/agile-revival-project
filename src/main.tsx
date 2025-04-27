@@ -1,8 +1,6 @@
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
 import App from './App.tsx';
 import './index.css';
 
@@ -37,11 +35,7 @@ try {
   root.render(
     <React.StrictMode>
       <React.Suspense fallback={<div>Loading...</div>}>
-        <BrowserRouter>
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        </BrowserRouter>
+        <App />
       </React.Suspense>
     </React.StrictMode>
   );
