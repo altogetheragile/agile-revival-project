@@ -74,8 +74,11 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
     if (template) {
       // Use our new hook to handle the scheduling
       await scheduleCourse(template.id, {
-        ...data,
-        isTemplate: false,
+        dates: data.dates || "",
+        location: data.location || "",
+        instructor: data.instructor || "",
+        spotsAvailable: Number(data.spotsAvailable || 0),
+        status: data.status || "draft",
         templateId: template.id
       });
     }

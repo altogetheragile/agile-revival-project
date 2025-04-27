@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -21,10 +22,7 @@ export default function AuthForms() {
     try {
       setLoading(true);
       setErrorMessage(null);
-      toast({
-        title: "Processing",
-        description: "Signing in...",
-      });
+      toast.loading("Signing in...");
       
       await signIn(email, password);
       window.location.href = '/';
@@ -40,15 +38,11 @@ export default function AuthForms() {
     setErrorMessage(null);
     
     try {
-      toast({
-        title: "Processing",
-        description: "Creating your account...",
-      });
+      toast.loading("Creating your account...");
       
       await signUp(email, password, firstName, lastName);
-      toast({
-        title: "Registration successful",
-        description: "Please check your email to verify your account.",
+      toast.success("Registration successful", {
+        description: "Please check your email to verify your account."
       });
     } catch (error: any) {
       handleError(error);

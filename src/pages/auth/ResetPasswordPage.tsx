@@ -13,7 +13,6 @@ export default function ResetPasswordPage() {
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [hasAccessToken, setHasAccessToken] = useState(false);
   const [isTokenChecking, setIsTokenChecking] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -124,8 +123,6 @@ export default function ResetPasswordPage() {
         <CardContent>
           {hasAccessToken ? (
             <NewPasswordForm
-              error={error}
-              setError={setError}
               onSuccess={() => setSuccess(true)}
             />
           ) : email && !tokenError ? (
