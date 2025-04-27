@@ -23,8 +23,8 @@ serve(async (req) => {
       body = await req.json();
       console.log('Request body:', JSON.stringify(body));
     } catch (error) {
-      console.log('Failed to parse JSON body:', error.message);
-      body = {};
+      console.error('Failed to parse JSON body:', error.message);
+      throw new Error(`Invalid request format: ${error.message}`);
     }
 
     // Log additional diagnostic information
@@ -32,19 +32,40 @@ serve(async (req) => {
     console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
     
     // Get SMTP credentials from environment variables
-    // These should match the Mailgun settings configured in Supabase
-    const smtpHostname = Deno.env.get('SMTP_HOST') || 'smtp.mailgun.org';
-    const smtpPort = parseInt(Deno.env.get('SMTP_PORT') || '587');
+    const smtpHostname = Deno.env.get('SMTP_HOST');
+    const smtpPortStr = Deno.env.get('SMTP_PORT');
     const smtpUsername = Deno.env.get('SMTP_USER');
     const smtpPassword = Deno.env.get('SMTP_PASS');
-    const senderEmail = Deno.env.get('SENDER_EMAIL') || 'no-reply@altogetheragile.com';
-    const senderName = Deno.env.get('SENDER_NAME') || 'AltogetherAgile';
+    const senderEmail = Deno.env.get('SENDER_EMAIL');
+    const senderName = Deno.env.get('SENDER_NAME');
     
-    if (!smtpUsername || !smtpPassword) {
-      throw new Error("SMTP credentials not configured. Please set SMTP_USER and SMTP_PASS environment variables.");
+    // Validate SMTP configuration
+    if (!smtpHostname) {
+      throw new Error("SMTP_HOST is not configured in environment variables");
     }
     
-    console.log(`SMTP Config: ${smtpHostname}:${smtpPort}`);
+    if (!smtpPortStr) {
+      throw new Error("SMTP_PORT is not configured in environment variables");
+    }
+    
+    if (!smtpUsername) {
+      throw new Error("SMTP_USER is not configured in environment variables");
+    }
+    
+    if (!smtpPassword) {
+      throw new Error("SMTP_PASS is not configured in environment variables");
+    }
+    
+    if (!senderEmail) {
+      throw new Error("SENDER_EMAIL is not configured in environment variables");
+    }
+    
+    const smtpPort = parseInt(smtpPortStr);
+    if (isNaN(smtpPort)) {
+      throw new Error(`Invalid SMTP_PORT: ${smtpPortStr} - must be a number`);
+    }
+    
+    console.log(`SMTP Config: ${smtpHostname}:${smtpPort} (${senderEmail})`);
     
     // Handle password reset request
     if (body.type === 'reset_password') {
@@ -73,52 +94,61 @@ serve(async (req) => {
         console.log('SMTP connection established successfully');
       } catch (connError) {
         console.error('SMTP connection failed:', connError);
-        throw new Error(`Failed to connect to SMTP server: ${connError.message}`);
+        throw new Error(`Failed to connect to SMTP server (${smtpHostname}:${smtpPort}): ${connError.message}`);
       }
       
-      // Render the email template
-      const emailHtml = renderToString(
-        React.createElement(ResetPasswordEmail, {
-          actionLink: resetLink,
-          email: email
-        })
-      );
-      
-      console.log('Sending password reset email...');
-      // Send the email
-      const result = await client.send({
-        from: `${senderName} <${senderEmail}>`,
-        to: email,
-        subject: "Reset Your AltogetherAgile Password",
-        content: emailHtml,
-        html: true,
-      });
-      
-      // Close the connection
-      await client.close();
-      
-      console.log('Password reset email result:', result);
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: "Password reset email sent successfully",
-        details: {
-          recipient: email,
-          timestamp: new Date().toISOString()
+      try {
+        // Render the email template
+        const emailHtml = renderToString(
+          React.createElement(ResetPasswordEmail, {
+            actionLink: resetLink,
+            email: email
+          })
+        );
+        
+        console.log('Sending password reset email...');
+        // Send the email
+        const result = await client.send({
+          from: senderName ? `${senderName} <${senderEmail}>` : senderEmail,
+          to: email,
+          subject: "Reset Your AltogetherAgile Password",
+          content: emailHtml,
+          html: true,
+        });
+        
+        console.log('Password reset email result:', result);
+        return new Response(JSON.stringify({ 
+          success: true, 
+          message: "Password reset email sent successfully",
+          details: {
+            recipient: email,
+            timestamp: new Date().toISOString()
+          }
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        });
+      } catch (sendError) {
+        console.error('Email sending error:', sendError);
+        throw new Error(`Failed to send password reset email: ${sendError.message}`);
+      } finally {
+        try {
+          // Always attempt to close the connection
+          await client.close();
+          console.log('SMTP connection closed');
+        } catch (closeError) {
+          console.error('Error closing SMTP connection:', closeError);
         }
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      });
+      }
     }
     
     // Check if this is a test email request
     else if (body.type === 'test') {
       console.log('Sending test email');
       
-      // Determine the recipient - either specified or fallback
-      const recipient = body.recipient || senderEmail;
-      console.log(`Sending test email to ${recipient} from ${senderEmail}`);
+      if (!body.recipient) {
+        throw new Error('No recipient email specified for test email');
+      }
       
       // Create SMTP client
       const client = new SmtpClient();
@@ -135,48 +165,57 @@ serve(async (req) => {
         console.log('SMTP connection established successfully');
       } catch (connError) {
         console.error('SMTP connection failed:', connError);
-        throw new Error(`Failed to connect to SMTP server: ${connError.message}`);
+        throw new Error(`Failed to connect to SMTP server (${smtpHostname}:${smtpPort}): ${connError.message}`);
       }
       
-      // Send the email
-      console.log('Sending test email...');
-      const result = await client.send({
-        from: `${senderName} <${senderEmail}>`,
-        to: recipient,
-        subject: "Test Email from AltogetherAgile",
-        content: `
-          <h1>Test Email</h1>
-          <p>This is a test email from your AltogetherAgile website.</p>
-          <p>If you're receiving this, your email configuration is working correctly!</p>
-          <hr />
-          <h2>Email Configuration Details:</h2>
-          <ul>
-            <li><strong>Sender Email:</strong> ${senderEmail}</li>
-            <li><strong>Sender Name:</strong> ${senderName}</li>
-            <li><strong>Recipient:</strong> ${recipient}</li>
-            <li><strong>Sent at:</strong> ${new Date().toISOString()}</li>
-          </ul>
-        `,
-        html: true,
-      });
-      
-      // Close the connection
-      await client.close();
-      
-      console.log('Test email result:', result);
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: "Email sent successfully",
-        details: {
-          recipient,
-          timestamp: new Date().toISOString(),
-          smtp_server: smtpHostname
+      try {
+        // Send the email
+        console.log(`Sending test email to ${body.recipient}...`);
+        const result = await client.send({
+          from: senderName ? `${senderName} <${senderEmail}>` : senderEmail,
+          to: body.recipient,
+          subject: "Test Email from AltogetherAgile",
+          content: `
+            <h1>Test Email</h1>
+            <p>This is a test email from your AltogetherAgile website.</p>
+            <p>If you're receiving this, your email configuration is working correctly!</p>
+            <hr />
+            <h2>Email Configuration Details:</h2>
+            <ul>
+              <li><strong>Sender Email:</strong> ${senderEmail}</li>
+              <li><strong>Sender Name:</strong> ${senderName || 'Not specified'}</li>
+              <li><strong>Recipient:</strong> ${body.recipient}</li>
+              <li><strong>Sent at:</strong> ${new Date().toISOString()}</li>
+            </ul>
+          `,
+          html: true,
+        });
+        
+        console.log('Test email result:', result);
+        return new Response(JSON.stringify({ 
+          success: true, 
+          message: "Email sent successfully",
+          details: {
+            recipient: body.recipient,
+            timestamp: new Date().toISOString(),
+            smtp_server: smtpHostname
+          }
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        });
+      } catch (sendError) {
+        console.error('Email sending error:', sendError);
+        throw new Error(`Failed to send test email: ${sendError.message}`);
+      } finally {
+        try {
+          // Always attempt to close the connection
+          await client.close();
+          console.log('SMTP connection closed');
+        } catch (closeError) {
+          console.error('Error closing SMTP connection:', closeError);
         }
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      });
+      }
     } 
     
     // Handle custom emails (e.g. welcome emails, notifications)
@@ -184,14 +223,14 @@ serve(async (req) => {
       const { recipient, subject, htmlContent, textContent } = body;
       
       if (!recipient) {
-        throw new Error('No recipient email specified');
+        throw new Error('No recipient email specified for custom email');
       }
       
       // Create SMTP client
       const client = new SmtpClient();
       
       // Connect to SMTP server
-      console.log('Attempting SMTP connection...');
+      console.log('Attempting SMTP connection for custom email...');
       try {
         await client.connectTLS({
           hostname: smtpHostname,
@@ -202,35 +241,44 @@ serve(async (req) => {
         console.log('SMTP connection established successfully');
       } catch (connError) {
         console.error('SMTP connection failed:', connError);
-        throw new Error(`Failed to connect to SMTP server: ${connError.message}`);
+        throw new Error(`Failed to connect to SMTP server (${smtpHostname}:${smtpPort}): ${connError.message}`);
       }
       
-      // Send the email
-      console.log('Sending custom email...');
-      const result = await client.send({
-        from: `${senderName} <${senderEmail}>`,
-        to: recipient,
-        subject: subject || "Message from AltogetherAgile",
-        content: htmlContent || textContent || "This is a message from AltogetherAgile.",
-        html: !!htmlContent,
-      });
-      
-      // Close the connection
-      await client.close();
-      
-      console.log('Custom email result:', result);
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: "Email sent successfully",
-        details: {
-          recipient,
-          timestamp: new Date().toISOString()
+      try {
+        // Send the email
+        console.log(`Sending custom email to ${recipient}...`);
+        const result = await client.send({
+          from: senderName ? `${senderName} <${senderEmail}>` : senderEmail,
+          to: recipient,
+          subject: subject || "Message from AltogetherAgile",
+          content: htmlContent || textContent || "This is a message from AltogetherAgile.",
+          html: !!htmlContent,
+        });
+        
+        console.log('Custom email result:', result);
+        return new Response(JSON.stringify({ 
+          success: true, 
+          message: "Email sent successfully",
+          details: {
+            recipient,
+            timestamp: new Date().toISOString()
+          }
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        });
+      } catch (sendError) {
+        console.error('Email sending error:', sendError);
+        throw new Error(`Failed to send custom email: ${sendError.message}`);
+      } finally {
+        try {
+          // Always attempt to close the connection
+          await client.close();
+          console.log('SMTP connection closed');
+        } catch (closeError) {
+          console.error('Error closing SMTP connection:', closeError);
         }
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      });
+      }
     }
     
     // Default response for unhandled cases
@@ -248,8 +296,8 @@ serve(async (req) => {
     
     // Determine if it's a configuration error
     const isConfigError = error.message?.includes('not configured') || 
-                         error.message?.includes('credentials') ||
-                         error.message?.includes('SMTP_');
+                          error.message?.includes('credentials') ||
+                          error.message?.includes('SMTP_');
     
     return new Response(JSON.stringify({ 
       error: {
