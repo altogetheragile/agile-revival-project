@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -55,12 +56,32 @@ export default function AuthForms() {
     setErrorMessage(null);
     
     try {
+      console.log('Attempting password reset for:', email);
+      toast.loading("Sending reset link...");
+      
       const result = await initiatePasswordReset(email);
       if (result.success) {
+        toast.success("Reset link sent", {
+          description: "If an account exists with this email, you'll receive reset instructions."
+        });
+        setResetEmailSent(true);
+      } else if (result.error) {
+        // Still show success toast for security, but log the error
+        console.error('Password reset error:', result.error);
+        toast.success("Reset link sent", {
+          description: "If an account exists with this email, you'll receive reset instructions."
+        });
         setResetEmailSent(true);
       }
     } catch (error: any) {
+      console.error('Unhandled password reset error:', error);
       handleError(error);
+      
+      // Still show success message for security reasons
+      toast.success("Reset link sent", {
+        description: "If an account exists with this email, you'll receive reset instructions."
+      });
+      setResetEmailSent(true);
     } finally {
       setLoading(false);
     }

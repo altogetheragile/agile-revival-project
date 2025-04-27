@@ -2,7 +2,7 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
-import { useResetPassword } from '@/hooks/useResetPassword';
+import { usePasswordReset } from '@/hooks/usePasswordReset';
 import { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -23,7 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { user, session, isAdmin, isLoading, isAdminChecked, checkAdminStatus } = useAuthState();
   const { signIn, signUp, signOut, updatePassword } = useAuthMethods();
-  const { handleResetPassword } = useResetPassword();
+  const { initiatePasswordReset } = usePasswordReset();
 
   // Authorization is ready when we've finished loading and checked admin status
   const isAuthReady = !isLoading && isAdminChecked;
@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signUp,
     signOut,
-    resetPassword: handleResetPassword,
+    resetPassword: initiatePasswordReset,
     updatePassword,
     isAdmin,
     isAuthReady,

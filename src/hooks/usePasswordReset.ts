@@ -18,11 +18,39 @@ export function usePasswordReset() {
       const resetUrl = `${window.location.origin}/reset-password`;
       console.log('[Password Reset] Using reset URL:', resetUrl);
       
+      // First try the standard Supabase method
       const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: resetUrl
       });
       
-      if (supabaseError) throw supabaseError;
+      if (supabaseError) {
+        console.error('[Password Reset] Supabase error:', supabaseError);
+        
+        // If Supabase direct method fails, try our custom edge function as backup
+        try {
+          console.log('[Password Reset] Trying edge function method...');
+          
+          const { error: edgeFunctionError } = await supabase.functions.invoke('send-email', {
+            body: {
+              type: 'reset_password',
+              email: email,
+              recipient: email,
+              resetLink: `${resetUrl}?email=${encodeURIComponent(email)}`
+            }
+          });
+          
+          if (edgeFunctionError) {
+            console.error('[Password Reset] Edge function error:', edgeFunctionError);
+            throw edgeFunctionError;
+          }
+          
+          console.log('[Password Reset] Password reset email sent via edge function');
+        } catch (edgeError) {
+          console.error('[Password Reset] Edge function attempt failed:', edgeError);
+          // If both methods fail, throw the original error
+          throw supabaseError;
+        }
+      }
       
       // For security reasons, always show success message regardless of email existence
       toast.success("If an account exists with this email, you'll receive reset instructions.");

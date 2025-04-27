@@ -1,6 +1,9 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
+import ResetPasswordEmail from "./_templates/reset-password-email.tsx";
+import { renderToString } from "npm:react-dom@18.3.1/server";
+import React from "npm:react@18.3.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,8 +46,74 @@ serve(async (req) => {
     
     console.log(`SMTP Config: ${smtpHostname}:${smtpPort}`);
     
+    // Handle password reset request
+    if (body.type === 'reset_password') {
+      console.log('Processing password reset request');
+      
+      const email = body.email || body.recipient;
+      if (!email) {
+        throw new Error('No recipient email specified for password reset');
+      }
+      
+      const resetLink = body.resetLink || `${Deno.env.get('PUBLIC_URL') || 'https://altogetheragile.com'}/reset-password?email=${encodeURIComponent(email)}`;
+      console.log(`Reset link for ${email}: ${resetLink}`);
+      
+      // Create SMTP client
+      const client = new SmtpClient();
+      
+      console.log('Attempting SMTP connection for password reset email...');
+      try {
+        // Connect to SMTP server
+        await client.connectTLS({
+          hostname: smtpHostname,
+          port: smtpPort,
+          username: smtpUsername,
+          password: smtpPassword,
+        });
+        console.log('SMTP connection established successfully');
+      } catch (connError) {
+        console.error('SMTP connection failed:', connError);
+        throw new Error(`Failed to connect to SMTP server: ${connError.message}`);
+      }
+      
+      // Render the email template
+      const emailHtml = renderToString(
+        React.createElement(ResetPasswordEmail, {
+          actionLink: resetLink,
+          email: email
+        })
+      );
+      
+      console.log('Sending password reset email...');
+      // Send the email
+      const result = await client.send({
+        from: `${senderName} <${senderEmail}>`,
+        to: email,
+        subject: "Reset Your AltogetherAgile Password",
+        content: emailHtml,
+        html: true,
+      });
+      
+      // Close the connection
+      await client.close();
+      
+      console.log('Password reset email result:', result);
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Password reset email sent successfully",
+        details: {
+          recipient: email,
+          timestamp: new Date().toISOString()
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+    
     // Check if this is a test email request
-    if (body.type === 'test') {
+    else if (body.type === 'test') {
       console.log('Sending test email');
       
       // Determine the recipient - either specified or fallback
@@ -55,14 +124,22 @@ serve(async (req) => {
       const client = new SmtpClient();
       
       // Connect to SMTP server
-      await client.connectTLS({
-        hostname: smtpHostname,
-        port: smtpPort,
-        username: smtpUsername,
-        password: smtpPassword,
-      });
+      console.log('Attempting SMTP connection...');
+      try {
+        await client.connectTLS({
+          hostname: smtpHostname,
+          port: smtpPort,
+          username: smtpUsername,
+          password: smtpPassword,
+        });
+        console.log('SMTP connection established successfully');
+      } catch (connError) {
+        console.error('SMTP connection failed:', connError);
+        throw new Error(`Failed to connect to SMTP server: ${connError.message}`);
+      }
       
       // Send the email
+      console.log('Sending test email...');
       const result = await client.send({
         from: `${senderName} <${senderEmail}>`,
         to: recipient,
@@ -88,7 +165,15 @@ serve(async (req) => {
       
       console.log('Test email result:', result);
       
-      return new Response(JSON.stringify({ success: true, message: "Email sent successfully" }), {
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Email sent successfully",
+        details: {
+          recipient,
+          timestamp: new Date().toISOString(),
+          smtp_server: smtpHostname
+        }
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       });
@@ -106,14 +191,22 @@ serve(async (req) => {
       const client = new SmtpClient();
       
       // Connect to SMTP server
-      await client.connectTLS({
-        hostname: smtpHostname,
-        port: smtpPort,
-        username: smtpUsername,
-        password: smtpPassword,
-      });
+      console.log('Attempting SMTP connection...');
+      try {
+        await client.connectTLS({
+          hostname: smtpHostname,
+          port: smtpPort,
+          username: smtpUsername,
+          password: smtpPassword,
+        });
+        console.log('SMTP connection established successfully');
+      } catch (connError) {
+        console.error('SMTP connection failed:', connError);
+        throw new Error(`Failed to connect to SMTP server: ${connError.message}`);
+      }
       
       // Send the email
+      console.log('Sending custom email...');
       const result = await client.send({
         from: `${senderName} <${senderEmail}>`,
         to: recipient,
@@ -127,7 +220,14 @@ serve(async (req) => {
       
       console.log('Custom email result:', result);
       
-      return new Response(JSON.stringify({ success: true, message: "Email sent successfully" }), {
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Email sent successfully",
+        details: {
+          recipient,
+          timestamp: new Date().toISOString()
+        }
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       });
@@ -136,7 +236,7 @@ serve(async (req) => {
     // Default response for unhandled cases
     return new Response(JSON.stringify({ 
       error: {
-        message: "Invalid request type. Please specify 'test' or 'custom' type."
+        message: "Invalid request type. Please specify 'test', 'reset_password' or 'custom' type."
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -145,14 +245,23 @@ serve(async (req) => {
     
   } catch (error: any) {
     console.error('Email sending error:', error);
+    
+    // Determine if it's a configuration error
+    const isConfigError = error.message?.includes('not configured') || 
+                         error.message?.includes('credentials') ||
+                         error.message?.includes('SMTP_');
+    
     return new Response(JSON.stringify({ 
       error: {
         message: error.message,
-        hint: 'Check your SMTP configuration and ensure all required environment variables are set.'
+        type: isConfigError ? 'configuration' : 'sending',
+        hint: isConfigError 
+          ? 'Check your SMTP configuration in Supabase settings and ensure all required environment variables are set.'
+          : 'There was an error sending the email. Check the Edge Function logs for more details.'
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500
+      status: isConfigError ? 400 : 500
     });
   }
 });
