@@ -72,6 +72,34 @@ export function usePasswordReset() {
     }
   };
 
+  const completePasswordReset = async (newPassword: string) => {
+    try {
+      setIsSubmitting(true);
+      console.log('Attempting to update password...');
+      
+      const { error } = await supabase.auth.updateUser({ 
+        password: newPassword
+      });
+
+      if (error) {
+        console.error('Error updating password:', error);
+        throw error;
+      }
+
+      console.log('Password updated successfully');
+      toast.success('Your password has been updated successfully');
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Password update error:', error);
+      setError(error.message);
+      toast.error('Failed to update password');
+      return { success: false, error };
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return {
     isSubmitting,
     setIsSubmitting,
@@ -80,6 +108,7 @@ export function usePasswordReset() {
     localResetEmailSent,
     setLocalResetEmailSent,
     initiatePasswordReset,
+    completePasswordReset,
     navigate
   };
 }
