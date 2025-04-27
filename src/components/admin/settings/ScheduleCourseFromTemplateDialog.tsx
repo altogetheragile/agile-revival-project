@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,7 +27,6 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
     onOpenChange(false);
   });
 
-  // Convert template to schedulable course data
   const prepareCourseData = (): CourseFormData => {
     if (!template) {
       return {
@@ -53,7 +51,7 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
       instructor: template.instructor && template.instructor !== "To Be Assigned" ? template.instructor : "",
       price: template.price,
       category: template.category,
-      spotsAvailable: 12, // Default value
+      spotsAvailable: 12,
       learningOutcomes: template.learningOutcomes,
       prerequisites: template.prerequisites,
       targetAudience: template.targetAudience,
@@ -65,14 +63,13 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
       imageAspectRatio: template.imageAspectRatio,
       imageSize: template.imageSize,
       imageLayout: template.imageLayout,
-      isTemplate: false, // Explicitly set to false for scheduled courses
-      templateId: template.id // Reference back to source template
+      isTemplate: false,
+      templateId: template.id
     };
   };
 
   const handleFormSubmit = async (data: CourseFormData) => {
     if (template) {
-      // Use our new hook to handle the scheduling
       await scheduleCourse(template.id, {
         dates: data.dates || "",
         location: data.location || "",
@@ -82,7 +79,6 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
         templateId: template.id
       });
     }
-    // Also call the parent's onSubmit for backward compatibility
     onSubmit(data);
   };
 

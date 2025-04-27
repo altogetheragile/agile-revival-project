@@ -1,4 +1,3 @@
-
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -7,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { usePasswordReset } from '@/hooks/usePasswordReset';
 
 const passwordSchema = z.object({
@@ -31,7 +30,7 @@ interface NewPasswordFormProps {
 
 export function NewPasswordForm({ onSuccess }: NewPasswordFormProps) {
   const navigate = useNavigate();
-  const { isSubmitting, error, setError, completePasswordReset } = usePasswordReset();
+  const { isSubmitting, error, completePasswordReset } = usePasswordReset();
   
   const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
