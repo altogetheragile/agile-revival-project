@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ResetPasswordAlert } from './ResetPasswordAlert';
 import { ResetPasswordSuccess } from './ResetPasswordSuccess';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client'; 
 
 interface ResetPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
@@ -58,6 +60,37 @@ export function ResetPasswordForm({
     return handleSubmit(new Event('retry') as any);
   };
 
+  const handleResetPassword = async () => {
+    try {
+      console.log(`Initiating direct password reset for: ${email}`);
+      
+      // Show an immediate toast to let the user know the process has started
+      toast({
+        description: "Sending password reset email...",
+      });
+      
+      // Call Supabase directly for the reset password
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        console.error('Password reset error from Supabase:', error);
+        throw error;
+      }
+      
+      console.log('Password reset request successful');
+      toast({
+        description: "If an account exists with this email, you'll receive reset instructions shortly.",
+      });
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Password reset API error:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting || externalLoading) return;
@@ -83,7 +116,16 @@ export function ResetPasswordForm({
     
     try {
       console.log(`Attempting password reset for ${email} (attempt ${retryCount + 1})`);
-      await onSubmit(email);
+      
+      // First try direct Supabase method
+      await handleResetPassword();
+      
+      // Also try via the provided onSubmit callback as a backup
+      try {
+        await onSubmit(email);
+      } catch (callbackError) {
+        console.log('Note: callback onSubmit failed but direct reset succeeded:', callbackError);
+      }
       
       clearTimeout(timeoutId);
       setRetryCount(0);
@@ -94,10 +136,20 @@ export function ResetPasswordForm({
       
       clearTimeout(timeoutId);
       
-      if (error.message?.includes('Network') || error.message?.includes('time') || error.message === '{}') {
-        setTimeoutError("The request timed out. The server might be busy, but your request may still be processed. Please check your email or try again.");
-      } else {
-        setTimeoutError(error.message || "An unexpected error occurred");
+      // Try the callback method if the direct method fails
+      if (!localResetEmailSent) {
+        try {
+          await onSubmit(email);
+          setLocalResetEmailSent(true);
+        } catch (callbackError) {
+          console.log('Both reset methods failed:', callbackError);
+          
+          if (error.message?.includes('Network') || error.message?.includes('time') || error.message === '{}') {
+            setTimeoutError("The request timed out. The server might be busy, but your request may still be processed. Please check your email or try again.");
+          } else {
+            setTimeoutError(error.message || "An unexpected error occurred");
+          }
+        }
       }
     } finally {
       clearTimeout(timeoutId);
@@ -122,17 +174,65 @@ export function ResetPasswordForm({
   const showSuccess = externalResetEmailSent || localResetEmailSent;
 
   if (showSuccess) {
-    return <ResetPasswordSuccess onSwitchToLogin={onSwitchToLogin} />;
+    return (
+      <Alert className="bg-green-50 border-green-200">
+        <CheckCircle className="h-4 w-4 text-green-600" />
+        <AlertDescription className="text-green-700">
+          If an account exists with this email, you'll receive password reset instructions shortly.
+          <p className="mt-2">Please check your email inbox and spam folders.</p>
+          <p className="mt-2 text-sm">
+            Note: If you don't receive the email within a few minutes:
+            <ul className="list-disc pl-5 mt-1">
+              <li>Check your spam/junk folder</li>
+              <li>Verify you used the correct email address</li>
+              <li>Try again in a few moments if necessary</li>
+            </ul>
+          </p>
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onSwitchToLogin}
+              className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
+            >
+              Back to Sign In
+            </Button>
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <ResetPasswordAlert 
-        error={displayError}
-        retryCount={retryCount}
-        onRetry={handleRetry}
-        onSwitchToLogin={onSwitchToLogin}
-      />
+      {displayError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {displayError}
+            {retryCount > 0 && (
+              <p className="mt-2 text-sm">
+                Tips to resolve:
+                <ul className="list-disc pl-5 mt-1">
+                  <li>Wait a few moments and try again</li>
+                  <li>Check your internet connection</li>
+                  <li>If the issue persists, please contact support</li>
+                </ul>
+              </p>
+            )}
+            {(displayError.includes('timeout') || displayError.includes('busy')) && (
+              <Button 
+                type="button" 
+                onClick={handleRetry} 
+                className="mt-2 bg-amber-500 hover:bg-amber-600 text-white"
+                size="sm"
+              >
+                Try Again
+              </Button>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="space-y-2">
         <Label htmlFor="email">Email Address</Label>

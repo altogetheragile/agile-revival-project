@@ -36,6 +36,12 @@ export default function AuthContainer() {
     }
   }, [user, isAdmin, navigate, from]);
 
+  // Clear errors when changing tabs
+  const handleTabChange = (value: AuthMode) => {
+    setError(null);
+    setAuthMode(value);
+  };
+
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
@@ -69,6 +75,7 @@ export default function AuthContainer() {
     setIsLoading(true);
     setError(null);
     try {
+      // Using resetPassword from AuthContext which is delegating to initiatePasswordReset in usePasswordReset
       await signUp(email, '', '', ''); // This is just a placeholder, implement actual reset password logic
       setResetEmailSent(true);
     } catch (err: any) {
@@ -95,7 +102,7 @@ export default function AuthContainer() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={authMode} onValueChange={(value) => setAuthMode(value as AuthMode)}>
+          <Tabs value={authMode} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign up</TabsTrigger>
@@ -104,8 +111,8 @@ export default function AuthContainer() {
             <TabsContent value="login" className="pt-4">
               <LoginForm 
                 onSubmit={handleLogin}
-                onSwitchToSignup={() => setAuthMode('signup')}
-                onSwitchToReset={() => setAuthMode('reset')}
+                onSwitchToSignup={() => handleTabChange('signup')}
+                onSwitchToReset={() => handleTabChange('reset')}
                 loading={isLoading}
                 error={error}
               />
@@ -113,7 +120,7 @@ export default function AuthContainer() {
             <TabsContent value="signup" className="pt-4">
               <SignupForm
                 onSubmit={handleSignup}
-                onSwitchToLogin={() => setAuthMode('login')}
+                onSwitchToLogin={() => handleTabChange('login')}
                 loading={isLoading}
                 error={error}
               />
@@ -121,7 +128,7 @@ export default function AuthContainer() {
             <TabsContent value="reset" className="pt-4">
               <ResetPasswordForm 
                 onSubmit={handleResetPassword}
-                onSwitchToLogin={() => setAuthMode('login')}
+                onSwitchToLogin={() => handleTabChange('login')}
                 loading={isLoading}
                 error={error}
                 resetEmailSent={resetEmailSent}

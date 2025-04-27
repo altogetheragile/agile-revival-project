@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -22,89 +23,29 @@ export function usePasswordReset() {
       const resetUrl = `${window.location.origin}/reset-password`;
       console.log(`Using reset URL: ${resetUrl}`);
       
-      // Try direct Supabase method first with timeout handling
-      let supabaseError;
-      try {
-        // Adding proper type annotation for the Promise.race result
-        const result: { data: any, error: any } | Error = await Promise.race([
-          supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: resetUrl,
-          }),
-          new Promise<Error>((_, reject) => 
-            setTimeout(() => reject(new Error('Supabase password reset timed out')), 5000)
-          )
-        ]);
-        
-        // Check if the result is an Error object from the timeout
-        if (result instanceof Error) {
-          throw result;
-        }
-        
-        // Now TypeScript knows this is the Supabase result with error property
-        supabaseError = result.error;
-        
-        if (!supabaseError) {
-          console.log('Password reset email sent via Supabase directly');
-        }
-      } catch (timeoutErr) {
-        console.warn('Supabase direct password reset timed out, falling back to edge function');
-        supabaseError = new Error('Request timed out');
-      }
+      // Try direct Supabase method
+      const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: resetUrl,
+      });
       
-      // If Supabase direct method fails, try our custom edge function as backup
       if (supabaseError) {
-        console.log('Attempting fallback through edge function...');
+        console.error('Supabase password reset error:', supabaseError);
         
-        try {
-          const { error: edgeFunctionError } = await supabase.functions.invoke('send-email', {
-            body: {
-              type: 'reset_password',
-              email: email,
-              recipient: email,
-              resetLink: `${resetUrl}?email=${encodeURIComponent(email)}`
-            }
-          });
-          
-          if (edgeFunctionError) {
-            console.error('Edge function error:', edgeFunctionError);
-            
-            // Update loading toast to error
-            toast.error("Could not send reset email", {
-              id: toastId,
-              description: "Please try again later or contact support"
-            });
-            
-            throw edgeFunctionError;
-          }
-          
-          console.log('Password reset email sent via edge function');
-          
-          // Update loading toast to success
-          toast.success("Reset link sent", {
-            id: toastId,
-            description: "If an account exists with this email, you'll receive reset instructions."
-          });
-        } catch (edgeError) {
-          console.error('Edge function attempt failed:', edgeError);
-          
-          // Update loading toast to error
-          toast.error("Could not send reset email", {
-            id: toastId,
-            description: "Please try again later or contact support"
-          });
-          
-          // If both methods fail, throw the original error
-          throw supabaseError;
-        }
-      } else {
-        // Update loading toast to success
-        toast.success("Reset link sent", {
+        // Update loading toast to error but with a generic message for security
+        toast.success("If an account exists with this email, you'll receive reset instructions.", {
           id: toastId,
-          description: "If an account exists with this email, you'll receive reset instructions."
         });
+        
+        throw supabaseError;
       }
       
       console.log('Password reset request successful');
+      
+      // Update loading toast to success
+      toast.success("Reset link sent", {
+        id: toastId,
+        description: "If an account exists with this email, you'll receive reset instructions."
+      });
       
       setLocalResetEmailSent(true);
       return { success: true };
