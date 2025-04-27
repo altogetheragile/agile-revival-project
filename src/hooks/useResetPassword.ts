@@ -25,9 +25,7 @@ export function useResetPassword() {
       }
       
       console.log('Password reset request successful');
-      toast.success("Reset email sent", {
-        description: "If an account exists with this email, you'll receive reset instructions."
-      });
+      toast.success("If an account exists with this email, you'll receive reset instructions.");
       
       setLocalResetEmailSent(true);
       return { success: true };
@@ -36,11 +34,10 @@ export function useResetPassword() {
       console.error('Password reset error:', error);
       
       // For security, we still show a success message even on error
-      toast.success("Reset email sent", {
-        description: "If an account exists with this email, you'll receive reset instructions."
-      });
+      toast.success("If an account exists with this email, you'll receive reset instructions.");
       
-      throw error;
+      setError(error.message);
+      return { success: false, error };
     } finally {
       setIsSubmitting(false);
     }

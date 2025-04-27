@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,10 +34,7 @@ export function EmailTester() {
       
       if (error) throw error;
       
-      toast({
-        title: "Test email sent",
-        description: "Please check your inbox or spam folder",
-      });
+      toast("Test email sent. Please check your inbox or spam folder.");
       
       console.log('Email sent through Supabase auth system');
       setShowEmailInfo(true);
@@ -49,11 +45,7 @@ export function EmailTester() {
       
       setLastError(errorMessage);
       
-      toast({
-        title: "Failed to send email",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      toast.error("Failed to send email: " + errorMessage);
     } finally {
       setSending(false);
     }
@@ -62,11 +54,7 @@ export function EmailTester() {
   const sendTestPasswordReset = async () => {
     try {
       if (!recipient) {
-        toast({
-          title: "Email required",
-          description: "Please enter a recipient email address",
-          variant: "destructive"
-        });
+        toast.error("Please enter a recipient email address");
         return;
       }
       
@@ -82,10 +70,7 @@ export function EmailTester() {
       
       if (supabaseError) throw supabaseError;
       
-      toast({
-        title: "Password reset email sent",
-        description: "Check your inbox or spam folder"
-      });
+      toast("Password reset email sent. Check your inbox or spam folder.");
       
       setShowEmailInfo(true);
       console.log('Password reset test completed');
@@ -94,11 +79,7 @@ export function EmailTester() {
       console.error('Failed to send password reset test:', error);
       setLastError(error.message || "Unknown error");
       
-      toast({
-        title: "Failed to send password reset email",
-        description: error.message || "Unknown error",
-        variant: "destructive"
-      });
+      toast.error("Failed to send password reset email: " + (error.message || "Unknown error"));
     } finally {
       setSending(false);
       setTestPasswordReset(false);

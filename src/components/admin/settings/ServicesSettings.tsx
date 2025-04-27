@@ -15,13 +15,16 @@ export function ServicesSettings() {
         <Alert>
           <Mail className="h-4 w-4 mr-2" />
           <AlertDescription className="text-sm">
-            <p className="font-medium mb-2">Your application uses Mailgun for email delivery:</p>
+            <p className="font-medium mb-2">Your application uses Mailgun for all email delivery:</p>
             <ul className="list-disc pl-5 mb-3 space-y-1">
               <li>
-                <span className="font-medium">Supabase Auth Emails:</span> Uses Mailgun for authentication emails (password resets, confirmations)
+                <span className="font-medium">Authentication Emails:</span> Password resets, email confirmations, and magic links
               </li>
               <li>
-                <span className="font-medium">Custom Emails:</span> Can be sent via Supabase Edge Functions using the same Mailgun configuration
+                <span className="font-medium">Notification Emails:</span> System notifications and alerts
+              </li>
+              <li>
+                <span className="font-medium">Custom Emails:</span> All custom emails are managed through Supabase using Mailgun
               </li>
             </ul>
             

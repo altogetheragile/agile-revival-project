@@ -25,9 +25,7 @@ export function usePasswordReset() {
       if (supabaseError) throw supabaseError;
       
       // For security reasons, always show success message regardless of email existence
-      toast.success("Reset instructions sent", {
-        description: "If an account exists with this email, you'll receive password reset instructions."
-      });
+      toast.success("If an account exists with this email, you'll receive reset instructions.");
       
       return { success: true };
     } catch (error: any) {
@@ -37,9 +35,7 @@ export function usePasswordReset() {
       setError(handledError.message);
       
       // Even if there's an error, we don't reveal if the email exists for security
-      toast.success("Reset instructions sent", {
-        description: "If an account exists with this email, you'll receive password reset instructions."
-      });
+      toast.success("If an account exists with this email, you'll receive reset instructions.");
       
       return { success: false, error: handledError };
     } finally {
@@ -68,9 +64,7 @@ export function usePasswordReset() {
       
       console.log('[Password Reset] Password updated successfully');
       
-      toast.success("Password updated", {
-        description: "Your password has been reset successfully. You can now log in with your new password."
-      });
+      toast.success("Your password has been reset successfully. You can now log in with your new password.");
       
       return { success: true };
     } catch (error: any) {
@@ -79,9 +73,7 @@ export function usePasswordReset() {
       const handledError = handleAuthError(error);
       setError(handledError.message);
       
-      toast.error("Password reset failed", {
-        description: handledError.message
-      });
+      toast.error(handledError.message);
       
       return { success: false, error: handledError };
     } finally {

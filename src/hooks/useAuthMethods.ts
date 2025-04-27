@@ -39,10 +39,7 @@ export function useAuthMethods() {
     
     console.log('Sign up successful:', data);
     
-    // Show a toast notification for better UX
-    toast.success("Account created", {
-      description: "Please check your email to confirm your account."
-    });
+    toast.success("Please check your email to confirm your account.");
     
     return data;
   };
@@ -58,29 +55,8 @@ export function useAuthMethods() {
     console.log('Sign out successful');
   };
 
-  const resetPassword = async (email: string) => {
-    console.log('Requesting password reset for:', email);
-    
-    // Use the Supabase built-in password reset
-    const resetUrl = `${window.location.origin}/reset-password`;
-    console.log('Reset URL:', resetUrl);
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: resetUrl
-    });
-    
-    if (error) {
-      console.error('Password reset error:', error);
-      throw error;
-    }
-    
-    console.log('Password reset request successful');
-    
-    // Show a toast notification for better UX
-    toast.success("Reset email sent", {
-      description: "If an account exists with this email, you'll receive reset instructions."
-    });
-  };
+  // Using usePasswordReset hook for password reset functionality
+  // This is handled by the dedicated hook to avoid duplication
 
   const updatePassword = async (newPassword: string) => {
     console.log('Updating password');
@@ -101,10 +77,7 @@ export function useAuthMethods() {
     
     console.log('Password updated successfully');
     
-    // Show a toast notification for better UX
-    toast.success("Password updated", {
-      description: "Your password has been changed successfully."
-    });
+    toast.success("Your password has been changed successfully.");
     
     return { success: true };
   };
@@ -113,7 +86,6 @@ export function useAuthMethods() {
     signIn,
     signUp,
     signOut,
-    resetPassword,
     updatePassword
   };
 }
