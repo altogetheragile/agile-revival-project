@@ -1,15 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-import { renderAsync } from 'npm:@react-email/components@0.0.22';
-import ResetPasswordEmail from './_templates/reset-password-email.tsx';
-import WelcomeEmail from './_templates/welcome-email.tsx';
-
-const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
-
-// Get the sender email from environment variable or default to the Resend testing email
-const SENDER_EMAIL = Deno.env.get('SENDER_EMAIL') || 'onboarding@resend.dev';
-const SENDER_NAME = Deno.env.get('SENDER_NAME') || 'AltogetherAgile';
+import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    // First try to extract JSON body
+    // Extract JSON body
     let body;
     try {
       body = await req.json();
@@ -36,177 +27,128 @@ serve(async (req) => {
     // Log additional diagnostic information
     console.log('Request URL:', req.url);
     console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
-    console.log('Using sender email:', SENDER_EMAIL);
-    console.log('Using sender name:', SENDER_NAME);
+    
+    // Get SMTP credentials from environment variables
+    // These should match the Mailgun settings configured in Supabase
+    const smtpHostname = Deno.env.get('SMTP_HOST') || 'smtp.mailgun.org';
+    const smtpPort = parseInt(Deno.env.get('SMTP_PORT') || '587');
+    const smtpUsername = Deno.env.get('SMTP_USER');
+    const smtpPassword = Deno.env.get('SMTP_PASS');
+    const senderEmail = Deno.env.get('SENDER_EMAIL') || 'no-reply@altogetheragile.com';
+    const senderName = Deno.env.get('SENDER_NAME') || 'AltogetherAgile';
+    
+    if (!smtpUsername || !smtpPassword) {
+      throw new Error("SMTP credentials not configured. Please set SMTP_USER and SMTP_PASS environment variables.");
+    }
+    
+    console.log(`SMTP Config: ${smtpHostname}:${smtpPort}`);
     
     // Check if this is a test email request
     if (body.type === 'test') {
       console.log('Sending test email');
       
-      // Determine the recipient - either specified or fallback to sender
-      const recipient = body.recipient || SENDER_EMAIL;
-      console.log(`Sending test email to ${recipient} from ${SENDER_EMAIL}`);
+      // Determine the recipient - either specified or fallback
+      const recipient = body.recipient || senderEmail;
+      console.log(`Sending test email to ${recipient} from ${senderEmail}`);
       
-      // Include more detailed information in the test email
-      const testResult = await resend.emails.send({
-        from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
-        to: [recipient],
-        subject: 'Test Email from AltogetherAgile',
-        html: `
+      // Create SMTP client
+      const client = new SmtpClient();
+      
+      // Connect to SMTP server
+      await client.connectTLS({
+        hostname: smtpHostname,
+        port: smtpPort,
+        username: smtpUsername,
+        password: smtpPassword,
+      });
+      
+      // Send the email
+      const result = await client.send({
+        from: `${senderName} <${senderEmail}>`,
+        to: recipient,
+        subject: "Test Email from AltogetherAgile",
+        content: `
           <h1>Test Email</h1>
           <p>This is a test email from your AltogetherAgile website.</p>
           <p>If you're receiving this, your email configuration is working correctly!</p>
           <hr />
           <h2>Email Configuration Details:</h2>
           <ul>
-            <li><strong>Sender Email:</strong> ${SENDER_EMAIL}</li>
-            <li><strong>Sender Name:</strong> ${SENDER_NAME}</li>
+            <li><strong>Sender Email:</strong> ${senderEmail}</li>
+            <li><strong>Sender Name:</strong> ${senderName}</li>
             <li><strong>Recipient:</strong> ${recipient}</li>
             <li><strong>Sent at:</strong> ${new Date().toISOString()}</li>
           </ul>
-          <p>If you're experiencing delivery issues:</p>
-          <ol>
-            <li>Verify your domain at <a href="https://resend.com/domains">Resend Domains</a></li>
-            <li>Make sure your SENDER_EMAIL secret matches your verified domain</li>
-            <li>Check if you've exceeded your free tier limits</li>
-          </ol>
         `,
+        html: true,
       });
       
-      console.log('Test email result:', testResult);
+      // Close the connection
+      await client.close();
       
-      return new Response(JSON.stringify(testResult), {
+      console.log('Test email result:', result);
+      
+      return new Response(JSON.stringify({ success: true, message: "Email sent successfully" }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       });
-    }
-
-    // Detect if this is a password reset request
-    const isPasswordReset = 
-      req.url.includes('reset-password') || 
-      body.type === 'reset_password' ||
-      (body.template && body.template === 'reset_password');
+    } 
     
-    // Log details to help debug
-    console.log('Is password reset:', isPasswordReset);
-    
-    // For a password reset email
-    if (isPasswordReset) {
-      console.log('Sending password reset email');
+    // Handle custom emails (e.g. welcome emails, notifications)
+    else if (body.type === 'custom') {
+      const { recipient, subject, htmlContent, textContent } = body;
       
-      // Extract email from different possible locations in the request
-      let email = body.email || (body.user && body.user.email) || body.recipient;
-      
-      if (!email) {
-        throw new Error('No recipient email found in password reset request');
+      if (!recipient) {
+        throw new Error('No recipient email specified');
       }
       
-      console.log(`Recipient email for reset: ${email}`);
+      // Create SMTP client
+      const client = new SmtpClient();
       
-      // Generate a reset token if one wasn't provided
-      const resetToken = body.token || crypto.randomUUID();
-      
-      // Construct the direct reset URL using the origin and token
-      const origin = req.headers.get('origin') || Deno.env.get('PUBLIC_URL') || 'https://altogetheragile.com';
-      
-      // Get the hash fragment from the request (if any)
-      const hash = body.hash || '';
-      
-      // Generate the reset link - we'll now include a hash parameter and token for Auth API compatibility
-      const resetLink = `${origin}/reset-password?token=${resetToken}&type=recovery&email=${encodeURIComponent(email)}${hash ? `#${hash}` : ''}`;
-      
-      console.log('Generated reset link:', resetLink);
-      
-      // Generate email HTML content
-      let html = '';
-      try {
-        html = await renderAsync(
-          ResetPasswordEmail({ 
-            actionLink: resetLink,
-            email
-          })
-        );
-        console.log('Successfully rendered React email template');
-      } catch (renderError) {
-        console.error('Failed to render React email template:', renderError);
-        throw renderError;
-      }
-      
-      // Send the email with Resend
-      const result = await resend.emails.send({
-        from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
-        to: [email],
-        subject: 'Reset Your Password - AltogetherAgile',
-        html: html,
+      // Connect to SMTP server
+      await client.connectTLS({
+        hostname: smtpHostname,
+        port: smtpPort,
+        username: smtpUsername,
+        password: smtpPassword,
       });
-      
-      console.log('Password reset email sent result:', result);
-      
-      return new Response(JSON.stringify({
-        success: true,
-        message: 'Password reset email sent successfully',
-        data: result
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      });
-    } else {
-      // For a welcome email or other generic emails
-      const { firstName, email } = body;
-    
-      if (!email) {
-        throw new Error('No recipient email found in request');
-      }
-      
-      console.log(`Sending welcome email to ${email}`);
-      
-      // Try to render the welcome template
-      let html = '';
-      try {
-        const renderPromise = renderAsync(
-          WelcomeEmail({ firstName: firstName || 'there', email })
-        );
-        
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Email rendering timed out')), 4000);
-        });
-        
-        html = await Promise.race([renderPromise, timeoutPromise]);
-      } catch (renderError) {
-        console.error('Failed to render welcome email template:', renderError);
-        // Fallback to plain text
-        html = `
-          <html>
-            <body>
-              <h1>Welcome!</h1>
-              <p>Hello ${firstName || 'there'},</p>
-              <p>Thank you for joining our platform. We're excited to have you with us!</p>
-            </body>
-          </html>
-        `;
-      }
       
       // Send the email
-      const result = await resend.emails.send({
-        from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
-        to: [email],
-        subject: 'Welcome to Our Platform!',
-        html: html,
+      const result = await client.send({
+        from: `${senderName} <${senderEmail}>`,
+        to: recipient,
+        subject: subject || "Message from AltogetherAgile",
+        content: htmlContent || textContent || "This is a message from AltogetherAgile.",
+        html: !!htmlContent,
       });
       
-      console.log('Email sent successfully:', result);
+      // Close the connection
+      await client.close();
       
-      return new Response(JSON.stringify(result), {
+      console.log('Custom email result:', result);
+      
+      return new Response(JSON.stringify({ success: true, message: "Email sent successfully" }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       });
     }
+    
+    // Default response for unhandled cases
+    return new Response(JSON.stringify({ 
+      error: {
+        message: "Invalid request type. Please specify 'test' or 'custom' type."
+      }
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 400
+    });
+    
   } catch (error: any) {
     console.error('Email sending error:', error);
     return new Response(JSON.stringify({ 
       error: {
         message: error.message,
-        hint: 'The request failed but your password reset might still be processing. Check your email in a few minutes.'
+        hint: 'Check your SMTP configuration and ensure all required environment variables are set.'
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

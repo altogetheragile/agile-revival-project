@@ -1,5 +1,7 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function useAuthMethods() {
   const signIn = async (email: string, password: string) => {
@@ -36,6 +38,12 @@ export function useAuthMethods() {
     }
     
     console.log('Sign up successful:', data);
+    
+    // Show a toast notification for better UX
+    toast.success("Account created", {
+      description: "Please check your email to confirm your account."
+    });
+    
     return data;
   };
 
@@ -52,6 +60,8 @@ export function useAuthMethods() {
 
   const resetPassword = async (email: string) => {
     console.log('Requesting password reset for:', email);
+    
+    // Use the Supabase built-in password reset
     const resetUrl = `${window.location.origin}/reset-password`;
     console.log('Reset URL:', resetUrl);
     
@@ -65,6 +75,11 @@ export function useAuthMethods() {
     }
     
     console.log('Password reset request successful');
+    
+    // Show a toast notification for better UX
+    toast.success("Reset email sent", {
+      description: "If an account exists with this email, you'll receive reset instructions."
+    });
   };
 
   const updatePassword = async (newPassword: string) => {
@@ -85,6 +100,12 @@ export function useAuthMethods() {
     }
     
     console.log('Password updated successfully');
+    
+    // Show a toast notification for better UX
+    toast.success("Password updated", {
+      description: "Your password has been changed successfully."
+    });
+    
     return { success: true };
   };
 

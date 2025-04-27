@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { 
   Alert,
   AlertDescription, 
@@ -19,45 +19,33 @@ export function EmailTester() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [testPasswordReset, setTestPasswordReset] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("test");
-  const { toast } = useToast();
 
   const sendTestEmail = async () => {
     try {
       setSending(true);
       setLastError(null);
       
-      const { data, error } = await supabase.functions.invoke('send-email', {
-        body: {
-          type: 'test',
-          recipient: recipient || undefined
+      // Use Supabase to send a test email directly through Mailgun
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        recipient || 'test@example.com', 
+        {
+          redirectTo: `${window.location.origin}/reset-password`
         }
-      });
+      );
       
       if (error) throw error;
       
-      // Check for any error in the data response
-      if (data && data.error) {
-        throw new Error(data.error.message || "Failed to send email");
-      }
-
       toast({
         title: "Test email sent",
         description: "Please check your inbox or spam folder",
       });
       
-      console.log('Email send result:', data);
+      console.log('Email sent through Supabase auth system');
       setShowEmailInfo(true);
     } catch (error: any) {
       console.error('Failed to send test email:', error);
       
       let errorMessage = error.message || "Unknown error";
-      
-      // Check for common domain verification errors
-      if (errorMessage.includes("domain is not verified")) {
-        errorMessage = "Domain not verified in Resend. Verify your domain at https://resend.com/domains";
-      } else if (errorMessage.includes("bounced") || errorMessage.includes("rejected")) {
-        errorMessage = "Email bounced. The recipient's mail server rejected the email. Verify that the recipient address exists and check your sender domain configuration.";
-      }
       
       setLastError(errorMessage);
       
@@ -86,38 +74,18 @@ export function EmailTester() {
       setLastError(null);
       setTestPasswordReset(true);
       
-      // First try Supabase's built-in password reset
+      // Use Supabase's built-in password reset
       const resetUrl = `${window.location.origin}/reset-password`;
       const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(recipient, {
         redirectTo: resetUrl
       });
       
-      if (supabaseError) {
-        console.log('Supabase password reset failed, trying edge function:', supabaseError);
-        
-        // Try edge function as backup
-        const { data, error: functionError } = await supabase.functions.invoke('send-email', {
-          body: {
-            type: 'reset_password',
-            email: recipient,
-            actionLink: resetUrl,
-            recipient: recipient
-          }
-        });
-        
-        if (functionError) throw functionError;
-        if (data && data.error) throw new Error(data.error.message);
-        
-        toast({
-          title: "Password reset email sent via edge function",
-          description: "Check your inbox or spam folder"
-        });
-      } else {
-        toast({
-          title: "Password reset email sent via Supabase",
-          description: "Check your inbox or spam folder"
-        });
-      }
+      if (supabaseError) throw supabaseError;
+      
+      toast({
+        title: "Password reset email sent",
+        description: "Check your inbox or spam folder"
+      });
       
       setShowEmailInfo(true);
       console.log('Password reset test completed');
@@ -150,10 +118,9 @@ export function EmailTester() {
             <p className="text-sm">
               Common solutions:
               <ul className="list-disc pl-5 mt-1">
-                <li>Verify your domain in Resend.com</li>
-                <li>Make sure your SENDER_EMAIL secret matches a verified domain</li>
-                <li>Check if the recipient email address exists</li>
-                <li>For Gmail SMTP, ensure "Less secure app access" is enabled or use an app password</li>
+                <li>Check your Mailgun configuration in Supabase</li>
+                <li>Verify your sender domain is properly configured</li>
+                <li>Make sure the recipient email address is valid</li>
               </ul>
             </p>
           </AlertDescription>
@@ -165,8 +132,8 @@ export function EmailTester() {
           <Info className="h-4 w-4" />
           <AlertTitle>Email Sent!</AlertTitle>
           <AlertDescription>
-            Please check your inbox or spam folder. If you don't see the email, check the logs in 
-            Supabase Edge Functions for more details.
+            Please check your inbox or spam folder. If you don't see the email, check the Mailgun logs in 
+            the Mailgun dashboard for more details.
           </AlertDescription>
         </Alert>
       )}
@@ -180,15 +147,16 @@ export function EmailTester() {
         <TabsContent value="test" className="mt-4">
           <div className="flex flex-col gap-4">
             <p className="text-sm text-gray-700">
-              Send a standard test email to verify your email configuration is working.
+              Send a standard test email to verify your Mailgun configuration is working.
             </p>
             <div className="flex flex-col md:flex-row gap-4">
               <Input
                 type="email"
-                placeholder="Enter recipient email (optional)"
+                placeholder="Enter recipient email"
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
                 className="max-w-md"
+                required
               />
               <Button 
                 onClick={sendTestEmail}
@@ -198,7 +166,7 @@ export function EmailTester() {
               </Button>
             </div>
             <p className="text-sm text-gray-500">
-              Leave the recipient field empty to send to your configured sender email.
+              This will send a test email using Supabase's email service (Mailgun).
             </p>
           </div>
         </TabsContent>
@@ -227,15 +195,15 @@ export function EmailTester() {
               </Button>
             </div>
             <p className="text-sm text-gray-500">
-              This will test both Supabase's built-in email and the edge function fallback.
+              This will send a password reset email using Supabase's built-in authentication email system.
             </p>
           </div>
         </TabsContent>
       </Tabs>
       
       <p className="text-sm text-gray-500 pt-4 border-t mt-4">
-        If emails are bouncing, verify your domain in Resend and update the SENDER_EMAIL secret.
-        For Gmail SMTP issues, create an app password in your Google account security settings.
+        Your emails are configured to use Mailgun through Supabase. For delivery issues,
+        check your domain verification status and SMTP settings in the Supabase and Mailgun dashboards.
       </p>
     </div>
   );

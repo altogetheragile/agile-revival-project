@@ -24,6 +24,7 @@ export function usePasswordReset() {
       
       if (supabaseError) throw supabaseError;
       
+      // For security reasons, always show success message regardless of email existence
       toast.success("Reset instructions sent", {
         description: "If an account exists with this email, you'll receive password reset instructions."
       });
@@ -35,7 +36,7 @@ export function usePasswordReset() {
       const handledError = handleAuthError(error);
       setError(handledError.message);
       
-      // Even if there's an error, we don't want to reveal if the email exists
+      // Even if there's an error, we don't reveal if the email exists for security
       toast.success("Reset instructions sent", {
         description: "If an account exists with this email, you'll receive password reset instructions."
       });
