@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { handleAuthError } from '@/utils/errorHandler';
 import { toast } from 'sonner';
 
 export function usePasswordReset() {
@@ -24,6 +23,8 @@ export function usePasswordReset() {
       
       if (supabaseError) throw supabaseError;
       
+      // Use a success toast regardless of whether the email exists in the database
+      // This is a security measure to prevent email enumeration
       toast.success("Reset instructions sent", {
         description: "If an account exists with this email, you'll receive password reset instructions."
       });
@@ -32,15 +33,13 @@ export function usePasswordReset() {
     } catch (error: any) {
       console.error('[Password Reset] Error:', error);
       
-      const handledError = handleAuthError(error);
-      setError(handledError.message);
-      
-      // Even if there's an error, we don't want to reveal if the email exists
+      // Even if there's an error, show the same success message to prevent email enumeration
       toast.success("Reset instructions sent", {
         description: "If an account exists with this email, you'll receive password reset instructions."
       });
       
-      return { success: false, error: handledError };
+      setError("If you have an account, you'll receive password reset instructions shortly.");
+      return { success: false, error };
     } finally {
       setIsSubmitting(false);
     }
@@ -75,14 +74,14 @@ export function usePasswordReset() {
     } catch (error: any) {
       console.error('[Password Reset] Error updating password:', error);
       
-      const handledError = handleAuthError(error);
-      setError(handledError.message);
+      const errorMessage = error.message || "Failed to update password. Please try again.";
+      setError(errorMessage);
       
       toast.error("Password reset failed", {
-        description: handledError.message
+        description: errorMessage
       });
       
-      return { success: false, error: handledError };
+      return { success: false, error };
     } finally {
       setIsSubmitting(false);
     }

@@ -16,7 +16,7 @@ export default function ProtectedRoute({
   requiredRoles = [], 
   redirectTo = "/auth" 
 }: ProtectedRouteProps) {
-  const { user, isAdmin, isAuthReady } = useAuth();
+  const { user, isAdmin, isAuthReady, checkUserRole } = useAuth();
   const location = useLocation();
   const [isCheckingRole, setIsCheckingRole] = useState(requiredRoles.length > 0);
   const [hasRequiredRole, setHasRequiredRole] = useState(false);
@@ -44,23 +44,38 @@ export default function ProtectedRoute({
       return;
     }
 
-    // For other role checks, we would check user roles here
-    // This is a placeholder for future role checking logic
-    const userHasRequiredRole = requiredRoles.includes('user');
-    setHasRequiredRole(userHasRequiredRole);
-    setIsCheckingRole(false);
-    setCheckComplete(true);
-  }, [user, isAdmin, requiredRoles]);
+    // Check for specific roles
+    const checkRoles = async () => {
+      try {
+        // For each required role, check if the user has it
+        const roleChecks = await Promise.all(
+          requiredRoles.map(role => checkUserRole(user.id, role))
+        );
+        
+        // User has access if they have any of the required roles
+        const userHasRequiredRole = roleChecks.some(hasRole => hasRole);
+        setHasRequiredRole(userHasRequiredRole);
+      } catch (error) {
+        console.error("Error checking user roles:", error);
+        setHasRequiredRole(false);
+      } finally {
+        setIsCheckingRole(false);
+        setCheckComplete(true);
+      }
+    };
 
-  // Show toast notification when redirected due to admin access restriction
+    checkRoles();
+  }, [user, isAdmin, requiredRoles, checkUserRole]);
+
+  // Show toast notification when redirected due to access restriction
   useEffect(() => {
-    if (checkComplete && requiredRoles.includes('admin') && !isAdmin && user) {
+    if (checkComplete && requiredRoles.length > 0 && !hasRequiredRole && user) {
       toast.error("Access denied", {
-        description: "You need admin privileges to access this area",
+        description: "You don't have permission to access this area",
         duration: 5000,
       });
     }
-  }, [checkComplete, requiredRoles, isAdmin, user]);
+  }, [checkComplete, requiredRoles, hasRequiredRole, user]);
 
   // Show loading state while checking authentication
   if (!isAuthReady || isCheckingRole) {

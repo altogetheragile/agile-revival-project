@@ -73,16 +73,16 @@ const UserAvatar = ({ size = "md" }: UserAvatarProps) => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => navigate("/account")} className="cursor-pointer">
+            <UserIcon className="mr-2 h-4 w-4" />
+            <span>My Account</span>
+          </DropdownMenuItem>
           {isAdmin && (
             <DropdownMenuItem onClick={() => navigate("/admin")} className="cursor-pointer">
               <Shield className="mr-2 h-4 w-4" />
               <span>Admin Dashboard</span>
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={() => navigate("/account")} className="cursor-pointer">
-            <UserIcon className="mr-2 h-4 w-4" />
-            <span>My Account</span>
-          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
