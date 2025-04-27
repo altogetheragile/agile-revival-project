@@ -3,9 +3,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { useAuthMethods } from '@/hooks/useAuthMethods';
+import { usePasswordReset } from '@/hooks/usePasswordReset';
 
 interface RequestResetFormProps {
   email: string;
@@ -13,37 +12,13 @@ interface RequestResetFormProps {
 
 export function RequestResetForm({ email }: RequestResetFormProps) {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const { resetPassword } = useAuthMethods();
+  const { isSubmitting, error, initiatePasswordReset } = usePasswordReset();
 
   const handleResendResetLink = async () => {
-    setIsSubmitting(true);
-    setError(null);
-    
-    try {
-      await resetPassword(email);
+    const result = await initiatePasswordReset(email);
+    if (result.success) {
       setResetEmailSent(true);
-      
-      toast({
-        title: "Email Sent",
-        description: "A new password reset link has been sent to your email. Please check your inbox and spam folders.",
-        duration: 8000,
-      });
-    } catch (err: any) {
-      console.error('Failed to send reset email:', err);
-      setError(err.message || 'Failed to send reset email. Please try again later.');
-      
-      toast({
-        title: "Error",
-        description: err.message || 'Failed to send reset email',
-        variant: "destructive",
-        duration: 8000,
-      });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

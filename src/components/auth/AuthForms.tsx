@@ -1,21 +1,21 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useAuthError } from '@/hooks/useAuthError';
 import { AuthFormProvider } from '@/contexts/AuthFormContext';
 import { AuthMode } from './AuthContainer';
 import LoginView from './views/LoginView';
 import SignupView from './views/SignupView';
 import ResetPasswordView from './views/ResetPasswordView';
+import { usePasswordReset } from '@/hooks/usePasswordReset';
 
 export default function AuthForms() {
   const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const { signIn, signUp, resetPassword } = useAuth();
-  const { toast } = useToast();
+  const { signIn, signUp } = useAuth();
   const { errorMessage, handleError, setErrorMessage } = useAuthError();
+  const { initiatePasswordReset } = usePasswordReset();
 
   const handleSignIn = async (email: string, password: string) => {
     try {
@@ -62,18 +62,10 @@ export default function AuthForms() {
     setErrorMessage(null);
     
     try {
-      toast({
-        title: "Processing",
-        description: "Sending password reset email...",
-      });
-      
-      await resetPassword(email);
-      setResetEmailSent(true);
-      
-      toast({
-        title: "Password reset requested",
-        description: "If an account exists with this email, you'll receive password reset instructions.",
-      });
+      const result = await initiatePasswordReset(email);
+      if (result.success) {
+        setResetEmailSent(true);
+      }
     } catch (error: any) {
       handleError(error);
     } finally {

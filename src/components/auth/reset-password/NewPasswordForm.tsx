@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { useAuthMethods } from '@/hooks/useAuthMethods';
-import { toast } from 'sonner';
+import { usePasswordReset } from '@/hooks/usePasswordReset';
 
 const passwordSchema = z.object({
   password: z
@@ -28,16 +26,12 @@ const passwordSchema = z.object({
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 interface NewPasswordFormProps {
-  error: string | null;
-  setError: (error: string | null) => void;
   onSuccess: () => void;
 }
 
-export function NewPasswordForm({ error, setError, onSuccess }: NewPasswordFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
+export function NewPasswordForm({ onSuccess }: NewPasswordFormProps) {
   const navigate = useNavigate();
-  const { updatePassword } = useAuthMethods();
+  const { isSubmitting, error, setError, completePasswordReset } = usePasswordReset();
   
   const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
@@ -48,48 +42,16 @@ export function NewPasswordForm({ error, setError, onSuccess }: NewPasswordFormP
   });
 
   const onSubmit = async (data: PasswordFormValues) => {
-    setIsSubmitting(true);
-    setError(null);
+    const result = await completePasswordReset(data.password);
     
-    try {
-      console.log("[Password Reset] Attempting to update password");
-      await updatePassword(data.password);
-      console.log("[Password Reset] Password updated successfully");
-      
-      setIsComplete(true);
+    if (result.success) {
       onSuccess();
-      
-      toast.success("Password reset successful", {
-        description: "Your password has been updated. You will be redirected to the login page."
-      });
-      
       // Delay navigation to allow the success message to be shown
       setTimeout(() => {
         navigate('/auth');
       }, 5000);
-    } catch (err: any) {
-      console.error('[Password Reset] Error:', err);
-      setError(err.message || 'Failed to update password. Please try again.');
-      
-      toast.error("Password reset failed", {
-        description: err.message || "There was a problem updating your password."
-      });
-    } finally {
-      setIsSubmitting(false);
     }
   };
-
-  if (isComplete) {
-    return (
-      <Alert className="bg-green-50 border-green-200">
-        <CheckCircle className="h-4 w-4 text-green-600" />
-        <AlertDescription className="text-green-700">
-          <p className="font-medium">Your password has been reset successfully!</p>
-          <p className="mt-2">You will be redirected to the login page shortly. Please sign in with your new password.</p>
-        </AlertDescription>
-      </Alert>
-    );
-  }
 
   return (
     <div className="space-y-4">
