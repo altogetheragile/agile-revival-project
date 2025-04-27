@@ -14,15 +14,16 @@ interface AuthContextType {
   isAdmin: boolean;
   isAuthReady: boolean;
   refreshAdminStatus: (userId: string) => Promise<boolean>;
-  checkUserRole: (userId: string, role: string) => Promise<boolean>;
-  updatePassword: (newPassword: string) => Promise<{success: boolean}>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { user, session, isAdmin, isLoading, isAuthReady, checkAdminStatus, checkUserRole } = useAuthState();
-  const { signIn, signUp, signOut, resetPassword, updatePassword } = useAuthMethods();
+  const { user, session, isAdmin, isLoading, isAdminChecked, checkAdminStatus } = useAuthState();
+  const { signIn, signUp, signOut, resetPassword } = useAuthMethods();
+
+  // Authorization is ready when we've finished loading and checked admin status
+  const isAuthReady = !isLoading && isAdminChecked;
 
   const refreshAdminStatus = async (userId: string) => {
     return await checkAdminStatus(userId);
@@ -37,9 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resetPassword,
     isAdmin,
     isAuthReady,
-    refreshAdminStatus,
-    checkUserRole,
-    updatePassword
+    refreshAdminStatus
   };
 
   return (

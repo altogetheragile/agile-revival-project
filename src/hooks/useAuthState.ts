@@ -8,58 +8,39 @@ export function useAuthState() {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isAdminChecked, setIsAdminChecked] = useState(false);
 
-  // Check if user has specific role
-  const checkUserRole = useCallback(async (userId: string, role: string): Promise<boolean> => {
-    console.log(`[Auth Debug] Checking ${role} status for user: ${userId}`);
+  const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
+    console.log(`[Auth Debug] Checking admin status for user: ${userId}`);
     try {
       // Using RPC call to has_role function to prevent RLS recursion issues
       const { data, error } = await supabase.rpc('has_role', {
         user_id: userId,
-        required_role: role
+        required_role: 'admin'
       });
 
+      console.log('[Auth Debug] Admin check result:', { data, error });
+
       if (error) {
-        console.error(`[Auth Debug] Error checking ${role} status:`, error);
+        console.error('[Auth Debug] Error checking admin status:', error);
+        setIsAdmin(false);
+        setIsAdminChecked(true);
         return false;
       }
 
       // Ensure we treat the response correctly as a boolean
-      const hasRole = !!data;
-      console.log(`[Auth Debug] ${role} status for ${userId}: ${hasRole ? 'has role' : 'does not have role'}`);
+      const hasAdminRole = !!data;
+      console.log(`[Auth Debug] Admin status for ${userId}: ${hasAdminRole ? 'admin' : 'not admin'}`);
       
-      return hasRole;
+      setIsAdmin(hasAdminRole);
+      setIsAdminChecked(true);
+      
+      return hasAdminRole;
     } catch (error) {
-      console.error(`[Auth Debug] Exception checking ${role} status:`, error);
+      console.error('[Auth Debug] Exception checking admin status:', error);
+      setIsAdmin(false);
+      setIsAdminChecked(true);
       return false;
-    }
-  }, []);
-
-  // Check if user is admin
-  const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
-    const isAdminUser = await checkUserRole(userId, 'admin');
-    setIsAdmin(isAdminUser);
-    return isAdminUser;
-  }, [checkUserRole]);
-
-  // Get user profile data
-  const fetchUserProfile = useCallback(async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('[Auth Debug] Error fetching user profile:', error);
-      }
-
-      return data;
-    } catch (error) {
-      console.error('[Auth Debug] Exception fetching user profile:', error);
-      return null;
     }
   }, []);
 
@@ -69,7 +50,6 @@ export function useAuthState() {
     
     setIsLoading(true);
     
-    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         console.log(`[Auth Debug] Auth state changed: ${event}`, { 
@@ -85,79 +65,111 @@ export function useAuthState() {
         setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
-          console.log(`[Auth Debug] User authenticated, email: ${currentSession.user.email}, id: ${currentSession.user.id}`);
+          console.log(`[Auth Debug] User authenticated, email: ${currentSession.user.email}, id: ${currentSession.user.id}, provider: ${currentSession.user.app_metadata?.provider || 'email'}`);
+          setIsAdminChecked(false);
+          setIsAdmin(false);
           
-          // Check admin status with retry mechanism
+          // Try multiple attempts with increasing delays to ensure Supabase has fully processed the authentication
           const checkAdminWithRetry = async () => {
             if (!isMounted) return;
             
-            // First attempt
+            // First attempt immediately
+            console.log("[Auth Debug] Checking admin status - first attempt");
             let isAdminUser = await checkAdminStatus(currentSession.user.id);
             
-            // If not admin, try again after a delay (handles race conditions with new accounts)
+            // If not admin, try again after a delay
             if (!isAdminUser && isMounted) {
+              console.log("[Auth Debug] Admin check first attempt failed, retrying in 500ms");
               setTimeout(async () => {
                 if (!isMounted) return;
+                console.log("[Auth Debug] Checking admin status - second attempt");
                 isAdminUser = await checkAdminStatus(currentSession.user.id);
-                if (isMounted) setIsAuthReady(true);
+                
+                // If still not admin, try once more
+                if (!isAdminUser && isMounted) {
+                  console.log("[Auth Debug] Admin check second attempt failed, retrying in 1000ms");
+                  setTimeout(async () => {
+                    if (!isMounted) return;
+                    console.log("[Auth Debug] Checking admin status - final attempt");
+                    await checkAdminStatus(currentSession.user.id);
+                    if (isMounted) setIsLoading(false);
+                  }, 1000);
+                } else if (isMounted) {
+                  setIsLoading(false);
+                }
               }, 500);
             } else if (isMounted) {
-              setIsAuthReady(true);
+              setIsLoading(false);
             }
           };
           
           checkAdminWithRetry();
         } else {
-          console.log("[Auth Debug] No authenticated user");
+          console.log("[Auth Debug] No authenticated user, clearing admin status");
           setIsAdmin(false);
-          setIsAuthReady(true);
+          setIsAdminChecked(true);
+          setIsLoading(false);
         }
       }
     );
 
-    // Initial session check
+    console.log("[Auth Debug] Initial session check on component mount");
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log("[Auth Debug] Initial session check result:", { 
         email: currentSession?.user?.email,
-        userId: currentSession?.user?.id
+        userId: currentSession?.user?.id,
+        provider: currentSession?.user?.app_metadata?.provider
       });
       
       if (!isMounted) return;
       
-      // Update session and user state
+      // Always update session and user state
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       
       if (currentSession?.user) {
-        console.log(`[Auth Debug] Found existing session for: ${currentSession.user.email}`);
+        console.log(`[Auth Debug] Found existing session for: ${currentSession.user.email}, id: ${currentSession.user.id}, provider: ${currentSession.user.app_metadata?.provider || 'email'}`);
         
-        // Check admin status with retry for initial load
+        // Similar retry logic for initial session check
         const checkAdminWithRetry = async () => {
           if (!isMounted) return;
           
+          // First attempt immediately
+          console.log("[Auth Debug] Initial admin check - first attempt");
           let isAdminUser = await checkAdminStatus(currentSession.user.id);
           
+          // If not admin, try again after a delay
           if (!isAdminUser && isMounted) {
+            console.log("[Auth Debug] Initial admin check first attempt failed, retrying in 500ms");
             setTimeout(async () => {
               if (!isMounted) return;
+              console.log("[Auth Debug] Initial admin check - second attempt");
               isAdminUser = await checkAdminStatus(currentSession.user.id);
-              if (isMounted) setIsAuthReady(true);
+              
+              // If still not admin, try once more
+              if (!isAdminUser && isMounted) {
+                console.log("[Auth Debug] Initial admin check second attempt failed, retrying in 1000ms");
+                setTimeout(async () => {
+                  if (!isMounted) return;
+                  console.log("[Auth Debug] Initial admin check - final attempt");
+                  await checkAdminStatus(currentSession.user.id);
+                  if (isMounted) setIsLoading(false);
+                }, 1000);
+              } else if (isMounted) {
+                setIsLoading(false);
+              }
             }, 500);
           } else if (isMounted) {
-            setIsAuthReady(true);
+            setIsLoading(false);
           }
         };
         
         checkAdminWithRetry();
       } else {
-        setIsAuthReady(true);
+        if (isMounted) setIsLoading(false);
       }
     }).catch(error => {
       console.error("[Auth Debug] Error checking initial session:", error);
-      if (isMounted) {
-        setIsAuthReady(true);
-      }
-    }).finally(() => {
       if (isMounted) {
         setIsLoading(false);
       }
@@ -175,9 +187,7 @@ export function useAuthState() {
     session,
     isAdmin,
     isLoading,
-    isAuthReady,
-    checkAdminStatus,
-    checkUserRole,
-    fetchUserProfile
+    isAdminChecked,
+    checkAdminStatus
   };
 }
