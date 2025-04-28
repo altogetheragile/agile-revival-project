@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { handleError } from '@/utils/errorHandler';
 
@@ -10,40 +10,46 @@ export function usePasswordReset() {
   const [error, setError] = useState<string | null>(null);
   const [localResetEmailSent, setLocalResetEmailSent] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const initiatePasswordReset = async (email: string) => {
     try {
       setIsSubmitting(true);
+      setError(null);
       console.log(`Initiating password reset for: ${email}`);
       
       // Show loading toast immediately
-      const toastId = toast.loading("Sending password reset link...");
+      toast({
+        title: "Sending",
+        description: "Sending password reset link..."
+      });
       
       // Set the reset URL to the current site's reset password page
       const resetUrl = `${window.location.origin}/reset-password`;
       console.log(`Using reset URL: ${resetUrl}`);
       
-      // Try direct Supabase method
+      // Call Supabase directly to reset password
       const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: resetUrl,
       });
       
       if (supabaseError) {
         console.error('Supabase password reset error:', supabaseError);
-        
-        // Update loading toast to error but with a generic message for security
-        toast.success("If an account exists with this email, you'll receive reset instructions.", {
-          id: toastId,
+        // We'll still show a success message for security reasons (don't reveal if email exists)
+        toast({
+          title: "Email sent",
+          description: "If an account exists with this email, you'll receive reset instructions."
         });
         
+        // But still throw the error for debugging
         throw supabaseError;
       }
       
       console.log('Password reset request successful');
       
-      // Update loading toast to success
-      toast.success("Reset link sent", {
-        id: toastId,
+      // Show success toast
+      toast({
+        title: "Email sent",
         description: "If an account exists with this email, you'll receive reset instructions."
       });
       
@@ -54,9 +60,16 @@ export function usePasswordReset() {
       console.error('Password reset error:', error);
       
       // For security, we still show a success message even on error
-      toast.success("If an account exists with this email, you'll receive reset instructions.");
+      toast({
+        title: "Email sent",
+        description: "If an account exists with this email, you'll receive reset instructions."
+      });
       
-      setError(error.message);
+      // But we'll set the error for debugging purposes
+      setError(error.message || "An unexpected error occurred");
+      
+      // Still mark as sent for security reasons
+      setLocalResetEmailSent(true);
       return { success: false, error };
     } finally {
       setIsSubmitting(false);
@@ -78,13 +91,19 @@ export function usePasswordReset() {
       }
 
       console.log('Password updated successfully');
-      toast.success('Your password has been updated successfully');
+      toast({
+        title: "Success",
+        description: "Your password has been updated successfully"
+      });
       
       return { success: true };
     } catch (error: any) {
       console.error('Password update error:', error);
-      setError(error.message);
-      toast.error('Failed to update password');
+      setError(error.message || "An unexpected error occurred");
+      toast({
+        title: "Error",
+        description: "Failed to update password"
+      });
       return { success: false, error };
     } finally {
       setIsSubmitting(false);

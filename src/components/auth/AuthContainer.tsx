@@ -36,9 +36,14 @@ export default function AuthContainer() {
     }
   }, [user, isAdmin, navigate, from]);
 
-  // Clear errors when changing tabs
+  // Clear errors when changing tabs and reset the resetEmailSent state when leaving the reset tab
   const handleTabChange = (value: AuthMode) => {
     setError(null);
+    
+    if (authMode === 'reset' && value !== 'reset') {
+      setResetEmailSent(false);
+    }
+    
     setAuthMode(value);
   };
 
@@ -75,11 +80,29 @@ export default function AuthContainer() {
     setIsLoading(true);
     setError(null);
     try {
-      // Using resetPassword from AuthContext which is delegating to initiatePasswordReset in usePasswordReset
-      await signUp(email, '', '', ''); // This is just a placeholder, implement actual reset password logic
+      // Using direct Supabase method to reset password
+      const { data, error } = await supabase.auth.resetPasswordForEmail(
+        email,
+        { redirectTo: `${window.location.origin}/reset-password` }
+      );
+      
+      if (error) throw error;
+      
       setResetEmailSent(true);
+      toast({
+        title: "Reset email sent",
+        description: "If an account exists with this email, you'll receive reset instructions shortly.",
+      });
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset email');
+      // Don't expose specific errors for security reasons
+      console.error('Password reset error:', err);
+      
+      // Still show success message for security (don't reveal if email exists)
+      setResetEmailSent(true);
+      toast({
+        title: "Reset email sent",
+        description: "If an account exists with this email, you'll receive reset instructions.",
+      });
     } finally {
       setIsLoading(false);
     }

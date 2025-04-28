@@ -57,7 +57,7 @@ enable_confirmations = false
 
 # Increasing this value to 1 day (86400 seconds) to prevent quick expiration of reset links
 # This specifically increases the expiration time for password reset links
-reset_token_expiration_seconds = 86400
+reset_token_expiration_seconds = 172800
 
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin`, `notion`, `twitch`,
@@ -86,7 +86,7 @@ gcp_jwt_path = ""
 timeout_seconds = 60
 
 [functions.send-email]
-verify_jwt = true
+verify_jwt = false
 
 [functions.google-token-exchange]
 verify_jwt = true

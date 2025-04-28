@@ -10,6 +10,7 @@ interface ResetPasswordViewProps {
 }
 
 export default function ResetPasswordView({ 
+  onSubmit,
   error, 
   resetEmailSent 
 }: ResetPasswordViewProps) {
@@ -23,7 +24,11 @@ export default function ResetPasswordView({
 
   const handleSubmit = async (email: string): Promise<void> => {
     try {
-      await initiatePasswordReset(email);
+      // Try both the provided onSubmit and our hook implementation
+      await Promise.all([
+        onSubmit(email).catch(e => console.log('onSubmit error:', e)),
+        initiatePasswordReset(email).catch(e => console.log('initiatePasswordReset error:', e))
+      ]);
     } catch (error) {
       console.error('Error in ResetPasswordView.handleSubmit:', error);
     }
