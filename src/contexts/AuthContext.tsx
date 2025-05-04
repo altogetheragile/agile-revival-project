@@ -2,8 +2,10 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
-import { usePasswordReset } from '@/hooks/usePasswordReset';
 import { User, Session } from '@supabase/supabase-js';
+
+// Remove the unused import to fix any potential issues
+// import { usePasswordReset } from '@/hooks/usePasswordReset';
 
 interface AuthContextType {
   user: User | null;

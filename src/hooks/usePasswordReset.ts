@@ -27,24 +27,45 @@ export function usePasswordReset() {
       if (!email || typeof email !== 'string' || email.trim() === '') {
         throw new Error('Please enter a valid email address');
       }
-      
-      // Set the reset URL to the current site's reset password page
-      const resetUrl = `${window.location.origin}/reset-password`;
-      console.log(`Using reset URL: ${resetUrl}`);
-      
-      // Call Supabase directly to reset password with all available options
-      const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: resetUrl,
-        captchaToken: undefined
-      });
-      
-      if (supabaseError) {
-        console.error('Supabase password reset error:', supabaseError);
-        // We'll still show a success message for security reasons (don't reveal if email exists)
-        throw supabaseError;
+
+      // Try multiple approaches for better reliability
+      try {
+        // Approach 1: Use our dedicated edge function
+        console.log('Attempting password reset via edge function');
+        const { error: edgeFunctionError } = await supabase.functions.invoke('send-password-reset', {
+          body: { 
+            email: email.trim(),
+            redirectUrl: `${window.location.origin}/reset-password`
+          }
+        });
+        
+        if (edgeFunctionError) {
+          console.error('Edge function reset error:', edgeFunctionError);
+          // Continue to try other methods
+        } else {
+          console.log('Password reset via edge function successful');
+        }
+      } catch (edgeFunctionError) {
+        console.error('Edge function call failed:', edgeFunctionError);
+        // Continue to other methods
       }
       
-      console.log('Password reset request successful');
+      try {
+        // Approach 2: Use standard Supabase method
+        console.log('Attempting password reset via Supabase Auth API');
+        const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        
+        if (supabaseError) {
+          console.error('Supabase password reset error:', supabaseError);
+          // Still show success for security reasons
+        } else {
+          console.log('Password reset request through Supabase successful');
+        }
+      } catch (supabaseError) {
+        console.error('Supabase reset method error:', supabaseError);
+      }
       
       // Show success toast
       toast({

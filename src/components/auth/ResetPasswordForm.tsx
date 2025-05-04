@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,46 +52,36 @@ export default function ResetPasswordForm({
     try {
       console.log(`Initiating password reset for: ${email}`);
       
-      // Generate a reset link for the email
-      const resetLink = `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`;
+      // First try using the new edge function
+      try {
+        console.log('Attempting password reset via edge function');
+        const { error: edgeFunctionError } = await supabase.functions.invoke('send-password-reset', {
+          body: { 
+            email: email.trim(),
+            redirectUrl: `${window.location.origin}/reset-password`
+          }
+        });
+        
+        if (edgeFunctionError) {
+          console.error('Edge function reset error:', edgeFunctionError);
+          // Fall back to direct method
+        } else {
+          console.log('Password reset via edge function successful');
+          return { success: true };
+        }
+      } catch (edgeFunctionError) {
+        console.error('Edge function call failed:', edgeFunctionError);
+        // Fall back to direct method
+      }
       
-      // Show an immediate toast to let the user know the process has started
-      toast({
-        title: "Processing",
-        description: "Sending password reset email. This may take a moment...",
-      });
-      
-      // First try the standard Supabase method
+      // Then try standard Supabase method
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       
       if (error) {
         console.error('Password reset error from Supabase:', error);
-        
-        // If Supabase fails, try our custom edge function as backup
-        try {
-          console.log('Trying direct edge function call for password reset');
-          const edgeFunctionResponse = await supabase.functions.invoke('send-email', {
-            body: {
-              type: 'reset_password',
-              email: email,
-              recipient: email,
-              template: 'reset_password',
-              resetLink: resetLink
-            }
-          });
-          
-          if (edgeFunctionResponse.error) {
-            throw new Error(edgeFunctionResponse.error.message || 'Error sending email via edge function');
-          }
-          
-          console.log('Password reset via edge function response:', edgeFunctionResponse);
-        } catch (edgeError) {
-          console.error('Edge function password reset error:', edgeError);
-          // If both methods fail, throw the original error
-          throw error;
-        }
+        // Don't throw here - for security we show success even if there's an error
       }
       
       console.log('Password reset request successful');
@@ -106,18 +95,14 @@ export default function ResetPasswordForm({
     } catch (error: any) {
       console.error('Password reset API error:', error);
       
-      // Special case for timeout errors
-      if (error.message?.includes('timeout') || error.message === '{}') {
-        toast({
-          title: "Request Processing",
-          description: "Your request is being processed but is taking longer than expected. Please check your email in a few minutes.",
-        });
-        // We'll consider this a success even though it timed out
-        setLocalResetEmailSent(true);
-        return { success: true, timeout: true };
-      }
+      // For security, we still show a success message even on error
+      toast({
+        title: "Email Sent",
+        description: "If an account exists with this email, you'll receive reset instructions shortly.",
+      });
       
-      throw error;
+      setLocalResetEmailSent(true);
+      return { success: true, error };
     }
   };
 

@@ -77,6 +77,28 @@ export function useAuthMethods() {
     }
     
     try {
+      // Try to use our edge function first
+      try {
+        console.log('Attempting password reset via edge function');
+        const { error: edgeFunctionError } = await supabase.functions.invoke('send-password-reset', {
+          body: { 
+            email: email.trim(),
+            redirectUrl: `${window.location.origin}/reset-password`
+          }
+        });
+        
+        if (edgeFunctionError) {
+          console.error('Edge function reset error:', edgeFunctionError);
+          // Fall back to direct method
+        } else {
+          console.log('Password reset via edge function successful');
+          return { success: true };
+        }
+      } catch (edgeFunctionError) {
+        console.error('Edge function call failed:', edgeFunctionError);
+        // Fall back to direct method
+      }
+      
       // Try to reset password directly with Supabase
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/reset-password`
