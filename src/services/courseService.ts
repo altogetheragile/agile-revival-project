@@ -1,9 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Course, CourseFormData, ScheduleCourseFormData } from '@/types/course';
 import { mapDbToCourse } from './course/courseMappers';
 import { toast } from 'sonner';
 import { createCourseFromTemplate } from './templates/templateMutations';
+import { getScheduledCourses } from './course/courseQueries';
 
 // Get all courses
 export const getAllCourses = async (): Promise<Course[]> => {
@@ -273,5 +273,8 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
   }
 };
 
-// Export the template mutation function
-export { createCourseFromTemplate };
+// Export the necessary functions from course queries and mutations
+export { 
+  createCourseFromTemplate,
+  getScheduledCourses
+};

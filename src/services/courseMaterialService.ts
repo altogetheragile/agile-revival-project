@@ -14,12 +14,17 @@ export const addCourseMaterial = async (courseId: string, material: CourseMateri
   const materials = [...(course.materials || []), material];
   
   // Update the course with the new materials
-  const updatedCourse = await updateCourse(courseId, {
+  const success = await updateCourse(courseId, {
     ...course,
     materials
   });
   
-  return updatedCourse;
+  if (success) {
+    // If successful, fetch and return the updated course
+    return await getCourseById(courseId);
+  }
+  
+  return null;
 };
 
 export const removeCourseMaterial = async (courseId: string, materialId: string): Promise<Course | null> => {
@@ -33,10 +38,15 @@ export const removeCourseMaterial = async (courseId: string, materialId: string)
   const materials = (course.materials || []).filter(m => m.id !== materialId);
   
   // Update the course with the filtered materials
-  const updatedCourse = await updateCourse(courseId, {
+  const success = await updateCourse(courseId, {
     ...course,
     materials
   });
   
-  return updatedCourse;
+  if (success) {
+    // If successful, fetch and return the updated course
+    return await getCourseById(courseId);
+  }
+  
+  return null;
 };

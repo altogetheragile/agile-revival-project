@@ -1,9 +1,9 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData } from "@/types/course";
 import { getAllCourses, createCourse, updateCourse, deleteCourse } from "@/services/courseService";
 import { toast } from "sonner";
+import { getCourseById } from "@/services/courseService";
 
 export const useCourseManagement = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -85,9 +85,13 @@ export const useCourseManagement = () => {
         const updated = await updateCourse(currentCourse.id, templateData);
         
         if (updated) {
-          console.log("Course updated successfully:", updated);
+          console.log("Course updated successfully");
           await loadCourses();
-          setCurrentCourse(updated);
+          // Only update currentCourse if we have a valid Course object, not just a boolean success value
+          const updatedCourse = await getCourseById(currentCourse.id);
+          if (updatedCourse) {
+            setCurrentCourse(updatedCourse);
+          }
           uiToast({
             title: "Template updated",
             description: `"${data.title}" has been updated successfully.`
@@ -99,12 +103,11 @@ export const useCourseManagement = () => {
         const created = await createCourse(templateData);
         
         if (created) {
-          console.log("Course created successfully:", created);
+          console.log("Course created successfully");
           await loadCourses();
-          setCurrentCourse(created);
           uiToast({
             title: "Template created",
-            description: `"${created.title}" has been created successfully.`
+            description: `"${data.title}" has been created successfully.`
           });
           setIsFormOpen(false);
         }
