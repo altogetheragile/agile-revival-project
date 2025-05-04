@@ -16,7 +16,7 @@ export default function ProtectedRoute({
   requiredRoles = [], 
   redirectTo = "/auth" 
 }: ProtectedRouteProps) {
-  const { user, isAdmin, isAuthReady } = useAuth();
+  const { user, isAdmin, isAuthReady, refreshAdminStatus } = useAuth();
   const location = useLocation();
   const [isCheckingRole, setIsCheckingRole] = useState(requiredRoles.length > 0);
   const [hasRequiredRole, setHasRequiredRole] = useState(false);
@@ -36,21 +36,38 @@ export default function ProtectedRoute({
       return;
     }
 
-    // Admin users always have access to everything
-    if (isAdmin) {
-      setHasRequiredRole(true);
+    // For admin routes, refresh the admin status first
+    const checkRoles = async () => {
+      let adminStatus = isAdmin;
+      
+      // If admin role is required, try refreshing the status
+      if (requiredRoles.includes('admin')) {
+        try {
+          console.log("Refreshing admin status for user:", user.id);
+          adminStatus = await refreshAdminStatus(user.id);
+        } catch (error) {
+          console.error("Error refreshing admin status:", error);
+        }
+      }
+      
+      // Admin users always have access to everything
+      if (adminStatus) {
+        setHasRequiredRole(true);
+        setIsCheckingRole(false);
+        setCheckComplete(true);
+        return;
+      }
+      
+      // For other role checks, we would check user roles here
+      // This is a placeholder for future role checking logic
+      const userHasRequiredRole = requiredRoles.includes('user');
+      setHasRequiredRole(userHasRequiredRole);
       setIsCheckingRole(false);
       setCheckComplete(true);
-      return;
-    }
-
-    // For other role checks, we would check user roles here
-    // This is a placeholder for future role checking logic
-    const userHasRequiredRole = requiredRoles.includes('user');
-    setHasRequiredRole(userHasRequiredRole);
-    setIsCheckingRole(false);
-    setCheckComplete(true);
-  }, [user, isAdmin, requiredRoles]);
+    };
+    
+    checkRoles();
+  }, [user, isAdmin, requiredRoles, refreshAdminStatus]);
 
   // Show toast notification when redirected due to admin access restriction
   useEffect(() => {

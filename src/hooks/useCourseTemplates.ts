@@ -1,8 +1,9 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Course, CourseFormData } from '@/types/course';
 import { getCourseTemplates, createCourse, updateCourse, deleteCourse } from '@/services/courseService';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useCourseTemplates = () => {
   const [templates, setTemplates] = useState<Course[]>([]);
@@ -11,9 +12,17 @@ export const useCourseTemplates = () => {
   const [currentTemplate, setCurrentTemplate] = useState<Course | null>(null);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   
-  const loadTemplates = async () => {
+  const { user, isAdmin } = useAuth();
+  
+  const loadTemplates = useCallback(async () => {
+    if (!user || !isAdmin) {
+      console.error("User authentication or admin privileges missing");
+      return;
+    }
+    
     setIsLoading(true);
     try {
+      console.log("Loading course templates as admin user:", user.id);
       const courseTemplates = await getCourseTemplates();
       console.log("Loaded templates:", courseTemplates);
       setTemplates(courseTemplates);
@@ -25,25 +34,44 @@ export const useCourseTemplates = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, isAdmin]);
 
-  useEffect(() => {
-    loadTemplates();
-  }, []);
+  // Instead of useEffect here, we'll let the component call loadTemplates
+  // This gives more control over when to load the data
 
   const handleAddTemplate = () => {
+    if (!user || !isAdmin) {
+      toast.error("Access denied", { 
+        description: "You need admin privileges to add templates" 
+      });
+      return;
+    }
     setCurrentTemplate(null);
     setIsFormOpen(true);
   };
 
   const handleEditTemplate = (template: Course) => {
+    if (!user || !isAdmin) {
+      toast.error("Access denied", { 
+        description: "You need admin privileges to edit templates" 
+      });
+      return;
+    }
     console.log("Editing template:", template);
     setCurrentTemplate(template);
     setIsFormOpen(true);
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
+    if (!user || !isAdmin) {
+      toast.error("Access denied", { 
+        description: "You need admin privileges to delete templates" 
+      });
+      return;
+    }
+    
     try {
+      console.log("Deleting template with ID:", templateId);
       const success = await deleteCourse(templateId);
       if (success) {
         await loadTemplates();
@@ -58,13 +86,27 @@ export const useCourseTemplates = () => {
   };
 
   const handleScheduleCourse = (template: Course) => {
+    if (!user || !isAdmin) {
+      toast.error("Access denied", { 
+        description: "You need admin privileges to schedule courses" 
+      });
+      return;
+    }
     setCurrentTemplate(template);
     setIsScheduleDialogOpen(true);
   };
 
   const handleFormSubmit = async (data: CourseFormData) => {
+    if (!user || !isAdmin) {
+      toast.error("Access denied", { 
+        description: "You need admin privileges to save templates" 
+      });
+      return;
+    }
+    
     try {
       console.log("Form submitted with data:", data);
+      console.log("Current user:", user);
       
       // Ensure required fields have default values and isTemplate is true
       const templateData: CourseFormData = {

@@ -1,11 +1,15 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CourseForm from "@/components/courses/CourseForm";
 import { CourseFormData, CourseTemplate, Course } from "@/types/course";
 import CourseTemplatePreview from "./CourseTemplatePreview";
 import MediaLibrary from "@/components/media/MediaLibrary";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CourseTemplateFormDialogProps {
   open: boolean;
@@ -22,13 +26,30 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
   onSubmit,
   onCancel
 }) => {
+  // Get auth state
+  const { user, isAdmin } = useAuth();
+  
   // State to track preview dialog
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<CourseTemplate | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   
   // State for media library
   const [mediaLibOpen, setMediaLibOpen] = useState(false);
   const [formData, setFormData] = useState<CourseFormData | null>(null);
+
+  // Check authentication status when dialog opens
+  useEffect(() => {
+    if (open) {
+      if (!user) {
+        setAuthError("You must be logged in to manage templates");
+      } else if (!isAdmin) {
+        setAuthError("You need admin privileges to manage templates");
+      } else {
+        setAuthError(null);
+      }
+    }
+  }, [open, user, isAdmin]);
 
   // Convert template to course form data for editing
   const templateToCourseFormData = (template: Course): CourseFormData => {
@@ -76,6 +97,39 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
     setPreviewOpen(true);
   };
 
+  // Handle form submission with additional error handling
+  const handleSubmit = (data: CourseFormData) => {
+    if (!user) {
+      toast.error("Authentication required", {
+        description: "You need to be logged in to save templates"
+      });
+      return;
+    }
+    
+    if (!isAdmin) {
+      toast.error("Permission denied", {
+        description: "You need admin privileges to save templates"
+      });
+      return;
+    }
+    
+    // Ensure isTemplate is always true before submitting
+    const templateData = {
+      ...data,
+      isTemplate: true
+    };
+    console.log("Submitting template data:", templateData);
+    
+    try {
+      onSubmit(templateData);
+    } catch (error) {
+      console.error("Error submitting template:", error);
+      toast.error("Failed to save template", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred"
+      });
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -88,38 +142,40 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
               Define the course details that will be used as a template for scheduling course instances.
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="max-h-[70vh] pr-4">
-            <CourseForm
-              initialData={currentTemplate ? templateToCourseFormData(currentTemplate) : {
-                title: "",
-                description: "",
-                dates: "Template - No Dates",
-                location: "To Be Determined",
-                instructor: "To Be Assigned",
-                price: "£",
-                category: "scrum",
-                spotsAvailable: 0,
-                isTemplate: true, // Explicitly set isTemplate to true
-                status: "draft"
-              }}
-              onSubmit={(data) => {
-                // Ensure isTemplate is always true before submitting
-                const templateData = {
-                  ...data,
-                  isTemplate: true
-                };
-                console.log("Submitting template data:", templateData);
-                onSubmit(templateData);
-              }}
-              onCancel={onCancel}
-              stayOpenOnSubmit={true}
-              isTemplate={true} // Always pass isTemplate as true
-              onOpenMediaLibrary={() => setMediaLibOpen(true)}
-              formData={formData}
-              setFormData={setFormData}
-              onPreview={handlePreview}
-            />
-          </ScrollArea>
+          
+          {authError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{authError}</AlertDescription>
+            </Alert>
+          )}
+          
+          {!authError && (
+            <ScrollArea className="max-h-[70vh] pr-4">
+              <CourseForm
+                initialData={currentTemplate ? templateToCourseFormData(currentTemplate) : {
+                  title: "",
+                  description: "",
+                  dates: "Template - No Dates",
+                  location: "To Be Determined",
+                  instructor: "To Be Assigned",
+                  price: "£",
+                  category: "scrum",
+                  spotsAvailable: 0,
+                  isTemplate: true, // Explicitly set isTemplate to true
+                  status: "draft"
+                }}
+                onSubmit={handleSubmit}
+                onCancel={onCancel}
+                stayOpenOnSubmit={true}
+                isTemplate={true} // Always pass isTemplate as true
+                onOpenMediaLibrary={() => setMediaLibOpen(true)}
+                formData={formData}
+                setFormData={setFormData}
+                onPreview={handlePreview}
+              />
+            </ScrollArea>
+          )}
         </DialogContent>
       </Dialog>
       

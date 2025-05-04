@@ -10,7 +10,9 @@ import { CourseTemplateFormDialog } from "./CourseTemplateFormDialog";
 import { ScheduleCourseFromTemplateDialog } from "./ScheduleCourseFromTemplateDialog";
 import { EmptyTemplateState } from "./templates/EmptyTemplateState";
 import { TemplateLoadingState } from "./templates/TemplateLoadingState";
-import { useCourseTemplateManagement } from "@/hooks/useCourseTemplateManagement";
+import { useCourseTemplates } from "@/hooks/useCourseTemplates"; // Using this hook instead of useCourseTemplateManagement
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export const CourseTemplatesSettings = () => {
   const {
@@ -27,11 +29,38 @@ export const CourseTemplatesSettings = () => {
     handleScheduleCourse,
     handleFormSubmit,
     loadTemplates
-  } = useCourseTemplateManagement();
+  } = useCourseTemplates();
+
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
+    if (!user || !isAdmin) {
+      toast.error("Access denied", { 
+        description: "You need admin privileges to access templates" 
+      });
+      return;
+    }
+    
     loadTemplates();
-  }, []);
+  }, [user, isAdmin]);
+
+  if (!user || !isAdmin) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Course Templates</CardTitle>
+          <CardDescription>
+            Manage your course templates and schedule course instances
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="p-8 text-center text-gray-500">
+            <p>You need admin privileges to access this area.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
