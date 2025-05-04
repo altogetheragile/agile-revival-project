@@ -33,7 +33,8 @@ export function ResetPasswordForm({
   const [localResetEmailSent, setLocalResetEmailSent] = useState(externalResetEmailSent);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   
-  const REQUEST_TIMEOUT = 20000;
+  // Extended timeout for reset password requests
+  const REQUEST_TIMEOUT = 30000;
 
   useEffect(() => {
     if (timeoutError) {
@@ -60,18 +61,20 @@ export function ResetPasswordForm({
     return handleSubmit(new Event('retry') as any);
   };
 
-  const handleResetPassword = async () => {
+  const handleDirectResetPassword = async () => {
     try {
       console.log(`Initiating direct password reset for: ${email}`);
       
       // Show an immediate toast to let the user know the process has started
       toast({
+        title: "Processing",
         description: "Sending password reset email...",
       });
       
-      // Call Supabase directly for the reset password
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      // Call Supabase directly for the reset password with full options
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/reset-password`,
+        captchaToken: undefined
       });
       
       if (error) {
@@ -81,18 +84,36 @@ export function ResetPasswordForm({
       
       console.log('Password reset request successful');
       toast({
+        title: "Email sent",
         description: "If an account exists with this email, you'll receive reset instructions shortly.",
       });
       
       return { success: true };
     } catch (error: any) {
       console.error('Password reset API error:', error);
+      
+      // For security, still show a success message
+      toast({
+        title: "Email sent",
+        description: "If an account exists with this email, you'll receive reset instructions shortly.",
+      });
+      
       throw error;
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || email.trim() === '') {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (isSubmitting || externalLoading) return;
     
     setIsSubmitting(true);
@@ -107,6 +128,7 @@ export function ResetPasswordForm({
       setIsSubmitting(false);
       
       toast({
+        title: "Processing",
         description: "Your request is being processed but is taking longer than expected. Please check your email in a few minutes.",
         duration: 6000,
       });
@@ -117,14 +139,14 @@ export function ResetPasswordForm({
     try {
       console.log(`Attempting password reset for ${email} (attempt ${retryCount + 1})`);
       
-      // First try direct Supabase method
-      await handleResetPassword();
+      // First try with direct Supabase method
+      const directResult = await handleDirectResetPassword().catch(e => ({ success: false, error: e }));
       
       // Also try via the provided onSubmit callback as a backup
       try {
         await onSubmit(email);
       } catch (callbackError) {
-        console.log('Note: callback onSubmit failed but direct reset succeeded:', callbackError);
+        console.log('Note: callback onSubmit failed but direct reset might have succeeded:', callbackError);
       }
       
       clearTimeout(timeoutId);

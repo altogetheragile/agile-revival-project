@@ -55,7 +55,7 @@ double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
 enable_confirmations = false
 
-# Increasing this value to 1 day (86400 seconds) to prevent quick expiration of reset links
+# Increasing this value to 2 days (172800 seconds) to prevent quick expiration of reset links
 # This specifically increases the expiration time for password reset links
 reset_token_expiration_seconds = 172800
 
@@ -99,3 +99,6 @@ verify_jwt = true
 
 [functions.send-test-email]
 verify_jwt = true
+
+[functions.send-password-reset]
+verify_jwt = false

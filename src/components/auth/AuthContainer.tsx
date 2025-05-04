@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,8 +53,18 @@ export default function AuthContainer() {
     setError(null);
     try {
       await signIn(email, password);
+      toast({
+        title: "Success",
+        description: "You have been signed in successfully",
+      });
     } catch (err: any) {
+      console.error("Login error:", err);
       setError(err.message || 'Failed to sign in');
+      toast({
+        title: "Login failed",
+        description: err.message || 'Invalid login credentials',
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +81,13 @@ export default function AuthContainer() {
       });
       setAuthMode('login');
     } catch (err: any) {
+      console.error("Signup error:", err);
       setError(err.message || 'Failed to create account');
+      toast({
+        title: "Signup failed",
+        description: err.message || 'Failed to create account',
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -80,13 +97,27 @@ export default function AuthContainer() {
     setIsLoading(true);
     setError(null);
     try {
-      // Using direct Supabase method to reset password
+      console.log(`Attempting to reset password for ${email}`);
+      toast({
+        title: "Processing",
+        description: "Sending password reset email...",
+      });
+      
+      // Use direct Supabase method to reset password with increased timeout
       const { data, error } = await supabase.auth.resetPasswordForEmail(
         email,
-        { redirectTo: `${window.location.origin}/reset-password` }
+        { 
+          redirectTo: `${window.location.origin}/reset-password`,
+          captchaToken: undefined
+        }
       );
       
-      if (error) throw error;
+      if (error) {
+        console.error('Password reset error:', error);
+        throw error;
+      }
+      
+      console.log('Password reset request successful:', data);
       
       setResetEmailSent(true);
       toast({

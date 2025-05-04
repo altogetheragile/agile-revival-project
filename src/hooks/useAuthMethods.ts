@@ -6,8 +6,13 @@ import { toast } from 'sonner';
 export function useAuthMethods() {
   const signIn = async (email: string, password: string) => {
     console.log('Signing in with email:', email);
+    
+    if (!email || !password) {
+      throw new Error('Email and password are required');
+    }
+    
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password
     });
     
@@ -21,8 +26,17 @@ export function useAuthMethods() {
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     console.log('Signing up with email:', email);
+    
+    if (!email || !password) {
+      throw new Error('Email and password are required');
+    }
+    
+    if (password.length < 6) {
+      throw new Error('Password must be at least 6 characters');
+    }
+    
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: email.trim(),
       password,
       options: {
         data: {
@@ -55,11 +69,39 @@ export function useAuthMethods() {
     console.log('Sign out successful');
   };
 
-  // Using usePasswordReset hook for password reset functionality
-  // This is handled by the dedicated hook to avoid duplication
+  const resetPassword = async (email: string) => {
+    console.log('Resetting password for:', email);
+    
+    if (!email) {
+      throw new Error('Email is required');
+    }
+    
+    try {
+      // Try to reset password directly with Supabase
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+      
+      if (error) {
+        console.error('Password reset error:', error);
+        throw error;
+      }
+      
+      console.log('Password reset email sent successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('Password reset failed:', error);
+      throw error;
+    }
+  };
 
   const updatePassword = async (newPassword: string) => {
     console.log('Updating password');
+    
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error('Password must be at least 6 characters');
+    }
+    
     const { data: sessionData } = await supabase.auth.getSession();
     
     if (!sessionData.session) {
@@ -86,6 +128,7 @@ export function useAuthMethods() {
     signIn,
     signUp,
     signOut,
+    resetPassword,
     updatePassword
   };
 }

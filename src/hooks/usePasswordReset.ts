@@ -20,28 +20,27 @@ export function usePasswordReset() {
       
       // Show loading toast immediately
       toast({
-        title: "Sending",
+        title: "Processing",
         description: "Sending password reset link..."
       });
+
+      if (!email || typeof email !== 'string' || email.trim() === '') {
+        throw new Error('Please enter a valid email address');
+      }
       
       // Set the reset URL to the current site's reset password page
       const resetUrl = `${window.location.origin}/reset-password`;
       console.log(`Using reset URL: ${resetUrl}`);
       
-      // Call Supabase directly to reset password
-      const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(email, {
+      // Call Supabase directly to reset password with all available options
+      const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: resetUrl,
+        captchaToken: undefined
       });
       
       if (supabaseError) {
         console.error('Supabase password reset error:', supabaseError);
         // We'll still show a success message for security reasons (don't reveal if email exists)
-        toast({
-          title: "Email sent",
-          description: "If an account exists with this email, you'll receive reset instructions."
-        });
-        
-        // But still throw the error for debugging
         throw supabaseError;
       }
       
@@ -80,6 +79,10 @@ export function usePasswordReset() {
     try {
       setIsSubmitting(true);
       console.log('Attempting to update password...');
+      
+      if (!newPassword || newPassword.length < 6) {
+        throw new Error('Password must be at least 6 characters long');
+      }
       
       const { error } = await supabase.auth.updateUser({ 
         password: newPassword

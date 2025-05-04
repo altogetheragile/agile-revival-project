@@ -14,7 +14,7 @@ export default function AuthForms() {
   const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
   const { errorMessage, handleError, setErrorMessage } = useAuthError();
   const { toast } = useToast();
 
@@ -27,7 +27,11 @@ export default function AuthForms() {
         description: "Please wait"
       });
       
-      await signIn(email, password);
+      await signIn(email.trim(), password);
+      toast({
+        title: "Success", 
+        description: "You've been signed in successfully"
+      });
     } catch (error: any) {
       handleError(error);
     } finally {
@@ -50,7 +54,7 @@ export default function AuthForms() {
         throw new Error("Password must be at least 6 characters");
       }
       
-      await signUp(email, password, firstName, lastName);
+      await signUp(email.trim(), password, firstName, lastName);
       toast({
         title: "Success",
         description: "Registration successful. Please check your email to verify your account."
@@ -75,12 +79,24 @@ export default function AuthForms() {
         description: "Sending password reset email..."
       });
       
-      // Use direct Supabase method for password reset
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      console.log("Attempting password reset for:", email);
+      
+      // First try using the auth context method
+      try {
+        await resetPassword(email.trim());
+      } catch (contextError) {
+        console.error("Auth context reset password error:", contextError);
+      }
+      
+      // As a fallback, also try with direct Supabase call
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/reset-password`
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Direct Supabase reset password error:", error);
+        // Don't throw here - for security we show success even if there's an error
+      }
       
       setResetEmailSent(true);
       toast({
@@ -88,7 +104,7 @@ export default function AuthForms() {
         description: "If an account exists with this email, you'll receive reset instructions."
       });
     } catch (error: any) {
-      console.error("Reset password error:", error);
+      console.error("Reset password overall error:", error);
       
       // For security, we still show success even on error
       setResetEmailSent(true);

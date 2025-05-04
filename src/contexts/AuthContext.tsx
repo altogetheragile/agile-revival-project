@@ -22,8 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { user, session, isAdmin, isLoading, isAdminChecked, checkAdminStatus } = useAuthState();
-  const { signIn, signUp, signOut, updatePassword } = useAuthMethods();
-  const { initiatePasswordReset } = usePasswordReset();
+  const { signIn, signUp, signOut, resetPassword, updatePassword } = useAuthMethods();
 
   // Authorization is ready when we've finished loading and checked admin status
   const isAuthReady = !isLoading && isAdminChecked;
@@ -38,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signUp,
     signOut,
-    resetPassword: initiatePasswordReset,
+    resetPassword,
     updatePassword,
     isAdmin,
     isAuthReady,
