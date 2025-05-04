@@ -4,6 +4,7 @@ import { navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { LogIn, LogOut, User, Shield } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface AuthButtonProps {
   closeMenu?: () => void;
@@ -12,6 +13,15 @@ interface AuthButtonProps {
 
 export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
   const { user, isAdmin, signOut } = useAuth();
+
+  // Debug logging
+  useEffect(() => {
+    console.log("[AuthButton Debug] Auth state:", { 
+      user: !!user, 
+      userId: user?.id,
+      isAdmin 
+    });
+  }, [user, isAdmin]);
 
   // Handle logout
   const handleLogout = async (e: React.MouseEvent) => {
@@ -41,6 +51,7 @@ export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
 
   // When logged in as admin - show admin dashboard link
   if (isAdmin) {
+    console.log("[AuthButton Debug] Showing admin dashboard link");
     return (
       <div className={isMobile ? "space-y-2" : "flex items-center gap-2"}>
         <Link 

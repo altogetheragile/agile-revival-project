@@ -1,11 +1,8 @@
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
 import { User, Session } from '@supabase/supabase-js';
-
-// Remove the unused import to fix any potential issues
-// import { usePasswordReset } from '@/hooks/usePasswordReset';
 
 interface AuthContextType {
   user: User | null;
@@ -26,10 +23,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { user, session, isAdmin, isLoading, isAdminChecked, checkAdminStatus } = useAuthState();
   const { signIn, signUp, signOut, resetPassword, updatePassword } = useAuthMethods();
 
+  // Add debug logging
+  useEffect(() => {
+    console.log("[AuthContext Debug] Auth state:", {
+      user: user?.id,
+      email: user?.email,
+      isAdmin,
+      isLoading,
+      isAdminChecked
+    });
+  }, [user, isAdmin, isLoading, isAdminChecked]);
+
   // Authorization is ready when we've finished loading and checked admin status
   const isAuthReady = !isLoading && isAdminChecked;
 
   const refreshAdminStatus = async (userId: string) => {
+    console.log("[AuthContext Debug] Refreshing admin status for:", userId);
     return await checkAdminStatus(userId);
   };
 

@@ -22,15 +22,27 @@ export default function ProtectedRoute({
   const [hasRequiredRole, setHasRequiredRole] = useState(false);
   const [checkComplete, setCheckComplete] = useState(false);
 
+  // Add debug logging
+  console.log("[ProtectedRoute Debug] Initial state:", { 
+    user: !!user, 
+    userId: user?.id,
+    isAdmin, 
+    isAuthReady, 
+    requiredRoles,
+    isCheckingRole
+  });
+
   // Check if the user has any of the required roles
   useEffect(() => {
     if (!requiredRoles.length) {
+      console.log("[ProtectedRoute Debug] No required roles, skipping check");
       setIsCheckingRole(false);
       setCheckComplete(true);
       return;
     }
 
     if (!user) {
+      console.log("[ProtectedRoute Debug] No user, skipping role check");
       setIsCheckingRole(false);
       setCheckComplete(true);
       return;
@@ -43,15 +55,17 @@ export default function ProtectedRoute({
       // If admin role is required, try refreshing the status
       if (requiredRoles.includes('admin')) {
         try {
-          console.log("Refreshing admin status for user:", user.id);
+          console.log("[ProtectedRoute Debug] Refreshing admin status for user:", user.id);
           adminStatus = await refreshAdminStatus(user.id);
+          console.log("[ProtectedRoute Debug] Refreshed admin status:", adminStatus);
         } catch (error) {
-          console.error("Error refreshing admin status:", error);
+          console.error("[ProtectedRoute Debug] Error refreshing admin status:", error);
         }
       }
       
       // Admin users always have access to everything
       if (adminStatus) {
+        console.log("[ProtectedRoute Debug] User is admin, granting access");
         setHasRequiredRole(true);
         setIsCheckingRole(false);
         setCheckComplete(true);
@@ -61,6 +75,8 @@ export default function ProtectedRoute({
       // For other role checks, we would check user roles here
       // This is a placeholder for future role checking logic
       const userHasRequiredRole = requiredRoles.includes('user');
+      console.log("[ProtectedRoute Debug] User role check result:", userHasRequiredRole);
+      
       setHasRequiredRole(userHasRequiredRole);
       setIsCheckingRole(false);
       setCheckComplete(true);
@@ -71,13 +87,26 @@ export default function ProtectedRoute({
 
   // Show toast notification when redirected due to admin access restriction
   useEffect(() => {
-    if (checkComplete && requiredRoles.includes('admin') && !isAdmin && user) {
+    if (checkComplete && requiredRoles.includes('admin') && !hasRequiredRole && user) {
+      console.log("[ProtectedRoute Debug] Showing access denied toast");
       toast.error("Access denied", {
         description: "You need admin privileges to access this area",
         duration: 5000,
       });
     }
-  }, [checkComplete, requiredRoles, isAdmin, user]);
+  }, [checkComplete, requiredRoles, hasRequiredRole, user]);
+
+  // Log the final decision for debugging
+  useEffect(() => {
+    if (checkComplete) {
+      console.log("[ProtectedRoute Debug] Access decision:", {
+        hasRequiredRole,
+        isAdmin,
+        requiredRoles,
+        shouldRedirect: !user || (requiredRoles.length > 0 && !hasRequiredRole && !isAdmin)
+      });
+    }
+  }, [checkComplete, hasRequiredRole, isAdmin, requiredRoles, user]);
 
   // Show loading state while checking authentication
   if (!isAuthReady || isCheckingRole) {
@@ -93,14 +122,17 @@ export default function ProtectedRoute({
 
   // Redirect to login if not authenticated
   if (!user) {
+    console.log("[ProtectedRoute Debug] No user, redirecting to:", redirectTo);
     return <Navigate to={redirectTo} state={{ from: location.pathname }} replace />;
   }
 
   // Redirect to unauthorized page if missing required role
   if (requiredRoles.length > 0 && !hasRequiredRole && !isAdmin) {
+    console.log("[ProtectedRoute Debug] Missing role, redirecting to unauthorized");
     return <Navigate to="/unauthorized" state={{ from: location.pathname }} replace />;
   }
 
   // If all checks pass, render the children
+  console.log("[ProtectedRoute Debug] All checks passed, rendering protected content");
   return <>{children}</>;
 }

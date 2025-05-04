@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Settings, Shield, User as UserIcon } from "lucide-react";
+import { useEffect } from "react";
 
 interface UserAvatarProps {
   size?: "sm" | "md" | "lg";
@@ -21,6 +22,14 @@ interface UserAvatarProps {
 const UserAvatar = ({ size = "md" }: UserAvatarProps) => {
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    console.log("[UserAvatar Debug] User state:", { 
+      userId: user?.id, 
+      email: user?.email, 
+      isAdmin 
+    });
+  }, [user, isAdmin]);
 
   if (!user) return null;
 
