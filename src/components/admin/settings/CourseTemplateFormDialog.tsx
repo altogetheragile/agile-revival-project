@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CourseTemplateFormDialogProps {
   open: boolean;
@@ -47,6 +48,15 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
         setAuthError("You need admin privileges to manage templates");
       } else {
         setAuthError(null);
+        // Verify we have a valid session
+        supabase.auth.getSession().then(({ data: { session }}) => {
+          if (!session) {
+            setAuthError("Your session has expired. Please log in again.");
+            toast.error("Session expired", {
+              description: "Please log in again to continue"
+            });
+          }
+        });
       }
     }
   }, [open, user, isAdmin]);
@@ -98,8 +108,11 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
   };
 
   // Handle form submission with additional error handling
-  const handleSubmit = (data: CourseFormData) => {
-    if (!user) {
+  const handleSubmit = async (data: CourseFormData) => {
+    // Double check authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session || !user) {
       toast.error("Authentication required", {
         description: "You need to be logged in to save templates"
       });

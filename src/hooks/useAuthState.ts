@@ -118,7 +118,8 @@ export function useAuthState() {
       console.log("[Auth Debug] Initial session check result:", { 
         email: currentSession?.user?.email,
         userId: currentSession?.user?.id,
-        provider: currentSession?.user?.app_metadata?.provider
+        provider: currentSession?.user?.app_metadata?.provider,
+        expires_at: currentSession?.expires_at
       });
       
       if (!isMounted) return;
@@ -129,6 +130,16 @@ export function useAuthState() {
       
       if (currentSession?.user) {
         console.log(`[Auth Debug] Found existing session for: ${currentSession.user.email}, id: ${currentSession.user.id}, provider: ${currentSession.user.app_metadata?.provider || 'email'}`);
+        
+        // Check for session expiration
+        const expiresAt = currentSession.expires_at;
+        if (expiresAt) {
+          const currentTime = Math.floor(Date.now() / 1000); // convert to seconds
+          if (expiresAt < currentTime) {
+            console.log("[Auth Debug] Session has expired, will force refresh");
+            supabase.auth.refreshSession(); // Attempt to refresh the session
+          }
+        }
         
         // Similar retry logic for initial session check
         const checkAdminWithRetry = async () => {

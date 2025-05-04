@@ -1,8 +1,8 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Course } from "@/types/course";
 import { CourseTemplateCard } from "./CourseTemplateCard";
@@ -10,9 +10,11 @@ import { CourseTemplateFormDialog } from "./CourseTemplateFormDialog";
 import { ScheduleCourseFromTemplateDialog } from "./ScheduleCourseFromTemplateDialog";
 import { EmptyTemplateState } from "./templates/EmptyTemplateState";
 import { TemplateLoadingState } from "./templates/TemplateLoadingState";
-import { useCourseTemplates } from "@/hooks/useCourseTemplates"; // Using this hook instead of useCourseTemplateManagement
+import { useCourseTemplates } from "@/hooks/useCourseTemplates"; 
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 export const CourseTemplatesSettings = () => {
   const {
@@ -32,17 +34,88 @@ export const CourseTemplatesSettings = () => {
   } = useCourseTemplates();
 
   const { user, isAdmin } = useAuth();
+  const [authChecked, setAuthChecked] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
+  // First, check authentication state
   useEffect(() => {
+    const checkAuth = async () => {
+      if (!user || !isAdmin) {
+        setAuthChecked(true);
+        return;
+      }
+
+      try {
+        // Verify we have a valid session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setSessionError("Your session has expired. Please log in again.");
+          toast.error("Session expired", {
+            description: "Please log in again to manage templates"
+          });
+        } else {
+          console.log("Valid session found for user:", session.user.id);
+          setSessionError(null);
+          // Now that we've confirmed auth is ready, load the templates
+          loadTemplates();
+        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        setSessionError("Error verifying your authentication status");
+      } finally {
+        setAuthChecked(true);
+      }
+    };
+    
+    checkAuth();
+  }, [user, isAdmin, loadTemplates]);
+
+  const handleManualRefresh = async () => {
     if (!user || !isAdmin) {
       toast.error("Access denied", { 
-        description: "You need admin privileges to access templates" 
+        description: "You need admin privileges to refresh templates" 
       });
       return;
     }
     
-    loadTemplates();
-  }, [user, isAdmin]);
+    try {
+      // Re-check session first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setSessionError("Your session has expired. Please log in again.");
+        toast.error("Session expired", {
+          description: "Please log in again to manage templates"
+        });
+        return;
+      }
+      
+      // Session is valid, refresh templates
+      setSessionError(null);
+      await loadTemplates();
+      toast.success("Templates refreshed successfully");
+    } catch (error) {
+      console.error("Error refreshing templates:", error);
+      toast.error("Error refreshing templates", {
+        description: "Failed to refresh template data"
+      });
+    }
+  };
+
+  if (!authChecked) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Course Templates</CardTitle>
+          <CardDescription>
+            Manage your course templates and schedule course instances
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TemplateLoadingState />
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!user || !isAdmin) {
     return (
@@ -55,7 +128,40 @@ export const CourseTemplatesSettings = () => {
         </CardHeader>
         <CardContent>
           <div className="p-8 text-center text-gray-500">
-            <p>You need admin privileges to access this area.</p>
+            <Alert variant="destructive">
+              <AlertTitle>Access Denied</AlertTitle>
+              <AlertDescription>
+                You need admin privileges to access this area.
+              </AlertDescription>
+            </Alert>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (sessionError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Course Templates</CardTitle>
+          <CardDescription>
+            Manage your course templates and schedule course instances
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Alert variant="destructive">
+              <AlertTitle>Authentication Error</AlertTitle>
+              <AlertDescription>
+                {sessionError}
+              </AlertDescription>
+            </Alert>
+            <div className="flex justify-center">
+              <Button onClick={() => window.location.href = "/auth"}>
+                Go to Login
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -64,11 +170,16 @@ export const CourseTemplatesSettings = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Course Templates</CardTitle>
-        <CardDescription>
-          Manage your course templates and schedule course instances
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Course Templates</CardTitle>
+          <CardDescription>
+            Manage your course templates and schedule course instances
+          </CardDescription>
+        </div>
+        <Button onClick={handleManualRefresh} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+        </Button>
       </CardHeader>
       <CardContent>
         {isLoading ? (

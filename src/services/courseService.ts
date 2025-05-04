@@ -91,6 +91,8 @@ export const createCourse = async (courseData: CourseFormData): Promise<boolean>
       return false;
     }
     
+    console.log("Current session user:", session.user.id);
+    
     // Prepare the data for insertion, converting to snake_case for DB
     const dbCourseData = {
       title: courseData.title,
@@ -118,7 +120,7 @@ export const createCourse = async (courseData: CourseFormData): Promise<boolean>
       created_by: session.user.id // Always set the creator to the current user
     };
     
-    console.log("Prepared DB data:", dbCourseData);
+    console.log("Prepared DB data for insertion:", dbCourseData);
 
     const { data, error } = await supabase
       .from('courses')
@@ -128,9 +130,19 @@ export const createCourse = async (courseData: CourseFormData): Promise<boolean>
     if (error) {
       console.error("Error creating course:", error);
       
+      // Enhanced error logging for debugging
+      console.error("Error details:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      
       // Check for specific errors
-      if (error.code === '42501') {
+      if (error.code === '42501' || error.message.includes('permission')) {
         throw new Error("Permission denied: You don't have access to create courses");
+      } else if (error.message.includes('violates row-level security policy')) {
+        throw new Error("Row-level security policy violation: Check that your role has insert permissions");
       }
       throw error;
     }
@@ -183,6 +195,8 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       });
       return false;
     }
+
+    console.log("Current session user:", session.user.id);
 
     // Prepare the data for update, converting to snake_case for DB
     const dbCourseData = {
