@@ -15,6 +15,7 @@ import BlogForm from "@/components/blog/BlogForm";
 import { BlogManagementHeader } from "./blog/BlogManagementHeader";
 import { BlogPostGrid } from "./blog/BlogPostGrid";
 import { DeleteConfirmationDialog } from "./users/DeleteConfirmationDialog";
+import { toast } from "sonner";
 
 const BlogManagement = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -22,12 +23,25 @@ const BlogManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [currentPost, setCurrentPost] = useState<BlogPostFormData | undefined>(undefined);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState<boolean>(false);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
-  const { toast } = useToast();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { toast: uiToast } = useToast();
 
   useEffect(() => {
-    const loadedPosts = getAllBlogPosts(true);
-    setPosts(loadedPosts);
+    const loadPosts = async () => {
+      setIsLoading(true);
+      try {
+        const loadedPosts = await getAllBlogPosts(true);
+        setPosts(loadedPosts);
+      } catch (error) {
+        console.error("Error loading blog posts:", error);
+        toast.error("Failed to load blog posts");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPosts();
   }, []);
 
   // Filter posts based on search term
@@ -44,59 +58,64 @@ const BlogManagement = () => {
     setIsDialogOpen(true);
   };
 
-  const handleEdit = (id: number) => {
-    const post = getBlogPostById(id);
-    if (post) {
-      setCurrentPost(post);
-      setIsDialogOpen(true);
+  const handleEdit = async (id: string) => {
+    try {
+      const post = await getBlogPostById(id);
+      if (post) {
+        setCurrentPost(post);
+        setIsDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Error fetching post for editing:", error);
+      toast.error("Failed to load post for editing");
     }
   };
 
-  const handleDeleteConfirm = (id: number) => {
+  const handleDeleteConfirm = (id: string) => {
     setDeleteId(id);
     setIsConfirmDialogOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteId !== null) {
-      const success = deleteBlogPost(deleteId);
+      const success = await deleteBlogPost(deleteId);
       if (success) {
-        toast({
-          title: "Post deleted",
-          description: "The blog post has been deleted successfully.",
-        });
-        setPosts(getAllBlogPosts(true));
+        toast.success("Post deleted successfully");
+        // Refresh posts list
+        const updatedPosts = await getAllBlogPosts(true);
+        setPosts(updatedPosts);
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to delete the blog post.",
-          variant: "destructive",
-        });
+        toast.error("Failed to delete the post");
       }
       setIsConfirmDialogOpen(false);
       setDeleteId(null);
     }
   };
 
-  const handleSubmit = (data: BlogPostFormData) => {
-    if (currentPost?.id) {
-      const updatedPost = updateBlogPost(currentPost.id, data);
-      if (updatedPost) {
-        toast({
-          title: "Post updated",
-          description: "The blog post has been updated successfully.",
-        });
-        setPosts(getAllBlogPosts(true));
+  const handleSubmit = async (data: BlogPostFormData) => {
+    try {
+      if (currentPost?.id) {
+        const updatedPost = await updateBlogPost(currentPost.id, data);
+        if (updatedPost) {
+          toast.success("Post updated successfully");
+          // Refresh posts list
+          const updatedPosts = await getAllBlogPosts(true);
+          setPosts(updatedPosts);
+        }
+      } else {
+        const newPost = await createBlogPost(data);
+        if (newPost) {
+          toast.success("Post created successfully");
+          // Refresh posts list
+          const updatedPosts = await getAllBlogPosts(true);
+          setPosts(updatedPosts);
+        }
       }
-    } else {
-      const newPost = createBlogPost(data);
-      toast({
-        title: "Post created",
-        description: "The blog post has been created successfully.",
-      });
-      setPosts(getAllBlogPosts(true));
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error submitting post:", error);
+      toast.error("Failed to save post");
     }
-    setIsDialogOpen(false);
   };
 
   return (
@@ -107,11 +126,17 @@ const BlogManagement = () => {
         onAddNew={handleAddNew}
       />
       
-      <BlogPostGrid
-        posts={filteredPosts}
-        onEdit={handleEdit}
-        onDelete={handleDeleteConfirm}
-      />
+      {isLoading ? (
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      ) : (
+        <BlogPostGrid
+          posts={filteredPosts}
+          onEdit={handleEdit}
+          onDelete={handleDeleteConfirm}
+        />
+      )}
       
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh]">

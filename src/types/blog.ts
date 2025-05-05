@@ -1,6 +1,6 @@
 
 export interface BlogPost {
-  id: number;
+  id: string;
   title: string;
   content: string;
   date: string;
@@ -13,6 +13,6 @@ export interface BlogPost {
 }
 
 export type BlogPostFormData = Omit<BlogPost, "id" | "date"> & {
-  id?: number;
+  id?: string;
   date?: string;
 };

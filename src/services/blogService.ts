@@ -1,134 +1,204 @@
 
 import { BlogPost, BlogPostFormData } from "@/types/blog";
-import { blogPosts as initialBlogPosts } from "@/data/blogPosts";
-
-// We'll use localStorage to persist blog posts
-const BLOG_STORAGE_KEY = 'agile-trainer-blog-posts';
-
-// Load blog posts from localStorage or use initial data
-const loadBlogPosts = (): BlogPost[] => {
-  const storedPosts = localStorage.getItem(BLOG_STORAGE_KEY);
-  return storedPosts ? JSON.parse(storedPosts) : [...initialBlogPosts];
-};
-
-// Save blog posts to localStorage
-const saveBlogPosts = (posts: BlogPost[]): void => {
-  localStorage.setItem(BLOG_STORAGE_KEY, JSON.stringify(posts));
-};
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Get all blog posts (excluding drafts unless specified)
-export const getAllBlogPosts = (includeDrafts = false): BlogPost[] => {
-  const posts = loadBlogPosts();
-  return includeDrafts ? posts : posts.filter(post => !post.isDraft);
+export const getAllBlogPosts = async (includeDrafts = false): Promise<BlogPost[]> => {
+  try {
+    let query = supabase.from('blog_posts').select('*');
+    
+    if (!includeDrafts) {
+      query = query.eq('is_draft', false);
+    }
+    
+    const { data, error } = await query.order('date', { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching blog posts:", error);
+      toast.error("Failed to load blog posts");
+      return [];
+    }
+    
+    return data.map(post => ({
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      url: post.url || "",
+      date: post.date,
+      isDraft: post.is_draft,
+      imageUrl: post.image_url || "",
+      imageAspectRatio: post.image_aspect_ratio || "16/9",
+      imageSize: post.image_size || 100,
+      imageLayout: post.image_layout || "standard"
+    }));
+  } catch (error) {
+    console.error("Unexpected error in getAllBlogPosts:", error);
+    toast.error("Failed to load blog posts");
+    return [];
+  }
 };
 
 // Get a single blog post by ID
-export const getBlogPostById = (id: number): BlogPost | undefined => {
-  const posts = loadBlogPosts();
-  return posts.find(post => post.id === id);
+export const getBlogPostById = async (id: string): Promise<BlogPost | undefined> => {
+  try {
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching blog post by ID:", error);
+      return undefined;
+    }
+    
+    return {
+      id: data.id,
+      title: data.title,
+      content: data.content,
+      url: data.url || "",
+      date: data.date,
+      isDraft: data.is_draft,
+      imageUrl: data.image_url || "",
+      imageAspectRatio: data.image_aspect_ratio || "16/9",
+      imageSize: data.image_size || 100,
+      imageLayout: data.image_layout || "standard"
+    };
+  } catch (error) {
+    console.error("Unexpected error in getBlogPostById:", error);
+    return undefined;
+  }
 };
 
 // Create a new blog post
-export const createBlogPost = (postData: BlogPostFormData): BlogPost => {
-  const posts = loadBlogPosts();
-  
-  // Generate a new ID (highest existing ID + 1)
-  const newId = posts.length > 0 
-    ? Math.max(...posts.map(post => post.id)) + 1 
-    : 1;
-  
-  console.log("Creating blog post with image settings:", {
-    imageUrl: postData.imageUrl,
-    aspectRatio: postData.imageAspectRatio,
-    size: postData.imageSize,
-    layout: postData.imageLayout
-  });
-  
-  // Create the new post with the current date and explicit image properties
-  const newPost: BlogPost = {
-    id: newId,
-    title: postData.title,
-    content: postData.content,
-    url: postData.url,
-    date: postData.date || new Date().toISOString().split('T')[0],
-    isDraft: postData.isDraft !== undefined ? postData.isDraft : true,
-    // Explicitly include ALL image settings with defaults if not provided
-    imageUrl: postData.imageUrl || "",
-    imageAspectRatio: postData.imageAspectRatio || "16/9",
-    imageSize: postData.imageSize || 100,
-    imageLayout: postData.imageLayout || "standard"
-  };
-  
-  // Add the new post to the collection and save
-  posts.push(newPost);
-  saveBlogPosts(posts);
-  
-  return newPost;
+export const createBlogPost = async (postData: BlogPostFormData): Promise<BlogPost | null> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    console.log("Creating blog post with image settings:", {
+      imageUrl: postData.imageUrl,
+      aspectRatio: postData.imageAspectRatio,
+      size: postData.imageSize,
+      layout: postData.imageLayout
+    });
+    
+    const newPost = {
+      title: postData.title,
+      content: postData.content,
+      url: postData.url || "",
+      date: postData.date || new Date().toISOString().split('T')[0],
+      is_draft: postData.isDraft !== undefined ? postData.isDraft : true,
+      image_url: postData.imageUrl || "",
+      image_aspect_ratio: postData.imageAspectRatio || "16/9",
+      image_size: postData.imageSize || 100,
+      image_layout: postData.imageLayout || "standard",
+      created_by: user?.id
+    };
+    
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .insert([newPost])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error creating blog post:", error);
+      toast.error("Failed to create blog post");
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      title: data.title,
+      content: data.content,
+      url: data.url || "",
+      date: data.date,
+      isDraft: data.is_draft,
+      imageUrl: data.image_url || "",
+      imageAspectRatio: data.image_aspect_ratio || "16/9",
+      imageSize: data.image_size || 100,
+      imageLayout: data.image_layout || "standard"
+    };
+  } catch (error) {
+    console.error("Unexpected error in createBlogPost:", error);
+    toast.error("Failed to create blog post");
+    return null;
+  }
 };
 
 // Update an existing blog post
-export const updateBlogPost = (id: number, postData: BlogPostFormData): BlogPost | null => {
-  const posts = loadBlogPosts();
-  const index = posts.findIndex(post => post.id === id);
-  
-  if (index === -1) {
-    console.error("Failed to update blog post: Post not found with ID", id);
+export const updateBlogPost = async (id: string, postData: BlogPostFormData): Promise<BlogPost | null> => {
+  try {
+    const updates = {
+      title: postData.title,
+      content: postData.content,
+      url: postData.url || "",
+      is_draft: postData.isDraft !== undefined ? postData.isDraft : true,
+      image_url: postData.imageUrl || "",
+      image_aspect_ratio: postData.imageAspectRatio || "16/9",
+      image_size: postData.imageSize !== undefined ? postData.imageSize : 100,
+      image_layout: postData.imageLayout || "standard",
+    };
+    
+    console.log("Updating blog post with image settings:", {
+      imageUrl: updates.image_url,
+      imageAspectRatio: updates.image_aspect_ratio,
+      imageSize: updates.image_size,
+      imageLayout: updates.image_layout
+    });
+    
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error updating blog post:", error);
+      toast.error("Failed to update blog post");
+      return null;
+    }
+    
+    console.log("Blog post updated successfully:", data);
+    return {
+      id: data.id,
+      title: data.title,
+      content: data.content,
+      url: data.url || "",
+      date: data.date,
+      isDraft: data.is_draft,
+      imageUrl: data.image_url || "",
+      imageAspectRatio: data.image_aspect_ratio || "16/9",
+      imageSize: data.image_size || 100,
+      imageLayout: data.image_layout || "standard"
+    };
+  } catch (error) {
+    console.error("Error updating blog post:", error);
+    toast.error("Failed to update blog post");
     return null;
   }
-  
-  // Get original post to maintain any fields not provided in update
-  const originalPost = posts[index];
-  
-  console.log("Updating blog post with image settings:", {
-    original: {
-      imageUrl: originalPost.imageUrl,
-      imageAspectRatio: originalPost.imageAspectRatio,
-      imageSize: originalPost.imageSize,
-      imageLayout: originalPost.imageLayout
-    },
-    new: {
-      imageUrl: postData.imageUrl,
-      imageAspectRatio: postData.imageAspectRatio,
-      imageSize: postData.imageSize,
-      imageLayout: postData.imageLayout
-    }
-  });
-  
-  // Update the blog post with new data while preserving ID and date
-  const updatedPost: BlogPost = {
-    ...originalPost,
-    title: postData.title !== undefined ? postData.title : originalPost.title,
-    content: postData.content !== undefined ? postData.content : originalPost.content,
-    url: postData.url !== undefined ? postData.url : originalPost.url,
-    isDraft: postData.isDraft !== undefined ? postData.isDraft : originalPost.isDraft,
-    // Explicitly handle image properties to prevent them from becoming undefined
-    imageUrl: postData.imageUrl !== undefined ? postData.imageUrl : originalPost.imageUrl || "",
-    imageAspectRatio: postData.imageAspectRatio !== undefined ? postData.imageAspectRatio : originalPost.imageAspectRatio || "16/9",
-    imageSize: postData.imageSize !== undefined ? postData.imageSize : originalPost.imageSize || 100,
-    imageLayout: postData.imageLayout !== undefined ? postData.imageLayout : originalPost.imageLayout || "standard",
-    // Keep original ID and date
-    id: id,
-    date: originalPost.date
-  };
-  
-  // Update the post in the array
-  posts[index] = updatedPost;
-  saveBlogPosts(posts);
-  
-  console.log("Blog post updated successfully:", updatedPost);
-  return updatedPost;
 };
 
 // Delete a blog post
-export const deleteBlogPost = (id: number): boolean => {
-  const posts = loadBlogPosts();
-  const filteredPosts = posts.filter(post => post.id !== id);
-  
-  if (filteredPosts.length === posts.length) {
-    // No post was removed
+export const deleteBlogPost = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('blog_posts')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error("Error deleting blog post:", error);
+      toast.error("Failed to delete blog post");
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error deleting blog post:", error);
+    toast.error("Failed to delete blog post");
     return false;
   }
-  
-  saveBlogPosts(filteredPosts);
-  return true;
 };

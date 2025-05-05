@@ -39,6 +39,54 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          date: string
+          id: string
+          image_aspect_ratio: string | null
+          image_layout: string | null
+          image_size: number | null
+          image_url: string | null
+          is_draft: boolean | null
+          title: string
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          date: string
+          id?: string
+          image_aspect_ratio?: string | null
+          image_layout?: string | null
+          image_size?: number | null
+          image_url?: string | null
+          is_draft?: boolean | null
+          title: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          id?: string
+          image_aspect_ratio?: string | null
+          image_layout?: string | null
+          image_size?: number | null
+          image_url?: string | null
+          is_draft?: boolean | null
+          title?: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       course_materials: {
         Row: {
           course_id: string

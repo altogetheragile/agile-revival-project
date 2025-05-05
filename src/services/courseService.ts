@@ -1,294 +1,306 @@
-import { supabase } from '@/integrations/supabase/client';
-import { Course, CourseFormData, ScheduleCourseFormData } from '@/types/course';
-import { mapDbToCourse } from './course/courseMappers';
-import { toast } from 'sonner';
-import { createCourseFromTemplate } from './templates/templateMutations';
-import { getScheduledCourses } from './course/courseQueries';
+
+import { Course, CourseFormData, ScheduleCourseFormData } from "@/types/course";
+import { mapDbToCourse, mapCourseToDb } from "@/services/course/courseMappers";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Get all courses
 export const getAllCourses = async (): Promise<Course[]> => {
-  console.log("Fetching all courses...");
   try {
-    // This should get courses that are not templates
-    const { data, error } = await supabase
+    console.log("Fetching all courses...");
+    const { data: courses, error } = await supabase
       .from('courses')
-      .select('*')
-      .eq('is_template', false)
-      .order('created_at', { ascending: false });
-
+      .select('*');
+      
     if (error) {
       console.error("Error fetching courses:", error);
-      throw error;
-    }
-
-    console.log(`Successfully fetched ${data?.length || 0} courses`);
-    if (!data || data.length === 0) {
-      console.log("No courses loaded or empty array returned");
+      
+      if (error.message?.includes('infinite recursion detected')) {
+        console.error("RLS policy recursion error detected");
+        toast.error("Database permission issue", {
+          description: "Unable to access courses due to a permission configuration issue."
+        });
+        return [];
+      }
+      
+      toast.error("Failed to load courses", {
+        description: error.message
+      });
       return [];
     }
-
-    return data.map(mapDbToCourse);
-  } catch (error) {
-    console.error("Unexpected error fetching courses:", error);
-    throw error;
+    
+    console.log(`Successfully fetched ${courses.length} courses`);
+    return courses.map(mapDbToCourse);
+  } catch (err) {
+    console.error("Unexpected error fetching courses:", err);
+    toast.error("Failed to load courses", {
+      description: "There was an unexpected error loading courses."
+    });
+    return [];
   }
 };
 
-// Get templates only
-export const getCourseTemplates = async (): Promise<Course[]> => {
-  console.log("Fetching course templates...");
+// Get courses by category
+export const getCoursesByCategory = async (category: string): Promise<Course[]> => {
   try {
-    // Check if user is authenticated before making the request
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      console.error("No active session found");
-      throw new Error("Authentication required to access templates");
-    }
-    
-    console.log(`Making request with authenticated user: ${session.user.id}`);
-    
-    const { data, error } = await supabase
+    const { data: courses, error } = await supabase
       .from('courses')
       .select('*')
-      .eq('is_template', true)
-      .order('title');
-
+      .eq('is_template', false);
+      
     if (error) {
-      console.error("Error fetching course templates:", error);
-      // Check if this is a permissions issue
-      if (error.message.includes('permission') || error.code === 'PGRST301') {
-        throw new Error("You don't have permission to access course templates");
-      }
-      throw error;
-    }
-
-    if (!data || data.length === 0) {
-      console.log("No course templates found");
+      console.error("Error fetching courses by category:", error);
+      toast.error("Failed to load courses");
       return [];
     }
+    
+    const mappedCourses = courses.map(mapDbToCourse);
+    return category === 'all' ? mappedCourses : mappedCourses.filter(course => course.category === category);
+  } catch (err) {
+    console.error("Unexpected error fetching courses by category:", err);
+    toast.error("Failed to load courses");
+    return [];
+  }
+};
 
-    console.log(`Successfully fetched ${data.length} course templates`);
-    return data.map(mapDbToCourse);
-  } catch (error) {
-    console.error("Unexpected error fetching course templates:", error);
-    throw error;
+// Get scheduled (non-template) courses
+export const getScheduledCourses = async (): Promise<Course[]> => {
+  try {
+    console.log("Fetching scheduled courses...");
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('is_template', false);
+      
+    if (error) {
+      console.error("Error fetching scheduled courses:", error);
+      toast.error("Failed to load scheduled courses", {
+        description: error.message
+      });
+      return [];
+    }
+    
+    console.log(`Successfully fetched ${courses.length} scheduled courses`);
+    return courses.map(mapDbToCourse);
+  } catch (err) {
+    console.error("Unexpected error fetching scheduled courses:", err);
+    toast.error("Failed to load scheduled courses", {
+      description: "There was an unexpected error loading the courses."
+    });
+    return [];
+  }
+};
+
+// Get course templates
+export const getCourseTemplates = async (): Promise<Course[]> => {
+  try {
+    console.log("Fetching course templates...");
+    const { data: templates, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('is_template', true);
+      
+    if (error) {
+      console.error("Error fetching course templates:", error);
+      toast.error("Failed to load course templates", {
+        description: error.message
+      });
+      return [];
+    }
+    
+    console.log(`Successfully fetched ${templates.length} course templates`);
+    return templates.map(mapDbToCourse);
+  } catch (err) {
+    console.error("Unexpected error fetching course templates:", err);
+    toast.error("Failed to load course templates", {
+      description: "There was an unexpected error loading the templates."
+    });
+    return [];
+  }
+};
+
+// Get a course by ID
+export const getCourseById = async (id: string): Promise<Course | null> => {
+  try {
+    const { data: course, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+      
+    if (error) {
+      console.error("Error fetching course by id:", error);
+      toast.error("Failed to load course", {
+        description: error.message
+      });
+      return null;
+    }
+    
+    return course ? mapDbToCourse(course) : null;
+  } catch (err) {
+    console.error("Unexpected error fetching course:", err);
+    toast.error("Failed to load course", {
+      description: "There was an unexpected error loading the course."
+    });
+    return null;
   }
 };
 
 // Create a new course
-export const createCourse = async (courseData: CourseFormData): Promise<boolean> => {
+export const createCourse = async (courseData: CourseFormData): Promise<Course | null> => {
   try {
-    console.log("Creating course with data:", courseData);
+    const newCourse = mapCourseToDb(courseData);
     
-    // Check if user is authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      console.error("No active session found");
-      toast.error("Authentication required", {
-        description: "You must be logged in to create a course"
-      });
-      return false;
-    }
+    console.log("Creating course with data:", newCourse);
     
-    console.log("Current session user:", session.user.id);
-    
-    // Prepare the data for insertion, converting to snake_case for DB
-    const dbCourseData = {
-      title: courseData.title,
-      description: courseData.description,
-      dates: courseData.dates,
-      location: courseData.location,
-      instructor: courseData.instructor,
-      price: courseData.price,
-      category: courseData.category,
-      spots_available: courseData.spotsAvailable,
-      is_template: courseData.isTemplate || false,
-      learning_outcomes: courseData.learningOutcomes || [],
-      prerequisites: courseData.prerequisites,
-      target_audience: courseData.targetAudience,
-      duration: courseData.duration,
-      skill_level: courseData.skillLevel,
-      format: courseData.format,
-      status: courseData.status || 'draft',
-      image_url: courseData.imageUrl,
-      image_aspect_ratio: courseData.imageAspectRatio || '16/9',
-      image_size: courseData.imageSize || 100,
-      image_layout: courseData.imageLayout || 'standard',
-      google_drive_folder_id: courseData.googleDriveFolderId,
-      google_drive_folder_url: courseData.googleDriveFolderUrl,
-      created_by: session.user.id // Always set the creator to the current user
-    };
-    
-    console.log("Prepared DB data for insertion:", dbCourseData);
-
     const { data, error } = await supabase
       .from('courses')
-      .insert([dbCourseData])
-      .select();
-
+      .insert([newCourse])
+      .select()
+      .single();
+      
     if (error) {
       console.error("Error creating course:", error);
-      
-      // Enhanced error logging for debugging
-      console.error("Error details:", {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
+      toast.error("Failed to create course", {
+        description: error.message
       });
-      
-      // Check for specific errors
-      if (error.code === '42501' || error.message.includes('permission')) {
-        throw new Error("Permission denied: You don't have access to create courses");
-      } else if (error.message.includes('violates row-level security policy')) {
-        throw new Error("Row-level security policy violation: Check that your role has insert permissions");
-      }
-      throw error;
-    }
-
-    console.log("Course created successfully:", data);
-    return true;
-  } catch (error: any) {
-    console.error("Failed to create course:", error);
-    throw error;
-  }
-};
-
-// Get course by ID
-export const getCourseById = async (id: string): Promise<Course | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      console.error(`Error fetching course with ID ${id}:`, error);
-      throw error;
-    }
-
-    if (!data) {
-      console.log(`No course found with ID ${id}`);
       return null;
     }
-
+    
+    toast.success(newCourse.is_template ? "Template created successfully" : "Course created successfully");
     return mapDbToCourse(data);
-  } catch (error) {
-    console.error(`Unexpected error fetching course with ID ${id}:`, error);
-    throw error;
+  } catch (err) {
+    console.error("Unexpected error in createCourse:", err);
+    toast.error("Failed to create course", {
+      description: err instanceof Error ? err.message : "Unknown error occurred"
+    });
+    return null;
   }
 };
 
-// Update a course
-export const updateCourse = async (id: string, courseData: CourseFormData): Promise<boolean> => {
+// Update an existing course
+export const updateCourse = async (id: string, courseData: CourseFormData): Promise<Course | null> => {
   try {
-    console.log(`Updating course with ID ${id}:`, courseData);
+    const updates = mapCourseToDb(courseData);
     
-    // Check if user is authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      console.error("No active session found");
-      toast.error("Authentication required", {
-        description: "You must be logged in to update a course"
-      });
-      return false;
-    }
-
-    console.log("Current session user:", session.user.id);
-
-    // Prepare the data for update, converting to snake_case for DB
-    const dbCourseData = {
-      title: courseData.title,
-      description: courseData.description,
-      dates: courseData.dates,
-      location: courseData.location,
-      instructor: courseData.instructor,
-      price: courseData.price,
-      category: courseData.category,
-      spots_available: courseData.spotsAvailable,
-      is_template: courseData.isTemplate,
-      learning_outcomes: courseData.learningOutcomes || [],
-      prerequisites: courseData.prerequisites,
-      target_audience: courseData.targetAudience,
-      duration: courseData.duration,
-      skill_level: courseData.skillLevel,
-      format: courseData.format,
-      status: courseData.status,
-      image_url: courseData.imageUrl,
-      image_aspect_ratio: courseData.imageAspectRatio,
-      image_size: courseData.imageSize,
-      image_layout: courseData.imageLayout,
-      google_drive_folder_id: courseData.googleDriveFolderId,
-      google_drive_folder_url: courseData.googleDriveFolderUrl,
-      updated_at: new Date().toISOString()
-    };
+    console.log("Updating course with ID:", id);
+    console.log("Update data:", updates);
     
-    console.log("Prepared DB data for update:", dbCourseData);
-
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('courses')
-      .update(dbCourseData)
-      .eq('id', id);
-
-    if (error) {
-      console.error(`Error updating course with ID ${id}:`, error);
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
       
-      // Check for specific errors
-      if (error.code === '42501') {
-        throw new Error("Permission denied: You don't have access to update this course");
-      }
-      throw error;
+    if (error) {
+      console.error("Error updating course:", error);
+      toast.error("Failed to update course", {
+        description: error.message
+      });
+      return null;
     }
-
-    console.log(`Course with ID ${id} updated successfully`);
-    return true;
-  } catch (error: any) {
-    console.error(`Failed to update course with ID ${id}:`, error);
-    throw error;
+    
+    toast.success(updates.is_template ? "Template updated successfully" : "Course updated successfully");
+    return mapDbToCourse(data);
+  } catch (err) {
+    console.error("Unexpected error in updateCourse:", err);
+    toast.error("Failed to update course", {
+      description: err instanceof Error ? err.message : "Unknown error occurred"
+    });
+    return null;
   }
 };
 
 // Delete a course
 export const deleteCourse = async (id: string): Promise<boolean> => {
   try {
-    console.log(`Deleting course with ID ${id}`);
-    
-    // Check if user is authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      console.error("No active session found");
-      toast.error("Authentication required", {
-        description: "You must be logged in to delete a course"
-      });
-      return false;
-    }
-
     const { error } = await supabase
       .from('courses')
       .delete()
       .eq('id', id);
-
+      
     if (error) {
-      console.error(`Error deleting course with ID ${id}:`, error);
-      // Check for specific errors
-      if (error.code === '42501') {
-        throw new Error("Permission denied: You don't have access to delete this course");
-      }
-      throw error;
+      console.error("Error deleting course:", error);
+      toast.error("Failed to delete course", {
+        description: error.message
+      });
+      return false;
     }
-
-    console.log(`Course with ID ${id} deleted successfully`);
+    
+    toast.success("Course deleted successfully");
     return true;
-  } catch (error) {
-    console.error(`Failed to delete course with ID ${id}:`, error);
-    throw error;
+  } catch (err) {
+    console.error("Unexpected error in deleteCourse:", err);
+    toast.error("Failed to delete course", {
+      description: err instanceof Error ? err.message : "Unknown error occurred"
+    });
+    return false;
   }
 };
 
-// Export the necessary functions from course queries and mutations
-export { 
-  createCourseFromTemplate,
-  getScheduledCourses
+// Create a course from template
+export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
+  try {
+    const { data: template, error: templateError } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('id', templateId)
+      .eq('is_template', true)
+      .maybeSingle();
+    
+    if (templateError || !template) {
+      console.error("Error fetching template:", templateError);
+      toast.error("Failed to fetch template", {
+        description: templateError?.message || "Template not found"
+      });
+      return null;
+    }
+    
+    console.log("Template found, creating new course:", template.title);
+    
+    // Create new course based on template
+    const newCourseData = {
+      ...template,
+      id: undefined, // Remove ID to get a new one
+      created_at: undefined, // Let DB set this
+      updated_at: undefined, // Let DB set this
+      dates: scheduleData.dates,
+      location: scheduleData.location,
+      instructor: scheduleData.instructor,
+      spots_available: scheduleData.spotsAvailable,
+      status: scheduleData.status || 'draft',
+      is_template: false,
+      template_id: templateId,
+    };
+    
+    // Remove any database internal fields
+    delete newCourseData.created_by;
+    
+    const { data: createdCourse, error: createError } = await supabase
+      .from('courses')
+      .insert([newCourseData])
+      .select()
+      .single();
+      
+    if (createError) {
+      console.error("Error creating course from template:", createError);
+      toast.error("Failed to create course", {
+        description: createError.message
+      });
+      return null;
+    }
+    
+    console.log("Course created successfully:", createdCourse.title);
+    toast.success("Course scheduled successfully", {
+      description: `${createdCourse.title} has been scheduled.`
+    });
+    return mapDbToCourse(createdCourse);
+  } catch (error) {
+    console.error("Unexpected error creating course from template:", error);
+    toast.error("Failed to schedule course", {
+      description: error instanceof Error ? error.message : "Unknown error occurred"
+    });
+    return null;
+  }
 };
