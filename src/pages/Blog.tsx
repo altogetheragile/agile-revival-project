@@ -10,11 +10,23 @@ import BlogPosts from "@/components/blog/BlogPosts";
 
 const Blog = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Load blog posts
   useEffect(() => {
-    const loadedPosts = getAllBlogPosts();
-    setPosts(loadedPosts);
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const loadedPosts = await getAllBlogPosts();
+        setPosts(loadedPosts);
+      } catch (error) {
+        console.error("Error loading blog posts:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchPosts();
   }, []);
 
   return (
