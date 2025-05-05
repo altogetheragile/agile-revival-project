@@ -16,6 +16,8 @@ import { BlogManagementHeader } from "./blog/BlogManagementHeader";
 import { BlogPostGrid } from "./blog/BlogPostGrid";
 import { DeleteConfirmationDialog } from "./users/DeleteConfirmationDialog";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, AlertTriangle } from "lucide-react";
 
 const BlogManagement = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -25,22 +27,27 @@ const BlogManagement = () => {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState<boolean>(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { toast: uiToast } = useToast();
 
-  useEffect(() => {
-    const loadPosts = async () => {
-      setIsLoading(true);
-      try {
-        const loadedPosts = await getAllBlogPosts(true);
-        setPosts(loadedPosts);
-      } catch (error) {
-        console.error("Error loading blog posts:", error);
-        toast.error("Failed to load blog posts");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadPosts = async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      console.log("Loading blog posts in BlogManagement component...");
+      const loadedPosts = await getAllBlogPosts(true);
+      console.log("Fetched blog posts:", loadedPosts);
+      setPosts(loadedPosts);
+    } catch (error) {
+      console.error("Error loading blog posts:", error);
+      setLoadError(error instanceof Error ? error.message : "Failed to load blog posts");
+      toast.error("Failed to load blog posts");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadPosts();
   }, []);
 
@@ -60,10 +67,13 @@ const BlogManagement = () => {
 
   const handleEdit = async (id: string) => {
     try {
+      console.log("Editing post with ID:", id);
       const post = await getBlogPostById(id);
       if (post) {
         setCurrentPost(post);
         setIsDialogOpen(true);
+      } else {
+        toast.error("Post not found");
       }
     } catch (error) {
       console.error("Error fetching post for editing:", error);
@@ -78,40 +88,47 @@ const BlogManagement = () => {
 
   const handleDelete = async () => {
     if (deleteId !== null) {
-      const success = await deleteBlogPost(deleteId);
-      if (success) {
-        toast.success("Post deleted successfully");
-        // Refresh posts list
-        const updatedPosts = await getAllBlogPosts(true);
-        setPosts(updatedPosts);
-      } else {
-        toast.error("Failed to delete the post");
+      try {
+        console.log("Deleting post with ID:", deleteId);
+        const success = await deleteBlogPost(deleteId);
+        if (success) {
+          toast.success("Post deleted successfully");
+          // Refresh posts list
+          await loadPosts();
+        } else {
+          toast.error("Failed to delete the post");
+        }
+      } catch (error) {
+        console.error("Error deleting post:", error);
+        toast.error("Failed to delete post");
+      } finally {
+        setIsConfirmDialogOpen(false);
+        setDeleteId(null);
       }
-      setIsConfirmDialogOpen(false);
-      setDeleteId(null);
     }
   };
 
   const handleSubmit = async (data: BlogPostFormData) => {
     try {
       if (currentPost?.id) {
+        console.log("Updating post with ID:", currentPost.id);
         const updatedPost = await updateBlogPost(currentPost.id, data);
         if (updatedPost) {
           toast.success("Post updated successfully");
           // Refresh posts list
-          const updatedPosts = await getAllBlogPosts(true);
-          setPosts(updatedPosts);
+          await loadPosts();
+          setIsDialogOpen(false);
         }
       } else {
+        console.log("Creating new post");
         const newPost = await createBlogPost(data);
         if (newPost) {
           toast.success("Post created successfully");
           // Refresh posts list
-          const updatedPosts = await getAllBlogPosts(true);
-          setPosts(updatedPosts);
+          await loadPosts();
+          setIsDialogOpen(false);
         }
       }
-      setIsDialogOpen(false);
     } catch (error) {
       console.error("Error submitting post:", error);
       toast.error("Failed to save post");
@@ -125,6 +142,24 @@ const BlogManagement = () => {
         onSearchChange={setSearchTerm}
         onAddNew={handleAddNew}
       />
+      
+      {loadError && (
+        <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="flex items-center gap-2 text-red-600">
+            <AlertTriangle className="h-5 w-5" />
+            <h2 className="font-medium">Error loading blog posts</h2>
+          </div>
+          <p className="mt-1 text-red-500">{loadError}</p>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={loadPosts}
+            className="mt-3 border-red-200 text-red-600 hover:bg-red-50"
+          >
+            <RefreshCw className="mr-1 h-3 w-3" /> Try Again
+          </Button>
+        </div>
+      )}
       
       {isLoading ? (
         <div className="flex justify-center items-center py-20">

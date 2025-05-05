@@ -1,9 +1,42 @@
 
-import { Course, CourseFormData } from "@/types/course";
+import { Course, CourseFormData } from '@/types/course';
 
-// Map from database fields to Course type
-export const mapDbToCourse = (dbCourse: any): Course => {
-  console.log("Mapping DB course to frontend:", dbCourse);
+interface SupabaseCourse {
+  id: string;
+  title: string;
+  description: string;
+  dates: string;
+  location: string;
+  price: number;
+  instructor: string;
+  image_url?: string;
+  category: string;
+  skill_level: string;
+  format: string;
+  duration: string;
+  status: string;
+  spots_available: number;
+  is_template: boolean;
+  template_id?: string;
+  syllabus?: string[];
+  prerequisites?: string[];
+  learning_outcomes?: string[];
+  materials_included?: string[];
+  certification?: string;
+  image_aspect_ratio?: string;
+  image_size?: number;
+  image_layout?: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+}
+
+/**
+ * Maps a course from the database format to the application format
+ */
+export const mapDbToCourse = (dbCourse: SupabaseCourse): Course => {
+  // Console log for debugging
+  console.log("Mapping DB course to app format:", dbCourse);
   
   return {
     id: dbCourse.id,
@@ -11,68 +44,60 @@ export const mapDbToCourse = (dbCourse: any): Course => {
     description: dbCourse.description,
     dates: dbCourse.dates,
     location: dbCourse.location,
-    instructor: dbCourse.instructor,
     price: dbCourse.price,
+    instructor: dbCourse.instructor,
+    imageUrl: dbCourse.image_url || '',
     category: dbCourse.category,
-    spotsAvailable: dbCourse.spots_available,
-    learningOutcomes: dbCourse.learning_outcomes,
-    prerequisites: dbCourse.prerequisites,
-    targetAudience: dbCourse.target_audience,
-    duration: dbCourse.duration,
     skillLevel: dbCourse.skill_level,
     format: dbCourse.format,
+    duration: dbCourse.duration,
     status: dbCourse.status,
-    materials: dbCourse.materials || [],
-    googleDriveFolderId: dbCourse.google_drive_folder_id,
-    googleDriveFolderUrl: dbCourse.google_drive_folder_url,
+    spotsAvailable: dbCourse.spots_available,
     isTemplate: dbCourse.is_template,
     templateId: dbCourse.template_id,
-    imageUrl: dbCourse.image_url,
-    imageAspectRatio: dbCourse.image_aspect_ratio,
-    imageSize: dbCourse.image_size,
-    imageLayout: dbCourse.image_layout,
+    syllabus: dbCourse.syllabus || [],
+    prerequisites: dbCourse.prerequisites || [],
+    learningOutcomes: dbCourse.learning_outcomes || [],
+    materialsIncluded: dbCourse.materials_included || [],
+    certification: dbCourse.certification || '',
+    imageAspectRatio: dbCourse.image_aspect_ratio || '16/9',
+    imageSize: dbCourse.image_size || 100,
+    imageLayout: dbCourse.image_layout || 'standard',
+    createdAt: dbCourse.created_at,
+    updatedAt: dbCourse.updated_at
   };
 };
 
-// Map from Course type to database fields
-export const mapCourseToDb = (courseData: CourseFormData) => {
-  console.log("Mapping frontend course to DB:", courseData);
+/**
+ * Maps a course from the application format to the database format
+ */
+export const mapCourseToDb = (course: CourseFormData): Omit<SupabaseCourse, 'id' | 'created_at' | 'updated_at'> => {
+  // Console log for debugging
+  console.log("Mapping app course to DB format:", course);
   
-  // Convert learning outcomes to array if it's a string
-  let learningOutcomes = courseData.learningOutcomes;
-  if (typeof learningOutcomes === 'string') {
-    learningOutcomes = learningOutcomes.split('\n')
-      .map(item => item.trim())
-      .filter(item => item.length > 0);
-  }
-
-  // Create the DB object with all fields properly mapped
-  const dbObject = {
-    title: courseData.title || "",
-    description: courseData.description || "",
-    dates: courseData.dates || "",
-    location: courseData.location || "",
-    instructor: courseData.instructor || "",
-    price: courseData.price || "",
-    category: courseData.category || "",
-    spots_available: courseData.spotsAvailable || 0,
-    status: courseData.status || "draft",
-    is_template: Boolean(courseData.isTemplate),
-    learning_outcomes: Array.isArray(learningOutcomes) ? learningOutcomes : [],
-    prerequisites: courseData.prerequisites || null,
-    target_audience: courseData.targetAudience || null,
-    duration: courseData.duration || null,
-    skill_level: courseData.skillLevel || null,
-    format: courseData.format || "in-person",
-    google_drive_folder_id: courseData.googleDriveFolderId || null,
-    google_drive_folder_url: courseData.googleDriveFolderUrl || null,
-    template_id: courseData.templateId || null,
-    image_url: courseData.imageUrl || null,
-    image_aspect_ratio: courseData.imageAspectRatio || "16/9",
-    image_size: courseData.imageSize !== undefined ? courseData.imageSize : 100,
-    image_layout: courseData.imageLayout || "standard"
+  return {
+    title: course.title,
+    description: course.description || '',
+    dates: course.dates || '',
+    location: course.location || '',
+    price: course.price || 0,
+    instructor: course.instructor || '',
+    image_url: course.imageUrl || '',
+    category: course.category || '',
+    skill_level: course.skillLevel || '',
+    format: course.format || '',
+    duration: course.duration || '',
+    status: course.status || 'draft',
+    spots_available: course.spotsAvailable || 0,
+    is_template: course.isTemplate !== undefined ? course.isTemplate : false,
+    template_id: course.templateId,
+    syllabus: course.syllabus || [],
+    prerequisites: course.prerequisites || [],
+    learning_outcomes: course.learningOutcomes || [],
+    materials_included: course.materialsIncluded || [],
+    certification: course.certification || '',
+    image_aspect_ratio: course.imageAspectRatio || '16/9',
+    image_size: course.imageSize || 100,
+    image_layout: course.imageLayout || 'standard',
   };
-
-  console.log("Final DB object:", dbObject);
-  return dbObject;
 };

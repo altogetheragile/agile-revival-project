@@ -8,10 +8,20 @@ import { toast } from "sonner";
 export const getAllCourses = async (): Promise<Course[]> => {
   try {
     console.log("Fetching all courses...");
-    const { data: courses, error } = await supabase
-      .from('courses')
-      .select('*');
-      
+    
+    // Add a timeout for debugging
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("Timeout fetching courses")), 15000);
+    });
+    
+    const fetchPromise = supabase.from('courses').select('*');
+    
+    // Race between fetch and timeout
+    const { data: courses, error } = await Promise.race([
+      fetchPromise,
+      timeoutPromise.then(() => { throw new Error("Timeout fetching courses"); })
+    ]) as any;
+    
     if (error) {
       console.error("Error fetching courses:", error);
       
@@ -29,13 +39,24 @@ export const getAllCourses = async (): Promise<Course[]> => {
       return [];
     }
     
+    if (!courses || courses.length === 0) {
+      console.log("No courses found in database");
+      return [];
+    }
+    
     console.log(`Successfully fetched ${courses.length} courses`);
     return courses.map(mapDbToCourse);
   } catch (err) {
     console.error("Unexpected error fetching courses:", err);
-    toast.error("Failed to load courses", {
-      description: "There was an unexpected error loading courses."
-    });
+    if (err instanceof Error) {
+      toast.error("Failed to load courses", {
+        description: err.message
+      });
+    } else {
+      toast.error("Failed to load courses", {
+        description: "There was an unexpected error loading courses."
+      });
+    }
     return [];
   }
 };
@@ -43,6 +64,8 @@ export const getAllCourses = async (): Promise<Course[]> => {
 // Get courses by category
 export const getCoursesByCategory = async (category: string): Promise<Course[]> => {
   try {
+    console.log("Fetching courses by category:", category);
+    
     const { data: courses, error } = await supabase
       .from('courses')
       .select('*')
@@ -53,6 +76,13 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
       toast.error("Failed to load courses");
       return [];
     }
+    
+    if (!courses || courses.length === 0) {
+      console.log("No courses found for category:", category);
+      return [];
+    }
+    
+    console.log(`Fetched ${courses.length} courses for category filtering`);
     
     const mappedCourses = courses.map(mapDbToCourse);
     return category === 'all' ? mappedCourses : mappedCourses.filter(course => course.category === category);
@@ -67,6 +97,7 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
 export const getScheduledCourses = async (): Promise<Course[]> => {
   try {
     console.log("Fetching scheduled courses...");
+    
     const { data: courses, error } = await supabase
       .from('courses')
       .select('*')
@@ -77,6 +108,11 @@ export const getScheduledCourses = async (): Promise<Course[]> => {
       toast.error("Failed to load scheduled courses", {
         description: error.message
       });
+      return [];
+    }
+    
+    if (!courses || courses.length === 0) {
+      console.log("No scheduled courses found");
       return [];
     }
     
@@ -95,11 +131,20 @@ export const getScheduledCourses = async (): Promise<Course[]> => {
 export const getCourseTemplates = async (): Promise<Course[]> => {
   try {
     console.log("Fetching course templates...");
-    const { data: templates, error } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('is_template', true);
-      
+    
+    // Add a timeout for debugging
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("Timeout fetching course templates")), 15000);
+    });
+    
+    const fetchPromise = supabase.from('courses').select('*').eq('is_template', true);
+    
+    // Race between fetch and timeout
+    const { data: templates, error } = await Promise.race([
+      fetchPromise,
+      timeoutPromise.then(() => { throw new Error("Timeout fetching course templates"); })
+    ]) as any;
+    
     if (error) {
       console.error("Error fetching course templates:", error);
       toast.error("Failed to load course templates", {
@@ -108,13 +153,24 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
       return [];
     }
     
+    if (!templates) {
+      console.log("No course templates found or null response");
+      return [];
+    }
+    
     console.log(`Successfully fetched ${templates.length} course templates`);
     return templates.map(mapDbToCourse);
   } catch (err) {
     console.error("Unexpected error fetching course templates:", err);
-    toast.error("Failed to load course templates", {
-      description: "There was an unexpected error loading the templates."
-    });
+    if (err instanceof Error) {
+      toast.error("Failed to load course templates", {
+        description: err.message
+      });
+    } else {
+      toast.error("Failed to load course templates", {
+        description: "There was an unexpected error loading the templates."
+      });
+    }
     return [];
   }
 };
@@ -122,6 +178,8 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
 // Get a course by ID
 export const getCourseById = async (id: string): Promise<Course | null> => {
   try {
+    console.log("Fetching course by ID:", id);
+    
     const { data: course, error } = await supabase
       .from('courses')
       .select('*')
@@ -136,7 +194,13 @@ export const getCourseById = async (id: string): Promise<Course | null> => {
       return null;
     }
     
-    return course ? mapDbToCourse(course) : null;
+    if (!course) {
+      console.log("No course found with ID:", id);
+      return null;
+    }
+    
+    console.log("Successfully fetched course:", course);
+    return mapDbToCourse(course);
   } catch (err) {
     console.error("Unexpected error fetching course:", err);
     toast.error("Failed to load course", {
@@ -167,6 +231,7 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
       return null;
     }
     
+    console.log("Course created successfully:", data);
     toast.success(newCourse.is_template ? "Template created successfully" : "Course created successfully");
     return mapDbToCourse(data);
   } catch (err) {
@@ -201,6 +266,7 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       return null;
     }
     
+    console.log("Course updated successfully:", data);
     toast.success(updates.is_template ? "Template updated successfully" : "Course updated successfully");
     return mapDbToCourse(data);
   } catch (err) {
@@ -215,6 +281,8 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
 // Delete a course
 export const deleteCourse = async (id: string): Promise<boolean> => {
   try {
+    console.log("Deleting course with ID:", id);
+    
     const { error } = await supabase
       .from('courses')
       .delete()
@@ -228,6 +296,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
       return false;
     }
     
+    console.log("Course deleted successfully");
     toast.success("Course deleted successfully");
     return true;
   } catch (err) {
@@ -242,6 +311,9 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
 // Create a course from template
 export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
   try {
+    console.log("Creating course from template ID:", templateId);
+    console.log("Schedule data:", scheduleData);
+    
     const { data: template, error: templateError } = await supabase
       .from('courses')
       .select('*')

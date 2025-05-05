@@ -6,6 +6,8 @@ import { toast } from "sonner";
 // Get all blog posts (excluding drafts unless specified)
 export const getAllBlogPosts = async (includeDrafts = false): Promise<BlogPost[]> => {
   try {
+    console.log("Fetching blog posts from Supabase, includeDrafts:", includeDrafts);
+    
     let query = supabase.from('blog_posts').select('*');
     
     if (!includeDrafts) {
@@ -15,10 +17,16 @@ export const getAllBlogPosts = async (includeDrafts = false): Promise<BlogPost[]
     const { data, error } = await query.order('date', { ascending: false });
     
     if (error) {
-      console.error("Error fetching blog posts:", error);
-      toast.error("Failed to load blog posts");
+      console.error("Supabase error fetching blog posts:", error);
+      throw new Error(`Failed to load blog posts: ${error.message}`);
+    }
+    
+    if (!data || data.length === 0) {
+      console.log("No blog posts found in database, returning empty array");
       return [];
     }
+    
+    console.log("Successfully fetched blog posts:", data.length);
     
     return data.map(post => ({
       id: post.id,
@@ -34,7 +42,11 @@ export const getAllBlogPosts = async (includeDrafts = false): Promise<BlogPost[]
     }));
   } catch (error) {
     console.error("Unexpected error in getAllBlogPosts:", error);
-    toast.error("Failed to load blog posts");
+    if (error instanceof Error) {
+      toast.error(`Failed to load blog posts: ${error.message}`);
+    } else {
+      toast.error("Failed to load blog posts");
+    }
     return [];
   }
 };
@@ -42,16 +54,26 @@ export const getAllBlogPosts = async (includeDrafts = false): Promise<BlogPost[]
 // Get a single blog post by ID
 export const getBlogPostById = async (id: string): Promise<BlogPost | undefined> => {
   try {
+    console.log("Fetching blog post with ID:", id);
+    
     const { data, error } = await supabase
       .from('blog_posts')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
     
     if (error) {
       console.error("Error fetching blog post by ID:", error);
+      toast.error(`Failed to load blog post: ${error.message}`);
       return undefined;
     }
+    
+    if (!data) {
+      console.log("No blog post found with ID:", id);
+      return undefined;
+    }
+    
+    console.log("Successfully fetched blog post:", data);
     
     return {
       id: data.id,
@@ -67,6 +89,11 @@ export const getBlogPostById = async (id: string): Promise<BlogPost | undefined>
     };
   } catch (error) {
     console.error("Unexpected error in getBlogPostById:", error);
+    if (error instanceof Error) {
+      toast.error(`Failed to load blog post: ${error.message}`);
+    } else {
+      toast.error("Failed to load blog post");
+    }
     return undefined;
   }
 };
@@ -74,14 +101,9 @@ export const getBlogPostById = async (id: string): Promise<BlogPost | undefined>
 // Create a new blog post
 export const createBlogPost = async (postData: BlogPostFormData): Promise<BlogPost | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    console.log("Creating new blog post with data:", postData);
     
-    console.log("Creating blog post with image settings:", {
-      imageUrl: postData.imageUrl,
-      aspectRatio: postData.imageAspectRatio,
-      size: postData.imageSize,
-      layout: postData.imageLayout
-    });
+    const { data: { user } } = await supabase.auth.getUser();
     
     const newPost = {
       title: postData.title,
@@ -104,9 +126,12 @@ export const createBlogPost = async (postData: BlogPostFormData): Promise<BlogPo
     
     if (error) {
       console.error("Error creating blog post:", error);
-      toast.error("Failed to create blog post");
+      toast.error(`Failed to create blog post: ${error.message}`);
       return null;
     }
+    
+    console.log("Successfully created blog post:", data);
+    toast.success("Blog post created successfully");
     
     return {
       id: data.id,
@@ -122,7 +147,11 @@ export const createBlogPost = async (postData: BlogPostFormData): Promise<BlogPo
     };
   } catch (error) {
     console.error("Unexpected error in createBlogPost:", error);
-    toast.error("Failed to create blog post");
+    if (error instanceof Error) {
+      toast.error(`Failed to create blog post: ${error.message}`);
+    } else {
+      toast.error("Failed to create blog post");
+    }
     return null;
   }
 };
@@ -130,6 +159,8 @@ export const createBlogPost = async (postData: BlogPostFormData): Promise<BlogPo
 // Update an existing blog post
 export const updateBlogPost = async (id: string, postData: BlogPostFormData): Promise<BlogPost | null> => {
   try {
+    console.log("Updating blog post with ID:", id, "with data:", postData);
+    
     const updates = {
       title: postData.title,
       content: postData.content,
@@ -141,13 +172,6 @@ export const updateBlogPost = async (id: string, postData: BlogPostFormData): Pr
       image_layout: postData.imageLayout || "standard",
     };
     
-    console.log("Updating blog post with image settings:", {
-      imageUrl: updates.image_url,
-      imageAspectRatio: updates.image_aspect_ratio,
-      imageSize: updates.image_size,
-      imageLayout: updates.image_layout
-    });
-    
     const { data, error } = await supabase
       .from('blog_posts')
       .update(updates)
@@ -157,11 +181,13 @@ export const updateBlogPost = async (id: string, postData: BlogPostFormData): Pr
     
     if (error) {
       console.error("Error updating blog post:", error);
-      toast.error("Failed to update blog post");
+      toast.error(`Failed to update blog post: ${error.message}`);
       return null;
     }
     
     console.log("Blog post updated successfully:", data);
+    toast.success("Blog post updated successfully");
+    
     return {
       id: data.id,
       title: data.title,
@@ -176,7 +202,11 @@ export const updateBlogPost = async (id: string, postData: BlogPostFormData): Pr
     };
   } catch (error) {
     console.error("Error updating blog post:", error);
-    toast.error("Failed to update blog post");
+    if (error instanceof Error) {
+      toast.error(`Failed to update blog post: ${error.message}`);
+    } else {
+      toast.error("Failed to update blog post");
+    }
     return null;
   }
 };
@@ -184,6 +214,8 @@ export const updateBlogPost = async (id: string, postData: BlogPostFormData): Pr
 // Delete a blog post
 export const deleteBlogPost = async (id: string): Promise<boolean> => {
   try {
+    console.log("Deleting blog post with ID:", id);
+    
     const { error } = await supabase
       .from('blog_posts')
       .delete()
@@ -191,14 +223,20 @@ export const deleteBlogPost = async (id: string): Promise<boolean> => {
     
     if (error) {
       console.error("Error deleting blog post:", error);
-      toast.error("Failed to delete blog post");
+      toast.error(`Failed to delete blog post: ${error.message}`);
       return false;
     }
     
+    console.log("Blog post deleted successfully");
+    toast.success("Blog post deleted successfully");
     return true;
   } catch (error) {
     console.error("Error deleting blog post:", error);
-    toast.error("Failed to delete blog post");
+    if (error instanceof Error) {
+      toast.error(`Failed to delete blog post: ${error.message}`);
+    } else {
+      toast.error("Failed to delete blog post");
+    }
     return false;
   }
 };
