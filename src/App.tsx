@@ -25,6 +25,8 @@ import StorageInitializer from "@/components/media/StorageInitializer";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import { DevModeProvider } from "@/contexts/DevModeContext";
+import DevModeToggle from "@/components/dev/DevModeToggle";
 
 // Create a client with sensible default options
 const queryClient = new QueryClient({
@@ -42,40 +44,43 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <SiteSettingsProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <Toaster />
-              <Sonner />
-              <ScrollToTop />
-              <StorageInitializer />
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/training-schedule" element={<TrainingSchedule />} />
-                <Route path="/course/:id" element={<CourseDetails />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-                <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
-                <Route path="/unauthorized" element={<UnauthorizedPage />} />
-                <Route path="/services/leadership-coaching" element={<LeadershipCoaching />} />
-                <Route path="/services/team-coaching" element={<TeamCoaching />} />
-                <Route path="/services/agile-facilitation" element={<AgileFacilitation />} />
-                <Route path="/services/performance-metrics" element={<PerformanceMetrics />} />
-                <Route path="/services/custom-coaching" element={<CustomCoaching />} />
-                
-                {/* Protected admin route */}
-                <Route path="/admin" element={
-                  <ProtectedRoute requiredRoles={["admin"]}>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } />
-                
-                {/* 404 page */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AuthProvider>
-          </BrowserRouter>
+          <DevModeProvider>
+            <BrowserRouter>
+              <AuthProvider>
+                <Toaster />
+                <Sonner />
+                <ScrollToTop />
+                <StorageInitializer />
+                <DevModeToggle />
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/training-schedule" element={<TrainingSchedule />} />
+                  <Route path="/course/:id" element={<CourseDetails />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+                  <Route path="/unauthorized" element={<UnauthorizedPage />} />
+                  <Route path="/services/leadership-coaching" element={<LeadershipCoaching />} />
+                  <Route path="/services/team-coaching" element={<TeamCoaching />} />
+                  <Route path="/services/agile-facilitation" element={<AgileFacilitation />} />
+                  <Route path="/services/performance-metrics" element={<PerformanceMetrics />} />
+                  <Route path="/services/custom-coaching" element={<CustomCoaching />} />
+                  
+                  {/* Protected admin route */}
+                  <Route path="/admin" element={
+                    <ProtectedRoute requiredRoles={["admin"]}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* 404 page */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AuthProvider>
+            </BrowserRouter>
+          </DevModeProvider>
         </SiteSettingsProvider>
       </TooltipProvider>
     </QueryClientProvider>

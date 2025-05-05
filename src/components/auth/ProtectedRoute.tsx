@@ -4,6 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDevMode } from '@/contexts/DevModeContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ export default function ProtectedRoute({
   redirectTo = "/auth" 
 }: ProtectedRouteProps) {
   const { user, isAdmin, isAuthReady, refreshAdminStatus } = useAuth();
+  const { devMode } = useDevMode();
   const location = useLocation();
   const [isCheckingRole, setIsCheckingRole] = useState(requiredRoles.length > 0);
   const [hasRequiredRole, setHasRequiredRole] = useState(false);
@@ -29,11 +31,21 @@ export default function ProtectedRoute({
     isAdmin, 
     isAuthReady, 
     requiredRoles,
-    isCheckingRole
+    isCheckingRole,
+    devMode
   });
 
-  // Check if the user has any of the required roles
+  // If dev mode is enabled, bypass all checks
   useEffect(() => {
+    if (devMode) {
+      console.log("[ProtectedRoute Debug] Dev mode enabled, bypassing security checks");
+      setIsCheckingRole(false);
+      setHasRequiredRole(true);
+      setCheckComplete(true);
+      return;
+    }
+
+    // Check if the user has any of the required roles
     if (!requiredRoles.length) {
       console.log("[ProtectedRoute Debug] No required roles, skipping check");
       setIsCheckingRole(false);
@@ -83,33 +95,34 @@ export default function ProtectedRoute({
     };
     
     checkRoles();
-  }, [user, isAdmin, requiredRoles, refreshAdminStatus]);
+  }, [user, isAdmin, requiredRoles, refreshAdminStatus, devMode]);
 
   // Show toast notification when redirected due to admin access restriction
   useEffect(() => {
-    if (checkComplete && requiredRoles.includes('admin') && !hasRequiredRole && user) {
+    if (!devMode && checkComplete && requiredRoles.includes('admin') && !hasRequiredRole && user) {
       console.log("[ProtectedRoute Debug] Showing access denied toast");
       toast.error("Access denied", {
         description: "You need admin privileges to access this area",
         duration: 5000,
       });
     }
-  }, [checkComplete, requiredRoles, hasRequiredRole, user]);
+  }, [checkComplete, requiredRoles, hasRequiredRole, user, devMode]);
 
   // Log the final decision for debugging
   useEffect(() => {
     if (checkComplete) {
       console.log("[ProtectedRoute Debug] Access decision:", {
+        devMode,
         hasRequiredRole,
         isAdmin,
         requiredRoles,
-        shouldRedirect: !user || (requiredRoles.length > 0 && !hasRequiredRole && !isAdmin)
+        shouldRedirect: !devMode && (!user || (requiredRoles.length > 0 && !hasRequiredRole && !isAdmin))
       });
     }
-  }, [checkComplete, hasRequiredRole, isAdmin, requiredRoles, user]);
+  }, [checkComplete, hasRequiredRole, isAdmin, requiredRoles, user, devMode]);
 
   // Show loading state while checking authentication
-  if (!isAuthReady || isCheckingRole) {
+  if (!devMode && (!isAuthReady || isCheckingRole)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -118,6 +131,11 @@ export default function ProtectedRoute({
         </div>
       </div>
     );
+  }
+
+  // When dev mode is enabled, always render the children
+  if (devMode) {
+    return <>{children}</>;
   }
 
   // Redirect to login if not authenticated
