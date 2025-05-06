@@ -56,8 +56,7 @@ export const mapDbToCourse = (dbCourse: SupabaseCourse): Course => {
     templateId: dbCourse.template_id,
     prerequisites: dbCourse.prerequisites,
     learningOutcomes: dbCourse.learning_outcomes || [],
-    materials: [],
-    certification: dbCourse.certification || '',
+    materials: [], // Using the existing materials array
     imageAspectRatio: dbCourse.image_aspect_ratio || '16/9',
     imageSize: dbCourse.image_size || 100,
     imageLayout: dbCourse.image_layout || 'standard',
@@ -92,7 +91,6 @@ export const mapCourseToDb = (course: CourseFormData): Omit<SupabaseCourse, 'id'
     prerequisites: course.prerequisites || '',
     learning_outcomes: Array.isArray(course.learningOutcomes) ? course.learningOutcomes : [],
     materials_included: [],
-    certification: '',
     image_aspect_ratio: course.imageAspectRatio || '16/9',
     image_size: course.imageSize || 100,
     image_layout: course.imageLayout || 'standard',
