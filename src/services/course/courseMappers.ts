@@ -19,7 +19,7 @@ interface SupabaseCourse {
   is_template: boolean;
   template_id?: string;
   syllabus?: string[];
-  prerequisites?: string[];
+  prerequisites?: string;
   learning_outcomes?: string[];
   materials_included?: string[];
   certification?: string;
@@ -44,19 +44,18 @@ export const mapDbToCourse = (dbCourse: SupabaseCourse): Course => {
     description: dbCourse.description,
     dates: dbCourse.dates,
     location: dbCourse.location,
-    price: dbCourse.price,
+    price: String(dbCourse.price),
     instructor: dbCourse.instructor,
     imageUrl: dbCourse.image_url || '',
     category: dbCourse.category,
-    skillLevel: dbCourse.skill_level,
+    skillLevel: dbCourse.skill_level as "beginner" | "intermediate" | "advanced" | "all-levels",
     format: dbCourse.format,
     duration: dbCourse.duration,
-    status: dbCourse.status,
+    status: dbCourse.status as "draft" | "published",
     spotsAvailable: dbCourse.spots_available,
     isTemplate: dbCourse.is_template,
     templateId: dbCourse.template_id,
-    syllabus: dbCourse.syllabus || [],
-    prerequisites: dbCourse.prerequisites || [],
+    prerequisites: dbCourse.prerequisites,
     learningOutcomes: dbCourse.learning_outcomes || [],
     materialsIncluded: dbCourse.materials_included || [],
     certification: dbCourse.certification || '',
@@ -80,7 +79,7 @@ export const mapCourseToDb = (course: CourseFormData): Omit<SupabaseCourse, 'id'
     description: course.description || '',
     dates: course.dates || '',
     location: course.location || '',
-    price: course.price || 0,
+    price: Number(course.price) || 0,
     instructor: course.instructor || '',
     image_url: course.imageUrl || '',
     category: course.category || '',
@@ -88,14 +87,13 @@ export const mapCourseToDb = (course: CourseFormData): Omit<SupabaseCourse, 'id'
     format: course.format || '',
     duration: course.duration || '',
     status: course.status || 'draft',
-    spots_available: course.spotsAvailable || 0,
+    spots_available: Number(course.spotsAvailable) || 0,
     is_template: course.isTemplate !== undefined ? course.isTemplate : false,
     template_id: course.templateId,
-    syllabus: course.syllabus || [],
-    prerequisites: course.prerequisites || [],
-    learning_outcomes: course.learningOutcomes || [],
-    materials_included: course.materialsIncluded || [],
-    certification: course.certification || '',
+    prerequisites: course.prerequisites || '',
+    learning_outcomes: Array.isArray(course.learningOutcomes) ? course.learningOutcomes : [],
+    materials_included: [],
+    certification: '',
     image_aspect_ratio: course.imageAspectRatio || '16/9',
     image_size: course.imageSize || 100,
     image_layout: course.imageLayout || 'standard',

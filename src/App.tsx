@@ -13,7 +13,7 @@ import CourseDetails from '@/pages/CourseDetails';
 import UnauthorizedPage from '@/pages/UnauthorizedPage';
 import { SiteSettingsProvider } from '@/contexts/site-settings';
 import { Toaster } from '@/components/ui/toaster';
-import { AuthContextProvider } from '@/contexts/AuthContext';
+import { AuthProvider as AuthContextProvider } from '@/contexts/AuthContext';
 import DevModeToggle from '@/components/dev/DevModeToggle';
 import { DevModeProvider } from '@/contexts/DevModeContext';
 import { Toaster as SonnerToaster } from 'sonner';
@@ -25,7 +25,7 @@ import PerformanceMetrics from './pages/services/PerformanceMetrics';
 import TeamCoaching from './pages/services/TeamCoaching';
 
 import './App.css';
-import { ErrorBoundary } from './components/layout/ErrorBoundary';
+import ErrorBoundary from './components/layout/ErrorBoundary';
 
 function App() {
   useEffect(() => {
