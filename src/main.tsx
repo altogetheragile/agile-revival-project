@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
 
@@ -35,7 +36,9 @@ try {
   root.render(
     <React.StrictMode>
       <React.Suspense fallback={<div>Loading...</div>}>
-        <App />
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
       </React.Suspense>
     </React.StrictMode>
   );
