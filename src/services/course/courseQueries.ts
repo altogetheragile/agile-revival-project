@@ -30,7 +30,7 @@ export const getAllCourses = async (): Promise<Course[]> => {
     }
     
     console.log(`Successfully fetched ${courses.length} courses`);
-    return courses.map(mapDbToCourse);
+    return courses.map((dbCourse) => mapDbToCourse(dbCourse));
   } catch (err) {
     console.error("Unexpected error fetching courses:", err);
     toast.error("Failed to load courses", {
@@ -54,7 +54,7 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
       return [];
     }
     
-    const mappedCourses = courses.map(mapDbToCourse);
+    const mappedCourses = courses.map((dbCourse) => mapDbToCourse(dbCourse));
     return category === 'all' ? mappedCourses : mappedCourses.filter(course => course.category === category);
   } catch (err) {
     console.error("Unexpected error fetching courses by category:", err);
@@ -81,7 +81,7 @@ export const getScheduledCourses = async (): Promise<Course[]> => {
     }
     
     console.log(`Successfully fetched ${courses.length} scheduled courses`);
-    return courses.map(mapDbToCourse);
+    return courses.map((dbCourse) => mapDbToCourse(dbCourse));
   } catch (err) {
     console.error("Unexpected error fetching scheduled courses:", err);
     toast.error("Failed to load scheduled courses", {
@@ -109,7 +109,7 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
     }
     
     console.log(`Successfully fetched ${templates.length} course templates`);
-    return templates.map(mapDbToCourse);
+    return templates.map((dbCourse) => mapDbToCourse(dbCourse));
   } catch (err) {
     console.error("Unexpected error fetching course templates:", err);
     toast.error("Failed to load course templates", {

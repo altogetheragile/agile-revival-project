@@ -40,8 +40,10 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
       }
     }
 
+    const dbCourseData = mapCourseToDb(courseData);
+    
     const newCourse = {
-      ...mapCourseToDb(courseData),
+      ...dbCourseData,
       created_by: user.id
     };
     

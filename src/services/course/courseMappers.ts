@@ -7,7 +7,7 @@ interface SupabaseCourse {
   description: string;
   dates: string;
   location: string;
-  price: number;
+  price: string;
   instructor: string;
   image_url?: string;
   category: string;
@@ -18,7 +18,6 @@ interface SupabaseCourse {
   spots_available: number;
   is_template: boolean;
   template_id?: string;
-  syllabus?: string[];
   prerequisites?: string;
   learning_outcomes?: string[];
   materials_included?: string[];
@@ -44,7 +43,7 @@ export const mapDbToCourse = (dbCourse: SupabaseCourse): Course => {
     description: dbCourse.description,
     dates: dbCourse.dates,
     location: dbCourse.location,
-    price: String(dbCourse.price),
+    price: dbCourse.price,
     instructor: dbCourse.instructor,
     imageUrl: dbCourse.image_url || '',
     category: dbCourse.category,
@@ -57,7 +56,7 @@ export const mapDbToCourse = (dbCourse: SupabaseCourse): Course => {
     templateId: dbCourse.template_id,
     prerequisites: dbCourse.prerequisites,
     learningOutcomes: dbCourse.learning_outcomes || [],
-    materialsIncluded: dbCourse.materials_included || [],
+    materials: [],
     certification: dbCourse.certification || '',
     imageAspectRatio: dbCourse.image_aspect_ratio || '16/9',
     imageSize: dbCourse.image_size || 100,
@@ -79,7 +78,7 @@ export const mapCourseToDb = (course: CourseFormData): Omit<SupabaseCourse, 'id'
     description: course.description || '',
     dates: course.dates || '',
     location: course.location || '',
-    price: Number(course.price) || 0,
+    price: course.price || '0',
     instructor: course.instructor || '',
     image_url: course.imageUrl || '',
     category: course.category || '',
