@@ -56,16 +56,15 @@ export const mapDbToCourse = (dbCourse: SupabaseCourse): Course => {
     templateId: dbCourse.template_id,
     prerequisites: dbCourse.prerequisites,
     learningOutcomes: dbCourse.learning_outcomes || [],
-    materials: dbCourse.materials_included?.map((mat, index) => ({
-      id: `material-${index}`, // Generate an ID for each material
+    materials: (dbCourse.materials_included || []).map((mat, index) => ({
+      id: `material-${index}`, 
       fileName: mat,
       fileUrl: '',
       fileType: 'text',
-    })) || [],
+    })),
     imageAspectRatio: dbCourse.image_aspect_ratio || '16/9',
     imageSize: dbCourse.image_size || 100,
     imageLayout: dbCourse.image_layout || 'standard'
-    // Removed createdAt and updatedAt as they don't exist in Course interface
   };
 };
 

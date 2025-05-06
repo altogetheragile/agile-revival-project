@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Course } from "@/types/course";
 import { toast } from "sonner";
 import { mapDbToCourse } from "./courseMappers";
+import { handleError } from "@/utils/errorHandler";
 
 // Get all courses
 export const getAllCourses = async (): Promise<Course[]> => {
@@ -29,8 +30,8 @@ export const getAllCourses = async (): Promise<Course[]> => {
       return [];
     }
     
-    console.log(`Successfully fetched ${courses.length} courses`);
-    return courses.map((dbCourse) => mapDbToCourse(dbCourse));
+    console.log(`Successfully fetched ${courses?.length || 0} courses`);
+    return (courses || []).map((dbCourse) => mapDbToCourse(dbCourse));
   } catch (err) {
     console.error("Unexpected error fetching courses:", err);
     toast.error("Failed to load courses", {
@@ -54,7 +55,7 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
       return [];
     }
     
-    const mappedCourses = courses.map((dbCourse) => mapDbToCourse(dbCourse));
+    const mappedCourses = (courses || []).map((dbCourse) => mapDbToCourse(dbCourse));
     return category === 'all' ? mappedCourses : mappedCourses.filter(course => course.category === category);
   } catch (err) {
     console.error("Unexpected error fetching courses by category:", err);
@@ -80,8 +81,8 @@ export const getScheduledCourses = async (): Promise<Course[]> => {
       return [];
     }
     
-    console.log(`Successfully fetched ${courses.length} scheduled courses`);
-    return courses.map((dbCourse) => mapDbToCourse(dbCourse));
+    console.log(`Successfully fetched ${courses?.length || 0} scheduled courses`);
+    return (courses || []).map((dbCourse) => mapDbToCourse(dbCourse));
   } catch (err) {
     console.error("Unexpected error fetching scheduled courses:", err);
     toast.error("Failed to load scheduled courses", {
@@ -108,8 +109,8 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
       return [];
     }
     
-    console.log(`Successfully fetched ${templates.length} course templates`);
-    return templates.map((dbCourse) => mapDbToCourse(dbCourse));
+    console.log(`Successfully fetched ${templates?.length || 0} course templates`);
+    return (templates || []).map((dbCourse) => mapDbToCourse(dbCourse));
   } catch (err) {
     console.error("Unexpected error fetching course templates:", err);
     toast.error("Failed to load course templates", {

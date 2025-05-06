@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData } from "@/types/course";
@@ -53,10 +54,6 @@ export const useCourseManagement = () => {
 
   useEffect(() => {
     loadCourses();
-    
-    // Refresh every 30 seconds
-    const intervalId = setInterval(loadCourses, 30000);
-    return () => clearInterval(intervalId);
   }, [loadCourses]);
 
   const filteredCourses = courses.filter(course => {

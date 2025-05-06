@@ -3,36 +3,19 @@ import { Course, CourseFormData, ScheduleCourseFormData } from "@/types/course";
 import { mapDbToCourse, mapCourseToDb } from "@/services/course/courseMappers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { handleError } from "@/utils/errorHandler";
 
 // Get all courses
 export const getAllCourses = async (): Promise<Course[]> => {
   try {
     console.log("Fetching all courses...");
     
-    // Add a timeout for debugging
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error("Timeout fetching courses")), 15000);
-    });
-    
-    const fetchPromise = supabase.from('courses').select('*');
-    
-    // Race between fetch and timeout
-    const { data: courses, error } = await Promise.race([
-      fetchPromise,
-      timeoutPromise.then(() => { throw new Error("Timeout fetching courses"); })
-    ]) as any;
-    
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select('*');
+      
     if (error) {
       console.error("Error fetching courses:", error);
-      
-      if (error.message?.includes('infinite recursion detected')) {
-        console.error("RLS policy recursion error detected");
-        toast.error("Database permission issue", {
-          description: "Unable to access courses due to a permission configuration issue."
-        });
-        return [];
-      }
-      
       toast.error("Failed to load courses", {
         description: error.message
       });
@@ -132,19 +115,11 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
   try {
     console.log("Fetching course templates...");
     
-    // Add a timeout for debugging
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error("Timeout fetching course templates")), 15000);
-    });
-    
-    const fetchPromise = supabase.from('courses').select('*').eq('is_template', true);
-    
-    // Race between fetch and timeout
-    const { data: templates, error } = await Promise.race([
-      fetchPromise,
-      timeoutPromise.then(() => { throw new Error("Timeout fetching course templates"); })
-    ]) as any;
-    
+    const { data: templates, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('is_template', true);
+      
     if (error) {
       console.error("Error fetching course templates:", error);
       toast.error("Failed to load course templates", {

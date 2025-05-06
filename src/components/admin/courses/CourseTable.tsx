@@ -10,8 +10,8 @@ interface CourseTableProps {
   courses: Course[];
   onEdit: (course: Course) => void;
   onDelete: (course: Course) => void;
-  onViewRegistrations: (course: Course) => void;
-  onScheduleCourse: (template: Course) => void;
+  onViewRegistrations?: (course: Course) => void;
+  onScheduleCourse?: (template: Course) => void;
   onPreviewTemplate?: (template: Course) => void;
 }
 
@@ -43,7 +43,7 @@ export const CourseTable = ({
     return <Badge variant="outline" className="bg-gray-50 text-gray-600">Draft</Badge>;
   };
 
-  if (!courses.length) {
+  if (!courses || courses.length === 0) {
     return (
       <Card className="p-6 text-center text-gray-500">
         No course templates found. Add your first template to get started.
@@ -93,15 +93,30 @@ export const CourseTable = ({
                   </Button>
                 )}
                 
-                <Button
-                  onClick={() => onScheduleCourse(course)}
-                  size="sm"
-                  variant="outline"
-                  className="h-8 px-2 text-green-600"
-                >
-                  <Calendar className="h-4 w-4 mr-1" />
-                  Schedule
-                </Button>
+                {onScheduleCourse && (
+                  <Button
+                    onClick={() => onScheduleCourse(course)}
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2 text-green-600"
+                  >
+                    <Calendar className="h-4 w-4 mr-1" />
+                    Schedule
+                  </Button>
+                )}
+
+                {onViewRegistrations && (
+                  <Button
+                    onClick={() => onViewRegistrations(course)}
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2 text-orange-600"
+                  >
+                    <Users className="h-4 w-4 mr-1" />
+                    Registrations
+                  </Button>
+                )}
+
                 <Button
                   onClick={() => onDelete(course)}
                   size="sm"
