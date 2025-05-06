@@ -11,7 +11,8 @@ export const getAllCourses = async (): Promise<Course[]> => {
     console.log("Fetching all courses...");
     const { data: courses, error } = await supabase
       .from('courses')
-      .select('*');
+      .select('*')
+      .timeout(10000); // 10 second timeout
       
     if (error) {
       console.error("Error fetching courses:", error);
@@ -30,8 +31,13 @@ export const getAllCourses = async (): Promise<Course[]> => {
       return [];
     }
     
+    if (!courses) {
+      console.log("No courses returned from database");
+      return [];
+    }
+    
     console.log(`Successfully fetched ${courses?.length || 0} courses`);
-    return (courses || []).map((dbCourse) => mapDbToCourse(dbCourse));
+    return courses.map((dbCourse) => mapDbToCourse(dbCourse));
   } catch (err) {
     console.error("Unexpected error fetching courses:", err);
     toast.error("Failed to load courses", {
@@ -47,7 +53,8 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
     const { data: courses, error } = await supabase
       .from('courses')
       .select('*')
-      .eq('is_template', false);
+      .eq('is_template', false)
+      .timeout(10000); // 10 second timeout
       
     if (error) {
       console.error("Error fetching courses by category:", error);
@@ -55,7 +62,12 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
       return [];
     }
     
-    const mappedCourses = (courses || []).map((dbCourse) => mapDbToCourse(dbCourse));
+    if (!courses) {
+      console.log("No courses returned from database for category filter");
+      return [];
+    }
+    
+    const mappedCourses = courses.map((dbCourse) => mapDbToCourse(dbCourse));
     return category === 'all' ? mappedCourses : mappedCourses.filter(course => course.category === category);
   } catch (err) {
     console.error("Unexpected error fetching courses by category:", err);
@@ -71,7 +83,8 @@ export const getScheduledCourses = async (): Promise<Course[]> => {
     const { data: courses, error } = await supabase
       .from('courses')
       .select('*')
-      .eq('is_template', false);
+      .eq('is_template', false)
+      .timeout(10000); // 10 second timeout
       
     if (error) {
       console.error("Error fetching scheduled courses:", error);
@@ -81,8 +94,13 @@ export const getScheduledCourses = async (): Promise<Course[]> => {
       return [];
     }
     
-    console.log(`Successfully fetched ${courses?.length || 0} scheduled courses`);
-    return (courses || []).map((dbCourse) => mapDbToCourse(dbCourse));
+    if (!courses) {
+      console.log("No scheduled courses returned from database");
+      return [];
+    }
+    
+    console.log(`Successfully fetched ${courses.length} scheduled courses`);
+    return courses.map((dbCourse) => mapDbToCourse(dbCourse));
   } catch (err) {
     console.error("Unexpected error fetching scheduled courses:", err);
     toast.error("Failed to load scheduled courses", {
@@ -99,7 +117,8 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
     const { data: templates, error } = await supabase
       .from('courses')
       .select('*')
-      .eq('is_template', true);
+      .eq('is_template', true)
+      .timeout(10000); // 10 second timeout
       
     if (error) {
       console.error("Error fetching course templates:", error);
@@ -109,8 +128,13 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
       return [];
     }
     
-    console.log(`Successfully fetched ${templates?.length || 0} course templates`);
-    return (templates || []).map((dbCourse) => mapDbToCourse(dbCourse));
+    if (!templates || templates.length === 0) {
+      console.log("No course templates found in database");
+      return [];
+    }
+    
+    console.log(`Successfully fetched ${templates.length} course templates`);
+    return templates.map((dbCourse) => mapDbToCourse(dbCourse));
   } catch (err) {
     console.error("Unexpected error fetching course templates:", err);
     toast.error("Failed to load course templates", {
@@ -122,12 +146,20 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
 
 // Get a course by ID
 export const getCourseById = async (id: string): Promise<Course | undefined> => {
+  if (!id) {
+    console.error("Invalid course ID provided");
+    toast.error("Invalid course ID");
+    return undefined;
+  }
+  
   try {
+    console.log(`Fetching course with ID: ${id}`);
     const { data: course, error } = await supabase
       .from('courses')
       .select('*')
       .eq('id', id)
-      .maybeSingle();
+      .maybeSingle()
+      .timeout(10000); // 10 second timeout
       
     if (error) {
       console.error("Error fetching course by id:", error);
@@ -137,7 +169,13 @@ export const getCourseById = async (id: string): Promise<Course | undefined> => 
       return undefined;
     }
     
-    return course ? mapDbToCourse(course) : undefined;
+    if (!course) {
+      console.log(`No course found with ID: ${id}`);
+      return undefined;
+    }
+    
+    console.log("Successfully fetched course by ID");
+    return mapDbToCourse(course);
   } catch (err) {
     console.error("Unexpected error fetching course:", err);
     toast.error("Failed to load course", {

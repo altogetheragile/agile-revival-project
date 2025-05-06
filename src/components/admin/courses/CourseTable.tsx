@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Edit, Trash2, Users, Calendar, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 
 interface CourseTableProps {
   courses: Course[];
@@ -23,6 +24,8 @@ export const CourseTable = ({
   onScheduleCourse,
   onPreviewTemplate
 }: CourseTableProps) => {
+  const [errorCourse, setErrorCourse] = useState<string | null>(null);
+  
   const getFormatBadge = (format?: string) => {
     switch (format) {
       case 'online':
@@ -42,17 +45,33 @@ export const CourseTable = ({
     }
     return <Badge variant="outline" className="bg-gray-50 text-gray-600">Draft</Badge>;
   };
+  
+  const handleAction = (actionFn: Function, course: Course, actionName: string) => {
+    try {
+      actionFn(course);
+    } catch (error) {
+      console.error(`Error during ${actionName} action:`, error);
+      setErrorCourse(course.id);
+      setTimeout(() => setErrorCourse(null), 3000);
+    }
+  };
 
   if (!courses || courses.length === 0) {
     return (
       <Card className="p-6 text-center text-gray-500">
-        No course templates found. Add your first template to get started.
+        <p className="mb-2 text-lg">No course templates found.</p>
+        <p>Add your first template to get started.</p>
       </Card>
     );
   }
 
   return (
     <div className="rounded-md border overflow-hidden">
+      {errorCourse && (
+        <div className="bg-red-50 p-2 text-red-700 text-sm text-center">
+          There was an error processing your request. Please try again.
+        </div>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
@@ -66,13 +85,13 @@ export const CourseTable = ({
         <TableBody>
           {courses.map(course => (
             <TableRow key={course.id}>
-              <TableCell className="font-medium">{course.title}</TableCell>
-              <TableCell>{course.category}</TableCell>
+              <TableCell className="font-medium">{course.title || 'Untitled'}</TableCell>
+              <TableCell>{course.category || 'Uncategorized'}</TableCell>
               <TableCell>{getFormatBadge(course.format)}</TableCell>
               <TableCell>{getStatusBadge(course.status)}</TableCell>
               <TableCell className="flex gap-2">
                 <Button
-                  onClick={() => onEdit(course)}
+                  onClick={() => handleAction(onEdit, course, 'edit')}
                   size="sm"
                   variant="outline"
                   className="h-8 px-2 text-blue-600"
@@ -83,7 +102,7 @@ export const CourseTable = ({
                 
                 {onPreviewTemplate && (
                   <Button
-                    onClick={() => onPreviewTemplate(course)}
+                    onClick={() => handleAction(onPreviewTemplate, course, 'preview')}
                     size="sm"
                     variant="outline"
                     className="h-8 px-2 text-purple-600"
@@ -95,7 +114,7 @@ export const CourseTable = ({
                 
                 {onScheduleCourse && (
                   <Button
-                    onClick={() => onScheduleCourse(course)}
+                    onClick={() => handleAction(onScheduleCourse, course, 'schedule')}
                     size="sm"
                     variant="outline"
                     className="h-8 px-2 text-green-600"
@@ -107,7 +126,7 @@ export const CourseTable = ({
 
                 {onViewRegistrations && (
                   <Button
-                    onClick={() => onViewRegistrations(course)}
+                    onClick={() => handleAction(onViewRegistrations, course, 'view-registrations')}
                     size="sm"
                     variant="outline"
                     className="h-8 px-2 text-orange-600"
@@ -118,7 +137,7 @@ export const CourseTable = ({
                 )}
 
                 <Button
-                  onClick={() => onDelete(course)}
+                  onClick={() => handleAction(onDelete, course, 'delete')}
                   size="sm"
                   variant="outline"
                   className="h-8 px-2 text-red-600"

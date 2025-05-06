@@ -19,8 +19,6 @@ window.addEventListener('error', (event) => {
   
   // Prevent the error from crashing the entire app if possible
   event.preventDefault();
-  
-  // You could also show a toast notification or other UI feedback here
 });
 
 // More robust error handling for unhandled promise rejections
@@ -35,11 +33,11 @@ window.addEventListener('unhandledrejection', (event) => {
 try {
   root.render(
     <React.StrictMode>
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <BrowserRouter>
+      <BrowserRouter>
+        <React.Suspense fallback={<div>Loading...</div>}>
           <App />
-        </BrowserRouter>
-      </React.Suspense>
+        </React.Suspense>
+      </BrowserRouter>
     </React.StrictMode>
   );
 } catch (error) {

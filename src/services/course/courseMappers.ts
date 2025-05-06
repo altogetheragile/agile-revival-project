@@ -34,34 +34,41 @@ interface SupabaseCourse {
  * Maps a course from the database format to the application format
  */
 export const mapDbToCourse = (dbCourse: SupabaseCourse): Course => {
+  if (!dbCourse) {
+    console.error("Attempted to map null or undefined database course");
+    throw new Error("Invalid course data");
+  }
+  
   // Console log for debugging
   console.log("Mapping DB course to app format:", dbCourse);
   
   return {
     id: dbCourse.id,
-    title: dbCourse.title,
-    description: dbCourse.description,
-    dates: dbCourse.dates,
-    location: dbCourse.location,
-    price: dbCourse.price,
-    instructor: dbCourse.instructor,
+    title: dbCourse.title || '',
+    description: dbCourse.description || '',
+    dates: dbCourse.dates || '',
+    location: dbCourse.location || '',
+    price: dbCourse.price || '',
+    instructor: dbCourse.instructor || '',
     imageUrl: dbCourse.image_url || '',
-    category: dbCourse.category,
-    skillLevel: dbCourse.skill_level as "beginner" | "intermediate" | "advanced" | "all-levels",
-    format: dbCourse.format,
-    duration: dbCourse.duration,
-    status: dbCourse.status as "draft" | "published",
-    spotsAvailable: dbCourse.spots_available,
-    isTemplate: dbCourse.is_template,
+    category: dbCourse.category || '',
+    skillLevel: (dbCourse.skill_level || 'all-levels') as "beginner" | "intermediate" | "advanced" | "all-levels",
+    format: dbCourse.format || '',
+    duration: dbCourse.duration || '',
+    status: (dbCourse.status || 'draft') as "draft" | "published",
+    spotsAvailable: dbCourse.spots_available || 0,
+    isTemplate: Boolean(dbCourse.is_template),
     templateId: dbCourse.template_id,
-    prerequisites: dbCourse.prerequisites,
-    learningOutcomes: dbCourse.learning_outcomes || [],
-    materials: (dbCourse.materials_included || []).map((mat, index) => ({
-      id: `material-${index}`, 
-      fileName: mat,
-      fileUrl: '',
-      fileType: 'text',
-    })),
+    prerequisites: dbCourse.prerequisites || '',
+    learningOutcomes: Array.isArray(dbCourse.learning_outcomes) ? dbCourse.learning_outcomes : [],
+    materials: Array.isArray(dbCourse.materials_included) 
+      ? dbCourse.materials_included.map((mat, index) => ({
+          id: `material-${index}`, 
+          fileName: mat,
+          fileUrl: '',
+          fileType: 'text',
+        }))
+      : [],
     imageAspectRatio: dbCourse.image_aspect_ratio || '16/9',
     imageSize: dbCourse.image_size || 100,
     imageLayout: dbCourse.image_layout || 'standard'
@@ -72,11 +79,16 @@ export const mapDbToCourse = (dbCourse: SupabaseCourse): Course => {
  * Maps a course from the application format to the database format
  */
 export const mapCourseToDb = (course: CourseFormData): Omit<SupabaseCourse, 'id' | 'created_at' | 'updated_at'> => {
+  if (!course) {
+    console.error("Attempted to map null or undefined course form data");
+    throw new Error("Invalid course form data");
+  }
+  
   // Console log for debugging
   console.log("Mapping app course to DB format:", course);
   
   return {
-    title: course.title,
+    title: course.title || '',
     description: course.description || '',
     dates: course.dates || '',
     location: course.location || '',
@@ -93,7 +105,7 @@ export const mapCourseToDb = (course: CourseFormData): Omit<SupabaseCourse, 'id'
     template_id: course.templateId,
     prerequisites: course.prerequisites || '',
     learning_outcomes: Array.isArray(course.learningOutcomes) ? course.learningOutcomes : [],
-    materials_included: course.materials?.map(material => material.fileName) || [],
+    materials_included: Array.isArray(course.materials) ? course.materials.map(material => material.fileName) : [],
     image_aspect_ratio: course.imageAspectRatio || '16/9',
     image_size: course.imageSize || 100,
     image_layout: course.imageLayout || 'standard',
