@@ -59,9 +59,8 @@ export const mapDbToCourse = (dbCourse: SupabaseCourse): Course => {
     materials: [], // Using the existing materials array
     imageAspectRatio: dbCourse.image_aspect_ratio || '16/9',
     imageSize: dbCourse.image_size || 100,
-    imageLayout: dbCourse.image_layout || 'standard',
-    createdAt: dbCourse.created_at,
-    updatedAt: dbCourse.updated_at
+    imageLayout: dbCourse.image_layout || 'standard'
+    // Removed createdAt and updatedAt as they don't exist in Course interface
   };
 };
 
