@@ -26,8 +26,8 @@ const HeroSection = () => {
         className="absolute inset-0 w-full h-full bg-cover bg-center z-0"
         style={{
           backgroundImage: "url('https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80')",
-          transform: `translateY(${scrollPosition * 0.3}px)`,
-          backgroundAttachment: "fixed"
+          transform: `translateY(${scrollPosition * 0.15}px)`,
+          backgroundSize: "cover"
         }}
       />
       
