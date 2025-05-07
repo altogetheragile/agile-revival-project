@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export const CourseLoadingState = () => {
   const [loadingTime, setLoadingTime] = useState(0);
+  const [timeoutMessage, setTimeoutMessage] = useState("");
   
   useEffect(() => {
     const timer = setInterval(() => {
@@ -13,17 +14,25 @@ export const CourseLoadingState = () => {
     return () => clearInterval(timer);
   }, []);
   
+  useEffect(() => {
+    if (loadingTime === 5) {
+      setTimeoutMessage("This is taking a bit longer than usual.");
+    } else if (loadingTime === 15) {
+      setTimeoutMessage("Taking longer than expected. There might be a connection issue.");
+    } else if (loadingTime === 30) {
+      setTimeoutMessage("We're experiencing some difficulties. You may want to try again later.");
+    }
+  }, [loadingTime]);
+  
   return (
     <div className="flex flex-col items-center justify-center py-12">
       <Loader2 className="h-8 w-8 animate-spin text-gray-500 mb-2" />
       <span className="text-gray-500">Loading course templates... {loadingTime}s</span>
       
-      {loadingTime > 5 && (
+      {timeoutMessage && (
         <div className="mt-4 text-center max-w-md">
           <p className="text-sm text-amber-600">
-            {loadingTime > 15 ? 
-              "Taking longer than expected. There might be a connection issue." : 
-              "This is taking a bit longer than usual."}
+            {timeoutMessage}
           </p>
           
           {loadingTime > 20 && (

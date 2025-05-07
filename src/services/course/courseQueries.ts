@@ -11,8 +11,7 @@ export const getAllCourses = async (): Promise<Course[]> => {
     console.log("Fetching all courses...");
     const { data: courses, error } = await supabase
       .from('courses')
-      .select('*')
-      .timeout(10000); // 10 second timeout
+      .select('*');
       
     if (error) {
       console.error("Error fetching courses:", error);
@@ -53,8 +52,7 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
     const { data: courses, error } = await supabase
       .from('courses')
       .select('*')
-      .eq('is_template', false)
-      .timeout(10000); // 10 second timeout
+      .eq('is_template', false);
       
     if (error) {
       console.error("Error fetching courses by category:", error);
@@ -83,8 +81,7 @@ export const getScheduledCourses = async (): Promise<Course[]> => {
     const { data: courses, error } = await supabase
       .from('courses')
       .select('*')
-      .eq('is_template', false)
-      .timeout(10000); // 10 second timeout
+      .eq('is_template', false);
       
     if (error) {
       console.error("Error fetching scheduled courses:", error);
@@ -117,8 +114,7 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
     const { data: templates, error } = await supabase
       .from('courses')
       .select('*')
-      .eq('is_template', true)
-      .timeout(10000); // 10 second timeout
+      .eq('is_template', true);
       
     if (error) {
       console.error("Error fetching course templates:", error);
@@ -158,8 +154,7 @@ export const getCourseById = async (id: string): Promise<Course | undefined> => 
       .from('courses')
       .select('*')
       .eq('id', id)
-      .maybeSingle()
-      .timeout(10000); // 10 second timeout
+      .maybeSingle();
       
     if (error) {
       console.error("Error fetching course by id:", error);
