@@ -94,7 +94,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       price: "",
       category: "",
       spotsAvailable: 0,
-      status: "draft", // Add the required status field
+      status: "draft" as const, // Explicitly use "draft" as a literal type
       imageUrl: finalUrl,
       imageAspectRatio: aspectRatio || "16/9",
       imageSize: size || 100,
