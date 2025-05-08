@@ -10,7 +10,7 @@ export const getAllEvents = async (): Promise<Event[]> => {
     console.log("Fetching all events...");
     
     const { data: events, error } = await supabase
-      .from('courses')
+      .from('events')
       .select('*');
       
     if (error) {
@@ -49,7 +49,7 @@ export const getEventById = async (id: string): Promise<Event | null> => {
     console.log("Fetching event by ID:", id);
     
     const { data: event, error } = await supabase
-      .from('courses')
+      .from('events')
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -86,7 +86,7 @@ export const createEvent = async (eventData: EventFormData): Promise<Event | nul
     console.log("Creating event with data:", newEvent);
     
     const { data, error } = await supabase
-      .from('courses')
+      .from('events')
       .insert([newEvent])
       .select()
       .single();
@@ -120,7 +120,7 @@ export const updateEvent = async (id: string, eventData: EventFormData): Promise
     console.log("Update data:", updates);
     
     const { data, error } = await supabase
-      .from('courses')
+      .from('events')
       .update(updates)
       .eq('id', id)
       .select()
@@ -152,7 +152,7 @@ export const deleteEvent = async (id: string): Promise<boolean> => {
     console.log("Deleting event with ID:", id);
     
     const { error } = await supabase
-      .from('courses')
+      .from('events')
       .delete()
       .eq('id', id);
       
@@ -183,7 +183,7 @@ export const createEventFromTemplate = async (templateId: string, scheduleData: 
     console.log("Schedule data:", scheduleData);
     
     const { data: template, error: templateError } = await supabase
-      .from('courses')
+      .from('events')
       .select('*')
       .eq('id', templateId)
       .eq('is_template', true)
@@ -217,7 +217,7 @@ export const createEventFromTemplate = async (templateId: string, scheduleData: 
     };
     
     const { data: createdEvent, error: createError } = await supabase
-      .from('courses')
+      .from('events')
       .insert([newEventData])
       .select()
       .single();

@@ -263,6 +263,96 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          category: string
+          created_at: string | null
+          dates: string
+          description: string
+          duration: string | null
+          format: string | null
+          google_drive_folder_id: string | null
+          google_drive_folder_url: string | null
+          id: string
+          image_aspect_ratio: string | null
+          image_layout: string | null
+          image_size: number | null
+          image_url: string | null
+          instructor: string
+          is_template: boolean | null
+          learning_outcomes: string[] | null
+          location: string
+          materials: Json | null
+          prerequisites: string | null
+          price: string
+          skill_level: string | null
+          spots_available: number
+          status: string
+          target_audience: string | null
+          template_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          dates: string
+          description: string
+          duration?: string | null
+          format?: string | null
+          google_drive_folder_id?: string | null
+          google_drive_folder_url?: string | null
+          id?: string
+          image_aspect_ratio?: string | null
+          image_layout?: string | null
+          image_size?: number | null
+          image_url?: string | null
+          instructor: string
+          is_template?: boolean | null
+          learning_outcomes?: string[] | null
+          location: string
+          materials?: Json | null
+          prerequisites?: string | null
+          price: string
+          skill_level?: string | null
+          spots_available: number
+          status?: string
+          target_audience?: string | null
+          template_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          dates?: string
+          description?: string
+          duration?: string | null
+          format?: string | null
+          google_drive_folder_id?: string | null
+          google_drive_folder_url?: string | null
+          id?: string
+          image_aspect_ratio?: string | null
+          image_layout?: string | null
+          image_size?: number | null
+          image_url?: string | null
+          instructor?: string
+          is_template?: boolean | null
+          learning_outcomes?: string[] | null
+          location?: string
+          materials?: Json | null
+          prerequisites?: string | null
+          price?: string
+          skill_level?: string | null
+          spots_available?: number
+          status?: string
+          target_audience?: string | null
+          template_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           email: string | null

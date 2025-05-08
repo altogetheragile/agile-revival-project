@@ -30,7 +30,8 @@ export const mapDbToEvent = (dbEvent: any): Event => {
     imageUrl: dbEvent.image_url,
     imageAspectRatio: dbEvent.image_aspect_ratio || "16/9",
     imageSize: dbEvent.image_size || 100,
-    imageLayout: dbEvent.image_layout || "standard"
+    imageLayout: dbEvent.image_layout || "standard",
+    materials: dbEvent.materials || []
   };
 };
 
