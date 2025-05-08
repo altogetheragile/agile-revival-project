@@ -15,7 +15,7 @@ export interface Event {
   duration?: string;
   skillLevel?: "beginner" | "intermediate" | "advanced" | "all-levels";
   format?: string;
-  status?: "draft" | "published";
+  status: "draft" | "published";
   materials?: EventMaterial[];
   googleDriveFolderId?: string;
   googleDriveFolderUrl?: string;
@@ -60,5 +60,5 @@ export interface ScheduleEventFormData {
   location: string;
   instructor: string;
   spotsAvailable: number;
-  status?: "draft" | "published";
+  status: "draft" | "published";
 }

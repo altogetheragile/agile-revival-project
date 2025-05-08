@@ -3,6 +3,9 @@ import { Event, EventFormData } from "@/types/event";
 
 // Map database event object to frontend Event type
 export const mapDbToEvent = (dbEvent: any): Event => {
+  // Ensure status is either "draft" or "published"
+  const status = dbEvent.status === "published" ? "published" : "draft";
+
   return {
     id: dbEvent.id,
     title: dbEvent.title,
@@ -19,7 +22,7 @@ export const mapDbToEvent = (dbEvent: any): Event => {
     duration: dbEvent.duration || "",
     skillLevel: dbEvent.skill_level || "all-levels",
     format: dbEvent.format || "in-person",
-    status: dbEvent.status || "draft",
+    status: status,
     googleDriveFolderId: dbEvent.google_drive_folder_id,
     googleDriveFolderUrl: dbEvent.google_drive_folder_url,
     isTemplate: dbEvent.is_template || false,
@@ -43,6 +46,9 @@ export const mapEventToDb = (event: EventFormData): any => {
       .filter(item => item.length > 0);
   }
 
+  // Ensure status is either "draft" or "published"
+  const status = event.status === "published" ? "published" : "draft";
+
   return {
     title: event.title,
     description: event.description,
@@ -58,7 +64,7 @@ export const mapEventToDb = (event: EventFormData): any => {
     duration: event.duration,
     skill_level: event.skillLevel,
     format: event.format,
-    status: event.status || 'draft',
+    status: status,
     google_drive_folder_id: event.googleDriveFolderId,
     google_drive_folder_url: event.googleDriveFolderUrl,
     is_template: event.isTemplate || false,

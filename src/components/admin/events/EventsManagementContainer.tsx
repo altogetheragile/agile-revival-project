@@ -54,12 +54,13 @@ export const EventsManagementContainer: React.FC = () => {
 
   const handleDuplicateEvent = (event: Event) => {
     // Create a copy of the event without the ID
-    const eventCopy = { 
+    const eventCopy: Event = { 
       ...event,
-      id: undefined, 
       title: `Copy of ${event.title}`,
-      status: 'draft'
+      status: 'draft' as "draft"
     };
+    // Remove the id from the copy
+    delete (eventCopy as any).id;
     setCurrentEvent(null);
     setFormData(eventCopy);
     setIsFormOpen(true);
