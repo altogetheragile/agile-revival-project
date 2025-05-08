@@ -13,9 +13,10 @@ import UserManagement from "@/components/admin/UserManagement";
 import SiteSettings from "@/components/admin/SiteSettings";
 import PageManagement from "@/components/admin/PageManagement";
 import AdminMediaManager from "@/components/media/AdminMediaManager";
+import EventsManagement from "@/components/admin/EventsManagement";
 
 const AdminDashboard = () => {
-  const [currentTab, setCurrentTab] = useState<string>("courses");
+  const [currentTab, setCurrentTab] = useState<string>("events");
   const [isChecking, setIsChecking] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -61,15 +62,20 @@ const AdminDashboard = () => {
           <div className="max-w-5xl mx-auto">
             <h1 className="text-3xl font-bold text-agile-purple-dark mb-6">Admin Dashboard</h1>
             
-            <Tabs defaultValue="courses" value={currentTab} onValueChange={setCurrentTab} className="w-full">
+            <Tabs defaultValue="events" value={currentTab} onValueChange={setCurrentTab} className="w-full">
               <TabsList className="mb-8 w-full grid grid-cols-2 md:flex md:w-auto">
-                <TabsTrigger value="courses">Course Management</TabsTrigger>
-                <TabsTrigger value="blog">Blog Management</TabsTrigger>
-                <TabsTrigger value="users">User Management</TabsTrigger>
-                <TabsTrigger value="pages">Page Management</TabsTrigger>
-                <TabsTrigger value="settings">Site Settings</TabsTrigger>
-                <TabsTrigger value="media">Media Library</TabsTrigger>
+                <TabsTrigger value="events">Events</TabsTrigger>
+                <TabsTrigger value="courses">Courses</TabsTrigger>
+                <TabsTrigger value="blog">Blog</TabsTrigger>
+                <TabsTrigger value="users">Users</TabsTrigger>
+                <TabsTrigger value="pages">Pages</TabsTrigger>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
+                <TabsTrigger value="media">Media</TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="events" className="pt-4">
+                <EventsManagement />
+              </TabsContent>
               
               <TabsContent value="courses" className="pt-4">
                 <CourseManagement />
