@@ -1,9 +1,11 @@
 
-import { createContext, useContext, ReactNode, useEffect } from 'react';
+import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
 import { User, Session } from '@supabase/supabase-js';
 import { useDevMode } from '@/contexts/DevModeContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -24,6 +26,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { user, session, isAdmin, isLoading, isAdminChecked, checkAdminStatus } = useAuthState();
   const { signIn, signUp, signOut, resetPassword, updatePassword } = useAuthMethods();
   const { devMode } = useDevMode();
+  const [connectionError, setConnectionError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
 
   // Add debug logging
   useEffect(() => {
@@ -33,9 +38,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin: devMode ? true : isAdmin,
       isLoading,
       isAdminChecked,
-      devMode
+      devMode,
+      connectionError,
+      retryCount
     });
-  }, [user, isAdmin, isLoading, isAdminChecked, devMode]);
+  }, [user, isAdmin, isLoading, isAdminChecked, devMode, connectionError, retryCount]);
+
+  // Add connection monitoring and auto-recovery
+  useEffect(() => {
+    if (connectionError && retryCount < MAX_RETRIES) {
+      const timer = setTimeout(() => {
+        console.log(`[AuthContext] Attempting to reconnect (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
+        
+        // Test the connection
+        supabase.auth.getSession()
+          .then(({ data, error }) => {
+            if (error) {
+              console.error("[AuthContext] Reconnection attempt failed:", error);
+              setRetryCount(prev => prev + 1);
+            } else {
+              console.log("[AuthContext] Reconnection successful, resetting error state");
+              setConnectionError(false);
+              setRetryCount(0);
+              
+              if (retryCount > 0) {
+                toast.success("Connection restored", {
+                  description: "The connection to the authentication service has been restored."
+                });
+              }
+            }
+          })
+          .catch(err => {
+            console.error("[AuthContext] Error during reconnection:", err);
+            setRetryCount(prev => prev + 1);
+          });
+      }, 5000 * Math.pow(2, retryCount)); // Exponential backoff
+      
+      return () => clearTimeout(timer);
+    } else if (connectionError && retryCount >= MAX_RETRIES) {
+      toast.error("Authentication service unavailable", {
+        description: "Please try refreshing the page or try again later."
+      });
+    }
+  }, [connectionError, retryCount]);
+
+  // Handle errors in the auth state
+  useEffect(() => {
+    const handleError = (error: any) => {
+      console.error("[AuthContext] Auth error detected:", error);
+      setConnectionError(true);
+    };
+
+    // Listen for auth errors
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        console.log("[AuthContext] User signed out");
+      } else if (event === 'SIGNED_IN') {
+        console.log("[AuthContext] User signed in");
+        // Reset error state on successful sign in
+        setConnectionError(false);
+        setRetryCount(0);
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log("[AuthContext] Token refreshed");
+      } else if (event === 'USER_UPDATED') {
+        console.log("[AuthContext] User updated");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Authorization is ready when we've finished loading and checked admin status
   const isAuthReady = !isLoading && isAdminChecked;
