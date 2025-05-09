@@ -1,9 +1,8 @@
-
 import { AlertCircle, Loader2, RefreshCw, DatabaseZap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
+import { testDatabaseConnection } from "@/utils/databaseHealth";
 import { toast } from "sonner";
 
 export const CourseLoadingState = () => {
@@ -38,26 +37,18 @@ export const CourseLoadingState = () => {
     
     setIsCheckingConnection(true);
     try {
-      // Test the connection by making a simple query
-      const startTime = Date.now();
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('key')
-        .limit(1)
-        .maybeSingle();
+      const status = await testDatabaseConnection();
       
-      const responseTime = Date.now() - startTime;
-      
-      if (error) {
-        console.error("Database connection test failed:", error);
+      if (!status.isConnected) {
+        console.error("Database connection test failed:", status.error);
         toast.error("Database connection issue", {
           description: "Could not connect to the database. Please try again later."
         });
         setShowErrorHelp(true);
       } else {
-        console.log(`Database connection test successful. Response time: ${responseTime}ms`);
+        console.log(`Database connection test successful. Response time: ${status.responseTime}ms`);
         // If response time is very slow, show a warning
-        if (responseTime > 5000) {
+        if (status.responseTime > 5000) {
           toast.warning("Slow database connection", {
             description: "The database is responding slowly, which may affect performance."
           });
