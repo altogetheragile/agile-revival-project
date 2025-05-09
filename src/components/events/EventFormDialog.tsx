@@ -16,6 +16,7 @@ interface EventFormDialogProps {
   onCancel: () => void;
   formData?: Event | null;
   setFormData?: React.Dispatch<React.SetStateAction<Event | null>>;
+  onOpenMediaLibrary?: () => void;
 }
 
 // Convert Event to EventFormData for the form
@@ -42,6 +43,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   onCancel,
   formData,
   setFormData,
+  onOpenMediaLibrary,
 }) => {
   const { toast } = useToast();
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
@@ -144,7 +146,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               initialData={localFormData || undefined}
               onSubmit={handleSubmit}
               onCancel={onCancel}
-              onOpenMediaLibrary={() => setIsMediaLibraryOpen(true)}
+              onOpenMediaLibrary={onOpenMediaLibrary || (() => setIsMediaLibraryOpen(true))}
             />
           </ScrollArea>
         </DialogContent>
