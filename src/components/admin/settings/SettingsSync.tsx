@@ -23,7 +23,7 @@ export const SettingsSync = () => {
         toast.error("Database connection issue", {
           description: "Unable to establish a stable connection to the database."
         });
-        return;
+        return () => {}; // Return empty cleanup function to avoid errors
       }
 
       const channel = supabase
@@ -114,10 +114,27 @@ export const SettingsSync = () => {
   };
 
   useEffect(() => {
-    const cleanup = setupRealtimeSubscription();
+    // Create a cleanup function variable to store the function returned by setupRealtimeSubscription
+    let cleanupFunction: (() => void) | undefined;
+    
+    // Set up the subscription and handle the Promise
+    setupRealtimeSubscription()
+      .then(cleanup => {
+        cleanupFunction = cleanup;
+      })
+      .catch(error => {
+        console.error("Failed to set up realtime subscription:", error);
+      });
+    
+    // Return a cleanup function for useEffect
     return () => {
-      if (cleanup) {
-        cleanup();
+      if (cleanupFunction) {
+        cleanupFunction();
+      }
+      
+      // Also clear any reconnect timeout if component unmounts
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
       }
     };
   }, [refreshSettings, uiToast]);
