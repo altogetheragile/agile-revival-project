@@ -16,14 +16,19 @@ export interface ConnectionStatus {
 export const testDatabaseConnection = async (): Promise<ConnectionStatus> => {
   const startTime = Date.now();
   try {
+    // Create an AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
     // Make a simple query to test the connection
     const { data, error } = await supabase
       .from('site_settings')
       .select('key')
       .limit(1)
-      .timeout(10000) // 10 second timeout
+      .abortSignal(controller.signal)
       .maybeSingle();
       
+    clearTimeout(timeoutId);
     const responseTime = Date.now() - startTime;
     
     if (error) {

@@ -116,7 +116,7 @@ export const SettingsSync = () => {
   useEffect(() => {
     const cleanup = setupRealtimeSubscription();
     return () => {
-      if (cleanup && typeof cleanup === 'function') {
+      if (cleanup) {
         cleanup();
       }
     };

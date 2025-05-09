@@ -31,7 +31,8 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       const { data, error } = await supabase
         .from('site_settings')
         .select('key, value')
-        .timeout(10000); // 10 second timeout
+        // Using AbortController for timeout instead of .timeout()
+        .abortSignal(AbortSignal.timeout(10000)); // 10 second timeout
 
       if (error) {
         console.error("Error fetching settings:", error);
