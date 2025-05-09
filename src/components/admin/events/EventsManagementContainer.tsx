@@ -6,9 +6,10 @@ import { EventTable } from "./EventTable";
 import { EventLoadingState } from "./EventLoadingState";
 import { EventErrorAlert } from "./EventErrorAlert";
 import { EventDialogs } from "./EventDialogs";
-import { useToast } from "@/components/ui/use-toast";
 import { createEventFromTemplate } from "@/services/eventService";
 import { useEventManagement } from "@/hooks/useEventManagement";
+import { useToast } from "@/components/ui/use-toast";
+import { ScheduleEventFromTemplateDialog } from "@/components/events/ScheduleEventFromTemplateDialog";
 
 export const EventsManagementContainer: React.FC = () => {
   const {
@@ -153,6 +154,17 @@ export const EventsManagementContainer: React.FC = () => {
         setMediaLibOpen={setMediaLibOpen}
         handleMediaSelect={handleMediaSelect}
       />
+
+      {scheduleDialogOpen && (
+        <ScheduleEventFromTemplateDialog
+          open={scheduleDialogOpen}
+          onOpenChange={setScheduleDialogOpen}
+          template={selectedTemplate}
+          onSubmit={handleScheduleSubmit}
+          onCancel={() => setScheduleDialogOpen(false)}
+          onOpenMediaLibrary={() => setMediaLibOpen(true)}
+        />
+      )}
     </div>
   );
 };
