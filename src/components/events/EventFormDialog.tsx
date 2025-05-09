@@ -14,7 +14,6 @@ interface EventFormDialogProps {
   currentEvent: Event | null;
   onSubmit: (data: EventFormData) => void;
   onCancel: () => void;
-  onOpenMediaLibrary?: () => void;
   formData?: Event | null;
   setFormData?: React.Dispatch<React.SetStateAction<Event | null>>;
 }
@@ -24,10 +23,10 @@ const convertToFormData = (event: Event): EventFormData => {
   return {
     ...event,
     id: event.id,
-    // Include Google Drive folder information
-    googleDriveFolderId: event.googleDriveFolderId,
-    googleDriveFolderUrl: event.googleDriveFolderUrl,
-    // Explicitly include image settings
+    // Include Google Drive folder information if available
+    googleDriveFolderId: event.googleDriveFolderId || "",
+    googleDriveFolderUrl: event.googleDriveFolderUrl || "",
+    // Explicitly include image settings with defaults if not provided
     imageUrl: event.imageUrl || "",
     imageAspectRatio: event.imageAspectRatio || "16/9",
     imageSize: event.imageSize || 100,
@@ -41,7 +40,6 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   currentEvent,
   onSubmit,
   onCancel,
-  onOpenMediaLibrary,
   formData,
   setFormData,
 }) => {
@@ -57,8 +55,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     if (currentEvent) {
       const convertedData = convertToFormData(currentEvent);
       setLocalFormData(convertedData);
-      // Set a new form key to force re-render with fresh data
-      setFormKey(Date.now());
+      setFormKey(Date.now()); // Force re-render with fresh data
     } else if (formData) {
       setLocalFormData(formData);
       setFormKey(Date.now());
@@ -94,7 +91,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       price: "",
       category: "",
       spotsAvailable: 0,
-      status: "draft" as const, // Explicitly use "draft" as a literal type
+      status: "draft" as const,
       imageUrl: finalUrl,
       imageAspectRatio: aspectRatio || "16/9",
       imageSize: size || 100,
@@ -106,26 +103,24 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       setFormData(updatedFormData as Event);
     }
     
-    // Show confirmation toast
     toast({
       title: "Image settings updated",
       description: "The image and its settings have been applied to the event."
     });
   };
   
-  // Handle the form submission to ensure image settings are included
+  // Handle form submission ensuring image settings are included
   const handleSubmit = (data: EventFormData) => {
-    // Make sure we preserve all image settings when submitting
+    // Preserve all image settings when submitting
     const submissionData = {
       ...data,
-      // Use formData as source of truth for image settings if available
+      // Use formData as source of truth for image settings
       imageUrl: data.imageUrl || (localFormData?.imageUrl || ""),
       imageAspectRatio: data.imageAspectRatio || localFormData?.imageAspectRatio || "16/9",
       imageSize: data.imageSize !== undefined ? data.imageSize : localFormData?.imageSize || 100,
       imageLayout: data.imageLayout || localFormData?.imageLayout || "standard"
     };
     
-    // Call the original onSubmit with our complete data
     onSubmit(submissionData);
   };
   
