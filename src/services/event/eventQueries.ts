@@ -58,12 +58,21 @@ export const getEventById = async (id: string): Promise<Event | null> => {
     console.log("Fetching event by ID:", id);
     
     const { data, error } = await executeQuery<any>(
-      (signal) => supabase
-        .from('events')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle()
-        .abortSignal(signal),
+      (signal) => {
+        // Create the query first
+        const query = supabase
+          .from('events')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+          
+        // Apply the abort signal if available on the builder
+        if (signal && typeof query.abortSignal === 'function') {
+          return query.abortSignal(signal);
+        }
+        
+        return query;
+      },
       {
         timeoutMs: 8000,
         retries: 1,
