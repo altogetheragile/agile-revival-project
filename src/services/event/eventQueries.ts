@@ -11,10 +11,19 @@ export const getAllEvents = async (): Promise<Event[]> => {
     console.log("Fetching all events...");
     
     const { data, error } = await executeQuery<any[]>(
-      (signal) => supabase
-        .from('events')
-        .select('*')
-        .abortSignal(signal),
+      (signal) => {
+        const query = supabase
+          .from('events')
+          .select('*');
+          
+        // Since different versions of Supabase client might handle abort signals differently,
+        // we'll use a more compatible approach
+        if (signal && signal.aborted) {
+          throw new DOMException('Aborted', 'AbortError');
+        }
+        
+        return query;
+      },
       {
         timeoutMs: 10000,
         retries: 2,
