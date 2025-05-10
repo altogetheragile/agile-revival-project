@@ -2,6 +2,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { executeQuery } from '@/utils/supabaseHelpers';
 
 interface ConnectionState {
   isConnected: boolean;
@@ -54,13 +55,19 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const startTime = Date.now();
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('key')
-        .limit(1)
-        .abortSignal(controller.signal);
+      const { data, error } = await executeQuery<any[]>(
+        (signal) => supabase
+          .from('site_settings')
+          .select('key')
+          .limit(1)
+          .abortSignal(signal),
+        {
+          timeoutMs: 5000,
+          showErrorToast: false,
+          silentRetry: true
+        }
+      );
       
-      clearTimeout(timeoutId);
       const responseTime = Date.now() - startTime;
       
       const isConnected = !error;
@@ -134,7 +141,12 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           description: "Successfully reconnected to the database"
         });
         setRetryCount(0);
-        setState(prev => ({ ...prev, reconnecting: false }));
+        setState(prev => ({ 
+          ...prev, 
+          isConnected: true, 
+          reconnecting: false,
+          lastChecked: new Date()
+        }));
       } else if (retryCount < MAX_RETRIES) {
         scheduleReconnection();
       } else {

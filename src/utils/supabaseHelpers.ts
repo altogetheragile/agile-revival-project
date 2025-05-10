@@ -2,12 +2,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import { PostgrestError, PostgrestSingleResponse } from "@supabase/supabase-js";
 import { ErrorType, handleError } from "@/utils/errorHandler";
+import { toast } from "sonner";
 
 interface QueryOptions {
   timeoutMs?: number;
   showErrorToast?: boolean;
   errorMessage?: string;
   retries?: number;
+  silentRetry?: boolean;  // Add this option for silent retries
 }
 
 const DEFAULT_TIMEOUT = 10000; // 10 seconds
@@ -35,7 +37,13 @@ export async function executeQuery<T>(
   queryFn: (signal: AbortSignal) => Promise<PostgrestSingleResponse<T>> | any,
   options: QueryOptions = {}
 ): Promise<{ data: T | null; error: any | null }> {
-  const { timeoutMs = DEFAULT_TIMEOUT, showErrorToast = true, errorMessage, retries = DEFAULT_RETRIES } = options;
+  const { 
+    timeoutMs = DEFAULT_TIMEOUT, 
+    showErrorToast = true, 
+    errorMessage, 
+    retries = DEFAULT_RETRIES, 
+    silentRetry = false 
+  } = options;
   
   let currentRetry = 0;
   
@@ -57,14 +65,23 @@ export async function executeQuery<T>(
         
         if (result.error) {
           if (currentRetry < retries) {
-            console.log(`Query failed (attempt ${currentRetry + 1}/${retries + 1}), retrying...`);
+            if (!silentRetry) {
+              console.log(`Query failed (attempt ${currentRetry + 1}/${retries + 1}), retrying...`);
+            }
             currentRetry++;
             await new Promise(resolve => setTimeout(resolve, 1000 * currentRetry)); // Progressive backoff
             continue;
           }
           
           if (showErrorToast) {
-            handleError(result.error, errorMessage);
+            if (result.error.message?.includes('Failed to fetch') || 
+                result.error.message?.includes('Network error')) {
+              toast.error("Connection lost", {
+                description: "Unable to reach the database. Please check your internet connection."
+              });
+            } else {
+              handleError(result.error, errorMessage);
+            }
           }
           
           return { data: null, error: result.error };
@@ -76,7 +93,9 @@ export async function executeQuery<T>(
         
         if (err instanceof DOMException && err.name === 'AbortError') {
           if (currentRetry < retries) {
-            console.log(`Query timed out (attempt ${currentRetry + 1}/${retries + 1}), retrying...`);
+            if (!silentRetry) {
+              console.log(`Query timed out (attempt ${currentRetry + 1}/${retries + 1}), retrying...`);
+            }
             currentRetry++;
             await new Promise(resolve => setTimeout(resolve, 1000 * currentRetry)); // Progressive backoff
             continue;
@@ -95,21 +114,32 @@ export async function executeQuery<T>(
         }
         
         if (currentRetry < retries) {
-          console.log(`Query error (attempt ${currentRetry + 1}/${retries + 1}), retrying...`, err);
+          if (!silentRetry) {
+            console.log(`Query error (attempt ${currentRetry + 1}/${retries + 1}), retrying...`, err);
+          }
           currentRetry++;
           await new Promise(resolve => setTimeout(resolve, 1000 * currentRetry)); // Progressive backoff
           continue;
         }
         
         if (showErrorToast) {
-          handleError(err, errorMessage);
+          if (err instanceof Error && 
+             (err.message?.includes('Failed to fetch') || err.message?.includes('Network error'))) {
+            toast.error("Connection lost", {
+              description: "Unable to reach the database. Please check your internet connection."
+            });
+          } else {
+            handleError(err, errorMessage);
+          }
         }
         
         return { data: null, error: err };
       }
     } catch (outerError) {
       if (currentRetry < retries) {
-        console.log(`Unexpected error (attempt ${currentRetry + 1}/${retries + 1}), retrying...`, outerError);
+        if (!silentRetry) {
+          console.log(`Unexpected error (attempt ${currentRetry + 1}/${retries + 1}), retrying...`, outerError);
+        }
         currentRetry++;
         await new Promise(resolve => setTimeout(resolve, 1000 * currentRetry)); // Progressive backoff
         continue;

@@ -3,15 +3,24 @@ import { Event } from "@/types/event";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { mapDbToEvent } from "./eventMappers";
+import { executeQuery } from "@/utils/supabaseHelpers";
 
 // Get all events
 export const getAllEvents = async (): Promise<Event[]> => {
   try {
     console.log("Fetching all events...");
     
-    const { data: events, error } = await supabase
-      .from('events')
-      .select('*');
+    const { data, error } = await executeQuery<any[]>(
+      (signal) => supabase
+        .from('events')
+        .select('*')
+        .abortSignal(signal),
+      {
+        timeoutMs: 10000,
+        retries: 2,
+        errorMessage: "Failed to load events"
+      }
+    );
       
     if (error) {
       console.error("Error fetching events:", error);
@@ -21,13 +30,13 @@ export const getAllEvents = async (): Promise<Event[]> => {
       return [];
     }
     
-    if (!events || events.length === 0) {
+    if (!data || data.length === 0) {
       console.log("No events found in database");
       return [];
     }
     
-    console.log(`Successfully fetched ${events.length} events`);
-    return events.map(mapDbToEvent);
+    console.log(`Successfully fetched ${data.length} events`);
+    return data.map(mapDbToEvent);
   } catch (err) {
     console.error("Unexpected error fetching events:", err);
     if (err instanceof Error) {
@@ -48,11 +57,19 @@ export const getEventById = async (id: string): Promise<Event | null> => {
   try {
     console.log("Fetching event by ID:", id);
     
-    const { data: event, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+    const { data, error } = await executeQuery<any>(
+      (signal) => supabase
+        .from('events')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle()
+        .abortSignal(signal),
+      {
+        timeoutMs: 8000,
+        retries: 1,
+        errorMessage: `Failed to load event with ID ${id}`
+      }
+    );
       
     if (error) {
       console.error("Error fetching event by id:", error);
@@ -62,13 +79,13 @@ export const getEventById = async (id: string): Promise<Event | null> => {
       return null;
     }
     
-    if (!event) {
+    if (!data) {
       console.log("No event found with ID:", id);
       return null;
     }
     
-    console.log("Successfully fetched event:", event);
-    return mapDbToEvent(event);
+    console.log("Successfully fetched event:", data);
+    return mapDbToEvent(data);
   } catch (err) {
     console.error("Unexpected error fetching event:", err);
     toast.error("Failed to load event", {

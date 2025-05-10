@@ -4,6 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Event, EventFormData } from "@/types/event";
 import { getAllEvents, createEvent, updateEvent, deleteEvent, getEventById } from "@/services/eventService";
 import { toast } from "sonner";
+import { useConnection } from "@/contexts/ConnectionContext";
 
 export const useEventManagement = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -14,12 +15,27 @@ export const useEventManagement = () => {
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadRetries, setLoadRetries] = useState(0);
   const { toast: uiToast } = useToast();
+  const { connectionState, checkConnection } = useConnection();
+  
+  // Maximum number of retry attempts
+  const MAX_RETRIES = 3;
 
-  const loadEvents = useCallback(async () => {
+  const loadEvents = useCallback(async (showToast = true) => {
     try {
       setIsLoading(true);
       setLoadError(null);
+      
+      // Check connection status first if we've had previous errors
+      if (loadRetries > 0 && !connectionState.isConnected) {
+        await checkConnection();
+        if (!connectionState.isConnected) {
+          setLoadError("Database connection issue. Please check your internet connection.");
+          setIsLoading(false);
+          return;
+        }
+      }
       
       console.log("Loading all events...");
       const allEvents = await getAllEvents();
@@ -28,6 +44,15 @@ export const useEventManagement = () => {
         console.log("No events loaded or empty array returned");
       } else {
         console.log(`Loaded ${allEvents.length} events successfully`);
+        // Reset retry counter on successful load
+        if (loadRetries > 0) {
+          setLoadRetries(0);
+          if (showToast) {
+            toast.success("Connection restored", {
+              description: "Successfully loaded events data."
+            });
+          }
+        }
       }
       
       setEvents(allEvents);
@@ -41,11 +66,33 @@ export const useEventManagement = () => {
         toast.error("Permission configuration issue", {
           description: "The system is experiencing a temporary permission issue."
         });
+      } else if (error.message?.includes('Failed to fetch') || 
+                 error.message?.includes('Network error') ||
+                 error.message?.includes('timeout') ||
+                 error.message?.includes('abort')) {
+        // Increment retry counter for connection issues
+        setLoadRetries(prev => prev + 1);
+        
+        if (loadRetries < MAX_RETRIES) {
+          // Schedule a retry with exponential backoff
+          const delay = Math.min(1000 * Math.pow(2, loadRetries), 10000);
+          toast.error("Connection issue", {
+            description: `Attempting to reconnect in ${delay/1000} seconds...`
+          });
+          
+          setTimeout(() => {
+            loadEvents(false); // Don't show toast on auto-retry
+          }, delay);
+        } else {
+          toast.error("Connection failed", {
+            description: "Could not connect after multiple attempts. Please check your network."
+          });
+        }
       }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadRetries, connectionState, checkConnection, uiToast]);
 
   useEffect(() => {
     loadEvents();
@@ -65,6 +112,17 @@ export const useEventManagement = () => {
     try {
       console.log("Submitting event form data:", data);
 
+      // Check connection first
+      if (!connectionState.isConnected) {
+        await checkConnection();
+        if (!connectionState.isConnected) {
+          toast.error("Unable to save", {
+            description: "Database connection issue. Please check your internet connection."
+          });
+          return;
+        }
+      }
+      
       if (currentEvent) {
         console.log("Updating existing event:", currentEvent.id);
         const updated = await updateEvent(currentEvent.id, data);
@@ -106,6 +164,11 @@ export const useEventManagement = () => {
         errorMessage = "Permission configuration issue detected. Please try again in a few moments.";
       } else if (error.message?.includes('violates row-level security policy')) {
         errorMessage = "You don't have permission to perform this action.";
+      } else if (error.message?.includes('Failed to fetch') || 
+                 error.message?.includes('Network error') ||
+                 error.message?.includes('timeout') ||
+                 error.message?.includes('abort')) {
+        errorMessage = "Network connection issue. Please check your internet connection and try again.";
       }
       
       uiToast({
@@ -119,6 +182,17 @@ export const useEventManagement = () => {
   const handleDelete = async () => {
     if (deleteEventId) {
       try {
+        // Check connection first
+        if (!connectionState.isConnected) {
+          await checkConnection();
+          if (!connectionState.isConnected) {
+            toast.error("Unable to delete", {
+              description: "Database connection issue. Please check your internet connection."
+            });
+            return;
+          }
+        }
+        
         const success = await deleteEvent(deleteEventId);
         if (success) {
           await loadEvents();
@@ -136,6 +210,11 @@ export const useEventManagement = () => {
           errorMessage = "Permission configuration issue detected. Please try again in a few moments.";
         } else if (error.message?.includes('violates row-level security policy')) {
           errorMessage = "You don't have permission to perform this action.";
+        } else if (error.message?.includes('Failed to fetch') || 
+                  error.message?.includes('Network error') ||
+                  error.message?.includes('timeout') ||
+                  error.message?.includes('abort')) {
+          errorMessage = "Network connection issue. Please check your internet connection and try again.";
         }
         
         uiToast({
