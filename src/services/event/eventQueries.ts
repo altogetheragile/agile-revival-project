@@ -59,16 +59,17 @@ export const getEventById = async (id: string): Promise<Event | null> => {
     
     const { data, error } = await executeQuery<any>(
       (signal) => {
-        // Create the query first
+        // Create the query
         const query = supabase
           .from('events')
           .select('*')
           .eq('id', id)
           .maybeSingle();
           
-        // Apply the abort signal if available on the builder
-        if (signal && typeof query.abortSignal === 'function') {
-          return query.abortSignal(signal);
+        // Since abortSignal might not be available in this version,
+        // we'll check if the controller was aborted manually
+        if (signal && signal.aborted) {
+          throw new DOMException('Aborted', 'AbortError');
         }
         
         return query;
