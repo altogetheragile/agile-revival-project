@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { PostgrestError, PostgrestFilterBuilder, PostgrestSingleResponse } from "@supabase/supabase-js";
+import { PostgrestError, PostgrestSingleResponse } from "@supabase/supabase-js";
 import { ErrorType, handleError } from "@/utils/errorHandler";
 
 interface QueryOptions {
@@ -27,12 +27,12 @@ export const createTimeoutController = (timeoutMs: number = DEFAULT_TIMEOUT): {
 
 /**
  * Execute a Supabase query with standardized error handling and timeout
- * @param queryFn Function that returns a PostgrestFilterBuilder or Promise
+ * @param queryFn Function that returns a query builder or Promise
  * @param options Configuration options for the query execution
  * @returns Promise with data and error fields
  */
 export async function executeQuery<T>(
-  queryFn: (signal: AbortSignal) => PostgrestFilterBuilder<any> | Promise<PostgrestSingleResponse<T>>,
+  queryFn: (signal: AbortSignal) => Promise<PostgrestSingleResponse<T>> | any,
   options: QueryOptions = {}
 ): Promise<{ data: T | null; error: any | null }> {
   const { timeoutMs = DEFAULT_TIMEOUT, showErrorToast = true, errorMessage, retries = DEFAULT_RETRIES } = options;
@@ -48,7 +48,7 @@ export async function executeQuery<T>(
         // Execute the query function with the abort signal
         const query = queryFn(controller.signal);
         
-        // Handle both Promise and PostgrestFilterBuilder return types
+        // Handle both Promise and Query Builder return types
         const result = query instanceof Promise 
           ? await query 
           : await query;
