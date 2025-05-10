@@ -7,6 +7,8 @@ import { AllSettings } from "./types";
 import { SiteSettingsContext, SiteSettingsContextValue } from "./SiteSettingsContext";
 import { deepMergeObjects } from "./deepMergeObjects";
 import { toast } from "sonner";
+import { useConnection } from "@/contexts/ConnectionContext";
+import { executeQuery } from "@/utils/supabaseHelpers";
 
 interface SiteSettingsProviderProps {
   children: ReactNode;
@@ -15,11 +17,12 @@ interface SiteSettingsProviderProps {
 export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) => {
   const [settings, setSettings] = useState<AllSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
-  const [connectionError, setConnectionError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const { toast: uiToast } = useToast();
   const isInitialLoad = useRef(true);
   const MAX_RETRIES = 3;
+  
+  const { connectionState, checkConnection } = useConnection();
 
   const fetchSettings = useCallback(async (silentMode = false) => {
     try {
@@ -27,15 +30,38 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         setIsLoading(true);
       }
       
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('key, value')
-        // Using AbortController for timeout instead of .timeout()
-        .abortSignal(AbortSignal.timeout(10000)); // 10 second timeout
+      // Check connection first
+      if (!connectionState.isConnected) {
+        await checkConnection();
+        if (!connectionState.isConnected) {
+          console.log("Connection check failed, using default settings");
+          setSettings(defaultSettings);
+          if (!silentMode) {
+            setIsLoading(false);
+          }
+          return;
+        }
+      }
+      
+      // Use our new executeQuery helper
+      const { data, error } = await executeQuery(
+        (signal) => supabase
+          .from('site_settings')
+          .select('key, value')
+          .abortSignal(signal),
+        {
+          timeoutMs: 10000,
+          showErrorToast: !silentMode && !isInitialLoad.current,
+          errorMessage: "Failed to load site settings",
+          retries: silentMode ? 0 : 1
+        }
+      );
 
-      if (error) {
+      if (error || !data) {
         console.error("Error fetching settings:", error);
+        
+        // Set default settings and show toast if needed
+        setSettings(defaultSettings);
         if (!isInitialLoad.current && !silentMode) {
           uiToast({
             title: "Error",
@@ -44,28 +70,19 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
           });
         }
         
-        // Handle connection error for retries
-        if (error.message?.includes('Failed to fetch') || 
-            error.message?.includes('NetworkError') ||
-            error.message?.includes('timeout')) {
-          setConnectionError(true);
-          setRetryCount(prev => prev + 1);
-        }
-        
-        setSettings(defaultSettings);
+        setRetryCount(prev => prev + 1);
         if (!silentMode) {
           setIsLoading(false);
         }
         return;
       }
 
-      // Reset error state on successful fetch
-      if (connectionError) {
-        setConnectionError(false);
+      // Reset retry count on successful fetch
+      if (retryCount > 0) {
         setRetryCount(0);
-        if (retryCount > 0 && !silentMode) {
+        if (!silentMode) {
           toast.success("Connection restored", {
-            description: "Successfully reconnected to the database."
+            description: "Successfully loaded site settings."
           });
         }
       }
@@ -116,15 +133,15 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         isInitialLoad.current = false;
       }
     }
-  }, [uiToast, connectionError, retryCount]);
+  }, [uiToast, retryCount, connectionState, checkConnection]);
 
   // Add auto-retry logic for connection errors
   useEffect(() => {
-    if (connectionError && retryCount < MAX_RETRIES) {
-      const delay = 5000 * Math.pow(2, retryCount); // Exponential backoff
-      console.log(`[SiteSettings] Connection error. Retrying in ${delay/1000} seconds... (${retryCount}/${MAX_RETRIES})`);
+    if (retryCount > 0 && retryCount < MAX_RETRIES) {
+      const delay = 5000 * Math.pow(2, retryCount - 1); // Exponential backoff
+      console.log(`[SiteSettings] Retry ${retryCount}/${MAX_RETRIES} in ${delay/1000} seconds...`);
       
-      if (retryCount > 0) {
+      if (retryCount > 1) {
         toast.error("Database connection issue", {
           description: `Attempting to reconnect in ${delay/1000} seconds...`,
         });
@@ -135,29 +152,45 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       }, delay);
       
       return () => clearTimeout(timer);
-    } else if (connectionError && retryCount >= MAX_RETRIES) {
+    } else if (retryCount >= MAX_RETRIES) {
       console.error("[SiteSettings] Max retry attempts reached. Using default settings.");
       toast.error("Connection failed", {
         description: "Could not connect to the database after multiple attempts. Using default settings.",
       });
     }
-  }, [connectionError, retryCount, fetchSettings]);
+  }, [retryCount, fetchSettings]);
 
   const updateSettings = async (key: string, values: any, silentMode: boolean = false) => {
     try {
       console.log(`Updating ${key} settings:`, values);
-      const { error } = await supabase.rpc('update_site_settings', {
-        setting_key: key,
-        setting_value: values,
-      });
+      
+      // Check connection first
+      if (!connectionState.isConnected) {
+        await checkConnection();
+        if (!connectionState.isConnected) {
+          uiToast({
+            title: "Error",
+            description: "Cannot update settings: database is not connected",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      const { error } = await executeQuery(
+        (signal) => supabase.rpc('update_site_settings', {
+          setting_key: key,
+          setting_value: values,
+        }).abortSignal(signal),
+        {
+          timeoutMs: 10000,
+          showErrorToast: !silentMode,
+          errorMessage: `Failed to update ${key} settings`,
+          retries: 1
+        }
+      );
 
       if (error) {
-        console.error("Error updating settings:", error);
-        uiToast({
-          title: "Error",
-          description: `Failed to update ${key} settings: ${error.message}`,
-          variant: "destructive",
-        });
         return;
       }
 

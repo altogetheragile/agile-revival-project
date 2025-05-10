@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { testConnection } from "./supabaseHelpers";
 
 // Interface for the connection status result
 export interface ConnectionStatus {
@@ -14,44 +15,7 @@ export interface ConnectionStatus {
  * @returns Object containing connection status information
  */
 export const testDatabaseConnection = async (): Promise<ConnectionStatus> => {
-  const startTime = Date.now();
-  try {
-    // Create an AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
-    // Make a simple query to test the connection
-    const { data, error } = await supabase
-      .from('site_settings')
-      .select('key')
-      .limit(1)
-      .abortSignal(controller.signal)
-      .maybeSingle();
-      
-    clearTimeout(timeoutId);
-    const responseTime = Date.now() - startTime;
-    
-    if (error) {
-      console.error("Database connection test failed:", error);
-      return {
-        isConnected: false,
-        responseTime,
-        error
-      };
-    }
-    
-    return {
-      isConnected: true,
-      responseTime
-    };
-  } catch (err) {
-    console.error("Error testing database connection:", err);
-    return {
-      isConnected: false,
-      responseTime: Date.now() - startTime,
-      error: err
-    };
-  }
+  return testConnection();
 };
 
 /**

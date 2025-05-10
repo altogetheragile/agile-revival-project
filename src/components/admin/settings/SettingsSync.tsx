@@ -4,14 +4,16 @@ import { useSiteSettings } from '@/contexts/site-settings';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
+import { useConnection } from '@/contexts/ConnectionContext';
 
 export const SettingsSync = () => {
   const { refreshSettings } = useSiteSettings();
   const { toast: uiToast } = useToast();
+  const { connectionState } = useConnection();
+  
   // Track if this is the first load
   const isInitialLoad = useRef(true);
   // Add state to track connection status
-  const [isConnected, setIsConnected] = useState(false);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const MAX_RECONNECT_ATTEMPTS = 5;
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -59,14 +61,12 @@ export const SettingsSync = () => {
         )
         .subscribe((status) => {
           console.log("Realtime subscription status:", status);
-          const isSubscribed = status === 'SUBSCRIBED';
-          setIsConnected(isSubscribed);
           
-          if (isSubscribed) {
+          if (status === 'SUBSCRIBED') {
             setReconnectAttempts(0);
             // Successfully connected
             if (reconnectAttempts > 0) {
-              toast.success("Database connection restored");
+              toast.success("Realtime connection restored");
             }
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             // Handle connection error
@@ -103,18 +103,41 @@ export const SettingsSync = () => {
     // Exponential backoff for reconnection
     const delay = Math.min(1000 * (2 ** reconnectAttempts), 30000);
     
-    toast.error("Database connection lost", {
+    toast.error("Realtime connection lost", {
       description: `Attempting to reconnect in ${delay/1000} seconds...`,
       duration: delay,
     });
     
     reconnectTimeoutRef.current = setTimeout(() => {
-      setupRealtimeSubscription();
+      // First check if the database is connected
+      if (!connectionState.isConnected) {
+        console.log("Database not connected, skipping realtime reconnection attempt");
+        // Try again in a bit
+        handleReconnect();
+        return;
+      }
+      
+      console.log("Attempting to reconnect realtime subscription...");
+      const cleanup = setupRealtimeSubscription();
+      // Store the cleanup function if needed
+      if (cleanup instanceof Promise) {
+        cleanup.then(cleanupFn => {
+          // Store for later if needed
+        }).catch(error => {
+          console.error("Error getting cleanup function:", error);
+        });
+      }
     }, delay);
   };
 
   useEffect(() => {
-    // Create a cleanup function variable to store the function returned by setupRealtimeSubscription
+    // Only set up realtime if database is connected
+    if (!connectionState.isConnected) {
+      console.log("Database not connected, waiting to set up realtime...");
+      return;
+    }
+    
+    console.log("Setting up realtime subscription for settings...");
     let cleanupFunction: (() => void) | undefined;
     
     // Set up the subscription and handle the Promise
@@ -137,7 +160,7 @@ export const SettingsSync = () => {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [refreshSettings, uiToast]);
+  }, [refreshSettings, uiToast, connectionState.isConnected]);
 
   // Don't render anything
   return null;
