@@ -29,9 +29,9 @@ export const createTimeoutController = (timeoutMs: number = DEFAULT_TIMEOUT): {
  * Execute a Supabase query with standardized error handling and timeout
  */
 export async function executeQuery<T>(
-  queryFn: (signal: AbortSignal) => Promise<{ data: T | null, error: PostgrestError | null }>,
+  queryFn: (signal: AbortSignal) => Promise<{ data: T; error: PostgrestError | null }>,
   options: QueryOptions = {}
-): Promise<{ data: T | null, error: any | null }> {
+): Promise<{ data: T | null; error: any | null }> {
   const { timeoutMs = DEFAULT_TIMEOUT, showErrorToast = true, errorMessage, retries = DEFAULT_RETRIES } = options;
   
   let currentRetry = 0;

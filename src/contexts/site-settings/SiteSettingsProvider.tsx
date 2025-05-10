@@ -14,6 +14,11 @@ interface SiteSettingsProviderProps {
   children: ReactNode;
 }
 
+interface SiteSetting {
+  key: string;
+  value: any;
+}
+
 export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) => {
   const [settings, setSettings] = useState<AllSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,8 +48,8 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         }
       }
       
-      // Use our new executeQuery helper
-      const { data, error } = await executeQuery(
+      // Use our new executeQuery helper with the correct type annotation
+      const { data, error } = await executeQuery<SiteSetting[]>(
         (signal) => supabase
           .from('site_settings')
           .select('key, value')
@@ -92,7 +97,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         try {
           data.forEach(setting => {
             if (setting.key in newSettings && setting.key !== 'courseTemplates') {
-              const currentValue = newSettings[setting.key];
+              const currentValue = newSettings[setting.key as keyof AllSettings];
               const newValue = setting.value;
               if (
                 typeof currentValue === 'object' && 
@@ -102,9 +107,9 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
                 newValue !== null &&
                 !Array.isArray(newValue)
               ) {
-                newSettings[setting.key] = deepMergeObjects(currentValue, newValue);
+                newSettings[setting.key as keyof AllSettings] = deepMergeObjects(currentValue, newValue);
               } else {
-                newSettings[setting.key] = newValue;
+                newSettings[setting.key as keyof AllSettings] = newValue;
               }
             }
           });
@@ -177,7 +182,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         }
       }
       
-      const { error } = await executeQuery(
+      const { error } = await executeQuery<any>(
         (signal) => supabase.rpc('update_site_settings', {
           setting_key: key,
           setting_value: values,

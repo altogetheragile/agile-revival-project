@@ -30,7 +30,7 @@ export function useTestimonials(limit: number = 10) {
         setIsLoading(true);
         setError(null);
 
-        const { data, error } = await executeQuery(
+        const { data, error } = await executeQuery<SupabaseTestimonial[]>(
           (signal) => supabase
             .from('testimonials')
             .select('*')
