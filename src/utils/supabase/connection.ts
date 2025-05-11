@@ -17,14 +17,15 @@ const createTimeoutController = (timeoutMs: number = 10000): {
 /**
  * Test database connectivity
  */
-export async function testConnection(): Promise<ConnectionCheckResult> {
+export async function testConnection(timeoutMs: number = 5000): Promise<ConnectionCheckResult> {
   console.log("[Supabase Connection] Testing database connection...");
   const startTime = Date.now();
   
   try {
-    const { controller, timeoutId } = createTimeoutController(5000);
+    const { controller, timeoutId } = createTimeoutController(timeoutMs);
     
     try {
+      // Try a simple query to test connectivity
       const { data, error } = await supabase
         .from('site_settings')
         .select('key')
@@ -37,26 +38,49 @@ export async function testConnection(): Promise<ConnectionCheckResult> {
       
       if (error) {
         console.error("[Supabase Connection] Connection test failed:", error);
+        
+        // Categorize the error for better diagnostics
+        let errorType = 'Unknown';
+        if (error.message?.includes('violates row-level security policy')) {
+          errorType = 'RLS Policy';
+        } else if (error.message?.includes('timeout') || responseTime >= timeoutMs) {
+          errorType = 'Timeout';
+        } else if (error.message?.includes('Failed to fetch')) {
+          errorType = 'Network';
+        } else if (error.message?.includes('permission denied')) {
+          errorType = 'Permission';
+        } else if (error.message?.includes('infinite recursion')) {
+          errorType = 'Recursion';
+        }
+        
+        console.log(`[Supabase Connection] Error type: ${errorType}`);
+        
         return {
           isConnected: false,
           responseTime,
-          error
+          error: {
+            ...error,
+            type: errorType
+          }
         };
       }
       
       console.log(`[Supabase Connection] Connection test successful, response time: ${responseTime}ms`);
       return {
         isConnected: true,
-        responseTime
+        responseTime,
+        data
       };
     } catch (err) {
       clearTimeout(timeoutId);
+      
+      const responseTime = Date.now() - startTime;
       
       if (err instanceof DOMException && err.name === 'AbortError') {
         console.error("[Supabase Connection] Connection test timed out");
         return {
           isConnected: false,
-          responseTime: Date.now() - startTime,
+          responseTime,
           error: new Error("Connection timed out")
         };
       }
@@ -64,7 +88,7 @@ export async function testConnection(): Promise<ConnectionCheckResult> {
       console.error("[Supabase Connection] Connection test threw an error:", err);
       return {
         isConnected: false,
-        responseTime: Date.now() - startTime,
+        responseTime,
         error: err
       };
     }

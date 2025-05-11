@@ -91,9 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return result;
     } catch (error) {
       console.error("[AuthContext Debug] Error refreshing admin status:", error);
-      // Show a helpful toast explaining that the database function has been fixed
       toast.error("Admin verification failed", {
-        description: "The database function has been fixed. Please try refreshing the page.",
+        description: "Unable to verify admin status. Try refreshing the page.",
         duration: 7000
       });
       return false;
