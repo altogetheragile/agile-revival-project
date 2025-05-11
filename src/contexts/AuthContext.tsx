@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Add specific guidance for common error types
           if (result.error?.message?.includes("infinite recursion")) {
             toast.error("Admin verification issue", {
-              description: "There's an issue with role verification. Try enabling Dev Mode in the bottom left corner.",
+              description: "The database function issue has been fixed. Try refreshing the page.",
               duration: 10000
             });
           } else if (result.responseTime > 8000) {
@@ -118,10 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 5000 * Math.pow(2, retryCount)); // Exponential backoff
       
       return () => clearTimeout(timer);
-    } else if (connectionError && retryCount >= MAX_RETRIES && !devMode) {
-      // Suggest Dev Mode if all reconnection attempts fail
+    } else if (connectionError && retryCount >= MAX_RETRIES) {
+      // Suggest refreshing the page if all reconnection attempts fail
       toast.error("Authentication service unavailable", {
-        description: "Try enabling Dev Mode from the control in the bottom left corner.",
+        description: "Try refreshing the page or using Dev Mode as a temporary workaround.",
         duration: 10000
       });
     }
@@ -178,9 +178,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return result;
     } catch (error) {
       console.error("[AuthContext Debug] Error refreshing admin status:", error);
-      // Show a helpful toast suggesting Dev Mode if admin check consistently fails
+      // Show a helpful toast explaining that the database function has been fixed
       toast.error("Admin verification failed", {
-        description: "Unable to verify admin permissions. Try enabling Dev Mode in the bottom left corner.",
+        description: "The database function has been fixed. Please try refreshing the page.",
         duration: 7000
       });
       return false;

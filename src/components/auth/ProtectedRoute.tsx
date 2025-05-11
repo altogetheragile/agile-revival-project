@@ -104,9 +104,9 @@ export default function ProtectedRoute({
         setHasRequiredRole(false);
         setCheckComplete(true);
         
-        // Show a toast suggesting dev mode
+        // Updated toast message now that we've fixed the database function
         toast.error("Role verification error", {
-          description: "Unable to verify your permissions. Try enabling Dev Mode in the bottom left corner.",
+          description: "Unable to verify your permissions. Try refreshing the page.",
           duration: 8000
         });
       }
@@ -120,7 +120,7 @@ export default function ProtectedRoute({
     if (!devMode && checkComplete && requiredRoles.includes('admin') && !hasRequiredRole && user) {
       console.log("[ProtectedRoute Debug] Showing access denied toast");
       toast.error("Access denied", {
-        description: "You need admin privileges to access this area. Try enabling Dev Mode if you need temporary access.",
+        description: "You need admin privileges to access this area.",
         duration: 5000,
       });
     }

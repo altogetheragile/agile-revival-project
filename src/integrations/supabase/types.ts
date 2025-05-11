@@ -476,9 +476,7 @@ export type Database = {
     }
     Functions: {
       has_role: {
-        Args:
-          | Record<PropertyKey, never>
-          | { user_id: string; required_role: string }
+        Args: { user_id: string; required_role: string }
         Returns: boolean
       }
       update_site_settings: {

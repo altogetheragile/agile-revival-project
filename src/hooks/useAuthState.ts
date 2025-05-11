@@ -16,8 +16,8 @@ export function useAuthState() {
       // Call the has_role RPC function with explicit parameter names
       const { data, error } = await supabase.rpc('has_role', {
         user_id: userId,
-        role: 'admin'
-      } as any); // Type assertion to bypass TS strict checking
+        required_role: 'admin'
+      });
 
       console.log('[Auth Debug] Admin check result:', { data, error });
 
@@ -30,12 +30,6 @@ export function useAuthState() {
           hint: error.hint,
           code: error.code
         });
-        
-        // Check for specific errors that might indicate an RLS recursion issue
-        if (error.message?.includes('infinite recursion') || 
-            error.message?.includes('permission denied')) {
-          console.warn('[Auth Debug] Possible RLS recursion or permission issue detected');
-        }
         
         // Even if there's an error, we'll continue without admin access
         setIsAdmin(false);

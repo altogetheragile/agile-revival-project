@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useConnection } from '@/contexts/ConnectionContext';
-import { Wifi, WifiOff, AlertCircle, RefreshCw } from 'lucide-react';
+import { Wifi, WifiOff, AlertCircle, RefreshCw, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useDevMode } from '@/contexts/DevModeContext';
@@ -16,23 +16,38 @@ export const ConnectionStatus: React.FC<{
   const { devMode } = useDevMode();
   
   const [isVisible, setIsVisible] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   
   // Show when there are connection issues or in dev mode
   useEffect(() => {
     if (!isConnected && !isChecking) {
       setIsVisible(true);
+      setShowSuccess(false);
     } else if (devMode) {
       setIsVisible(true); 
+      setShowSuccess(false);
+    } else if (isConnected && connectionError) {
+      // Show success message when connection is restored after an error
+      setIsVisible(true);
+      setShowSuccess(true);
+      
+      // Hide success message after a short delay
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+        setIsVisible(false);
+      }, 5000);
+      return () => clearTimeout(timer);
     } else {
       // Hide after a short delay when connection is restored
       if (isVisible && isConnected) {
         const timer = setTimeout(() => {
           setIsVisible(false);
+          setShowSuccess(false);
         }, 3000);
         return () => clearTimeout(timer);
       }
     }
-  }, [isConnected, isChecking, isVisible, devMode]);
+  }, [isConnected, isChecking, isVisible, devMode, connectionError]);
   
   // Always show when connection issues persist
   if (consecutiveErrors > 2) {
@@ -60,8 +75,8 @@ export const ConnectionStatus: React.FC<{
           </TooltipTrigger>
           <TooltipContent>
             <p className="text-xs max-w-xs">
-              Multiple connection errors detected. This might indicate a permission configuration issue.
-              Try enabling Dev Mode as a workaround.
+              Multiple connection errors detected. The database function has been fixed.
+              Try refreshing the page.
             </p>
           </TooltipContent>
         </Tooltip>
@@ -69,8 +84,20 @@ export const ConnectionStatus: React.FC<{
     );
   }
   
-  if ((!isVisible && isConnected) || (isConnected && !showDetails && !devMode)) {
+  if ((!isVisible && isConnected) || (isConnected && !showDetails && !devMode && !showSuccess)) {
     return null;
+  }
+  
+  if (isConnected && showSuccess) {
+    return (
+      <div className={cn(
+        "flex items-center gap-2 text-sm p-2 rounded-md transition-all bg-green-50 text-green-700",
+        className
+      )}>
+        <CheckCircle className="h-4 w-4 text-green-500" />
+        <span>Connection restored!</span>
+      </div>
+    );
   }
   
   return (
