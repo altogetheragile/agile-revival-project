@@ -13,7 +13,8 @@ export function useAuthState() {
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     console.log(`[Auth Debug] Checking admin status for user: ${userId}`);
     try {
-      // Using RPC call to has_role function to prevent RLS recursion issues
+      // Make sure we're passing the parameters with the correct names expected by the RPC
+      // The function expects 'user_id' and 'required_role'
       const { data, error } = await supabase.rpc('has_role', {
         user_id: userId,
         required_role: 'admin'
@@ -23,6 +24,13 @@ export function useAuthState() {
 
       if (error) {
         console.error('[Auth Debug] Error checking admin status:', error);
+        // Show detailed error information to help diagnose issues
+        console.error('[Auth Debug] Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         setIsAdmin(false);
         setIsAdminChecked(true);
         return false;

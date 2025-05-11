@@ -32,7 +32,8 @@ export default function ProtectedRoute({
     isAuthReady, 
     requiredRoles,
     isCheckingRole,
-    devMode
+    devMode,
+    pathname: location.pathname
   });
 
   // If dev mode is enabled, bypass all checks
@@ -62,40 +63,43 @@ export default function ProtectedRoute({
 
     // For admin routes, refresh the admin status first
     const checkRoles = async () => {
-      let adminStatus = isAdmin;
-      
-      // If admin role is required, try refreshing the status
-      if (requiredRoles.includes('admin')) {
-        try {
+      try {
+        let adminStatus = isAdmin;
+        
+        // If admin role is required, try refreshing the status
+        if (requiredRoles.includes('admin')) {
           console.log("[ProtectedRoute Debug] Refreshing admin status for user:", user.id);
           adminStatus = await refreshAdminStatus(user.id);
           console.log("[ProtectedRoute Debug] Refreshed admin status:", adminStatus);
-        } catch (error) {
-          console.error("[ProtectedRoute Debug] Error refreshing admin status:", error);
         }
-      }
-      
-      // Admin users always have access to everything
-      if (adminStatus) {
-        console.log("[ProtectedRoute Debug] User is admin, granting access");
-        setHasRequiredRole(true);
+        
+        // Admin users always have access to everything
+        if (adminStatus) {
+          console.log("[ProtectedRoute Debug] User is admin, granting access");
+          setHasRequiredRole(true);
+          setIsCheckingRole(false);
+          setCheckComplete(true);
+          return;
+        }
+        
+        // For other role checks, we would check user roles here
+        // This is a placeholder for future role checking logic
+        const userHasRequiredRole = requiredRoles.includes('user');
+        console.log("[ProtectedRoute Debug] User role check result:", userHasRequiredRole);
+        
+        setHasRequiredRole(userHasRequiredRole);
         setIsCheckingRole(false);
         setCheckComplete(true);
-        return;
+      } catch (error) {
+        console.error("[ProtectedRoute Debug] Error checking roles:", error);
+        setIsCheckingRole(false);
+        setHasRequiredRole(false);
+        setCheckComplete(true);
       }
-      
-      // For other role checks, we would check user roles here
-      // This is a placeholder for future role checking logic
-      const userHasRequiredRole = requiredRoles.includes('user');
-      console.log("[ProtectedRoute Debug] User role check result:", userHasRequiredRole);
-      
-      setHasRequiredRole(userHasRequiredRole);
-      setIsCheckingRole(false);
-      setCheckComplete(true);
     };
     
     checkRoles();
-  }, [user, isAdmin, requiredRoles, refreshAdminStatus, devMode]);
+  }, [user, isAdmin, requiredRoles, refreshAdminStatus, devMode, location.pathname]);
 
   // Show toast notification when redirected due to admin access restriction
   useEffect(() => {

@@ -4,6 +4,7 @@ import { handleError } from "@/utils/errorHandler";
 import { toast } from "sonner";
 import { QueryOptions } from "./types";
 import { createTimeoutController } from "./controllers";
+import { supabase } from "@/integrations/supabase/client";
 
 const DEFAULT_TIMEOUT = 10000; // 10 seconds
 const DEFAULT_RETRIES = 0;

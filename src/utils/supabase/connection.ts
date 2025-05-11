@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { executeQuery } from "./query";
 import { ConnectionCheckResult } from "./types";
 import { createTimeoutController } from "./controllers";
 
@@ -8,6 +7,7 @@ import { createTimeoutController } from "./controllers";
  * Test database connectivity
  */
 export async function testConnection(): Promise<ConnectionCheckResult> {
+  console.log("[Supabase Connection] Testing database connection...");
   const startTime = Date.now();
   
   try {
@@ -25,6 +25,7 @@ export async function testConnection(): Promise<ConnectionCheckResult> {
       const responseTime = Date.now() - startTime;
       
       if (error) {
+        console.error("[Supabase Connection] Connection test failed:", error);
         return {
           isConnected: false,
           responseTime,
@@ -32,6 +33,7 @@ export async function testConnection(): Promise<ConnectionCheckResult> {
         };
       }
       
+      console.log(`[Supabase Connection] Connection test successful, response time: ${responseTime}ms`);
       return {
         isConnected: true,
         responseTime
@@ -40,6 +42,7 @@ export async function testConnection(): Promise<ConnectionCheckResult> {
       clearTimeout(timeoutId);
       
       if (err instanceof DOMException && err.name === 'AbortError') {
+        console.error("[Supabase Connection] Connection test timed out");
         return {
           isConnected: false,
           responseTime: Date.now() - startTime,
@@ -47,6 +50,7 @@ export async function testConnection(): Promise<ConnectionCheckResult> {
         };
       }
       
+      console.error("[Supabase Connection] Connection test threw an error:", err);
       return {
         isConnected: false,
         responseTime: Date.now() - startTime,
@@ -54,6 +58,7 @@ export async function testConnection(): Promise<ConnectionCheckResult> {
       };
     }
   } catch (err) {
+    console.error("[Supabase Connection] Unexpected error during connection test:", err);
     return {
       isConnected: false,
       responseTime: Date.now() - startTime,

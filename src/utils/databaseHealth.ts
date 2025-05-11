@@ -15,6 +15,7 @@ export interface ConnectionStatus {
  * @returns Object containing connection status information
  */
 export const testDatabaseConnection = async (): Promise<ConnectionStatus> => {
+  console.log("[DatabaseHealth] Testing database connection");
   return testConnection();
 };
 
@@ -22,6 +23,7 @@ export const testDatabaseConnection = async (): Promise<ConnectionStatus> => {
  * Performs a health check on the database and shows appropriate notifications
  */
 export const performDatabaseHealthCheck = async (): Promise<ConnectionStatus> => {
+  console.log("[DatabaseHealth] Performing database health check");
   const status = await testDatabaseConnection();
   
   if (!status.isConnected) {
@@ -34,7 +36,7 @@ export const performDatabaseHealthCheck = async (): Promise<ConnectionStatus> =>
       description: `The database is responding slowly (${status.responseTime}ms), which may affect performance.`
     });
   } else {
-    console.log(`Database connection healthy. Response time: ${status.responseTime}ms`);
+    console.log(`[DatabaseHealth] Database connection healthy. Response time: ${status.responseTime}ms`);
   }
   
   return status;

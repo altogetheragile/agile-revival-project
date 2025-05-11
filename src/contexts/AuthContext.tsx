@@ -1,4 +1,3 @@
-
 import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
@@ -6,6 +5,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { useDevMode } from '@/contexts/DevModeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { testConnection } from '@/utils/supabase/connection';
 
 interface AuthContextType {
   user: User | null;
@@ -29,6 +29,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [connectionError, setConnectionError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
+
+  // Test database connectivity on mount
+  useEffect(() => {
+    const checkDatabaseConnection = async () => {
+      try {
+        console.log("[AuthContext Debug] Testing database connectivity...");
+        const result = await testConnection();
+        console.log("[AuthContext Debug] Database connection test result:", result);
+        
+        if (!result.isConnected) {
+          console.error("[AuthContext Debug] Database connectivity issue:", result.error);
+          setConnectionError(true);
+          
+          if (result.error?.message?.includes("infinite recursion")) {
+            toast.error("Permission configuration issue", {
+              description: "There's an issue with role verification. Please contact support."
+            });
+          }
+        } else {
+          setConnectionError(false);
+          setRetryCount(0);
+        }
+      } catch (err) {
+        console.error("[AuthContext Debug] Error testing connection:", err);
+      }
+    };
+    
+    checkDatabaseConnection();
+  }, []);
 
   // Add debug logging
   useEffect(() => {
@@ -117,7 +146,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshAdminStatus = async (userId: string) => {
     console.log("[AuthContext Debug] Refreshing admin status for:", userId);
-    return devMode ? true : await checkAdminStatus(userId);
+    
+    // If dev mode is enabled, always return true for admin status
+    if (devMode) {
+      console.log("[AuthContext Debug] Dev mode enabled, returning true for admin status");
+      return true;
+    }
+    
+    // Otherwise actually check the admin status
+    try {
+      return await checkAdminStatus(userId);
+    } catch (error) {
+      console.error("[AuthContext Debug] Error refreshing admin status:", error);
+      return false;
+    }
   };
 
   const contextValue: AuthContextType = {
