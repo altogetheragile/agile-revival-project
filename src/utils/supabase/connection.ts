@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { executeQuery } from "./query";
 import { ConnectionCheckResult } from "./types";
+import { createTimeoutController } from "./controllers";
 
 /**
  * Test database connectivity
@@ -60,6 +61,3 @@ export async function testConnection(): Promise<ConnectionCheckResult> {
     };
   }
 }
-
-// Import the controller from the same module
-import { createTimeoutController } from "./controllers";

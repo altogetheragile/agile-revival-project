@@ -1,6 +1,4 @@
 
-import { AbortController } from "@supabase/supabase-js";
-
 /**
  * Creates an AbortController with timeout
  */
