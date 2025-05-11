@@ -1,7 +1,18 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ConnectionCheckResult } from "./types";
-import { createTimeoutController } from "./controllers";
+
+/**
+ * Create an AbortController with timeout
+ */
+const createTimeoutController = (timeoutMs: number = 10000): { 
+  controller: AbortController, 
+  timeoutId: NodeJS.Timeout 
+} => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  return { controller, timeoutId };
+};
 
 /**
  * Test database connectivity
