@@ -14,6 +14,9 @@ import SiteSettings from "@/components/admin/SiteSettings";
 import PageManagement from "@/components/admin/PageManagement";
 import AdminMediaManager from "@/components/media/AdminMediaManager";
 import EventsManagement from "@/components/admin/EventsManagement";
+import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
+import { useDevMode } from "@/contexts/DevModeContext";
+import AdminBadge from "@/components/user/AdminBadge";
 
 const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("events");
@@ -21,6 +24,7 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAdmin, isAuthReady, user } = useAuth();
+  const { devMode } = useDevMode();
   
   useEffect(() => {
     setIsChecking(false);
@@ -50,9 +54,10 @@ const AdminDashboard = () => {
       isChecking, 
       isAuthReady, 
       isAdmin: isAdmin || false,
-      hasUser: !!user 
+      hasUser: !!user,
+      devMode
     });
-  }, [currentTab, isChecking, isAuthReady, isAdmin, user]);
+  }, [currentTab, isChecking, isAuthReady, isAdmin, user, devMode]);
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -60,7 +65,18 @@ const AdminDashboard = () => {
       <main className="flex-grow pt-24 pb-16">
         <section className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
-            <h1 className="text-3xl font-bold text-agile-purple-dark mb-6">Admin Dashboard</h1>
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-bold text-agile-purple-dark">Admin Dashboard</h1>
+              <div className="flex items-center gap-2">
+                {devMode && (
+                  <span className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded">
+                    Dev Mode Active
+                  </span>
+                )}
+                <AdminBadge />
+                <ConnectionStatus className="text-xs" />
+              </div>
+            </div>
             
             <Tabs defaultValue="events" value={currentTab} onValueChange={setCurrentTab} className="w-full">
               <TabsList className="mb-8 w-full grid grid-cols-2 md:flex md:w-auto">

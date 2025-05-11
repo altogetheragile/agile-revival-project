@@ -1,3 +1,4 @@
+
 import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { devMode } = useDevMode();
   const [connectionError, setConnectionError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const MAX_RETRIES = 3;
 
   // Test database connectivity on mount
@@ -44,7 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           if (result.error?.message?.includes("infinite recursion")) {
             toast.error("Permission configuration issue", {
-              description: "There's an issue with role verification. Please contact support."
+              description: "There's an issue with role verification. Try enabling Dev Mode in the bottom left corner.",
+              duration: 10000
             });
           }
         } else {
@@ -53,6 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         console.error("[AuthContext Debug] Error testing connection:", err);
+        setConnectionError(true);
+      } finally {
+        // Mark auth as initialized even if there was an error
+        setAuthInitialized(true);
       }
     };
     
@@ -69,9 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdminChecked,
       devMode,
       connectionError,
-      retryCount
+      retryCount,
+      authInitialized
     });
-  }, [user, isAdmin, isLoading, isAdminChecked, devMode, connectionError, retryCount]);
+  }, [user, isAdmin, isLoading, isAdminChecked, devMode, connectionError, retryCount, authInitialized]);
 
   // Add connection monitoring and auto-recovery
   useEffect(() => {
@@ -104,12 +112,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 5000 * Math.pow(2, retryCount)); // Exponential backoff
       
       return () => clearTimeout(timer);
-    } else if (connectionError && retryCount >= MAX_RETRIES) {
+    } else if (connectionError && retryCount >= MAX_RETRIES && !devMode) {
+      // Suggest Dev Mode if all reconnection attempts fail
       toast.error("Authentication service unavailable", {
-        description: "Please try refreshing the page or try again later."
+        description: "Try enabling Dev Mode from the control in the bottom left corner.",
+        duration: 10000
       });
     }
-  }, [connectionError, retryCount]);
+  }, [connectionError, retryCount, devMode]);
 
   // Handle errors in the auth state
   useEffect(() => {
@@ -141,8 +151,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Authorization is ready when we've finished loading and checked admin status
-  const isAuthReady = !isLoading && isAdminChecked;
+  // Authorization is ready when either:
+  // 1. We've finished loading and checked admin status, or
+  // 2. Dev mode is enabled (bypasses auth checks)
+  const isAuthReady = devMode || (!isLoading && isAdminChecked && authInitialized);
 
   const refreshAdminStatus = async (userId: string) => {
     console.log("[AuthContext Debug] Refreshing admin status for:", userId);
@@ -155,9 +167,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Otherwise actually check the admin status
     try {
-      return await checkAdminStatus(userId);
+      const result = await checkAdminStatus(userId);
+      console.log("[AuthContext Debug] Admin status refresh result:", result);
+      return result;
     } catch (error) {
       console.error("[AuthContext Debug] Error refreshing admin status:", error);
+      // Show a helpful toast suggesting Dev Mode if admin check consistently fails
+      toast.error("Admin verification failed", {
+        description: "Unable to verify admin permissions. Try enabling Dev Mode in the bottom left corner.",
+        duration: 7000
+      });
       return false;
     }
   };

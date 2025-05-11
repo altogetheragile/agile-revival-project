@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -10,6 +11,7 @@ interface ConnectionState {
   responseTime: number | null;
   reconnecting: boolean;
   connectionError: string | null;
+  consecutiveErrors: number;
 }
 
 interface ConnectionContextType {
@@ -25,6 +27,7 @@ const initialState: ConnectionState = {
   responseTime: null,
   reconnecting: false,
   connectionError: null,
+  consecutiveErrors: 0,
 };
 
 const ConnectionContext = createContext<ConnectionContextType>({
@@ -79,7 +82,9 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           lastChecked: new Date(),
           responseTime,
           connectionError: error ? error.message : null,
-          reconnecting: false
+          reconnecting: false,
+          // Reset consecutive errors if connection successful
+          consecutiveErrors: isConnected ? 0 : prev.consecutiveErrors + 1
         }));
       
         if (isConnected && state.reconnecting) {
@@ -90,6 +95,12 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         } else if (!isConnected) {
           console.error("Connection check failed:", error);
         }
+      } else if (!isConnected) {
+        // Track consecutive errors even in silent mode
+        setState(prev => ({
+          ...prev,
+          consecutiveErrors: prev.consecutiveErrors + 1
+        }));
       }
       
       return isConnected;
@@ -104,6 +115,12 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           lastChecked: new Date(),
           responseTime: null,
           connectionError: err instanceof Error ? err.message : 'Unknown connection error',
+          consecutiveErrors: prev.consecutiveErrors + 1
+        }));
+      } else {
+        setState(prev => ({
+          ...prev,
+          consecutiveErrors: prev.consecutiveErrors + 1
         }));
       }
       
@@ -111,11 +128,26 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [state.isChecking, state.reconnecting]);
   
+  // Monitor for consecutive connection failures that could indicate RLS recursion issues
+  useEffect(() => {
+    if (state.consecutiveErrors >= 3) {
+      console.error(`Multiple consecutive connection errors (${state.consecutiveErrors}). Possible RLS recursion issue.`);
+      // Specific toast for potential RLS recursion issues after multiple failures
+      if (state.consecutiveErrors === 3) {
+        toast.error("Database connection issues detected", {
+          description: "There might be an issue with database permissions. If this persists, try enabling Dev Mode.",
+          duration: 8000,
+        });
+      }
+    }
+  }, [state.consecutiveErrors]);
+  
   const resetConnection = useCallback(async () => {
     // Reset state
     setState({
       ...initialState,
-      isChecking: true
+      isChecking: true,
+      consecutiveErrors: 0
     });
     
     // Check connection
@@ -144,13 +176,14 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           ...prev, 
           isConnected: true, 
           reconnecting: false,
-          lastChecked: new Date()
+          lastChecked: new Date(),
+          consecutiveErrors: 0 
         }));
       } else if (retryCount < MAX_RETRIES) {
         scheduleReconnection();
       } else {
         toast.error("Connection failed", {
-          description: "Couldn't reconnect after multiple attempts. Please check your connection."
+          description: "Couldn't reconnect after multiple attempts. Try enabling Dev Mode or refresh the page."
         });
         setState(prev => ({ ...prev, reconnecting: false }));
       }

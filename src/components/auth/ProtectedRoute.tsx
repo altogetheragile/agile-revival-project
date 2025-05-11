@@ -95,6 +95,12 @@ export default function ProtectedRoute({
         setIsCheckingRole(false);
         setHasRequiredRole(false);
         setCheckComplete(true);
+        
+        // Show a toast suggesting dev mode
+        toast.error("Role verification error", {
+          description: "Unable to verify your permissions. Try enabling Dev Mode in the bottom left corner.",
+          duration: 8000
+        });
       }
     };
     
@@ -139,6 +145,7 @@ export default function ProtectedRoute({
 
   // When dev mode is enabled, always render the children
   if (devMode) {
+    console.log("[ProtectedRoute Debug] Dev mode enabled, allowing access");
     return <>{children}</>;
   }
 

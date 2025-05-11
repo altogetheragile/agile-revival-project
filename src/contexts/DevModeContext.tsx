@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 interface DevModeContextType {
   devMode: boolean;
@@ -10,10 +10,22 @@ const DevModeContext = createContext<DevModeContextType | undefined>(undefined);
 
 export function DevModeProvider({ children }: { children: ReactNode }) {
   const [devMode, setDevMode] = useState<boolean>(false);
+  
+  // Check localStorage for persisted dev mode state on initial load
+  useEffect(() => {
+    const storedDevMode = localStorage.getItem('devModeEnabled');
+    if (storedDevMode === 'true') {
+      setDevMode(true);
+      console.log("[Dev Mode] Restored from localStorage:", true);
+    }
+  }, []);
 
   const toggleDevMode = () => {
-    setDevMode(prevMode => !prevMode);
-    console.log("[Dev Mode] Toggled to:", !devMode);
+    const newDevMode = !devMode;
+    // Persist to localStorage
+    localStorage.setItem('devModeEnabled', String(newDevMode));
+    setDevMode(newDevMode);
+    console.log("[Dev Mode] Toggled to:", newDevMode);
   };
 
   return (
