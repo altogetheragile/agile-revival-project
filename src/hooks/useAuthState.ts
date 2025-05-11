@@ -13,10 +13,11 @@ export function useAuthState() {
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     console.log(`[Auth Debug] Checking admin status for user: ${userId}`);
     try {
-      // Make sure we're using the exact parameter names expected by the RPC function
+      // Call the has_role RPC function with proper parameter structure
+      // The function expects parameters without underscores in the object keys
       const { data, error } = await supabase.rpc('has_role', {
-        _user_id: userId,
-        _role: 'admin'
+        user_id: userId,
+        role: 'admin'
       });
 
       console.log('[Auth Debug] Admin check result:', { data, error });
