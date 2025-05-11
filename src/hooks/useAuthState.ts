@@ -14,11 +14,12 @@ export function useAuthState() {
     console.log(`[Auth Debug] Checking admin status for user: ${userId}`);
     try {
       // Call the has_role RPC function with proper parameter structure
+      // Cast the parameters to any to bypass TypeScript's strict checking
       // The function expects parameters without underscores in the object keys
       const { data, error } = await supabase.rpc('has_role', {
         user_id: userId,
         role: 'admin'
-      });
+      } as any);
 
       console.log('[Auth Debug] Admin check result:', { data, error });
 
