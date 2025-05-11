@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { testConnection } from "./supabaseHelpers";
+import { testConnection } from "./supabase/connection";
 
 // Interface for the connection status result
 export interface ConnectionStatus {
