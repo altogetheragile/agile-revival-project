@@ -1,9 +1,8 @@
-
 import { Event } from "@/types/event";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { mapDbToEvent } from "./eventMappers";
-import { executeQuery } from "@/utils/supabaseHelpers";
+import { executeQuery } from "@/utils/supabase/query";
 
 // Get all events
 export const getAllEvents = async (): Promise<Event[]> => {

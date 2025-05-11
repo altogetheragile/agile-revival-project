@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, ReactNode, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,7 +7,7 @@ import { SiteSettingsContext, SiteSettingsContextValue } from "./SiteSettingsCon
 import { deepMergeObjects } from "./deepMergeObjects";
 import { toast } from "sonner";
 import { useConnection } from "@/contexts/ConnectionContext";
-import { executeQuery } from "@/utils/supabaseHelpers";
+import { executeQuery } from "@/utils/supabase/query";
 
 interface SiteSettingsProviderProps {
   children: ReactNode;
@@ -140,7 +139,6 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
     }
   }, [uiToast, retryCount, connectionState, checkConnection]);
 
-  // Add auto-retry logic for connection errors
   useEffect(() => {
     if (retryCount > 0 && retryCount < MAX_RETRIES) {
       const delay = 5000 * Math.pow(2, retryCount - 1); // Exponential backoff

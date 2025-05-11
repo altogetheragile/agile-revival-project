@@ -1,8 +1,7 @@
-
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { executeQuery } from '@/utils/supabaseHelpers';
+import { executeQuery } from '@/utils/supabase/query';
 
 interface ConnectionState {
   isConnected: boolean;
