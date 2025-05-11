@@ -1,103 +1,125 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ConnectionCheckResult } from "./types";
+import { createTimeoutController, executeWithTimeout } from "./controllers";
+import { toast } from "sonner";
 
 /**
- * Create an AbortController with timeout
- */
-const createTimeoutController = (timeoutMs: number = 10000): { 
-  controller: AbortController, 
-  timeoutId: NodeJS.Timeout 
-} => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  return { controller, timeoutId };
-};
-
-/**
- * Test database connectivity
+ * Test database connectivity with enhanced error diagnostics
  */
 export async function testConnection(timeoutMs: number = 5000): Promise<ConnectionCheckResult> {
   console.log("[Supabase Connection] Testing database connection...");
   const startTime = Date.now();
   
   try {
-    const { controller, timeoutId } = createTimeoutController(timeoutMs);
+    const { result, error } = await executeWithTimeout(
+      async (signal) => {
+        // Try a simple query to test connectivity
+        return await supabase
+          .from('site_settings')
+          .select('key')
+          .limit(1)
+          .abortSignal(signal);
+      },
+      {
+        timeoutMs,
+        retries: 1,
+        onTimeout: () => console.error("[Supabase Connection] Connection test timed out")
+      }
+    );
     
-    try {
-      // Try a simple query to test connectivity
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('key')
-        .limit(1)
-        .abortSignal(controller.signal);
+    const responseTime = Date.now() - startTime;
+    
+    if (error || result?.error) {
+      const actualError = error || result?.error;
+      console.error("[Supabase Connection] Connection test failed:", actualError);
       
-      clearTimeout(timeoutId);
+      // Categorize the error for better diagnostics
+      let errorType = 'Unknown';
+      let errorMessage = actualError?.message || 'Unknown error occurred';
       
-      const responseTime = Date.now() - startTime;
-      
-      if (error) {
-        console.error("[Supabase Connection] Connection test failed:", error);
-        
-        // Categorize the error for better diagnostics
-        let errorType = 'Unknown';
-        if (error.message?.includes('violates row-level security policy')) {
-          errorType = 'RLS Policy';
-        } else if (error.message?.includes('timeout') || responseTime >= timeoutMs) {
-          errorType = 'Timeout';
-        } else if (error.message?.includes('Failed to fetch')) {
-          errorType = 'Network';
-        } else if (error.message?.includes('permission denied')) {
-          errorType = 'Permission';
-        } else if (error.message?.includes('infinite recursion')) {
-          errorType = 'Recursion';
-        }
-        
-        console.log(`[Supabase Connection] Error type: ${errorType}`);
-        
-        return {
-          isConnected: false,
-          responseTime,
-          error: {
-            ...error,
-            type: errorType
-          }
-        };
+      if (errorMessage.includes('violates row-level security policy')) {
+        errorType = 'RLS Policy';
+      } else if (errorMessage.includes('timeout') || responseTime >= timeoutMs) {
+        errorType = 'Timeout';
+      } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+        errorType = 'Network';
+      } else if (errorMessage.includes('permission denied')) {
+        errorType = 'Permission';
+      } else if (errorMessage.includes('infinite recursion')) {
+        errorType = 'Recursion';
       }
       
-      console.log(`[Supabase Connection] Connection test successful, response time: ${responseTime}ms`);
-      return {
-        isConnected: true,
-        responseTime,
-        data
-      };
-    } catch (err) {
-      clearTimeout(timeoutId);
+      console.log(`[Supabase Connection] Error type: ${errorType}`);
       
-      const responseTime = Date.now() - startTime;
-      
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        console.error("[Supabase Connection] Connection test timed out");
-        return {
-          isConnected: false,
-          responseTime,
-          error: new Error("Connection timed out")
-        };
-      }
-      
-      console.error("[Supabase Connection] Connection test threw an error:", err);
       return {
         isConnected: false,
         responseTime,
-        error: err
+        error: {
+          ...actualError,
+          type: errorType,
+          message: errorMessage
+        }
       };
     }
+    
+    console.log(`[Supabase Connection] Connection test successful, response time: ${responseTime}ms`);
+    return {
+      isConnected: true,
+      responseTime,
+      data: result?.data
+    };
   } catch (err) {
+    const responseTime = Date.now() - startTime;
+    
     console.error("[Supabase Connection] Unexpected error during connection test:", err);
     return {
       isConnected: false,
-      responseTime: Date.now() - startTime,
+      responseTime,
       error: err
     };
+  }
+}
+
+/**
+ * Test database connectivity and show user feedback
+ */
+export async function checkDatabaseHealth(silent: boolean = false): Promise<ConnectionCheckResult> {
+  const result = await testConnection();
+  
+  if (!silent) {
+    if (!result.isConnected) {
+      toast.error("Database connection issue", {
+        description: getConnectionErrorDescription(result.error)
+      });
+    } else if (result.responseTime > 5000) {
+      toast.warning("Slow database connection", {
+        description: `The database is responding slowly (${result.responseTime}ms), which may affect performance.`
+      });
+    }
+  }
+  
+  return result;
+}
+
+/**
+ * Get a user-friendly description of a connection error
+ */
+export function getConnectionErrorDescription(error: any): string {
+  if (!error) return "Could not connect to the database. Please check your internet connection.";
+  
+  switch (error.type) {
+    case 'RLS Policy':
+      return "Permission error. Please try enabling Dev Mode as a temporary workaround.";
+    case 'Timeout':
+      return "The database took too long to respond. Please try again later.";
+    case 'Network':
+      return "Network error. Please check your internet connection.";
+    case 'Permission':
+      return "You don't have permission to access the database. Try enabling Dev Mode.";
+    case 'Recursion':
+      return "The database is experiencing a configuration issue. Please try again later.";
+    default:
+      return error.message || "Unknown database error occurred.";
   }
 }
