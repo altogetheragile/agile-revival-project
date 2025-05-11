@@ -1,7 +1,9 @@
 
 import { useEffect } from 'react';
+import { User } from '@supabase/supabase-js';
 
 interface AuthDebugInfo {
+  user?: User | null;
   userId?: string | null;
   email?: string | null;
   isAdmin: boolean;
