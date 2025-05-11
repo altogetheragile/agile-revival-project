@@ -60,6 +60,7 @@ export async function executeWithTimeout<T>(
           if (attempt < retries) {
             if (!silentRetry) {
               console.log(`Operation timed out (attempt ${attempt + 1}/${retries + 1}), retrying...`);
+              toast.warning(`Request timed out, retrying... (${attempt + 1}/${retries + 1})`);
             }
             attempt++;
             await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, attempt)));

@@ -5,9 +5,10 @@ import { toast } from "sonner";
 import { QueryOptions } from "./types";
 import { createTimeoutController } from "./controllers";
 import { supabase } from "@/integrations/supabase/client";
+import { checkDatabaseHealth } from "./connection";
 
 const DEFAULT_TIMEOUT = 10000; // 10 seconds
-const DEFAULT_RETRIES = 0;
+const DEFAULT_RETRIES = 1; // Set default to 1 retry
 
 /**
  * Execute a Supabase query with standardized error handling and timeout
@@ -29,6 +30,20 @@ export async function executeQuery<T>(
   
   let currentRetry = 0;
   
+  // Check connection health before executing query
+  const connectionStatus = await checkDatabaseHealth(true);
+  if (!connectionStatus.isConnected && connectionStatus.error?.type === 'Trigger') {
+    if (showErrorToast) {
+      toast.error("Database configuration issue", {
+        description: "There's an issue with the database triggers. Please contact the administrator."
+      });
+    }
+    return { 
+      data: null, 
+      error: new Error("Database trigger error detected. This requires administrator attention.")
+    };
+  }
+  
   while (currentRetry <= retries) {
     try {
       // Create controller with timeout
@@ -46,6 +61,15 @@ export async function executeQuery<T>(
         clearTimeout(timeoutId);
         
         if (result.error) {
+          if (result.error.message?.includes('control reached end of trigger')) {
+            if (showErrorToast) {
+              toast.error("Database trigger error", {
+                description: "There's an issue with the database configuration. Please contact the administrator."
+              });
+            }
+            return { data: null, error: result.error };
+          }
+          
           if (currentRetry < retries) {
             if (!silentRetry) {
               console.log(`Query failed (attempt ${currentRetry + 1}/${retries + 1}), retrying...`);
@@ -93,6 +117,16 @@ export async function executeQuery<T>(
           }
           
           return { data: null, error: timeoutError };
+        }
+        
+        // Check for trigger errors
+        if (err instanceof Error && err.message?.includes('control reached end of trigger')) {
+          if (showErrorToast) {
+            toast.error("Database trigger error", {
+              description: "There's an issue with the database configuration. Please contact the administrator."
+            });
+          }
+          return { data: null, error: err };
         }
         
         if (currentRetry < retries) {

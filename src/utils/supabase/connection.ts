@@ -24,6 +24,7 @@ export async function testConnection(timeoutMs: number = 5000): Promise<Connecti
       {
         timeoutMs,
         retries: 1,
+        silentRetry: true,
         onTimeout: () => console.error("[Supabase Connection] Connection test timed out")
       }
     );
@@ -48,6 +49,9 @@ export async function testConnection(timeoutMs: number = 5000): Promise<Connecti
         errorType = 'Permission';
       } else if (errorMessage.includes('infinite recursion')) {
         errorType = 'Recursion';
+      } else if (errorMessage.includes('control reached end of trigger')) {
+        errorType = 'Trigger';
+        errorMessage = 'Database trigger error. Please contact the administrator.';
       }
       
       console.log(`[Supabase Connection] Error type: ${errorType}`);
@@ -96,6 +100,10 @@ export async function checkDatabaseHealth(silent: boolean = false): Promise<Conn
       toast.warning("Slow database connection", {
         description: `The database is responding slowly (${result.responseTime}ms), which may affect performance.`
       });
+    } else {
+      toast.success("Database connection healthy", {
+        description: `Connected successfully (${result.responseTime}ms)`
+      });
     }
   }
   
@@ -119,6 +127,8 @@ export function getConnectionErrorDescription(error: any): string {
       return "You don't have permission to access the database. Try enabling Dev Mode.";
     case 'Recursion':
       return "The database is experiencing a configuration issue. Please try again later.";
+    case 'Trigger':
+      return "Database trigger error. This is a database configuration issue that requires administrator attention.";
     default:
       return error.message || "Unknown database error occurred.";
   }

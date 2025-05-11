@@ -15,3 +15,21 @@ export interface QueryOptions {
   retries?: number;
   silentRetry?: boolean;
 }
+
+// Define the error types we can detect and handle
+export type ConnectionErrorType = 
+  | 'RLS Policy'
+  | 'Timeout'
+  | 'Network'
+  | 'Permission'
+  | 'Recursion'
+  | 'Trigger'
+  | 'Unknown';
+
+// Define a structured connection error
+export interface ConnectionError {
+  type: ConnectionErrorType;
+  message: string;
+  details?: string;
+  originalError?: any;
+}
