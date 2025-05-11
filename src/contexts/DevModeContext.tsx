@@ -26,6 +26,12 @@ export function DevModeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('devModeEnabled', String(newDevMode));
     setDevMode(newDevMode);
     console.log("[Dev Mode] Toggled to:", newDevMode);
+    
+    // Force refresh database connections when switching to dev mode
+    if (newDevMode) {
+      // If we have the connection context available, we could call resetConnection() here
+      // But we'll just let the system detect the change naturally
+    }
   };
 
   return (

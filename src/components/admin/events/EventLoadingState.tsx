@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { testDatabaseConnection } from "@/utils/databaseHealth";
 import { toast } from "sonner";
+import { useDevMode } from "@/contexts/DevModeContext";
 
 export const EventLoadingState = () => {
   const [loadingTime, setLoadingTime] = useState(0);
   const [timeoutMessage, setTimeoutMessage] = useState("");
   const [showErrorHelp, setShowErrorHelp] = useState(false);
   const [isCheckingConnection, setIsCheckingConnection] = useState(false);
+  const { devMode, toggleDevMode } = useDevMode();
   
   useEffect(() => {
     const timer = setInterval(() => {
@@ -28,7 +30,7 @@ export const EventLoadingState = () => {
       // At 10 seconds, check database connection
       checkDatabaseConnection();
     } else if (loadingTime === 20) {
-      setTimeoutMessage("We're experiencing some difficulties. You may want to try again later.");
+      setTimeoutMessage("We're experiencing some difficulties. You may want to try again later or enable Dev Mode.");
       setShowErrorHelp(true);
     }
   }, [loadingTime]);
@@ -43,7 +45,7 @@ export const EventLoadingState = () => {
       if (!status.isConnected) {
         console.error("Database connection test failed:", status.error);
         toast.error("Database connection issue", {
-          description: "Could not connect to the database. Please try again later."
+          description: "Could not connect to the database. You may want to try enabling Dev Mode."
         });
         setShowErrorHelp(true);
       } else {
@@ -71,6 +73,15 @@ export const EventLoadingState = () => {
     await checkDatabaseConnection();
   };
   
+  const handleToggleDevMode = () => {
+    toggleDevMode();
+    toast.success(devMode ? "Dev Mode disabled" : "Dev Mode enabled", {
+      description: devMode 
+        ? "Security checks have been restored." 
+        : "Security checks are now bypassed for development."
+    });
+  };
+  
   return (
     <div className="flex flex-col items-center justify-center py-12">
       <Loader2 className="h-8 w-8 animate-spin text-gray-500 mb-2" />
@@ -82,7 +93,7 @@ export const EventLoadingState = () => {
             {timeoutMessage}
           </p>
           
-          {loadingTime > 15 && (
+          {loadingTime > 10 && (
             <div className="flex flex-col sm:flex-row gap-2 mt-3 justify-center">
               <Button 
                 onClick={handleRefresh}
@@ -101,6 +112,14 @@ export const EventLoadingState = () => {
               >
                 <DatabaseZap className="h-4 w-4 mr-1" /> Test connection
               </Button>
+              
+              <Button
+                onClick={handleToggleDevMode}
+                variant={devMode ? "destructive" : "default"}
+                size="sm"
+              >
+                {devMode ? "Disable Dev Mode" : "Enable Dev Mode"}
+              </Button>
             </div>
           )}
         </div>
@@ -113,11 +132,11 @@ export const EventLoadingState = () => {
           <AlertDescription>
             <p className="mb-2">Possible causes:</p>
             <ul className="list-disc pl-5 text-sm">
-              <li>Supabase connection is not configured correctly</li>
-              <li>Database may be offline or unreachable</li>
-              <li>There might be permissions issues with the database</li>
+              <li>Database connection is not configured correctly</li>
               <li>Network connection issues</li>
+              <li>Permission issues with database access</li>
               <li>Row Level Security (RLS) policies may be too restrictive</li>
+              <li>Database function errors or recursion issues</li>
             </ul>
             <div className="mt-3 flex flex-col sm:flex-row gap-2">
               <Button 
@@ -129,16 +148,11 @@ export const EventLoadingState = () => {
               </Button>
               
               <Button
-                onClick={() => {
-                  // Toggle dev mode in local storage if it exists
-                  const devModeEnabled = localStorage.getItem('devModeEnabled') === 'true';
-                  localStorage.setItem('devModeEnabled', (!devModeEnabled).toString());
-                  window.location.reload();
-                }}
+                onClick={handleToggleDevMode}
                 size="sm"
-                variant="outline"
+                variant={devMode ? "destructive" : "default"}
               >
-                Toggle dev mode
+                {devMode ? "Disable Dev Mode" : "Enable Dev Mode"}
               </Button>
             </div>
           </AlertDescription>

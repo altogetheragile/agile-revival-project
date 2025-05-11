@@ -44,10 +44,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error("[AuthContext Debug] Database connectivity issue:", result.error);
           setConnectionError(true);
           
+          // Add specific guidance for common error types
           if (result.error?.message?.includes("infinite recursion")) {
-            toast.error("Permission configuration issue", {
+            toast.error("Admin verification issue", {
               description: "There's an issue with role verification. Try enabling Dev Mode in the bottom left corner.",
               duration: 10000
+            });
+          } else if (result.responseTime > 8000) {
+            toast.warning("Slow database connection", {
+              description: "The database is responding slowly which may affect functionality.",
+              duration: 8000
             });
           }
         } else {

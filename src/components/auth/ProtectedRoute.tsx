@@ -43,6 +43,14 @@ export default function ProtectedRoute({
       setIsCheckingRole(false);
       setHasRequiredRole(true);
       setCheckComplete(true);
+      
+      // Show a warning when entering a protected route with dev mode
+      if (requiredRoles.includes('admin') && location.pathname.includes('/admin')) {
+        toast.warning("Using Dev Mode for admin access", {
+          id: "dev-mode-admin-access",
+          description: "Security checks are bypassed. Disable Dev Mode for production use.",
+        });
+      }
       return;
     }
 
@@ -112,7 +120,7 @@ export default function ProtectedRoute({
     if (!devMode && checkComplete && requiredRoles.includes('admin') && !hasRequiredRole && user) {
       console.log("[ProtectedRoute Debug] Showing access denied toast");
       toast.error("Access denied", {
-        description: "You need admin privileges to access this area",
+        description: "You need admin privileges to access this area. Try enabling Dev Mode if you need temporary access.",
         duration: 5000,
       });
     }

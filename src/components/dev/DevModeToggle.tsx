@@ -3,12 +3,64 @@ import { useDevMode } from '@/contexts/DevModeContext';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Shield } from 'lucide-react';
-import { useState } from 'react';
+import { AlertCircle, Shield, ShieldOff, ShieldAlert, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const DevModeToggle = () => {
   const { devMode, toggleDevMode } = useDevMode();
   const [expanded, setExpanded] = useState(false);
+  const [minimized, setMinimized] = useState(false);
+  
+  // Show expanded state initially when Dev Mode is active
+  useEffect(() => {
+    if (devMode) {
+      setExpanded(true);
+    }
+  }, []);
+
+  const handleToggle = () => {
+    const newState = !devMode;
+    toggleDevMode();
+    
+    // Show toast when changing the state
+    if (newState) {
+      toast.success("Dev Mode enabled", {
+        description: "Security checks are now bypassed for development.",
+      });
+      // Auto-expand when enabling
+      setExpanded(true);
+      setMinimized(false);
+    } else {
+      toast.info("Dev Mode disabled", {
+        description: "Security checks have been restored.",
+      });
+    }
+  };
+  
+  // Allow completely hiding the Dev Mode toggle
+  const handleMinimize = () => {
+    setMinimized(!minimized);
+    // If showing after being minimized, and Dev Mode is on, show expanded
+    if (minimized && devMode) {
+      setExpanded(true);
+    }
+  };
+
+  if (minimized) {
+    return (
+      <Button
+        onClick={handleMinimize}
+        className="fixed bottom-4 left-4 z-50 h-8 w-8 rounded-full p-0"
+        variant={devMode ? "destructive" : "secondary"}
+        size="icon"
+        title="Show Dev Mode toggle"
+      >
+        {devMode ? <ShieldAlert size={16} /> : <Shield size={16} />}
+      </Button>
+    );
+  }
 
   return (
     <div className="fixed bottom-4 left-4 z-50">
@@ -17,14 +69,30 @@ const DevModeToggle = () => {
       }`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Shield className={devMode ? "text-red-500" : "text-green-500"} size={18} />
-            <Label htmlFor="dev-mode" className="font-medium">Development Mode</Label>
+            {devMode ? (
+              <ShieldAlert className="text-red-500" size={18} />
+            ) : (
+              <Shield className="text-green-500" size={18} />
+            )}
+            <Label htmlFor="dev-mode" className="font-medium">
+              Development Mode
+            </Label>
           </div>
-          <Switch
-            id="dev-mode"
-            checked={devMode}
-            onCheckedChange={toggleDevMode}
-          />
+          <div className="flex items-center gap-2">
+            <Switch
+              id="dev-mode"
+              checked={devMode}
+              onCheckedChange={handleToggle}
+            />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0 rounded-full" 
+              onClick={() => setMinimized(true)}
+            >
+              <X size={14} />
+            </Button>
+          </div>
         </div>
         
         {devMode && (
@@ -60,12 +128,25 @@ const DevModeToggle = () => {
               <li>Database RLS policies are ignored</li>
               <li>This state persists across page refreshes</li>
             </ul>
-            <button 
-              onClick={() => setExpanded(false)}
-              className="text-xs text-blue-600 hover:text-blue-800 mt-2"
-            >
-              Hide info
-            </button>
+            <div className="flex justify-between mt-2">
+              <button 
+                onClick={() => setExpanded(false)}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                Hide info
+              </button>
+              <button
+                onClick={() => {
+                  toggleDevMode();
+                  toast.info("Dev Mode disabled", {
+                    description: "Security checks have been restored."
+                  });
+                }}
+                className="text-xs text-red-600 hover:text-red-800 font-medium"
+              >
+                Disable Dev Mode
+              </button>
+            </div>
           </div>
         )}
       </div>

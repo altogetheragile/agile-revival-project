@@ -17,6 +17,10 @@ import EventsManagement from "@/components/admin/EventsManagement";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
 import { useDevMode } from "@/contexts/DevModeContext";
 import AdminBadge from "@/components/user/AdminBadge";
+import DevModeToggle from "@/components/dev/DevModeToggle";
+import { Shield, ShieldAlert } from "lucide-react";
+import { useConnection } from "@/contexts/ConnectionContext";
+import { Alert } from "@/components/ui/alert";
 
 const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("events");
@@ -25,6 +29,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { isAdmin, isAuthReady, user } = useAuth();
   const { devMode } = useDevMode();
+  const { connectionState, checkConnection } = useConnection();
   
   useEffect(() => {
     setIsChecking(false);
@@ -37,15 +42,29 @@ const AdminDashboard = () => {
         variant: "destructive",
       });
       navigate('/auth', { state: { from: '/admin' } });
-    } else if (isAuthReady && !isAdmin) {
+    } else if (isAuthReady && !isAdmin && !devMode) {
       toast({
         title: "Access Denied",
-        description: "You do not have admin privileges to access this page",
+        description: "You do not have admin privileges to access this page. You can enable Dev Mode to bypass this restriction.",
         variant: "destructive",
       });
       navigate('/unauthorized');
+    } else if (isAuthReady && devMode && !isAdmin) {
+      // User is accessing via Dev Mode
+      toast({
+        title: "Dev Mode Active",
+        description: "You are viewing the admin dashboard with Dev Mode enabled.",
+        duration: 5000,
+      });
     }
-  }, [isAuthReady, isAdmin, user, navigate, toast]);
+  }, [isAuthReady, isAdmin, user, navigate, toast, devMode]);
+
+  // Test connection when first loading the admin dashboard
+  useEffect(() => {
+    if (isAuthReady) {
+      checkConnection();
+    }
+  }, [isAuthReady, checkConnection]);
 
   // Log state for debugging purposes
   useEffect(() => {
@@ -55,9 +74,10 @@ const AdminDashboard = () => {
       isAuthReady, 
       isAdmin: isAdmin || false,
       hasUser: !!user,
-      devMode
+      devMode,
+      connectionStatus: connectionState.isConnected ? 'connected' : 'disconnected'
     });
-  }, [currentTab, isChecking, isAuthReady, isAdmin, user, devMode]);
+  }, [currentTab, isChecking, isAuthReady, isAdmin, user, devMode, connectionState]);
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -68,15 +88,29 @@ const AdminDashboard = () => {
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold text-agile-purple-dark">Admin Dashboard</h1>
               <div className="flex items-center gap-2">
-                {devMode && (
-                  <span className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded">
+                {devMode ? (
+                  <span className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded flex items-center gap-1">
+                    <ShieldAlert size={14} />
                     Dev Mode Active
                   </span>
+                ) : (
+                  <AdminBadge />
                 )}
-                <AdminBadge />
-                <ConnectionStatus className="text-xs" />
+                <ConnectionStatus className="text-xs" showDetails={true} />
               </div>
             </div>
+            
+            {!connectionState.isConnected && (
+              <Alert className="mb-4 border-amber-300 bg-amber-50">
+                <div className="flex flex-col">
+                  <p className="font-medium">Connection issue detected</p>
+                  <p className="text-sm mt-1">
+                    Having trouble connecting to the database. Some features may not work correctly.
+                    Try refreshing the page or enabling Dev Mode for development purposes.
+                  </p>
+                </div>
+              </Alert>
+            )}
             
             <Tabs defaultValue="events" value={currentTab} onValueChange={setCurrentTab} className="w-full">
               <TabsList className="mb-8 w-full grid grid-cols-2 md:flex md:w-auto">
@@ -122,6 +156,7 @@ const AdminDashboard = () => {
       </main>
       <Footer />
       <ScrollToTop />
+      <DevModeToggle />
     </div>
   );
 };

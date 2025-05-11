@@ -13,13 +13,11 @@ export function useAuthState() {
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     console.log(`[Auth Debug] Checking admin status for user: ${userId}`);
     try {
-      // Call the has_role RPC function with proper parameter structure
-      // Cast the parameters to any to bypass TypeScript's strict checking
-      // The function expects parameters without underscores in the object keys
+      // Call the has_role RPC function with explicit parameter names
       const { data, error } = await supabase.rpc('has_role', {
         user_id: userId,
         role: 'admin'
-      } as any);
+      } as any); // Type assertion to bypass TS strict checking
 
       console.log('[Auth Debug] Admin check result:', { data, error });
 
@@ -32,6 +30,14 @@ export function useAuthState() {
           hint: error.hint,
           code: error.code
         });
+        
+        // Check for specific errors that might indicate an RLS recursion issue
+        if (error.message?.includes('infinite recursion') || 
+            error.message?.includes('permission denied')) {
+          console.warn('[Auth Debug] Possible RLS recursion or permission issue detected');
+        }
+        
+        // Even if there's an error, we'll continue without admin access
         setIsAdmin(false);
         setIsAdminChecked(true);
         return false;
@@ -47,6 +53,7 @@ export function useAuthState() {
       return hasAdminRole;
     } catch (error) {
       console.error('[Auth Debug] Exception checking admin status:', error);
+      // Handle unexpected errors gracefully
       setIsAdmin(false);
       setIsAdminChecked(true);
       return false;
@@ -90,6 +97,14 @@ export function useAuthState() {
         // Check admin status immediately
         checkAdminStatus(currentSession.user.id).then(isAdmin => {
           console.log("[Auth Debug] Initial admin check result:", isAdmin);
+          if (!isAdmin) {
+            // Double check once more after a brief delay in case of temporary DB issues
+            setTimeout(() => {
+              if (isMounted) {
+                checkAdminStatus(currentSession.user.id);
+              }
+            }, 2000);
+          }
         });
       } else {
         if (isMounted) {
@@ -126,11 +141,36 @@ export function useAuthState() {
           console.log(`[Auth Debug] User authenticated, email: ${currentSession.user.email}, id: ${currentSession.user.id}`);
           setIsAdminChecked(false);
           
-          // Check admin status
-          const isAdminUser = await checkAdminStatus(currentSession.user.id);
-          console.log("[Auth Debug] Admin check complete, result:", isAdminUser);
+          // Check admin status with retry on failure
+          let attempts = 0;
+          let isAdminUser = false;
           
-          if (isMounted) setIsLoading(false);
+          const tryCheckAdmin = async () => {
+            try {
+              isAdminUser = await checkAdminStatus(currentSession.user.id);
+              console.log("[Auth Debug] Admin check complete, result:", isAdminUser);
+              return true;
+            } catch (err) {
+              console.error(`[Auth Debug] Admin check attempt ${attempts + 1} failed:`, err);
+              return false;
+            }
+          };
+          
+          // First attempt
+          const success = await tryCheckAdmin();
+          
+          // Retry once after a delay if first attempt failed
+          if (!success && attempts < 1) {
+            attempts++;
+            setTimeout(async () => {
+              if (isMounted) {
+                await tryCheckAdmin();
+                setIsLoading(false);
+              }
+            }, 2000);
+          } else {
+            if (isMounted) setIsLoading(false);
+          }
         } else {
           console.log("[Auth Debug] No authenticated user, clearing admin status");
           setIsAdmin(false);
