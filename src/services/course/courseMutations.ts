@@ -6,12 +6,17 @@ import { mapDbToCourse, mapCourseToDb } from "./courseMappers";
 import { executeQuery } from "@/utils/supabase/query";
 import { User } from "@supabase/supabase-js";
 
+// Interface for authentication data response
+interface AuthDataResponse {
+  user: User;
+}
+
 export const createCourse = async (courseData: CourseFormData): Promise<Course | null> => {
   try {
     console.log("Creating course with data:", courseData);
     
-    // Check if user is authenticated using executeQuery for better error handling
-    const { data: authData, error: userError } = await executeQuery<{ user: User }>(
+    // Check if user is authenticated using executeQuery with proper typing
+    const { data: authData, error: userError } = await executeQuery<AuthDataResponse>(
       async (signal) => await supabase.auth.getUser(),
       {
         timeoutMs: 20000,
@@ -21,7 +26,7 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
       }
     );
     
-    // Type assertion after checking the data exists
+    // Explicit null check and type assertion
     if (userError || !authData || !authData.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
@@ -135,8 +140,8 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
   try {
     console.log("Updating course:", id, courseData);
     
-    // Check if user is authenticated with better error handling
-    const { data: authData, error: userError } = await executeQuery<{ user: User }>(
+    // Check if user is authenticated with proper typing
+    const { data: authData, error: userError } = await executeQuery<AuthDataResponse>(
       async (signal) => await supabase.auth.getUser(),
       {
         timeoutMs: 20000,
@@ -146,7 +151,7 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       }
     );
     
-    // Type assertion after checking the data exists
+    // Explicit null check and type assertion
     if (userError || !authData || !authData.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
@@ -191,7 +196,7 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
 
     const dbCourseData = mapCourseToDb(courseData);
     
-    // Remove id property before update, rather than trying to destructure it
+    // Create update data object directly without destructuring
     // This is the fix for the TypeScript error
     const updateData = { ...dbCourseData };
     

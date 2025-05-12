@@ -7,12 +7,17 @@ import { mapDbToCourse } from "./templateMappers";
 import { executeQuery } from "@/utils/supabase/query";
 import { User } from "@supabase/supabase-js";
 
+// Interface for authentication data response
+interface AuthDataResponse {
+  user: User;
+}
+
 export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
   try {
     console.log(`Creating course from template ID: ${templateId}`, scheduleData);
     
-    // Check if user is authenticated using executeQuery for better error handling
-    const { data: authData, error: userError } = await executeQuery<{ user: User }>(
+    // Check if user is authenticated using executeQuery with proper typing
+    const { data: authData, error: userError } = await executeQuery<AuthDataResponse>(
       async (signal) => await supabase.auth.getUser(),
       {
         timeoutMs: 20000,
@@ -22,7 +27,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       }
     );
     
-    // Type assertion after checking the data exists
+    // Explicit null check and type assertion
     if (userError || !authData || !authData.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
