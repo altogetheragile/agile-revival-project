@@ -1,16 +1,16 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Course, CourseFormData } from "@/types/course";
 import { toast } from "sonner";
 import { mapDbToCourse, mapCourseToDb } from "./courseMappers";
 import { executeQuery } from "@/utils/supabase/query";
+import { User } from "@supabase/supabase-js";
 
 export const createCourse = async (courseData: CourseFormData): Promise<Course | null> => {
   try {
     console.log("Creating course with data:", courseData);
     
     // Check if user is authenticated using executeQuery for better error handling
-    const { data: userData, error: userError } = await executeQuery(
+    const { data: userData, error: userError } = await executeQuery<{ user: User }>(
       async (signal) => await supabase.auth.getUser(),
       {
         timeoutMs: 20000,
@@ -21,7 +21,7 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
     );
     
     // Type assertion after checking the data exists
-    if (userError || !userData?.user) {
+    if (userError || !userData) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
@@ -135,7 +135,7 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
     console.log("Updating course:", id, courseData);
     
     // Check if user is authenticated with better error handling
-    const { data: userData, error: userError } = await executeQuery(
+    const { data: userData, error: userError } = await executeQuery<{ user: User }>(
       async (signal) => await supabase.auth.getUser(),
       {
         timeoutMs: 20000,
@@ -146,7 +146,7 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
     );
     
     // Type assertion after checking the data exists
-    if (userError || !userData?.user) {
+    if (userError || !userData) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
@@ -247,7 +247,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     console.log("Deleting course:", id);
     
     // Check if user is authenticated with better error handling
-    const { data: userData, error: userError } = await executeQuery(
+    const { data: userData, error: userError } = await executeQuery<{ user: User }>(
       async (signal) => await supabase.auth.getUser(),
       {
         timeoutMs: 20000,
@@ -258,7 +258,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     );
     
     // Type assertion after checking the data exists
-    if (userError || !userData?.user) {
+    if (userError || !userData) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."

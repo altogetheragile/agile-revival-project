@@ -1,17 +1,17 @@
-
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fallbackTemplates } from "./templateData";
 import { mapDbToCourse } from "./templateMappers";
 import { executeQuery } from "@/utils/supabase/query";
+import { User } from "@supabase/supabase-js";
 
 export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
   try {
     console.log(`Creating course from template ID: ${templateId}`, scheduleData);
     
     // Check if user is authenticated using executeQuery for better error handling
-    const { data: userData, error: userError } = await executeQuery(
+    const { data: userData, error: userError } = await executeQuery<{ user: User }>(
       async (signal) => await supabase.auth.getUser(),
       {
         timeoutMs: 20000,
@@ -22,7 +22,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     );
     
     // Type assertion after checking the data exists
-    if (userError || !userData?.user) {
+    if (userError || !userData) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ConnectionCheckResult } from "./types";
 import { createTimeoutController, executeWithTimeout } from "./controllers";
 import { toast } from "sonner";
+import { PostgrestSingleResponse } from "@supabase/supabase-js";
 
 // Cache connection check results to avoid repeated checks
 const connectionCheckCache = {
@@ -27,7 +28,7 @@ export async function testConnection(timeoutMs: number = 20000): Promise<Connect
   const startTime = Date.now();
   
   try {
-    const { result, error } = await executeWithTimeout(
+    const { result, error } = await executeWithTimeout<PostgrestSingleResponse<{ key: string }[]>>(
       async (signal) => {
         // Try a simple query to test connectivity
         return await supabase
