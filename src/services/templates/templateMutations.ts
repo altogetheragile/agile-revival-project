@@ -1,3 +1,4 @@
+
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,7 +12,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     console.log(`Creating course from template ID: ${templateId}`, scheduleData);
     
     // Check if user is authenticated using executeQuery for better error handling
-    const { data: userData, error: userError } = await executeQuery<{ user: User }>(
+    const { data: authData, error: userError } = await executeQuery<{ user: User }>(
       async (signal) => await supabase.auth.getUser(),
       {
         timeoutMs: 20000,
@@ -22,7 +23,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     );
     
     // Type assertion after checking the data exists
-    if (userError || !userData) {
+    if (userError || !authData || !authData.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
@@ -30,7 +31,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       return null;
     }
     
-    const user = userData.user;
+    const user = authData.user;
     
     // Verify admin role using optimized RPC function call
     const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
