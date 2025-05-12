@@ -1,4 +1,3 @@
-
 import { PostgrestSingleResponse } from "@supabase/supabase-js";
 import { handleError } from "@/utils/errorHandler";
 import { toast } from "sonner";
