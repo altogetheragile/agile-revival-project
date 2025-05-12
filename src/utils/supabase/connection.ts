@@ -4,11 +4,26 @@ import { ConnectionCheckResult } from "./types";
 import { createTimeoutController, executeWithTimeout } from "./controllers";
 import { toast } from "sonner";
 
+// Cache connection check results to avoid repeated checks
+const connectionCheckCache = {
+  result: null as ConnectionCheckResult | null,
+  timestamp: 0,
+  ttl: 15000 // 15 seconds cache TTL (reduced from 30s for better responsiveness)
+};
+
 /**
  * Test database connectivity with enhanced error diagnostics
  */
-export async function testConnection(timeoutMs: number = 8000): Promise<ConnectionCheckResult> {
+export async function testConnection(timeoutMs: number = 20000): Promise<ConnectionCheckResult> {
   console.log("[Supabase Connection] Testing database connection...");
+  
+  // Check cache first
+  const now = Date.now();
+  if (connectionCheckCache.result && (now - connectionCheckCache.timestamp < connectionCheckCache.ttl)) {
+    console.log("[Supabase Connection] Using cached connection status");
+    return connectionCheckCache.result;
+  }
+  
   const startTime = Date.now();
   
   try {
@@ -23,7 +38,7 @@ export async function testConnection(timeoutMs: number = 8000): Promise<Connecti
       },
       {
         timeoutMs,
-        retries: 1,
+        retries: 2, // Increased from 1 to 2 retries
         silentRetry: true,
         onTimeout: () => console.error("[Supabase Connection] Connection test timed out")
       }
@@ -56,7 +71,7 @@ export async function testConnection(timeoutMs: number = 8000): Promise<Connecti
       
       console.log(`[Supabase Connection] Error type: ${errorType}`);
       
-      return {
+      const result = {
         isConnected: false,
         responseTime,
         error: {
@@ -65,48 +80,51 @@ export async function testConnection(timeoutMs: number = 8000): Promise<Connecti
           message: errorMessage
         }
       };
+      
+      // Update cache even for errors to prevent constant retries
+      connectionCheckCache.result = result;
+      connectionCheckCache.timestamp = now;
+      
+      return result;
     }
     
     console.log(`[Supabase Connection] Connection test successful, response time: ${responseTime}ms`);
-    return {
+    
+    const result = {
       isConnected: true,
       responseTime,
       data: result?.data
     };
+    
+    // Update cache with successful response
+    connectionCheckCache.result = result;
+    connectionCheckCache.timestamp = now;
+    
+    return result;
   } catch (err) {
     const responseTime = Date.now() - startTime;
     
     console.error("[Supabase Connection] Unexpected error during connection test:", err);
-    return {
+    
+    const result = {
       isConnected: false,
       responseTime,
       error: err
     };
+    
+    // Update cache even for errors
+    connectionCheckCache.result = result;
+    connectionCheckCache.timestamp = now;
+    
+    return result;
   }
 }
-
-// Cache connection check results to avoid repeated checks
-const connectionCheckCache = {
-  result: null as ConnectionCheckResult | null,
-  timestamp: 0,
-  ttl: 30000 // 30 seconds cache TTL
-};
 
 /**
  * Test database connectivity and show user feedback with caching
  */
 export async function checkDatabaseHealth(silent: boolean = false): Promise<ConnectionCheckResult> {
-  // Check cache first
-  const now = Date.now();
-  if (connectionCheckCache.result && (now - connectionCheckCache.timestamp < connectionCheckCache.ttl)) {
-    return connectionCheckCache.result;
-  }
-  
   const result = await testConnection();
-  
-  // Update cache
-  connectionCheckCache.result = result;
-  connectionCheckCache.timestamp = now;
   
   if (!silent) {
     if (!result.isConnected) {
@@ -125,6 +143,15 @@ export async function checkDatabaseHealth(silent: boolean = false): Promise<Conn
   }
   
   return result;
+}
+
+/**
+ * Force reset the connection cache
+ */
+export function resetConnectionCache(): void {
+  console.log("[Supabase Connection] Resetting connection cache");
+  connectionCheckCache.result = null;
+  connectionCheckCache.timestamp = 0;
 }
 
 /**

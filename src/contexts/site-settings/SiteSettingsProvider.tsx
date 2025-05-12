@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, ReactNode, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,12 +35,27 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         setIsLoading(true);
       }
       
-      // Check connection first
+      // Check connection first - use the shared connection state
       if (!connectionState.isConnected) {
+        // Try to re-establish connection
         await checkConnection();
-        if (!connectionState.isConnected) {
-          console.log("Connection check failed, using default settings");
+        
+        // If still not connected but this is initial load, use default settings
+        if (!connectionState.isConnected && isInitialLoad.current) {
+          console.log("Connection check failed on initial load, using default settings");
           setSettings(defaultSettings);
+          if (!silentMode) {
+            setIsLoading(false);
+          }
+          isInitialLoad.current = false;
+          return;
+        }
+        
+        // For non-initial loads, if disconnected, show warning and use cached settings
+        if (!connectionState.isConnected && !isInitialLoad.current) {
+          toast.warning("Using cached settings", {
+            description: "Unable to connect to the database. Using previously loaded settings."
+          });
           if (!silentMode) {
             setIsLoading(false);
           }
@@ -47,17 +63,17 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         }
       }
       
-      // Use our new executeQuery helper with the correct type annotation
+      // Use executeQuery helper with 20s timeout (increased from 10s)
       const { data, error } = await executeQuery<SiteSetting[]>(
         (signal) => supabase
           .from('site_settings')
           .select('key, value')
           .abortSignal(signal),
         {
-          timeoutMs: 10000,
+          timeoutMs: 20000, // Increased from 10s to 20s to match our global setting
           showErrorToast: !silentMode && !isInitialLoad.current,
           errorMessage: "Failed to load site settings",
-          retries: silentMode ? 0 : 1
+          retries: silentMode ? 0 : 2 // Increased from 1 to 2 retries
         }
       );
 
@@ -65,7 +81,6 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         console.error("Error fetching settings:", error);
         
         // Set default settings and show toast if needed
-        setSettings(defaultSettings);
         if (!isInitialLoad.current && !silentMode) {
           uiToast({
             title: "Error",
@@ -77,6 +92,9 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         setRetryCount(prev => prev + 1);
         if (!silentMode) {
           setIsLoading(false);
+          if (isInitialLoad.current) {
+            isInitialLoad.current = false;
+          }
         }
         return;
       }
@@ -122,7 +140,6 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       }
     } catch (error) {
       console.error("Exception fetching settings:", error);
-      setSettings(defaultSettings);
       
       if (!silentMode) {
         uiToast({
@@ -167,9 +184,11 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
     try {
       console.log(`Updating ${key} settings:`, values);
       
-      // Check connection first
+      // Check connection first - use the shared connection state
       if (!connectionState.isConnected) {
+        // Try to re-establish connection
         await checkConnection();
+        
         if (!connectionState.isConnected) {
           uiToast({
             title: "Error",
@@ -180,16 +199,17 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         }
       }
       
+      // Use our executeQuery helper with increased timeout
       const { error } = await executeQuery<any>(
         (signal) => supabase.rpc('update_site_settings', {
           setting_key: key,
           setting_value: values,
         }).abortSignal(signal),
         {
-          timeoutMs: 10000,
+          timeoutMs: 20000, // Increased from 10s to 20s
           showErrorToast: !silentMode,
           errorMessage: `Failed to update ${key} settings`,
-          retries: 1
+          retries: 2  // Increased from 1 to 2 retries
         }
       );
 

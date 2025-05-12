@@ -30,6 +30,14 @@ const initialState: ConnectionState = {
   consecutiveErrors: 0,
 };
 
+// Create a shared cache to improve connection check performance
+const connectionCache = {
+  isConnected: false,
+  timestamp: 0,
+  ttl: 5000, // 5 seconds cache TTL
+  responseTime: null as number | null,
+};
+
 const ConnectionContext = createContext<ConnectionContextType>({
   connectionState: initialState,
   checkConnection: async () => false,
@@ -45,6 +53,22 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const connectionCheckIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const checkConnection = useCallback(async (silent = false): Promise<boolean> => {
+    // Use cache if available and not expired
+    const now = Date.now();
+    if (now - connectionCache.timestamp < connectionCache.ttl) {
+      if (!silent) {
+        setState(prev => ({
+          ...prev,
+          isConnected: connectionCache.isConnected,
+          isChecking: false,
+          responseTime: connectionCache.responseTime,
+          // Only update lastChecked if we're not in silent mode
+          ...(connectionCache.isConnected ? { consecutiveErrors: 0 } : {})
+        }));
+      }
+      return connectionCache.isConnected;
+    }
+
     if (state.isChecking && !silent) return state.isConnected;
     
     if (!silent) {
@@ -52,10 +76,6 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     
     try {
-      // Create a controller with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
       const startTime = Date.now();
       const { data, error } = await executeQuery<any[]>(
         (signal) => supabase
@@ -64,15 +84,20 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           .limit(1)
           .abortSignal(signal),
         {
-          timeoutMs: 5000,
+          timeoutMs: 20000, // Increased from 5s to 20s for reliability
           showErrorToast: false,
-          silentRetry: true
+          silentRetry: true,
+          retries: 1 // Add a retry for connection checks
         }
       );
       
       const responseTime = Date.now() - startTime;
-      
       const isConnected = !error;
+      
+      // Update the connection cache
+      connectionCache.isConnected = isConnected;
+      connectionCache.timestamp = now;
+      connectionCache.responseTime = responseTime;
       
       if (!silent) {
         setState(prev => ({
@@ -106,6 +131,11 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return isConnected;
     } catch (err) {
       console.error("Error checking connection:", err);
+      
+      // Update the connection cache for errors too
+      connectionCache.isConnected = false;
+      connectionCache.timestamp = now;
+      connectionCache.responseTime = null;
       
       if (!silent) {
         setState(prev => ({
@@ -143,6 +173,10 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [state.consecutiveErrors]);
   
   const resetConnection = useCallback(async () => {
+    // Clear the connection cache
+    connectionCache.isConnected = false;
+    connectionCache.timestamp = 0;
+    
     // Reset state
     setState({
       ...initialState,

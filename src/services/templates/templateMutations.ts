@@ -4,26 +4,46 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fallbackTemplates } from "./templateData";
 import { mapDbToCourse } from "./templateMappers";
+import { executeQuery } from "@/utils/supabase/query";
 
 export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
   try {
     console.log(`Creating course from template ID: ${templateId}`, scheduleData);
     
-    // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      console.error("User not authenticated");
+    // Check if user is authenticated using executeQuery for better error handling
+    const { data: userData, error: userError } = await executeQuery(
+      async (signal) => await supabase.auth.getUser(),
+      {
+        timeoutMs: 20000,
+        showErrorToast: true,
+        errorMessage: "Authentication check failed",
+        retries: 2
+      }
+    );
+    
+    const user = userData?.user;
+    
+    if (userError || !user) {
+      console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
       });
       return null;
     }
     
-    // Verify admin role using RPC function
-    const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
-      user_id: user.id,
-      required_role: 'admin'
-    });
+    // Verify admin role using optimized RPC function call
+    const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
+      (signal) => supabase.rpc('has_role', {
+        user_id: user.id,
+        required_role: 'admin'
+      }).abortSignal(signal),
+      {
+        timeoutMs: 20000,
+        showErrorToast: true,
+        errorMessage: "Permission check failed",
+        retries: 2
+      }
+    );
 
     if (roleError) {
       console.error("Error checking admin role:", roleError);
@@ -69,12 +89,22 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       return scheduledCourse;
     }
     
-    const { data: template, error: templateError } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('id', templateId)
-      .eq('is_template', true)
-      .maybeSingle();
+    // Use executeQuery for better error handling
+    const { data: template, error: templateError } = await executeQuery<any>(
+      (signal) => supabase
+        .from('courses')
+        .select('*')
+        .eq('id', templateId)
+        .eq('is_template', true)
+        .abortSignal(signal)
+        .maybeSingle(),
+      {
+        timeoutMs: 20000,
+        showErrorToast: true,
+        errorMessage: "Error fetching template",
+        retries: 2
+      }
+    );
     
     if (templateError) {
       if (templateError.message && templateError.message.includes("infinite recursion detected in policy")) {
@@ -117,17 +147,37 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       updated_at: new Date().toISOString()
     };
     
-    const { data: createdCourse, error: createError } = await supabase
-      .from('courses')
-      .insert([newCourse])
-      .select()
-      .single();
+    // Use executeQuery for better error handling
+    const { data: createdCourse, error: createError } = await executeQuery<any>(
+      (signal) => supabase
+        .from('courses')
+        .insert([newCourse])
+        .select()
+        .abortSignal(signal)
+        .single(),
+      {
+        timeoutMs: 30000, // Increased timeout for course operations
+        showErrorToast: true,
+        errorMessage: "Failed to create course from template",
+        retries: 2
+      }
+    );
       
     if (createError) {
       console.error("Error creating course from template:", createError);
+      
+      // Enhanced error messaging
+      let errorMessage = "Failed to create course from template";
+      if (createError.message?.includes('violates row-level security policy')) {
+        errorMessage = "Permission issue: You don't have the required permissions";
+      } else if (createError.message?.includes('timed out') || createError.message?.includes('connection')) {
+        errorMessage = "Database connection issue: Please try again";
+      }
+      
       toast.error("Failed to create course", {
-        description: createError.message
+        description: errorMessage
       });
+      
       return null;
     }
     
