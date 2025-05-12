@@ -1,3 +1,4 @@
+
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -6,9 +7,11 @@ import { mapDbToCourse } from "./templateMappers";
 import { executeQuery } from "@/utils/supabase/query";
 import { User } from "@supabase/supabase-js";
 
-// Interface for authentication data response
+// Interface for authentication data response matching the actual structure
 interface AuthDataResponse {
-  user: User;
+  data: {
+    user: User | null;
+  };
 }
 
 export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
@@ -27,7 +30,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     );
     
     // Explicit null check and type assertion
-    if (userError || !authData || !authData.user) {
+    if (userError || !authData || !authData.data || !authData.data.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
@@ -35,14 +38,14 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       return null;
     }
     
-    const user = authData.user;
+    const user = authData.data.user;
     
     // Verify admin role using optimized check_user_role function directly to avoid recursion
     const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
-      (signal) => supabase.rpc('check_user_role', {
+      async (signal) => await supabase.rpc('check_user_role', {
         user_id: user.id,
         required_role: 'admin'
-      }).abortSignal(signal),
+      }),
       {
         timeoutMs: 20000,
         showErrorToast: true,
@@ -97,12 +100,11 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     
     // Use executeQuery for better error handling with proper RLS error detection
     const { data: template, error: templateError } = await executeQuery<any>(
-      (signal) => supabase
+      async (signal) => await supabase
         .from('courses')
         .select('*')
         .eq('id', templateId)
         .eq('is_template', true)
-        .abortSignal(signal)
         .maybeSingle(),
       {
         timeoutMs: 20000,
@@ -156,11 +158,10 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     
     // Use executeQuery for better error handling with improved error detection
     const { data: createdCourse, error: createError } = await executeQuery<any>(
-      (signal) => supabase
+      async (signal) => await supabase
         .from('courses')
         .insert([newCourse])
         .select()
-        .abortSignal(signal)
         .single(),
       {
         timeoutMs: 30000, // Increased timeout for course operations

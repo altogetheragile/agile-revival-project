@@ -78,11 +78,10 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       const startTime = Date.now();
       const { data, error } = await executeQuery<any[]>(
-        (signal) => supabase
+        async (signal) => await supabase
           .from('site_settings')
           .select('key')
-          .limit(1)
-          .abortSignal(signal),
+          .limit(1),
         {
           timeoutMs: 20000, // Increased from 5s to 20s for reliability
           showErrorToast: false,

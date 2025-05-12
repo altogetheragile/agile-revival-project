@@ -31,10 +31,9 @@ export function useTestimonials(limit: number = 10) {
         setError(null);
 
         const { data, error } = await executeQuery<SupabaseTestimonial[]>(
-          (signal) => supabase
+          async (signal) => await supabase
             .from('testimonials')
-            .select('*')
-            .abortSignal(signal),
+            .select('*'),
           {
             timeoutMs: 5000,
             errorMessage: "Failed to load testimonials"

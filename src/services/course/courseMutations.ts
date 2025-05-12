@@ -6,9 +6,11 @@ import { mapDbToCourse, mapCourseToDb } from "./courseMappers";
 import { executeQuery } from "@/utils/supabase/query";
 import { User } from "@supabase/supabase-js";
 
-// Interface for authentication data response
+// Interface for authentication data response matching the actual structure
 interface AuthDataResponse {
-  user: User;
+  data: {
+    user: User | null;
+  };
 }
 
 export const createCourse = async (courseData: CourseFormData): Promise<Course | null> => {
@@ -27,7 +29,7 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
     );
     
     // Explicit null check and type assertion
-    if (userError || !authData || !authData.user) {
+    if (userError || !authData || !authData.data || !authData.data.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
@@ -35,15 +37,15 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
       return null;
     }
     
-    const user = authData.user;
+    const user = authData.data.user;
 
     // If this is a template, verify admin role with optimized query using check_user_role
     if (courseData.isTemplate) {
       const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
-        (signal) => supabase.rpc('check_user_role', { // Use the non-recursive function
+        async (signal) => await supabase.rpc('check_user_role', { // Use the non-recursive function
           user_id: user.id,
           required_role: 'admin'
-        }).abortSignal(signal),
+        }),
         {
           timeoutMs: 20000,
           showErrorToast: true,
@@ -93,11 +95,10 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
     
     // Use executeQuery helper with proper timeouts and retries
     const { data, error } = await executeQuery<any>(
-      (signal) => supabase
+      async (signal) => await supabase
         .from('courses')
         .insert(newCourse)
         .select()
-        .abortSignal(signal)
         .single(),
       {
         timeoutMs: 30000, // Increased timeout for course operations
@@ -152,7 +153,7 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
     );
     
     // Explicit null check and type assertion
-    if (userError || !authData || !authData.user) {
+    if (userError || !authData || !authData.data || !authData.data.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
@@ -160,15 +161,15 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       return null;
     }
     
-    const user = authData.user;
+    const user = authData.data.user;
 
     // If this is a template, verify admin role using check_user_role
     if (courseData.isTemplate) {
       const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
-        (signal) => supabase.rpc('check_user_role', { // Use the non-recursive function
+        async (signal) => await supabase.rpc('check_user_role', { // Use the non-recursive function
           user_id: user.id,
           required_role: 'admin'
-        }).abortSignal(signal),
+        }),
         {
           timeoutMs: 20000,
           showErrorToast: true,
@@ -202,7 +203,7 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
     
     // Use optimized query with better error handling
     const { data, error } = await executeQuery<any>(
-      (signal) => supabase
+      async (signal) => await supabase
         .from('courses')
         .update({ 
           ...updateData,
@@ -210,7 +211,6 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
         })
         .eq('id', id)
         .select()
-        .abortSignal(signal)
         .single(),
       {
         timeoutMs: 30000, // Increased timeout for course operations
@@ -265,7 +265,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     );
     
     // Type assertion after checking the data exists
-    if (userError || !authData || !authData.user) {
+    if (userError || !authData || !authData.data || !authData.data.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
@@ -273,14 +273,14 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
       return false;
     }
     
-    const user = authData.user;
+    const user = authData.data.user;
 
     // Verify admin role with check_user_role function to avoid recursion
     const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
-      (signal) => supabase.rpc('check_user_role', { // Use the non-recursive function
+      async (signal) => await supabase.rpc('check_user_role', { // Use the non-recursive function
         user_id: user.id,
         required_role: 'admin'
-      }).abortSignal(signal),
+      }),
       {
         timeoutMs: 20000,
         showErrorToast: true,
@@ -307,11 +307,10 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
 
     // Use optimized query with better error handling
     const { error } = await executeQuery<any>(
-      (signal) => supabase
+      async (signal) => await supabase
         .from('courses')
         .delete()
-        .eq('id', id)
-        .abortSignal(signal),
+        .eq('id', id),
       {
         timeoutMs: 20000,
         showErrorToast: true,

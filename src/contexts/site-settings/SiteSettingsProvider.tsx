@@ -65,10 +65,9 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       
       // Use executeQuery helper with 20s timeout (increased from 10s)
       const { data, error } = await executeQuery<SiteSetting[]>(
-        (signal) => supabase
+        async (signal) => await supabase
           .from('site_settings')
-          .select('key, value')
-          .abortSignal(signal),
+          .select('key, value'),
         {
           timeoutMs: 20000, // Increased from 10s to 20s to match our global setting
           showErrorToast: !silentMode && !isInitialLoad.current,
@@ -201,10 +200,10 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       
       // Use our executeQuery helper with increased timeout
       const { error } = await executeQuery<any>(
-        (signal) => supabase.rpc('update_site_settings', {
+        async (signal) => await supabase.rpc('update_site_settings', {
           setting_key: key,
           setting_value: values,
-        }).abortSignal(signal),
+        }),
         {
           timeoutMs: 20000, // Increased from 10s to 20s
           showErrorToast: !silentMode,

@@ -3,7 +3,7 @@ import { Event, EventFormData, ScheduleEventFormData } from "@/types/event";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { mapDbToEvent, mapEventToDb } from "./eventMappers";
-import { checkDatabaseHealth, getConnectionErrorDescription } from "@/utils/supabase/connection";
+import { checkDatabaseHealth } from "@/utils/supabase/connection";
 import { executeWithTimeout } from "@/utils/supabase/controllers";
 
 // Create a new event
@@ -13,7 +13,7 @@ export const createEvent = async (eventData: EventFormData): Promise<Event | nul
     const connectionResult = await checkDatabaseHealth();
     if (!connectionResult.isConnected) {
       toast.error("Unable to save", {
-        description: getConnectionErrorDescription(connectionResult.error)
+        description: "Database connection issue. Please try again later."
       });
       return null;
     }
@@ -79,7 +79,7 @@ export const updateEvent = async (id: string, eventData: EventFormData): Promise
     const connectionResult = await checkDatabaseHealth();
     if (!connectionResult.isConnected) {
       toast.error("Unable to save", {
-        description: getConnectionErrorDescription(connectionResult.error)
+        description: "Database connection issue. Please try again later."
       });
       return null;
     }
@@ -147,7 +147,7 @@ export const deleteEvent = async (id: string): Promise<boolean> => {
     const connectionResult = await checkDatabaseHealth();
     if (!connectionResult.isConnected) {
       toast.error("Unable to delete", {
-        description: getConnectionErrorDescription(connectionResult.error)
+        description: "Database connection issue. Please try again later."
       });
       return false;
     }
@@ -197,7 +197,7 @@ export const createEventFromTemplate = async (templateId: string, scheduleData: 
     const connectionResult = await checkDatabaseHealth();
     if (!connectionResult.isConnected) {
       toast.error("Unable to schedule event", {
-        description: getConnectionErrorDescription(connectionResult.error)
+        description: "Database connection issue. Please try again later."
       });
       return null;
     }

@@ -1,3 +1,4 @@
+
 import { Event } from "@/types/event";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -10,19 +11,9 @@ export const getAllEvents = async (): Promise<Event[]> => {
     console.log("Fetching all events...");
     
     const { data, error } = await executeQuery<any[]>(
-      (signal) => {
-        const query = supabase
-          .from('events')
-          .select('*');
-          
-        // Since different versions of Supabase client might handle abort signals differently,
-        // we'll use a more compatible approach
-        if (signal && signal.aborted) {
-          throw new DOMException('Aborted', 'AbortError');
-        }
-        
-        return query;
-      },
+      async (signal) => await supabase
+        .from('events')
+        .select('*'),
       {
         timeoutMs: 10000,
         retries: 2,
@@ -66,22 +57,11 @@ export const getEventById = async (id: string): Promise<Event | null> => {
     console.log("Fetching event by ID:", id);
     
     const { data, error } = await executeQuery<any>(
-      (signal) => {
-        // Create the query
-        const query = supabase
-          .from('events')
-          .select('*')
-          .eq('id', id)
-          .maybeSingle();
-          
-        // Since abortSignal might not be available in this version,
-        // we'll check if the controller was aborted manually
-        if (signal && signal.aborted) {
-          throw new DOMException('Aborted', 'AbortError');
-        }
-        
-        return query;
-      },
+      async (signal) => await supabase
+        .from('events')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle(),
       {
         timeoutMs: 8000,
         retries: 1,

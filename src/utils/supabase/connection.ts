@@ -80,3 +80,33 @@ export const checkDatabaseHealth = async (): Promise<ConnectionCheckResult> => {
   
   return result;
 };
+
+/**
+ * Get a user-friendly description of a connection error
+ */
+export const getConnectionErrorDescription = (error: any): string => {
+  if (!error) return "Unknown connection issue.";
+  
+  const errorMessage = error?.message || "Unknown error";
+  
+  if (errorMessage.includes("infinite recursion detected in policy")) {
+    return "Database permission configuration issue. Try refreshing the page.";
+  }
+  
+  if (errorMessage.includes("violates row-level security policy") || 
+      errorMessage.includes("permission denied")) {
+    return "Permission error: You don't have access to this resource.";
+  }
+  
+  if (error.name === 'AbortError' || errorMessage.includes('timeout') || 
+      errorMessage.includes('timed out')) {
+    return "The request timed out. Please check your connection and try again.";
+  }
+  
+  if (errorMessage.includes("network") || errorMessage.includes("fetch") || 
+      errorMessage.includes("connection")) {
+    return "Network connection issue. Please check your internet connection.";
+  }
+  
+  return errorMessage;
+};

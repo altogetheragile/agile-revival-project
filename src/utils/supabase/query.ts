@@ -10,7 +10,7 @@ import { ConnectionErrorType, ConnectionError } from './types';
  * @returns Result of the query execution
  */
 export async function executeQuery<T>(
-  queryFn: (signal: AbortSignal) => Promise<T>,
+  queryFn: (signal: AbortSignal) => Promise<T> | any,
   {
     timeoutMs = 20000,
     showErrorToast = true,
@@ -26,7 +26,16 @@ export async function executeQuery<T>(
   } = {}
 ): Promise<{ data: T | null; error: Error | null }> {
   const { result, error } = await executeWithTimeout(
-    queryFn,
+    async (signal) => {
+      // Handle both Promise and PostgrestBuilder/PostgrestFilterBuilder
+      const response = queryFn(signal);
+      // If it's a Supabase query builder, it will have a then method but not an await
+      if (response && typeof response.then === 'function') {
+        return await response;
+      }
+      // If it's already a Supabase query result (with data/error properties)
+      return response;
+    },
     {
       timeoutMs,
       retries,
