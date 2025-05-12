@@ -1,180 +1,82 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { ConnectionCheckResult } from "./types";
-import { createTimeoutController, executeWithTimeout } from "./controllers";
-import { toast } from "sonner";
-import { PostgrestSingleResponse } from "@supabase/supabase-js";
-
-// Cache connection check results to avoid repeated checks
-const connectionCheckCache = {
-  result: null as ConnectionCheckResult | null,
-  timestamp: 0,
-  ttl: 15000 // 15 seconds cache TTL (reduced from 30s for better responsiveness)
-};
+import { supabase } from '@/integrations/supabase/client';
+import { ConnectionCheckResult } from './types';
+import { toast } from 'sonner';
 
 /**
- * Test database connectivity with enhanced error diagnostics
+ * Test the connection to the Supabase database
  */
-export async function testConnection(timeoutMs: number = 20000): Promise<ConnectionCheckResult> {
-  console.log("[Supabase Connection] Testing database connection...");
-  
-  // Check cache first
-  const now = Date.now();
-  if (connectionCheckCache.result && (now - connectionCheckCache.timestamp < connectionCheckCache.ttl)) {
-    console.log("[Supabase Connection] Using cached connection status");
-    return connectionCheckCache.result;
-  }
+export const testConnection = async (): Promise<ConnectionCheckResult> => {
+  console.log("[Connection] Testing database connection...");
   
   const startTime = Date.now();
+  let isConnected = false;
+  let error = null;
+  let data = null;
   
   try {
-    const { result, error } = await executeWithTimeout<PostgrestSingleResponse<{ key: string }[]>>(
-      async (signal) => {
-        // Try a simple query to test connectivity
-        return await supabase
-          .from('site_settings')
-          .select('key')
-          .limit(1)
-          .abortSignal(signal);
-      },
-      {
-        timeoutMs,
-        retries: 2, // Increased from 1 to 2 retries
-        silentRetry: true,
-        onTimeout: () => console.error("[Supabase Connection] Connection test timed out")
-      }
-    );
+    // Perform a simple query that doesn't require authentication
+    const response = await supabase
+      .from('site_settings')
+      .select('key')
+      .limit(1)
+      .maybeSingle();
     
-    const responseTime = Date.now() - startTime;
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
     
-    if (error || result?.error) {
-      const actualError = error || result?.error;
-      console.error("[Supabase Connection] Connection test failed:", actualError);
-      
-      // Categorize the error for better diagnostics
-      let errorType = 'Unknown';
-      let errorMessage = actualError?.message || 'Unknown error occurred';
-      
-      if (errorMessage.includes('violates row-level security policy')) {
-        errorType = 'RLS Policy';
-      } else if (errorMessage.includes('timeout') || responseTime >= timeoutMs) {
-        errorType = 'Timeout';
-      } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
-        errorType = 'Network';
-      } else if (errorMessage.includes('permission denied')) {
-        errorType = 'Permission';
-      } else if (errorMessage.includes('infinite recursion')) {
-        errorType = 'Recursion';
-      } else if (errorMessage.includes('control reached end of trigger')) {
-        errorType = 'Trigger';
-        errorMessage = 'Database trigger error. Please contact the administrator.';
-      }
-      
-      console.log(`[Supabase Connection] Error type: ${errorType}`);
-      
-      const connectionResult: ConnectionCheckResult = {
-        isConnected: false,
-        responseTime,
-        error: {
-          ...actualError,
-          type: errorType,
-          message: errorMessage
-        }
-      };
-      
-      // Update cache even for errors to prevent constant retries
-      connectionCheckCache.result = connectionResult;
-      connectionCheckCache.timestamp = now;
-      
-      return connectionResult;
+    if (response.error) {
+      console.error("[Connection] Database test query failed:", response.error);
+      error = response.error;
+      isConnected = false;
+    } else {
+      console.log(`[Connection] Database connection successful. Response time: ${responseTime}ms`);
+      isConnected = true;
+      data = response.data;
     }
     
-    console.log(`[Supabase Connection] Connection test successful, response time: ${responseTime}ms`);
-    
-    const connectionResult: ConnectionCheckResult = {
-      isConnected: true,
-      responseTime,
-      data: result?.data
-    };
-    
-    // Update cache with successful response
-    connectionCheckCache.result = connectionResult;
-    connectionCheckCache.timestamp = now;
-    
-    return connectionResult;
+    return { isConnected, responseTime, data, error };
   } catch (err) {
-    const responseTime = Date.now() - startTime;
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
+    console.error("[Connection] Database connection test error:", err);
     
-    console.error("[Supabase Connection] Unexpected error during connection test:", err);
-    
-    const connectionResult: ConnectionCheckResult = {
+    return {
       isConnected: false,
       responseTime,
       error: err
     };
-    
-    // Update cache even for errors
-    connectionCheckCache.result = connectionResult;
-    connectionCheckCache.timestamp = now;
-    
-    return connectionResult;
   }
-}
+};
 
 /**
- * Test database connectivity and show user feedback with caching
+ * Check if database connection is healthy and handle common errors
  */
-export async function checkDatabaseHealth(silent: boolean = false): Promise<ConnectionCheckResult> {
+export const checkDatabaseHealth = async (): Promise<ConnectionCheckResult> => {
+  console.log("[Health Check] Checking database health...");
   const result = await testConnection();
   
-  if (!silent) {
-    if (!result.isConnected) {
-      toast.error("Database connection issue", {
-        description: getConnectionErrorDescription(result.error)
+  if (!result.isConnected) {
+    // Check for specific error types
+    const errorMessage = result.error?.message || "Unknown connection error";
+    
+    if (errorMessage.includes("infinite recursion detected in policy")) {
+      toast.error("Database configuration issue", {
+        description: "A recursion in database policies was detected. This is a system issue that needs attention.",
+        duration: 8000
       });
     } else if (result.responseTime > 5000) {
       toast.warning("Slow database connection", {
-        description: `The database is responding slowly (${result.responseTime}ms), which may affect performance.`
+        description: `The database is responding slowly (${result.responseTime}ms), which may affect performance.`,
+        duration: 5000
       });
     } else {
-      toast.success("Database connection healthy", {
-        description: `Connected successfully (${result.responseTime}ms)`
+      toast.error("Database connection issue", {
+        description: "Unable to connect to the database. Please try again later.",
+        duration: 5000
       });
     }
   }
   
   return result;
-}
-
-/**
- * Force reset the connection cache
- */
-export function resetConnectionCache(): void {
-  console.log("[Supabase Connection] Resetting connection cache");
-  connectionCheckCache.result = null;
-  connectionCheckCache.timestamp = 0;
-}
-
-/**
- * Get a user-friendly description of a connection error
- */
-export function getConnectionErrorDescription(error: any): string {
-  if (!error) return "Could not connect to the database. Please check your internet connection.";
-  
-  switch (error.type) {
-    case 'RLS Policy':
-      return "Permission error. Please try enabling Dev Mode as a temporary workaround.";
-    case 'Timeout':
-      return "The database took too long to respond. Please try again later.";
-    case 'Network':
-      return "Network error. Please check your internet connection.";
-    case 'Permission':
-      return "You don't have permission to access the database. Try enabling Dev Mode.";
-    case 'Recursion':
-      return "The database is experiencing a configuration issue. Please try again later.";
-    case 'Trigger':
-      return "Database trigger error. This is a database configuration issue that requires administrator attention.";
-    default:
-      return error.message || "Unknown database error occurred.";
-  }
-}
+};

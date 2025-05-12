@@ -1,177 +1,142 @@
-import { PostgrestSingleResponse } from "@supabase/supabase-js";
-import { handleError } from "@/utils/errorHandler";
-import { toast } from "sonner";
-import { QueryOptions } from "./types";
-import { createTimeoutController } from "./controllers";
-import { supabase } from "@/integrations/supabase/client";
-import { checkDatabaseHealth } from "./connection";
 
-// Increasing timeout from 10s to 20s for better reliability with complex queries
-const DEFAULT_TIMEOUT = 20000; // 20 seconds (increased from 10s)
-const DEFAULT_RETRIES = 2; // Increased from 1 to 2 retries
+import { toast } from 'sonner';
+import { executeWithTimeout } from '../supabase/controllers';
+import { ConnectionErrorType, ConnectionError } from './types';
 
 /**
- * Execute a Supabase query with standardized error handling and timeout
- * @param queryFn Function that returns a query builder or Promise
- * @param options Configuration options for the query execution
- * @returns Promise with data and error fields
+ * Enhanced query execution with error handling, timeout, and retries
+ * @param queryFn Function that executes the query with an abort signal
+ * @param options Configuration options
+ * @returns Result of the query execution
  */
 export async function executeQuery<T>(
-  queryFn: (signal: AbortSignal) => Promise<PostgrestSingleResponse<T>> | any,
-  options: QueryOptions = {}
-): Promise<{ data: T | null; error: any | null }> {
-  const { 
-    timeoutMs = DEFAULT_TIMEOUT, 
-    showErrorToast = true, 
-    errorMessage, 
-    retries = DEFAULT_RETRIES, 
-    silentRetry = false 
-  } = options;
-  
-  let currentRetry = 0;
-  
-  // Check connection health before executing query but skip for repeated auth checks
-  // to avoid creating another bottleneck
-  if (!queryFn.toString().includes('has_role')) {
-    const connectionStatus = await checkDatabaseHealth(true);
-    if (!connectionStatus.isConnected && connectionStatus.error?.type === 'Trigger') {
-      if (showErrorToast) {
-        toast.error("Database configuration issue", {
-          description: "There's an issue with the database triggers. Please contact the administrator."
-        });
-      }
-      return { 
-        data: null, 
-        error: new Error("Database trigger error detected. This requires administrator attention.")
-      };
-    }
-  }
-  
-  while (currentRetry <= retries) {
-    try {
-      // Create controller with timeout
-      const { controller, timeoutId } = createTimeoutController(timeoutMs);
-      
-      try {
-        // Execute the query function with the abort signal
-        const query = queryFn(controller.signal);
-        
-        // Handle both Promise and Query Builder return types
-        const result = query instanceof Promise 
-          ? await query 
-          : await query;
-        
-        clearTimeout(timeoutId);
-        
-        if (result.error) {
-          if (result.error.message?.includes('control reached end of trigger')) {
-            if (showErrorToast) {
-              toast.error("Database trigger error", {
-                description: "There's an issue with the database configuration. Please contact the administrator."
-              });
-            }
-            return { data: null, error: result.error };
-          }
-          
-          if (currentRetry < retries) {
-            if (!silentRetry) {
-              console.log(`Query failed (attempt ${currentRetry + 1}/${retries + 1}), retrying...`);
-            }
-            currentRetry++;
-            await new Promise(resolve => setTimeout(resolve, 1000 * currentRetry)); // Progressive backoff
-            continue;
-          }
-          
-          if (showErrorToast) {
-            if (result.error.message?.includes('Failed to fetch') || 
-                result.error.message?.includes('Network error')) {
-              toast.error("Connection lost", {
-                description: "Unable to reach the database. Please check your internet connection."
-              });
-            } else {
-              handleError(result.error, errorMessage);
-            }
-          }
-          
-          return { data: null, error: result.error };
-        }
-        
-        return { data: result.data as T, error: null };
-      } catch (err) {
-        clearTimeout(timeoutId);
-        
-        if (err instanceof DOMException && err.name === 'AbortError') {
-          if (currentRetry < retries) {
-            if (!silentRetry) {
-              console.log(`Query timed out (attempt ${currentRetry + 1}/${retries + 1}), retrying...`);
-            }
-            currentRetry++;
-            await new Promise(resolve => setTimeout(resolve, 1000 * currentRetry)); // Progressive backoff
-            continue;
-          }
-          
-          const timeoutError = new Error(`Request timed out after ${timeoutMs}ms`);
-          
-          if (showErrorToast) {
-            handleError({
-              message: `Request timed out after ${timeoutMs}ms`,
-              details: 'The database query took too long to respond'
-            }, errorMessage || 'Request timed out');
-          }
-          
-          return { data: null, error: timeoutError };
-        }
-        
-        // Check for trigger errors
-        if (err instanceof Error && err.message?.includes('control reached end of trigger')) {
-          if (showErrorToast) {
-            toast.error("Database trigger error", {
-              description: "There's an issue with the database configuration. Please contact the administrator."
-            });
-          }
-          return { data: null, error: err };
-        }
-        
-        if (currentRetry < retries) {
-          if (!silentRetry) {
-            console.log(`Query error (attempt ${currentRetry + 1}/${retries + 1}), retrying...`, err);
-          }
-          currentRetry++;
-          await new Promise(resolve => setTimeout(resolve, 1000 * currentRetry)); // Progressive backoff
-          continue;
-        }
-        
+  queryFn: (signal: AbortSignal) => Promise<T>,
+  {
+    timeoutMs = 20000,
+    showErrorToast = true,
+    errorMessage = "Database operation failed",
+    retries = 2,
+    silentRetry = false
+  }: {
+    timeoutMs?: number;
+    showErrorToast?: boolean;
+    errorMessage?: string;
+    retries?: number;
+    silentRetry?: boolean;
+  } = {}
+): Promise<{ data: T | null; error: Error | null }> {
+  const { result, error } = await executeWithTimeout(
+    queryFn,
+    {
+      timeoutMs,
+      retries,
+      retryDelay: 1000,
+      silentRetry,
+      onTimeout: () => {
         if (showErrorToast) {
-          if (err instanceof Error && 
-             (err.message?.includes('Failed to fetch') || err.message?.includes('Network error'))) {
-            toast.error("Connection lost", {
-              description: "Unable to reach the database. Please check your internet connection."
-            });
-          } else {
-            handleError(err, errorMessage);
-          }
+          toast.error("Request timed out", {
+            description: "The database request took too long to respond."
+          });
         }
-        
-        return { data: null, error: err };
-      }
-    } catch (outerError) {
-      if (currentRetry < retries) {
-        if (!silentRetry) {
-          console.log(`Unexpected error (attempt ${currentRetry + 1}/${retries + 1}), retrying...`, outerError);
+      },
+      onError: (err) => {
+        if (showErrorToast) {
+          // Handle this in the return phase to provide better error messages
         }
-        currentRetry++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * currentRetry)); // Progressive backoff
-        continue;
       }
-      
-      if (showErrorToast) {
-        handleError(outerError, errorMessage);
-      }
-      
-      return { data: null, error: outerError };
     }
+  );
+
+  if (error) {
+    console.error("Query execution error:", error);
+    
+    // Parse error to provide more specific error messages
+    const parsedError = parseConnectionError(error);
+    
+    if (showErrorToast) {
+      switch (parsedError.type) {
+        case 'RLS Policy':
+          toast.error("Permission error", {
+            description: "You don't have permission to access this resource."
+          });
+          break;
+        case 'Recursion':
+          toast.error("System error", {
+            description: "A database configuration issue was detected. Refresh the page or try again later."
+          });
+          break;
+        case 'Timeout':
+          toast.error("Connection timeout", {
+            description: "The database request timed out. Please try again."
+          });
+          break;
+        case 'Network':
+          toast.error("Network error", {
+            description: "Unable to connect to the database. Check your connection."
+          });
+          break;
+        default:
+          toast.error(errorMessage, {
+            description: parsedError.message || "An unexpected error occurred."
+          });
+      }
+    }
+    
+    return { data: null, error: error as Error };
+  }
+
+  return { data: result as T, error: null };
+}
+
+/**
+ * Parse connection errors to provide more specific error types and messages
+ */
+export function parseConnectionError(error: any): ConnectionError {
+  const errorMessage = error?.message || "Unknown error";
+  
+  // Check for specific error patterns
+  if (errorMessage.includes("infinite recursion detected in policy")) {
+    return {
+      type: 'Recursion',
+      message: "Database policy recursion detected. This is a system configuration issue.",
+      details: errorMessage,
+      originalError: error
+    };
   }
   
-  // This should never happen but TypeScript needs it
-  return { data: null, error: new Error("Maximum retries exceeded") };
+  if (errorMessage.includes("violates row-level security policy") || 
+      errorMessage.includes("permission denied")) {
+    return {
+      type: 'RLS Policy',
+      message: "You don't have permission to perform this operation.",
+      details: errorMessage,
+      originalError: error
+    };
+  }
+  
+  if (error.name === 'AbortError' || errorMessage.includes('timeout') || 
+      errorMessage.includes('timed out')) {
+    return {
+      type: 'Timeout',
+      message: "The request timed out. Please try again later.",
+      details: errorMessage,
+      originalError: error
+    };
+  }
+  
+  if (errorMessage.includes("network") || errorMessage.includes("fetch") || 
+      errorMessage.includes("connection")) {
+    return {
+      type: 'Network',
+      message: "Network connection issue. Please check your internet connection.",
+      details: errorMessage,
+      originalError: error
+    };
+  }
+
+  return {
+    type: 'Unknown',
+    message: errorMessage,
+    originalError: error
+  };
 }

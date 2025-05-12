@@ -1,4 +1,3 @@
-
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -38,9 +37,9 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     
     const user = authData.user;
     
-    // Verify admin role using optimized RPC function call
+    // Verify admin role using optimized check_user_role function directly to avoid recursion
     const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
-      (signal) => supabase.rpc('has_role', {
+      (signal) => supabase.rpc('check_user_role', {
         user_id: user.id,
         required_role: 'admin'
       }).abortSignal(signal),
@@ -96,7 +95,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       return scheduledCourse;
     }
     
-    // Use executeQuery for better error handling
+    // Use executeQuery for better error handling with proper RLS error detection
     const { data: template, error: templateError } = await executeQuery<any>(
       (signal) => supabase
         .from('courses')
@@ -114,10 +113,11 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     );
     
     if (templateError) {
+      // Special handling for recursion errors which should now be fixed with our SQL changes
       if (templateError.message && templateError.message.includes("infinite recursion detected in policy")) {
         console.error("RLS policy recursion error when fetching template:", templateError);
         toast.error("Database permission issue", {
-          description: "Unable to access database due to a permission configuration issue."
+          description: "The database configuration has been updated. Please refresh the page and try again."
         });
         return null;
       }
@@ -154,7 +154,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       updated_at: new Date().toISOString()
     };
     
-    // Use executeQuery for better error handling
+    // Use executeQuery for better error handling with improved error detection
     const { data: createdCourse, error: createError } = await executeQuery<any>(
       (signal) => supabase
         .from('courses')

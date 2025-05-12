@@ -37,10 +37,10 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
     
     const user = authData.user;
 
-    // If this is a template, verify admin role with optimized query
+    // If this is a template, verify admin role with optimized query using check_user_role
     if (courseData.isTemplate) {
       const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
-        (signal) => supabase.rpc('has_role', {
+        (signal) => supabase.rpc('check_user_role', { // Use the non-recursive function
           user_id: user.id,
           required_role: 'admin'
         }).abortSignal(signal),
@@ -162,10 +162,10 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
     
     const user = authData.user;
 
-    // If this is a template, verify admin role
+    // If this is a template, verify admin role using check_user_role
     if (courseData.isTemplate) {
       const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
-        (signal) => supabase.rpc('has_role', {
+        (signal) => supabase.rpc('check_user_role', { // Use the non-recursive function
           user_id: user.id,
           required_role: 'admin'
         }).abortSignal(signal),
@@ -254,7 +254,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     console.log("Deleting course:", id);
     
     // Check if user is authenticated with better error handling
-    const { data: authData, error: userError } = await executeQuery<{ user: User }>(
+    const { data: authData, error: userError } = await executeQuery<AuthDataResponse>(
       async (signal) => await supabase.auth.getUser(),
       {
         timeoutMs: 20000,
@@ -275,9 +275,9 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     
     const user = authData.user;
 
-    // Verify admin role with better error handling
+    // Verify admin role with check_user_role function to avoid recursion
     const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
-      (signal) => supabase.rpc('has_role', {
+      (signal) => supabase.rpc('check_user_role', { // Use the non-recursive function
         user_id: user.id,
         required_role: 'admin'
       }).abortSignal(signal),
