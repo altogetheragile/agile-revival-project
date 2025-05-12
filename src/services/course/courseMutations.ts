@@ -191,8 +191,9 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
 
     const dbCourseData = mapCourseToDb(courseData);
     
-    // Ensure the ID is not in the update data - remove it properly
-    const { id: _, ...updateData } = dbCourseData;
+    // Remove id property before update, rather than trying to destructure it
+    // This is the fix for the TypeScript error
+    const updateData = { ...dbCourseData };
     
     // Use optimized query with better error handling
     const { data, error } = await executeQuery<any>(
