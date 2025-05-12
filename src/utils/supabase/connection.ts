@@ -71,7 +71,7 @@ export async function testConnection(timeoutMs: number = 20000): Promise<Connect
       
       console.log(`[Supabase Connection] Error type: ${errorType}`);
       
-      const result = {
+      const connectionResult: ConnectionCheckResult = {
         isConnected: false,
         responseTime,
         error: {
@@ -82,41 +82,41 @@ export async function testConnection(timeoutMs: number = 20000): Promise<Connect
       };
       
       // Update cache even for errors to prevent constant retries
-      connectionCheckCache.result = result;
+      connectionCheckCache.result = connectionResult;
       connectionCheckCache.timestamp = now;
       
-      return result;
+      return connectionResult;
     }
     
     console.log(`[Supabase Connection] Connection test successful, response time: ${responseTime}ms`);
     
-    const result = {
+    const connectionResult: ConnectionCheckResult = {
       isConnected: true,
       responseTime,
       data: result?.data
     };
     
     // Update cache with successful response
-    connectionCheckCache.result = result;
+    connectionCheckCache.result = connectionResult;
     connectionCheckCache.timestamp = now;
     
-    return result;
+    return connectionResult;
   } catch (err) {
     const responseTime = Date.now() - startTime;
     
     console.error("[Supabase Connection] Unexpected error during connection test:", err);
     
-    const result = {
+    const connectionResult: ConnectionCheckResult = {
       isConnected: false,
       responseTime,
       error: err
     };
     
     // Update cache even for errors
-    connectionCheckCache.result = result;
+    connectionCheckCache.result = connectionResult;
     connectionCheckCache.timestamp = now;
     
-    return result;
+    return connectionResult;
   }
 }
 

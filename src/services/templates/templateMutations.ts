@@ -21,15 +21,16 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       }
     );
     
-    const user = userData?.user;
-    
-    if (userError || !user) {
+    // Type assertion after checking the data exists
+    if (userError || !userData?.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
       });
       return null;
     }
+    
+    const user = userData.user;
     
     // Verify admin role using optimized RPC function call
     const { data: isAdmin, error: roleError } = await executeQuery<boolean>(

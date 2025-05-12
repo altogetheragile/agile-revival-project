@@ -20,15 +20,16 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
       }
     );
     
-    const user = userData?.user;
-    
-    if (userError || !user) {
+    // Type assertion after checking the data exists
+    if (userError || !userData?.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
       });
       return null;
     }
+    
+    const user = userData.user;
 
     // If this is a template, verify admin role with optimized query
     if (courseData.isTemplate) {
@@ -144,15 +145,16 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       }
     );
     
-    const user = userData?.user;
-    
-    if (userError || !user) {
+    // Type assertion after checking the data exists
+    if (userError || !userData?.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
       });
       return null;
     }
+    
+    const user = userData.user;
 
     // If this is a template, verify admin role
     if (courseData.isTemplate) {
@@ -188,8 +190,8 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
 
     const dbCourseData = mapCourseToDb(courseData);
     
-    // Ensure the ID is not in the update data
-    const { id: _, ...updateData } = dbCourseData;
+    // Ensure the ID is not in the update data - remove it properly
+    const { id: _, ...updateData } = dbCourseData as any;
     
     // Use optimized query with better error handling
     const { data, error } = await executeQuery<any>(
@@ -255,15 +257,16 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
       }
     );
     
-    const user = userData?.user;
-    
-    if (userError || !user) {
+    // Type assertion after checking the data exists
+    if (userError || !userData?.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
       });
       return false;
     }
+    
+    const user = userData.user;
 
     // Verify admin role with better error handling
     const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
