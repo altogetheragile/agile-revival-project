@@ -1,3 +1,4 @@
+
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useAuthMethods } from '@/hooks/useAuthMethods';
@@ -27,7 +28,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { user, session, isAdmin, isLoading, isAdminChecked, checkAdminStatus } = useAuthState();
+  const { 
+    user, 
+    session, 
+    isAdmin, 
+    isLoading, 
+    isAdminChecked, 
+    checkAdminStatus, 
+    clearRoleCache 
+  } = useAuthState();
   const { signIn, signUp, signOut, resetPassword, updatePassword } = useAuthMethods();
   const { devMode } = useDevMode();
   const [connectionError, setConnectionError] = useState(false);
@@ -52,10 +61,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRetryCount
   });
 
-  // Test database connectivity on mount
+  // Test database connectivity on mount - but do it only once
   useEffect(() => {
-    checkDatabaseConnection(setConnectionError, setRetryCount, setAuthInitialized);
-  }, []);
+    if (!authInitialized) {
+      checkDatabaseConnection(setConnectionError, setRetryCount, setAuthInitialized);
+    }
+  }, [authInitialized]);
 
   // Add connection monitoring and auto-recovery
   useEffect(() => {
@@ -69,6 +80,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     return cleanup;
   }, [connectionError, retryCount, devMode]);
+
+  // Clear role cache on signout
+  const handleSignOut = async () => {
+    clearRoleCache();
+    await signOut();
+  };
 
   // Authorization is ready when either:
   // 1. We've finished loading and checked admin status, or
@@ -104,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     signIn,
     signUp,
-    signOut,
+    signOut: handleSignOut, // Use our wrapper with cache clearing
     resetPassword,
     updatePassword,
     isAdmin: devMode ? true : isAdmin,

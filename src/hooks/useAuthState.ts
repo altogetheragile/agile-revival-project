@@ -3,15 +3,32 @@ import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+// Role check cache duration in milliseconds (5 minutes)
+const ROLE_CACHE_DURATION = 5 * 60 * 1000;
+
 export function useAuthState() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdminChecked, setIsAdminChecked] = useState(false);
+  // Add role cache state
+  const [roleCache, setRoleCache] = useState<{[key: string]: {role: boolean, timestamp: number}}>({});
 
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     console.log(`[Auth Debug] Checking admin status for user: ${userId}`);
+    
+    // Check cache first to avoid unnecessary DB calls
+    const cachedRole = roleCache[userId];
+    const now = Date.now();
+    
+    if (cachedRole && (now - cachedRole.timestamp) < ROLE_CACHE_DURATION) {
+      console.log('[Auth Debug] Using cached admin status:', cachedRole.role);
+      setIsAdmin(cachedRole.role);
+      setIsAdminChecked(true);
+      return cachedRole.role;
+    }
+    
     try {
       // Call the has_role RPC function with explicit parameter names
       const { data, error } = await supabase.rpc('has_role', {
@@ -23,11 +40,9 @@ export function useAuthState() {
 
       if (error) {
         console.error('[Auth Debug] Error checking admin status:', error);
-        // Show detailed error information to help diagnose issues
+        // Only log essential error details to reduce console noise
         console.error('[Auth Debug] Error details:', {
           message: error.message,
-          details: error.details,
-          hint: error.hint,
           code: error.code
         });
         
@@ -41,6 +56,15 @@ export function useAuthState() {
       const hasAdminRole = !!data;
       console.log(`[Auth Debug] Admin status for ${userId}: ${hasAdminRole ? 'admin' : 'not admin'}`);
       
+      // Update cache
+      setRoleCache(prev => ({
+        ...prev,
+        [userId]: {
+          role: hasAdminRole,
+          timestamp: now
+        }
+      }));
+      
       setIsAdmin(hasAdminRole);
       setIsAdminChecked(true);
       
@@ -52,6 +76,11 @@ export function useAuthState() {
       setIsAdminChecked(true);
       return false;
     }
+  }, [roleCache]);
+
+  const clearRoleCache = useCallback(() => {
+    console.log('[Auth Debug] Clearing role cache');
+    setRoleCache({});
   }, []);
 
   useEffect(() => {
@@ -131,6 +160,11 @@ export function useAuthState() {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
+        // Clear role cache on auth state changes
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+          clearRoleCache();
+        }
+        
         if (currentSession?.user) {
           console.log(`[Auth Debug] User authenticated, email: ${currentSession.user.email}, id: ${currentSession.user.id}`);
           setIsAdminChecked(false);
@@ -179,7 +213,7 @@ export function useAuthState() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [checkAdminStatus]);
+  }, [checkAdminStatus, clearRoleCache]);
 
   return {
     user,
@@ -187,6 +221,7 @@ export function useAuthState() {
     isAdmin,
     isLoading,
     isAdminChecked,
-    checkAdminStatus
+    checkAdminStatus,
+    clearRoleCache // Export the cache clearing function
   };
 }

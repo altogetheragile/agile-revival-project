@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 /**
  * Create an AbortController with timeout
  */
-export const createTimeoutController = (timeoutMs: number = 10000): { 
+export const createTimeoutController = (timeoutMs: number = 20000): { 
   controller: AbortController, 
   timeoutId: NodeJS.Timeout 
 } => {
@@ -26,8 +26,8 @@ export const createTimeoutController = (timeoutMs: number = 10000): {
 export async function executeWithTimeout<T>(
   fn: (signal: AbortSignal) => Promise<T>,
   {
-    timeoutMs = 10000,
-    retries = 0,
+    timeoutMs = 20000, // Increased from 10s to 20s
+    retries = 2,      // Increased default retries from 1 to 2
     retryDelay = 1000,
     onTimeout,
     onError,
@@ -63,7 +63,7 @@ export async function executeWithTimeout<T>(
               toast.warning(`Request timed out, retrying... (${attempt + 1}/${retries + 1})`);
             }
             attempt++;
-            await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, attempt)));
+            await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(1.5, attempt))); // Reduced exponential backoff
             continue;
           }
           
@@ -80,7 +80,7 @@ export async function executeWithTimeout<T>(
             console.log(`Operation failed (attempt ${attempt + 1}/${retries + 1}), retrying...`, err);
           }
           attempt++;
-          await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, attempt)));
+          await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(1.5, attempt))); // Reduced exponential backoff
           continue;
         }
         
@@ -89,7 +89,7 @@ export async function executeWithTimeout<T>(
     } catch (outerError) {
       if (attempt < retries) {
         attempt++;
-        await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, attempt)));
+        await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(1.5, attempt))); // Reduced exponential backoff
         continue;
       }
       

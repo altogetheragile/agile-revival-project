@@ -7,7 +7,7 @@ import { toast } from "sonner";
 /**
  * Test database connectivity with enhanced error diagnostics
  */
-export async function testConnection(timeoutMs: number = 5000): Promise<ConnectionCheckResult> {
+export async function testConnection(timeoutMs: number = 8000): Promise<ConnectionCheckResult> {
   console.log("[Supabase Connection] Testing database connection...");
   const startTime = Date.now();
   
@@ -85,11 +85,28 @@ export async function testConnection(timeoutMs: number = 5000): Promise<Connecti
   }
 }
 
+// Cache connection check results to avoid repeated checks
+const connectionCheckCache = {
+  result: null as ConnectionCheckResult | null,
+  timestamp: 0,
+  ttl: 30000 // 30 seconds cache TTL
+};
+
 /**
- * Test database connectivity and show user feedback
+ * Test database connectivity and show user feedback with caching
  */
 export async function checkDatabaseHealth(silent: boolean = false): Promise<ConnectionCheckResult> {
+  // Check cache first
+  const now = Date.now();
+  if (connectionCheckCache.result && (now - connectionCheckCache.timestamp < connectionCheckCache.ttl)) {
+    return connectionCheckCache.result;
+  }
+  
   const result = await testConnection();
+  
+  // Update cache
+  connectionCheckCache.result = result;
+  connectionCheckCache.timestamp = now;
   
   if (!silent) {
     if (!result.isConnected) {

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDevMode } from '@/contexts/DevModeContext';
 
@@ -69,16 +69,19 @@ export default function ProtectedRoute({
       return;
     }
 
-    // For admin routes, refresh the admin status first
+    // For admin routes, refresh the admin status first but only if needed
+    // (avoid excessive refreshing that could cause performance issues)
     const checkRoles = async () => {
       try {
         let adminStatus = isAdmin;
         
-        // If admin role is required, try refreshing the status
-        if (requiredRoles.includes('admin')) {
+        // Only refresh admin status if we're on an admin route and admin status isn't true
+        if (requiredRoles.includes('admin') && !isAdmin) {
           console.log("[ProtectedRoute Debug] Refreshing admin status for user:", user.id);
           adminStatus = await refreshAdminStatus(user.id);
           console.log("[ProtectedRoute Debug] Refreshed admin status:", adminStatus);
+        } else if (isAdmin) {
+          console.log("[ProtectedRoute Debug] Using cached admin status:", isAdmin);
         }
         
         // Admin users always have access to everything
@@ -139,14 +142,12 @@ export default function ProtectedRoute({
     }
   }, [checkComplete, hasRequiredRole, isAdmin, requiredRoles, user, devMode]);
 
-  // Show loading state while checking authentication
+  // Show loading state while checking authentication but with a shorter delay
   if (!devMode && (!isAuthReady || isCheckingRole)) {
+    // Simplified loading UI to reduce render complexity
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-agile-purple" />
-          <p className="text-gray-600">Verifying access...</p>
-        </div>
+        <Loader2 className="h-10 w-10 animate-spin text-agile-purple" />
       </div>
     );
   }

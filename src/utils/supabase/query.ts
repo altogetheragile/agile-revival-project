@@ -7,8 +7,9 @@ import { createTimeoutController } from "./controllers";
 import { supabase } from "@/integrations/supabase/client";
 import { checkDatabaseHealth } from "./connection";
 
-const DEFAULT_TIMEOUT = 10000; // 10 seconds
-const DEFAULT_RETRIES = 1; // Set default to 1 retry
+// Increasing timeout from 10s to 20s for better reliability with complex queries
+const DEFAULT_TIMEOUT = 20000; // 20 seconds (increased from 10s)
+const DEFAULT_RETRIES = 2; // Increased from 1 to 2 retries
 
 /**
  * Execute a Supabase query with standardized error handling and timeout
@@ -30,18 +31,21 @@ export async function executeQuery<T>(
   
   let currentRetry = 0;
   
-  // Check connection health before executing query
-  const connectionStatus = await checkDatabaseHealth(true);
-  if (!connectionStatus.isConnected && connectionStatus.error?.type === 'Trigger') {
-    if (showErrorToast) {
-      toast.error("Database configuration issue", {
-        description: "There's an issue with the database triggers. Please contact the administrator."
-      });
+  // Check connection health before executing query but skip for repeated auth checks
+  // to avoid creating another bottleneck
+  if (!queryFn.toString().includes('has_role')) {
+    const connectionStatus = await checkDatabaseHealth(true);
+    if (!connectionStatus.isConnected && connectionStatus.error?.type === 'Trigger') {
+      if (showErrorToast) {
+        toast.error("Database configuration issue", {
+          description: "There's an issue with the database triggers. Please contact the administrator."
+        });
+      }
+      return { 
+        data: null, 
+        error: new Error("Database trigger error detected. This requires administrator attention.")
+      };
     }
-    return { 
-      data: null, 
-      error: new Error("Database trigger error detected. This requires administrator attention.")
-    };
   }
   
   while (currentRetry <= retries) {
