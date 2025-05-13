@@ -14,6 +14,8 @@ export interface QueryOptions {
   errorMessage?: string;
   retries?: number;
   silentRetry?: boolean;
+  onSuccess?: () => void;
+  onError?: (error: any) => void;
 }
 
 // Define the error types we can detect and handle

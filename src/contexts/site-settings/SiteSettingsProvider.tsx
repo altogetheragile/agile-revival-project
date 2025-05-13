@@ -70,23 +70,20 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
           .select('key, value'),
         {
           timeoutMs: 20000, // Increased from 10s to 20s to match our global setting
-          showErrorToast: !silentMode && !isInitialLoad.current,
           errorMessage: "Failed to load site settings",
-          retries: silentMode ? 0 : 2 // Increased from 1 to 2 retries
+          retries: silentMode ? 0 : 2, // Increased from 1 to 2 retries
+          onError: !silentMode && !isInitialLoad.current ? (err) => {
+            uiToast({
+              title: "Error",
+              description: "Failed to load site settings, using defaults",
+              variant: "destructive",
+            });
+          } : undefined
         }
       );
 
       if (error || !data) {
         console.error("Error fetching settings:", error);
-        
-        // Set default settings and show toast if needed
-        if (!isInitialLoad.current && !silentMode) {
-          uiToast({
-            title: "Error",
-            description: "Failed to load site settings, using defaults",
-            variant: "destructive",
-          });
-        }
         
         setRetryCount(prev => prev + 1);
         if (!silentMode) {
@@ -206,9 +203,15 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         }),
         {
           timeoutMs: 20000, // Increased from 10s to 20s
-          showErrorToast: !silentMode,
           errorMessage: `Failed to update ${key} settings`,
-          retries: 2  // Increased from 1 to 2 retries
+          retries: 2,  // Increased from 1 to 2 retries
+          onError: !silentMode ? (err) => {
+            uiToast({
+              title: "Error",
+              description: `Failed to update ${key} settings`,
+              variant: "destructive",
+            });
+          } : undefined
         }
       );
 

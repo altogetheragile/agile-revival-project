@@ -1,14 +1,7 @@
 
 import { toast } from "sonner";
 import { PostgrestError, PostgrestSingleResponse } from "@supabase/supabase-js";
-
-export interface QueryOptions {
-  timeoutMs?: number;
-  retries?: number;
-  errorMessage?: string;
-  onSuccess?: () => void;
-  onError?: (error: PostgrestError | Error) => void;
-}
+import { QueryOptions } from "./types";
 
 export interface QueryResult<T> {
   data: T | null;
@@ -25,7 +18,8 @@ export async function executeQuery<T>(
   const { 
     timeoutMs = 5000, 
     retries = 1, 
-    errorMessage = "Query failed", 
+    errorMessage = "Query failed",
+    showErrorToast = false,
     onSuccess, 
     onError 
   } = options;
@@ -47,9 +41,11 @@ export async function executeQuery<T>(
         
         // Handle specific errors
         if (result.error.code === '54000' && result.error.message.includes('infinite recursion detected')) {
-          toast.error("Database configuration issue", {
-            description: "A recursion in database policies was detected."
-          });
+          if (showErrorToast) {
+            toast.error("Database configuration issue", {
+              description: "A recursion in database policies was detected."
+            });
+          }
           onError?.(result.error);
           return { data: null, error: result.error };
         }
@@ -69,11 +65,13 @@ export async function executeQuery<T>(
       
       // Handle abort errors differently
       if (error instanceof DOMException && error.name === 'AbortError') {
-        toast.error("Request timeout", {
-          description: `The request took longer than ${timeoutMs/1000} seconds and was aborted.`
-        });
+        if (showErrorToast) {
+          toast.error("Request timeout", {
+            description: `The request took longer than ${timeoutMs/1000} seconds and was aborted.`
+          });
+        }
         onError?.(error);
-        return { data: null, error };
+        return { data: null, error: error as Error };
       }
       
       if (attemptCount >= retries) {
@@ -89,7 +87,7 @@ export async function executeQuery<T>(
   }
   
   // If we get here, all retries failed
-  if (lastError) {
+  if (lastError && showErrorToast) {
     toast.error(errorMessage, {
       description: lastError.message || "An unexpected error occurred",
     });

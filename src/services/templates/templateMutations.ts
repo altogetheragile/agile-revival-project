@@ -7,30 +7,15 @@ import { mapDbToCourse } from "./templateMappers";
 import { executeQuery } from "@/utils/supabase/query";
 import { User } from "@supabase/supabase-js";
 
-// Interface for authentication data response matching the actual structure
-interface AuthDataResponse {
-  data: {
-    user: User | null;
-  };
-}
-
 export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
   try {
     console.log(`Creating course from template ID: ${templateId}`, scheduleData);
     
-    // Check if user is authenticated using executeQuery with proper typing
-    const { data: authData, error: userError } = await executeQuery<AuthDataResponse>(
-      async (signal) => await supabase.auth.getUser(),
-      {
-        timeoutMs: 20000,
-        showErrorToast: true,
-        errorMessage: "Authentication check failed",
-        retries: 2
-      }
-    );
+    // Check if user is authenticated using standard auth method
+    const { data: authData, error: userError } = await supabase.auth.getUser();
     
-    // Explicit null check and type assertion
-    if (userError || !authData || !authData.data || !authData.data.user) {
+    // Explicit null check
+    if (userError || !authData?.user) {
       console.error("User not authenticated or error getting user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
@@ -38,7 +23,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       return null;
     }
     
-    const user = authData.data.user;
+    const user = authData.user;
     
     // Verify admin role using optimized check_user_role function directly to avoid recursion
     const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
