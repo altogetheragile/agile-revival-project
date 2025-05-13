@@ -3,7 +3,7 @@ import React from 'react';
 import AuthDivider from './AuthDivider';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
-import ResetPasswordForm from './ResetPasswordForm';
+import ResetPasswordForm from './reset-password/ResetPasswordForm';
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cleanupAuthState } from '@/utils/supabase/auth-cleanup';
@@ -111,11 +111,11 @@ const AuthContainer = () => {
           
           <TabsContent value="reset">
             <ResetPasswordForm 
-              onResetClick={handleResetPassword}
+              onSubmit={handleResetPassword}
               onSwitchToLogin={() => setActiveTab("login")}
               loading={loading}
               error={error}
-              success={success}
+              resetEmailSent={success}
             />
           </TabsContent>
         </Tabs>
