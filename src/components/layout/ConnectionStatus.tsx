@@ -4,7 +4,7 @@ import { useConnection } from "@/contexts/ConnectionContext";
 import { cn } from "@/lib/utils";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ConnectionStatusProps {
   className?: string;
@@ -14,6 +14,27 @@ interface ConnectionStatusProps {
 export const ConnectionStatus = ({ className, showDetails = false }: ConnectionStatusProps) => {
   const { connectionState, checkConnection } = useConnection();
   const [isRetrying, setIsRetrying] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  
+  // Only show the checking state after a delay to avoid flickering on initial load
+  useEffect(() => {
+    // If we're checking, wait a bit before showing the indicator
+    // This prevents the indicator from appearing for quick connections
+    let timer: NodeJS.Timeout;
+    
+    if (connectionState.isChecking) {
+      timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 1000); // Only show checking indicator if it takes more than 1 second
+    } else {
+      // Always show connected/disconnected states
+      setIsVisible(true);
+    }
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [connectionState.isChecking]);
   
   // Handle retry with debounce
   const handleRetry = () => {
@@ -24,6 +45,9 @@ export const ConnectionStatus = ({ className, showDetails = false }: ConnectionS
       setTimeout(() => setIsRetrying(false), 500);
     });
   };
+  
+  // Don't render anything if not visible
+  if (!isVisible) return null;
   
   // Checking state - neutral gray with spinner
   if (connectionState.isChecking) {

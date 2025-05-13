@@ -12,7 +12,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <div className="fixed top-16 right-4 z-50 w-auto">
+      <div className="fixed bottom-4 right-4 z-50 w-auto">
         <ConnectionStatus />
       </div>
       <main className="flex-grow">
