@@ -5,8 +5,9 @@ import { toast } from "sonner";
 
 /**
  * Seeds the blog_posts table with initial data if it's empty
+ * @param userId The ID of the admin user performing the seeding operation
  */
-export const seedBlogPosts = async (): Promise<boolean> => {
+export const seedBlogPosts = async (userId?: string): Promise<boolean> => {
   try {
     // Check if the table is empty
     const { count, error: countError } = await supabase
@@ -35,7 +36,8 @@ export const seedBlogPosts = async (): Promise<boolean> => {
       image_url: post.imageUrl || "",
       image_aspect_ratio: post.imageAspectRatio || "16/9",
       image_size: post.imageSize || 100,
-      image_layout: post.imageLayout || "standard"
+      image_layout: post.imageLayout || "standard",
+      created_by: userId || null
     }));
     
     // Insert seed data
@@ -59,12 +61,13 @@ export const seedBlogPosts = async (): Promise<boolean> => {
 
 /**
  * Seeds all tables with initial data
+ * @param userId The ID of the admin user performing the seeding operation
  */
-export const seedAllData = async (): Promise<void> => {
+export const seedAllData = async (userId?: string): Promise<void> => {
   try {
     console.log("Starting data seeding process");
     
-    await seedBlogPosts();
+    await seedBlogPosts(userId);
     
     console.log("Data seeding complete");
   } catch (error) {
