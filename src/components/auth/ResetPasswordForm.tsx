@@ -5,25 +5,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface ResetPasswordFormProps {
-  onResetClick: (email: string) => Promise<void>;
+  onSubmit: (email: string) => Promise<void>; // Change from onResetClick to onSubmit
   onSwitchToLogin: () => void;
   loading: boolean;
   error: string | null;
-  success: boolean;
+  resetEmailSent: boolean; // Change from success to resetEmailSent
 }
 
 const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
-  onResetClick,
+  onSubmit, // Updated prop name
   onSwitchToLogin,
   loading,
   error,
-  success
+  resetEmailSent // Updated prop name
 }) => {
   const [email, setEmail] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onResetClick(email);
+    await onSubmit(email); // Updated function call
   };
 
   return (
@@ -51,7 +51,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
             {error}
           </div>
         )}
-        {success && (
+        {resetEmailSent && (
           <div className="bg-green-50 text-green-600 p-2 rounded-md text-sm">
             Password reset email sent! Check your inbox.
           </div>
@@ -59,9 +59,9 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
         <Button
           type="submit"
           className="w-full"
-          disabled={loading || success}
+          disabled={loading || resetEmailSent}
         >
-          {loading ? "Sending..." : success ? "Email Sent" : "Reset Password"}
+          {loading ? "Sending..." : resetEmailSent ? "Email Sent" : "Reset Password"}
         </Button>
       </form>
       <div className="text-center text-sm">

@@ -1,6 +1,6 @@
 
 import { useAuthForm } from '@/contexts/AuthFormContext';
-import ResetPasswordForm from '../ResetPasswordForm';
+import ResetPasswordForm from '../reset-password/ResetPasswordForm';
 
 interface ResetPasswordViewProps {
   onSubmit: (email: string) => Promise<void>;
