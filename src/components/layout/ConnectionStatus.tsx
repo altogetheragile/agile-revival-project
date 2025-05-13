@@ -1,159 +1,57 @@
+import { useState, useEffect } from 'react';
+import { CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 
-import React, { useEffect, useState } from 'react';
-import { useConnection } from '@/contexts/ConnectionContext';
-import { Wifi, WifiOff, AlertCircle, RefreshCw, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { useDevMode } from '@/contexts/DevModeContext';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+export const ConnectionStatus = () => {
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
 
-export const ConnectionStatus: React.FC<{
-  className?: string;
-  showDetails?: boolean;
-}> = ({ className, showDetails = false }) => {
-  const { connectionState, checkConnection } = useConnection();
-  const { isConnected, isChecking, responseTime, connectionError, consecutiveErrors } = connectionState;
-  const { devMode } = useDevMode();
-  
-  const [isVisible, setIsVisible] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  
-  // Show when there are connection issues or in dev mode
   useEffect(() => {
-    if (!isConnected && !isChecking) {
-      setIsVisible(true);
-      setShowSuccess(false);
-    } else if (devMode) {
-      setIsVisible(true); 
-      setShowSuccess(false);
-    } else if (isConnected && connectionError) {
-      // Show success message when connection is restored after an error
-      setIsVisible(true);
-      setShowSuccess(true);
-      
-      // Hide success message after a short delay
-      const timer = setTimeout(() => {
-        setShowSuccess(false);
-        setIsVisible(false);
-      }, 5000);
-      return () => clearTimeout(timer);
-    } else {
-      // Hide after a short delay when connection is restored
-      if (isVisible && isConnected) {
-        const timer = setTimeout(() => {
-          setIsVisible(false);
-          setShowSuccess(false);
-        }, 3000);
-        return () => clearTimeout(timer);
+    const checkConnection = async () => {
+      try {
+        // Attempt to fetch a resource from the same origin
+        const response = await fetch('/api/health');
+        setIsConnected(response.ok);
+      } catch (error) {
+        setIsConnected(false);
       }
-    }
-  }, [isConnected, isChecking, isVisible, devMode, connectionError]);
-  
-  // Always show when connection issues persist
-  if (consecutiveErrors > 2) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={cn(
-              "flex items-center gap-2 text-sm p-2 rounded-md transition-all bg-red-50 text-red-700",
-              className
-            )}>
-              <WifiOff className="h-4 w-4 text-red-500" />
-              <span>Connection issues ({consecutiveErrors})</span>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 text-xs"
-                onClick={() => checkConnection()}
-                disabled={isChecking}
-              >
-                <RefreshCw className={cn("h-3 w-3", isChecking && "animate-spin")} />
-              </Button>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs max-w-xs">
-              Multiple connection errors detected. The database function has been fixed.
-              Try refreshing the page.
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
+    };
+
+    checkConnection(); // Initial check
+
+    const intervalId = setInterval(checkConnection, 5000); // Check every 5 seconds
+
+    return () => clearInterval(intervalId); // Cleanup interval on unmount
+  }, []);
+
+  const statusStyle = {
+    base: "flex items-center gap-2 rounded-md text-sm font-medium transition-colors",
+    connected: "bg-green-500 text-white",
+    disconnected: "bg-red-500 text-white",
+    loading: "bg-gray-200 text-gray-600 animate-pulse",
+    icon: "h-4 w-4"
+  };
+
+  let statusText: string;
+  let icon;
+  let className: string;
+
+  if (isConnected === null) {
+    statusText = "Checking connection...";
+    icon = <Loader2 className={`${statusStyle.icon} animate-spin`} />;
+    className = statusStyle.base + " " + statusStyle.loading;
+  } else if (isConnected) {
+    statusText = "Connected to database";
+    icon = <CheckCircle className={statusStyle.icon} />;
+    className = statusStyle.base + " " + statusStyle.connected;
+  } else {
+    statusText = "Disconnected from database";
+    icon = <AlertTriangle className={statusStyle.icon} />;
+    className = statusStyle.base + " " + statusStyle.disconnected;
   }
-  
-  if ((!isVisible && isConnected) || (isConnected && !showDetails && !devMode && !showSuccess)) {
-    return null;
-  }
-  
-  if (isConnected && showSuccess) {
-    return (
-      <div className={cn(
-        "flex items-center gap-2 text-sm p-2 rounded-md transition-all bg-green-50 text-green-700",
-        className
-      )}>
-        <CheckCircle className="h-4 w-4 text-green-500" />
-        <span>Connection restored!</span>
-      </div>
-    );
-  }
-  
+
   return (
-    <div className={cn(
-      "flex items-center gap-2 text-sm p-2 rounded-md transition-all",
-      isConnected ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700",
-      className
-    )}>
-      {isChecking ? (
-        <div className="animate-pulse flex items-center gap-2">
-          <AlertCircle className="h-4 w-4" />
-          <span>Checking connection...</span>
-        </div>
-      ) : isConnected ? (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-2">
-                <Wifi className="h-4 w-4 text-green-500" />
-                <span>Connected{responseTime ? ` (${responseTime}ms)` : ''}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">
-                Database connection status: {isConnected ? 'OK' : 'Error'}<br />
-                Response time: {responseTime || '?'}ms
-                {devMode && <span className="block font-semibold text-amber-600">Dev Mode Active</span>}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      ) : (
-        <div className="flex items-center gap-2">
-          <WifiOff className="h-4 w-4 text-red-500" />
-          <span>Disconnected</span>
-        </div>
-      )}
-      
-      {showDetails && connectionError && !isConnected && (
-        <div className="text-xs mt-1 text-red-500">{connectionError}</div>
-      )}
-      
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-6 text-xs"
-        onClick={() => checkConnection()}
-        disabled={isChecking}
-      >
-        {isChecking ? (
-          <RefreshCw className="h-3 w-3 animate-spin mr-1" />
-        ) : (
-          <RefreshCw className="h-3 w-3 mr-1" />
-        )}
-        {isChecking ? 'Checking...' : 'Check'}
-      </Button>
+    <div className={className} style={{ padding: '0.5rem 1rem' }}>
+      {icon}
+      <span>{statusText}</span>
     </div>
   );
 };

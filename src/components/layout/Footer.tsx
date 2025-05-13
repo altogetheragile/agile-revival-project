@@ -1,12 +1,13 @@
 
 import React, { useEffect } from "react";
 import { ChevronRight, Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Footer = () => {
   const { email, phone, location, socialMedia } = useContactInfo();
+  const currentLocation = useLocation();
   
   // Debug logging
   useEffect(() => {
@@ -23,12 +24,12 @@ const Footer = () => {
         </div>
       );
     }
-    return <p>Email: {email}</p>;
+    return <p>Email: <a href={`mailto:${email}`} className="hover:text-agile-purple">{email}</a></p>;
   };
 
   const renderPhone = () => {
     if (!phone) return null;
-    return <p>Phone: {phone}</p>;
+    return <p>Phone: <a href={`tel:${phone}`} className="hover:text-agile-purple">{phone}</a></p>;
   };
 
   const renderLocation = () => {
@@ -101,6 +102,14 @@ const Footer = () => {
       </div>
     );
   };
+
+  // Helper to handle hash links correctly based on current page
+  const handleHashLink = (hash: string) => {
+    if (currentLocation.pathname === '/') {
+      return `#${hash}`;
+    }
+    return `/#${hash}`;
+  };
   
   return (
     <footer className="bg-gray-900 text-white pt-16 pb-8">
@@ -162,34 +171,40 @@ const Footer = () => {
             <h4 className="text-lg font-semibold mb-6">Quick Links</h4>
             <ul className="space-y-3">
               <li>
-                <a href="#home" className="text-gray-400 hover:text-agile-purple flex items-center">
+                <Link to="/" className="text-gray-400 hover:text-agile-purple flex items-center">
                   <ChevronRight size={16} className="mr-1" />
                   Home
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#about" className="text-gray-400 hover:text-agile-purple flex items-center">
+                <Link to={handleHashLink('about')} className="text-gray-400 hover:text-agile-purple flex items-center">
                   <ChevronRight size={16} className="mr-1" />
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#services" className="text-gray-400 hover:text-agile-purple flex items-center">
+                <Link to={handleHashLink('services')} className="text-gray-400 hover:text-agile-purple flex items-center">
                   <ChevronRight size={16} className="mr-1" />
                   Services
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#testimonials" className="text-gray-400 hover:text-agile-purple flex items-center">
+                <Link to={handleHashLink('testimonials')} className="text-gray-400 hover:text-agile-purple flex items-center">
                   <ChevronRight size={16} className="mr-1" />
                   Client Stories
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#contact" className="text-gray-400 hover:text-agile-purple flex items-center">
+                <Link to={handleHashLink('contact')} className="text-gray-400 hover:text-agile-purple flex items-center">
                   <ChevronRight size={16} className="mr-1" />
                   Contact Us
-                </a>
+                </Link>
+              </li>
+              <li>
+                <Link to="/blog" className="text-gray-400 hover:text-agile-purple flex items-center">
+                  <ChevronRight size={16} className="mr-1" />
+                  Blog
+                </Link>
               </li>
             </ul>
           </div>

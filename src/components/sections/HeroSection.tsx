@@ -16,6 +16,15 @@ const HeroSection = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Scroll to contact section when clicking "Get in Touch"
+  const scrollToContact = (e) => {
+    e.preventDefault();
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section 
       id="home" 
@@ -57,6 +66,7 @@ const HeroSection = () => {
               </Link>
               <a 
                 href="#contact" 
+                onClick={scrollToContact}
                 className="secondary-button flex items-center justify-center gap-2"
               >
                 Get in Touch

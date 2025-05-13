@@ -1,15 +1,15 @@
 
 import React, { useEffect } from 'react';
-import Navbar from "@/components/layout/Navbar";
+import MainLayout from "@/components/layout/MainLayout";
 import HeroSection from "@/components/sections/HeroSection";
 import ServicesSection from "@/components/sections/ServicesSection";
 import AboutSection from "@/components/sections/AboutSection";
 import TestimonialsSection from "@/components/sections/TestimonialsSection";
 import ContactSection from "@/components/sections/ContactSection";
-import Footer from "@/components/layout/Footer";
 import { Toaster } from '@/components/ui/toaster';
 import PageTitle from "@/components/layout/PageTitle";
 import { ErrorBoundary } from 'react-error-boundary';
+import { toast } from 'sonner';
 
 // Simple fallback component for section errors
 const SectionErrorFallback = ({ error, resetErrorBoundary }) => {
@@ -30,15 +30,22 @@ const SectionErrorFallback = ({ error, resetErrorBoundary }) => {
 const Index = () => {
   useEffect(() => {
     console.log("Index component mounted");
+    
+    // Validate page loaded correctly
+    toast.success("Welcome to Altogether Agile", {
+      description: "Explore our services and discover how we can help you transform your organization",
+      duration: 4000,
+      position: "bottom-right"
+    });
+    
     return () => {
       console.log("Index component unmounted");
     };
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <MainLayout>
       <PageTitle />
-      <Navbar />
       <main className="relative">
         <ErrorBoundary FallbackComponent={SectionErrorFallback}>
           <HeroSection />
@@ -58,9 +65,8 @@ const Index = () => {
           </ErrorBoundary>
         </div>
       </main>
-      <Footer />
       <Toaster />
-    </div>
+    </MainLayout>
   );
 };
 
