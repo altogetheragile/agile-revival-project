@@ -1,5 +1,4 @@
 
-import { useEffect } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
 import AdminDashboard from '@/pages/AdminDashboard';
@@ -17,7 +16,6 @@ import { AuthProvider as AuthContextProvider } from '@/contexts/AuthContext';
 import DevModeToggle from '@/components/dev/DevModeToggle';
 import { DevModeProvider } from '@/contexts/DevModeContext';
 import { Toaster as SonnerToaster } from 'sonner';
-import { seedAllData } from './services/seedDataService';
 import AgileFacilitation from './pages/services/AgileFacilitation';
 import CustomCoaching from './pages/services/CustomCoaching';
 import LeadershipCoaching from './pages/services/LeadershipCoaching';
@@ -29,10 +27,7 @@ import './App.css';
 import ErrorBoundary from './components/layout/ErrorBoundary';
 
 function App() {
-  useEffect(() => {
-    // Attempt to seed data on app startup
-    seedAllData().catch(console.error);
-  }, []);
+  // Removed the automatic seeding useEffect hook that was causing RLS policy errors
 
   return (
     <ErrorBoundary>
