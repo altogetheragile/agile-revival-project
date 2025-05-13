@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -251,7 +250,7 @@ export const BlogManagement = () => {
             <div className="p-1">
               <BlogForm 
                 initialData={currentBlogPost} 
-                onSave={handleSave} 
+                onSubmit={handleSave} 
                 onCancel={() => setIsDialogOpen(false)}
               />
             </div>
@@ -262,12 +261,8 @@ export const BlogManagement = () => {
       {/* Delete confirmation dialog */}
       <DeleteConfirmationDialog
         open={isDeleteDialogOpen}
-        onOpenChange={() => setIsDeleteDialogOpen(false)}
+        onOpenChange={(open) => setIsDeleteDialogOpen(open)}
         onConfirm={handleConfirmDelete}
-        title="Delete Blog Post"
-        description="Are you sure you want to delete this blog post? This action cannot be undone."
-        cancelText="Cancel"
-        confirmText="Delete"
       />
     </div>
   );
