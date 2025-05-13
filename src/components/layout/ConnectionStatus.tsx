@@ -30,13 +30,13 @@ export const ConnectionStatus = ({ className, showDetails = false }: ConnectionS
     return (
       <div 
         className={cn(
-          "inline-flex items-center gap-2 rounded-full px-2.5 py-0.5 text-xs",
-          "bg-gray-100 text-gray-600 border border-gray-200",
+          "inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm",
+          "bg-gray-100/90 text-gray-700 border border-gray-200 shadow-sm",
           className
         )}
         aria-live="polite"
       >
-        <Loader2 className="h-3 w-3 animate-spin" />
+        <Loader2 className="h-4 w-4 animate-spin" />
         <span>Checking</span>
       </div>
     );
