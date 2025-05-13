@@ -9,6 +9,7 @@ export interface CourseFormActionsProps {
   isDraft: boolean;
   isSubmitting?: boolean;
   onPreview?: () => void;
+  customSubmitText?: React.ReactNode;
 }
 
 export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
@@ -16,7 +17,8 @@ export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
   isEditing, 
   isDraft,
   isSubmitting = false,
-  onPreview
+  onPreview,
+  customSubmitText
 }) => {
   return (
     <div className="flex justify-between pt-4">
@@ -51,10 +53,10 @@ export const CourseFormActions: React.FC<CourseFormActionsProps> = ({
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isEditing ? "Updating..." : "Creating..."}
+              {customSubmitText ? customSubmitText : isEditing ? "Updating..." : "Creating..."}
             </>
           ) : (
-            isEditing ? "Update" : "Create"
+            customSubmitText ? customSubmitText : isEditing ? "Update" : "Create"
           )}
         </Button>
       </div>

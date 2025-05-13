@@ -21,6 +21,8 @@ interface CourseFormProps {
   formData?: CourseFormData | null;
   setFormData?: React.Dispatch<React.SetStateAction<CourseFormData | null>>;
   onPreview?: () => void;
+  isSubmitting?: boolean;
+  submitButtonText?: React.ReactNode;
 }
 
 const CourseForm: React.FC<CourseFormProps> = ({
@@ -52,7 +54,9 @@ const CourseForm: React.FC<CourseFormProps> = ({
   isTemplate = false,
   formData,
   setFormData,
-  onPreview
+  onPreview,
+  isSubmitting = false,
+  submitButtonText
 }) => {
   const form = useForm<CourseFormData>({
     defaultValues: initialData
@@ -87,6 +91,8 @@ const CourseForm: React.FC<CourseFormProps> = ({
           isEditing={!!initialData.id}
           isDraft={initialData.status === "draft"} 
           onPreview={onPreview}
+          isSubmitting={isSubmitting}
+          customSubmitText={submitButtonText}
         />
       </form>
     </Form>
