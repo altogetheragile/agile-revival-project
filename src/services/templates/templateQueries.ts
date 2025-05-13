@@ -29,6 +29,7 @@ const mapDbToCourse = (dbCourse: any): Course => ({
   imageAspectRatio: dbCourse.image_aspect_ratio,
   imageSize: dbCourse.image_size,
   imageLayout: dbCourse.image_layout,
+  eventType: dbCourse.event_type || "course", // Add default event type
 });
 
 // Fallback template data
@@ -47,7 +48,8 @@ const fallbackTemplates: Course[] = [
     spotsAvailable: 12,
     dates: "TBD",
     location: "London",
-    instructor: "Alun Davies-Baker"
+    instructor: "Alun Davies-Baker",
+    eventType: "course" // Add event type
   },
   {
     id: "template-002",
@@ -63,7 +65,8 @@ const fallbackTemplates: Course[] = [
     spotsAvailable: 12,
     dates: "TBD",
     location: "London",
-    instructor: "Alun Davies-Baker"
+    instructor: "Alun Davies-Baker",
+    eventType: "workshop" // Add event type
   }
 ];
 

@@ -27,4 +27,5 @@ export const mapDbToCourse = (dbCourse: any): Course => ({
   imageAspectRatio: dbCourse.image_aspect_ratio,
   imageSize: dbCourse.image_size,
   imageLayout: dbCourse.image_layout,
+  eventType: dbCourse.event_type || "course", // Add default event type
 });

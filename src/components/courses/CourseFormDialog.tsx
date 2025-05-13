@@ -14,7 +14,6 @@ interface CourseFormDialogProps {
   currentCourse: Course | null;
   onSubmit: (data: CourseFormData) => void;
   onCancel: () => void;
-  // Add the missing props
   onOpenMediaLibrary?: () => void;
   formData?: Course | null;
   setFormData?: React.Dispatch<React.SetStateAction<Course | null>>;
@@ -105,6 +104,7 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
           instructor: "",
           price: "",
           category: "scrum",
+          eventType: "course", // Default event type
           spotsAvailable: 0,
           imageUrl: finalUrl,
           imageAspectRatio: aspectRatio || "16/9",

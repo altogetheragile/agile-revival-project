@@ -16,6 +16,11 @@ interface CourseFormProps {
   onSubmit: (data: CourseFormData) => void;
   onCancel: () => void;
   onOpenMediaLibrary?: () => void;
+  stayOpenOnSubmit?: boolean;
+  isTemplate?: boolean;
+  formData?: CourseFormData | null;
+  setFormData?: React.Dispatch<React.SetStateAction<CourseFormData | null>>;
+  onPreview?: () => void;
 }
 
 const CourseForm: React.FC<CourseFormProps> = ({
@@ -42,7 +47,12 @@ const CourseForm: React.FC<CourseFormProps> = ({
   },
   onSubmit,
   onCancel,
-  onOpenMediaLibrary
+  onOpenMediaLibrary,
+  stayOpenOnSubmit = false,
+  isTemplate = false,
+  formData,
+  setFormData,
+  onPreview
 }) => {
   const form = useForm<CourseFormData>({
     defaultValues: initialData
@@ -74,7 +84,9 @@ const CourseForm: React.FC<CourseFormProps> = ({
         <CourseStatusField form={form} />
         <CourseFormActions 
           onCancel={onCancel} 
-          isEditing={!!initialData.id} 
+          isEditing={!!initialData.id}
+          isDraft={initialData.status === "draft"} 
+          onPreview={onPreview}
         />
       </form>
     </Form>

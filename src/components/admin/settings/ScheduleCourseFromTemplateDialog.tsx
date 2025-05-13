@@ -101,8 +101,6 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
             initialData={prepareCourseData()}
             onSubmit={handleFormSubmit}
             onCancel={onCancel}
-            stayOpenOnSubmit={false}
-            isTemplate={false}
             onOpenMediaLibrary={onOpenMediaLibrary}
             formData={formData}
             setFormData={setFormData}

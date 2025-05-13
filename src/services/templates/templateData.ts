@@ -16,7 +16,8 @@ export const fallbackTemplates: Course[] = [
     spotsAvailable: 12,
     dates: "TBD",
     location: "London",
-    instructor: "Alun Davies-Baker"
+    instructor: "Alun Davies-Baker",
+    eventType: "course" // Add event type
   },
   {
     id: "template-002",
@@ -32,6 +33,7 @@ export const fallbackTemplates: Course[] = [
     spotsAvailable: 12,
     dates: "TBD",
     location: "London",
-    instructor: "Alun Davies-Baker"
+    instructor: "Alun Davies-Baker",
+    eventType: "workshop" // Add event type
   }
 ];

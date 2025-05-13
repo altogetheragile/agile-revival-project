@@ -182,7 +182,6 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
                 }}
                 onSubmit={handleSubmit}
                 onCancel={onCancel}
-                stayOpenOnSubmit={true}
                 isTemplate={true} // Always pass isTemplate as true
                 onOpenMediaLibrary={() => setMediaLibOpen(true)}
                 formData={formData}
