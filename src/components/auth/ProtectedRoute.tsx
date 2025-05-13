@@ -4,7 +4,6 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useDevMode } from '@/contexts/DevModeContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,7 +17,6 @@ export default function ProtectedRoute({
   redirectTo = "/auth" 
 }: ProtectedRouteProps) {
   const { user, isAdmin, isAuthReady, refreshAdminStatus } = useAuth();
-  const { devMode } = useDevMode();
   const location = useLocation();
   const [isCheckingRole, setIsCheckingRole] = useState(requiredRoles.length > 0);
   const [hasRequiredRole, setHasRequiredRole] = useState(false);
@@ -32,29 +30,11 @@ export default function ProtectedRoute({
     isAuthReady, 
     requiredRoles,
     isCheckingRole,
-    devMode,
     pathname: location.pathname
   });
 
-  // If dev mode is enabled, bypass all checks
+  // Check if the user has any of the required roles
   useEffect(() => {
-    if (devMode) {
-      console.log("[ProtectedRoute Debug] Dev mode enabled, bypassing security checks");
-      setIsCheckingRole(false);
-      setHasRequiredRole(true);
-      setCheckComplete(true);
-      
-      // Show a warning when entering a protected route with dev mode
-      if (requiredRoles.includes('admin') && location.pathname.includes('/admin')) {
-        toast.warning("Using Dev Mode for admin access", {
-          id: "dev-mode-admin-access",
-          description: "Security checks are bypassed. Disable Dev Mode for production use.",
-        });
-      }
-      return;
-    }
-
-    // Check if the user has any of the required roles
     if (!requiredRoles.length) {
       console.log("[ProtectedRoute Debug] No required roles, skipping check");
       setIsCheckingRole(false);
@@ -116,46 +96,39 @@ export default function ProtectedRoute({
     };
     
     checkRoles();
-  }, [user, isAdmin, requiredRoles, refreshAdminStatus, devMode, location.pathname]);
+  }, [user, isAdmin, requiredRoles, refreshAdminStatus, location.pathname]);
 
   // Show toast notification when redirected due to admin access restriction
   useEffect(() => {
-    if (!devMode && checkComplete && requiredRoles.includes('admin') && !hasRequiredRole && user) {
+    if (checkComplete && requiredRoles.includes('admin') && !hasRequiredRole && user) {
       console.log("[ProtectedRoute Debug] Showing access denied toast");
       toast.error("Access denied", {
         description: "You need admin privileges to access this area.",
         duration: 5000,
       });
     }
-  }, [checkComplete, requiredRoles, hasRequiredRole, user, devMode]);
+  }, [checkComplete, requiredRoles, hasRequiredRole, user]);
 
   // Log the final decision for debugging
   useEffect(() => {
     if (checkComplete) {
       console.log("[ProtectedRoute Debug] Access decision:", {
-        devMode,
         hasRequiredRole,
         isAdmin,
         requiredRoles,
-        shouldRedirect: !devMode && (!user || (requiredRoles.length > 0 && !hasRequiredRole && !isAdmin))
+        shouldRedirect: (!user || (requiredRoles.length > 0 && !hasRequiredRole && !isAdmin))
       });
     }
-  }, [checkComplete, hasRequiredRole, isAdmin, requiredRoles, user, devMode]);
+  }, [checkComplete, hasRequiredRole, isAdmin, requiredRoles, user]);
 
   // Show loading state while checking authentication but with a shorter delay
-  if (!devMode && (!isAuthReady || isCheckingRole)) {
+  if (!isAuthReady || isCheckingRole) {
     // Simplified loading UI to reduce render complexity
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-10 w-10 animate-spin text-agile-purple" />
       </div>
     );
-  }
-
-  // When dev mode is enabled, always render the children
-  if (devMode) {
-    console.log("[ProtectedRoute Debug] Dev mode enabled, allowing access");
-    return <>{children}</>;
   }
 
   // Redirect to login if not authenticated

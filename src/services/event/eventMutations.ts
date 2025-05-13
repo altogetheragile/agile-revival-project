@@ -50,7 +50,7 @@ export const createEvent = async (eventData: EventFormData): Promise<Event | nul
         });
       } else if (actualError?.message?.includes('violates row-level security policy')) {
         toast.error("Permission error", {
-          description: "You don't have permission to create events. Try enabling Dev Mode."
+          description: "You don't have permission to create events. Please contact an administrator."
         });
       } else {
         toast.error("Failed to create event", {
@@ -268,9 +268,16 @@ export const createEventFromTemplate = async (templateId: string, scheduleData: 
     if (createError || createResult?.error) {
       const actualError = createError || createResult?.error;
       console.error("Error creating event from template:", actualError);
-      toast.error("Failed to create event", {
-        description: actualError?.message || "Unknown error occurred"
-      });
+      
+      if (actualError?.message?.includes('violates row-level security policy')) {
+        toast.error("Permission error", {
+          description: "You don't have permission to create events. Please contact an administrator."
+        });
+      } else {
+        toast.error("Failed to create event", {
+          description: actualError?.message || "Unknown error occurred"
+        });
+      }
       return null;
     }
     

@@ -15,9 +15,7 @@ import PageManagement from "@/components/admin/PageManagement";
 import AdminMediaManager from "@/components/media/AdminMediaManager";
 import EventsManagement from "@/components/admin/EventsManagement";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
-import { useDevMode } from "@/contexts/DevModeContext";
 import AdminBadge from "@/components/user/AdminBadge";
-import DevModeToggle from "@/components/dev/DevModeToggle";
 import { Shield, ShieldAlert } from "lucide-react";
 import { useConnection } from "@/contexts/ConnectionContext";
 import { Alert } from "@/components/ui/alert";
@@ -28,7 +26,6 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAdmin, isAuthReady, user } = useAuth();
-  const { devMode } = useDevMode();
   const { connectionState, checkConnection } = useConnection();
   
   useEffect(() => {
@@ -42,22 +39,15 @@ const AdminDashboard = () => {
         variant: "destructive",
       });
       navigate('/auth', { state: { from: '/admin' } });
-    } else if (isAuthReady && !isAdmin && !devMode) {
+    } else if (isAuthReady && !isAdmin) {
       toast({
         title: "Access Denied",
-        description: "You do not have admin privileges to access this page. You can enable Dev Mode to bypass this restriction.",
+        description: "You do not have admin privileges to access this page.",
         variant: "destructive",
       });
       navigate('/unauthorized');
-    } else if (isAuthReady && devMode && !isAdmin) {
-      // User is accessing via Dev Mode
-      toast({
-        title: "Dev Mode Active",
-        description: "You are viewing the admin dashboard with Dev Mode enabled.",
-        duration: 5000,
-      });
     }
-  }, [isAuthReady, isAdmin, user, navigate, toast, devMode]);
+  }, [isAuthReady, isAdmin, user, navigate, toast]);
 
   // Test connection when first loading the admin dashboard
   useEffect(() => {
@@ -74,10 +64,9 @@ const AdminDashboard = () => {
       isAuthReady, 
       isAdmin: isAdmin || false,
       hasUser: !!user,
-      devMode,
       connectionStatus: connectionState.isConnected ? 'connected' : 'disconnected'
     });
-  }, [currentTab, isChecking, isAuthReady, isAdmin, user, devMode, connectionState]);
+  }, [currentTab, isChecking, isAuthReady, isAdmin, user, connectionState]);
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -88,14 +77,7 @@ const AdminDashboard = () => {
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold text-agile-purple-dark">Admin Dashboard</h1>
               <div className="flex items-center gap-2">
-                {devMode ? (
-                  <span className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded flex items-center gap-1">
-                    <ShieldAlert size={14} />
-                    Dev Mode Active
-                  </span>
-                ) : (
-                  <AdminBadge />
-                )}
+                <AdminBadge />
                 <ConnectionStatus className="text-xs" showDetails={true} />
               </div>
             </div>
@@ -106,7 +88,7 @@ const AdminDashboard = () => {
                   <p className="font-medium">Connection issue detected</p>
                   <p className="text-sm mt-1">
                     Having trouble connecting to the database. Some features may not work correctly.
-                    Try refreshing the page or enabling Dev Mode for development purposes.
+                    Try refreshing the page.
                   </p>
                 </div>
               </Alert>
@@ -156,7 +138,6 @@ const AdminDashboard = () => {
       </main>
       <Footer />
       <ScrollToTop />
-      <DevModeToggle />
     </div>
   );
 };

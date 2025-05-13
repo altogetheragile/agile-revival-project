@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Course, CourseFormData } from "@/types/course";
 import { toast } from "sonner";
@@ -104,7 +103,7 @@ export const createCourse = async (courseData: CourseFormData): Promise<Course |
       // Enhanced error messaging
       let errorMessage = "Failed to create course";
       if (error.message?.includes('violates row-level security policy')) {
-        errorMessage = "Permission issue: You don't have the required permissions";
+        errorMessage = "Permission issue: You don't have the required admin permissions";
       } else if (error.message?.includes('timed out') || error.message?.includes('connection')) {
         errorMessage = "Database connection issue: Please try again";
       }
