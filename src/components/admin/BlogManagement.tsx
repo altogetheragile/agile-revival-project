@@ -33,8 +33,9 @@ export const BlogManagement = () => {
   const [currentPostId, setCurrentPostId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSeedDataVisible, setIsSeedDataVisible] = useState(false);
+  const [currentBlogPost, setCurrentBlogPost] = useState<BlogPostFormData | undefined>(undefined);
 
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
 
   // Load blog posts on component mount
   useEffect(() => {
@@ -42,6 +43,26 @@ export const BlogManagement = () => {
     // Only show seed button if no posts are found
     setIsSeedDataVisible(true);
   }, []);
+
+  // Fetch blog post data when currentPostId changes
+  useEffect(() => {
+    const fetchBlogPost = async () => {
+      if (currentPostId) {
+        try {
+          const post = await getBlogPostById(currentPostId);
+          setCurrentBlogPost(post);
+        } catch (error) {
+          console.error("Error fetching blog post:", error);
+          toast.error('Failed to load blog post details');
+        }
+      } else {
+        // Reset current blog post when adding a new post
+        setCurrentBlogPost(undefined);
+      }
+    };
+
+    fetchBlogPost();
+  }, [currentPostId]);
 
   // Filter posts based on search term
   const filteredPosts = blogPosts.filter(post => 
@@ -141,8 +162,12 @@ export const BlogManagement = () => {
   // Handle seeding sample blog posts
   const handleSeedData = async () => {
     try {
-      const { data: { user } } = await useAuth();
-      await seedBlogPosts(user?.id);
+      if (!user) {
+        toast.error('User not authenticated');
+        return;
+      }
+      
+      await seedBlogPosts(user.id);
       toast.success('Sample blog posts added successfully');
       await handleRefresh();
     } catch (error) {
@@ -225,7 +250,7 @@ export const BlogManagement = () => {
           <ScrollArea className="max-h-[70vh]">
             <div className="p-1">
               <BlogForm 
-                postId={currentPostId} 
+                initialData={currentBlogPost} 
                 onSave={handleSave} 
                 onCancel={() => setIsDialogOpen(false)}
               />
@@ -236,8 +261,8 @@ export const BlogManagement = () => {
 
       {/* Delete confirmation dialog */}
       <DeleteConfirmationDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
+        open={isDeleteDialogOpen}
+        onOpenChange={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Blog Post"
         description="Are you sure you want to delete this blog post? This action cannot be undone."
