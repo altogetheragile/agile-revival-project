@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Event, EventFormData } from "@/types/event";
+import { Course, CourseFormData } from "@/types/course";
 import { getAllEvents, createEvent, updateEvent, deleteEvent, getEventById } from "@/services/eventService";
 import { toast } from "sonner";
 import { useConnection } from "@/contexts/ConnectionContext";
@@ -22,6 +23,15 @@ export const useEventManagement = () => {
   // Maximum number of retry attempts
   const MAX_RETRIES = 3;
 
+  // Helper function to convert Course to Event
+  const convertCoursesToEvents = (courses: Course[]): Event[] => {
+    return courses.map(course => ({
+      ...course,
+      status: course.status || "draft", // Ensure status is not undefined
+      eventType: course.eventType || "course" // Ensure eventType is not undefined
+    } as Event));
+  };
+
   const loadEvents = useCallback(async (showToast = true) => {
     try {
       setIsLoading(true);
@@ -38,12 +48,12 @@ export const useEventManagement = () => {
       }
       
       console.log("Loading all events...");
-      const allEvents = await getAllEvents();
+      const allCourses = await getAllEvents();
       
-      if (!allEvents || allEvents.length === 0) {
+      if (!allCourses || allCourses.length === 0) {
         console.log("No events loaded or empty array returned");
       } else {
-        console.log(`Loaded ${allEvents.length} events successfully`);
+        console.log(`Loaded ${allCourses.length} events successfully`);
         // Reset retry counter on successful load
         if (loadRetries > 0) {
           setLoadRetries(0);
@@ -55,7 +65,9 @@ export const useEventManagement = () => {
         }
       }
       
-      setEvents(allEvents);
+      // Convert Course[] to Event[]
+      const convertedEvents = convertCoursesToEvents(allCourses);
+      setEvents(convertedEvents);
     } catch (error: any) {
       console.error("Error loading events:", error);
       setLoadError(error?.message || "Failed to load events");
@@ -108,6 +120,15 @@ export const useEventManagement = () => {
     );
   });
 
+  // Helper function to convert EventFormData to CourseFormData
+  const convertEventToCourseFormData = (eventData: EventFormData): CourseFormData => {
+    return {
+      ...eventData,
+      eventType: eventData.eventType || "event", // Default to "event" type
+      status: eventData.status || "draft" // Ensure status is not undefined
+    } as CourseFormData;
+  };
+
   const handleFormSubmit = async (data: EventFormData) => {
     try {
       console.log("Submitting event form data:", data);
@@ -123,9 +144,12 @@ export const useEventManagement = () => {
         }
       }
       
+      // Convert EventFormData to CourseFormData
+      const courseData = convertEventToCourseFormData(data);
+      
       if (currentEvent) {
         console.log("Updating existing event:", currentEvent.id);
-        const updated = await updateEvent(currentEvent.id, data);
+        const updated = await updateEvent(currentEvent.id, courseData);
         
         if (updated) {
           console.log("Event updated successfully");
@@ -133,7 +157,8 @@ export const useEventManagement = () => {
           // Only update currentEvent if we have a valid Event object, not just a boolean success value
           const updatedEvent = await getEventById(currentEvent.id);
           if (updatedEvent) {
-            setCurrentEvent(updatedEvent);
+            // Convert Course to Event
+            setCurrentEvent(convertCoursesToEvents([updatedEvent])[0]);
           }
           uiToast({
             title: "Event updated",
@@ -143,7 +168,7 @@ export const useEventManagement = () => {
         }
       } else {
         console.log("Creating new event");
-        const created = await createEvent(data);
+        const created = await createEvent(courseData);
         
         if (created) {
           console.log("Event created successfully");

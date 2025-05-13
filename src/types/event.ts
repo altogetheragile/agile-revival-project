@@ -25,6 +25,7 @@ export interface Event {
   imageAspectRatio?: string;
   imageSize?: number;
   imageLayout?: string;
+  eventType?: string; // Add eventType field to match Course
 }
 
 export interface EventMaterial {
@@ -48,6 +49,7 @@ export type EventFormData = Omit<Event, "id"> & {
   imageAspectRatio?: string;
   imageSize?: number;
   imageLayout?: string;
+  eventType?: string; // Add eventType field to match CourseFormData
 };
 
 export interface EventWithFormData extends Omit<Event, "learningOutcomes"> {
@@ -61,4 +63,5 @@ export interface ScheduleEventFormData {
   instructor: string;
   spotsAvailable: number;
   status: "draft" | "published";
+  eventType?: string; // Add eventType field
 }
