@@ -14,7 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { cleanupAuthState } from '@/utils/supabase/auth-cleanup';
 
 const formSchema = z.object({
@@ -59,15 +59,16 @@ const LoginForm = ({ onResetClick }: { onResetClick: () => void }) => {
       if (error) throw error;
 
       if (data.user) {
+        toast.success("Login successful", {
+          description: "You've been signed in successfully."
+        });
         // Force page reload for a clean state
         window.location.href = '/';
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      toast({
-        title: 'Login failed',
-        description: error.message || 'There was a problem with your login.',
-        variant: 'destructive',
+      toast.error("Login failed", {
+        description: error.message || 'There was a problem with your login.'
       });
     } finally {
       setIsLoading(false);

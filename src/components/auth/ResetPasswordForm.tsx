@@ -1,308 +1,109 @@
-import { useState, useEffect } from 'react';
+
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, Loader2, XCircle } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
-interface ResetPasswordFormProps {
-  onSubmit: (email: string) => Promise<void>;
-  onSwitchToLogin: () => void;
-  loading: boolean;
-  error: string | null;
-  resetEmailSent: boolean;
-}
+const formSchema = z.object({
+  email: z.string().email({
+    message: 'Please enter a valid email address.',
+  }),
+});
 
-export default function ResetPasswordForm({ 
-  onSwitchToLogin, 
-  loading: externalLoading, 
-  error: externalError,
-  resetEmailSent 
-}: ResetPasswordFormProps) {
-  const [email, setEmail] = useState('');
-  const [retryCount, setRetryCount] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [timeoutError, setTimeoutError] = useState<string | null>(null);
-  const [localResetEmailSent, setLocalResetEmailSent] = useState(resetEmailSent);
-  const [abortController, setAbortController] = useState<AbortController | null>(null);
-  const { toast } = useToast();
+const ResetPasswordForm = ({ onBackToLogin }: { onBackToLogin: () => void }) => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [emailSent, setEmailSent] = useState<boolean>(false);
   
-  // Maximum timeout increased to 20 seconds for better chances of success
-  const REQUEST_TIMEOUT = 20000;
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
 
-  // Clear timeout error when email changes
-  useEffect(() => {
-    if (timeoutError) {
-      setTimeoutError(null);
-    }
-  }, [email]);
-  
-  // Cleanup function for any pending requests
-  useEffect(() => {
-    return () => {
-      if (abortController) {
-        abortController.abort();
-      }
-    };
-  }, [abortController]);
-
-  const handleResetPassword = async () => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
     try {
-      console.log(`Initiating password reset for: ${email}`);
-      
-      // First try using the new edge function
-      try {
-        console.log('Attempting password reset via edge function');
-        const { error: edgeFunctionError } = await supabase.functions.invoke('send-password-reset', {
-          body: { 
-            email: email.trim(),
-            redirectUrl: `${window.location.origin}/reset-password`
-          }
-        });
-        
-        if (edgeFunctionError) {
-          console.error('Edge function reset error:', edgeFunctionError);
-          // Fall back to direct method
-        } else {
-          console.log('Password reset via edge function successful');
-          return { success: true };
-        }
-      } catch (edgeFunctionError) {
-        console.error('Edge function call failed:', edgeFunctionError);
-        // Fall back to direct method
-      }
-      
-      // Then try standard Supabase method
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      
-      if (error) {
-        console.error('Password reset error from Supabase:', error);
-        // Don't throw here - for security we show success even if there's an error
-      }
-      
-      console.log('Password reset request successful');
-      toast({
-        title: "Email Sent",
-        description: "If an account exists with this email, you'll receive reset instructions shortly.",
-      });
-      
-      setLocalResetEmailSent(true);
-      return { success: true };
-    } catch (error: any) {
-      console.error('Password reset API error:', error);
-      
-      // For security, we still show a success message even on error
-      toast({
-        title: "Email Sent",
-        description: "If an account exists with this email, you'll receive reset instructions shortly.",
-      });
-      
-      setLocalResetEmailSent(true);
-      return { success: true, error };
-    }
-  };
 
-  const handleRetry = async () => {
-    setRetryCount(prev => prev + 1);
-    return handleSubmit(new Event('retry') as any);
-  };
+      if (error) throw error;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmitting || externalLoading) return;
-    
-    setIsSubmitting(true);
-    setTimeoutError(null);
-    
-    // Create a new abort controller for this request
-    const controller = new AbortController();
-    setAbortController(controller);
-    
-    // Set a timeout to abort the request after specified timeout
-    const timeoutId = setTimeout(() => {
-      controller.abort('timeout');
-      setTimeoutError("Request timed out. The server might be busy but your request may still be processed. Please check your email in a few minutes.");
-      setIsSubmitting(false);
-      
-      // Even though it timed out, we'll show a toast suggesting to check email
-      toast({
-        title: "Request Processing",
-        description: "Your request is being processed but is taking longer than expected. Please check your email in a few minutes.",
-        duration: 6000,
+      setEmailSent(true);
+      toast.success("Reset email sent", {
+        description: "If an account exists with this email, you'll receive reset instructions."
       });
       
-      // Assume it might have worked despite the timeout
-      setLocalResetEmailSent(true);
-    }, REQUEST_TIMEOUT);
-    
-    try {
-      console.log(`Attempting password reset for ${email} (attempt ${retryCount + 1})`);
-      await handleResetPassword();
-      
-      clearTimeout(timeoutId);
-      setRetryCount(0);
-      
-      // Show success even if the parent component hasn't updated
-      setLocalResetEmailSent(true);
     } catch (error: any) {
-      console.log('Error in ResetPasswordForm:', error);
+      console.error('Password reset error:', error);
       
-      clearTimeout(timeoutId);
-      
-      if (error.message?.includes('Network') || error.message?.includes('time') || error.message === '{}') {
-        setTimeoutError("The request timed out. The server might be busy, but your request may still be processed. Please check your email or try again.");
-      } else {
-        setTimeoutError(error.message || "An unexpected error occurred");
-      }
+      // For security reasons, we still show success even if there's an error
+      setEmailSent(true);
+      toast.success("Reset email sent", {
+        description: "If an account exists with this email, you'll receive reset instructions."
+      });
     } finally {
-      clearTimeout(timeoutId);
-      setIsSubmitting(false);
-      setAbortController(null);
+      setIsLoading(false);
     }
   };
 
-  // Allow user to cancel a pending request
-  const handleCancel = () => {
-    if (abortController) {
-      abortController.abort('canceled by user');
-      setTimeoutError("Request canceled");
-    }
-    setIsSubmitting(false);
-    setAbortController(null);
-  };
-
-  const isLoading = externalLoading || isSubmitting;
-  const displayError = timeoutError || externalError;
-  const buttonText = isLoading ? 'Processing...' : 'Send Reset Link';
-  
-  // Use either the prop value or local state
-  const showSuccess = resetEmailSent || localResetEmailSent;
-
-  if (showSuccess) {
+  if (emailSent) {
     return (
-      <Alert className="bg-green-50 border-green-200">
-        <CheckCircle className="h-4 w-4 text-green-600" />
-        <AlertDescription className="text-green-700">
-          If an account exists with this email, you'll receive password reset instructions shortly.
-          <p className="mt-2">Please check your email inbox and spam folders.</p>
-          <p className="mt-2 text-sm">
-            Note: If you don't receive the email within a few minutes:
-            <ul className="list-disc pl-5 mt-1">
-              <li>Check your spam/junk folder</li>
-              <li>Verify you used the correct email address</li>
-              <li>Try again in a few moments if necessary</li>
-            </ul>
-          </p>
-          <div className="mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onSwitchToLogin}
-              className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
-            >
-              Back to Sign In
-            </Button>
-          </div>
-        </AlertDescription>
-      </Alert>
+      <div className="space-y-4">
+        <Alert>
+          <AlertDescription>
+            If an account exists with this email address, we've sent instructions to reset your password.
+          </AlertDescription>
+        </Alert>
+        <Button onClick={onBackToLogin} className="w-full">
+          Back to Login
+        </Button>
+      </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {displayError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {displayError}
-            {retryCount > 0 && (
-              <p className="mt-2 text-sm">
-                Tips to resolve:
-                <ul className="list-disc pl-5 mt-1">
-                  <li>Wait a few moments and try again</li>
-                  <li>Check your internet connection</li>
-                  <li>If the issue persists, please contact support</li>
-                </ul>
-              </p>
-            )}
-            {(displayError.includes('timeout') || displayError.includes('busy')) && (
-              <Button 
-                type="button" 
-                onClick={handleRetry} 
-                className="mt-2 bg-amber-500 hover:bg-amber-600 text-white"
-                size="sm"
-              >
-                Try Again
-              </Button>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      <div className="space-y-2">
-        <Label htmlFor="email">Email Address</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="Enter your email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full"
-          disabled={isLoading}
-          autoComplete="email"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="youremail@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      
-      <div className="text-sm text-gray-500 mb-4">
-        Enter your email address and we'll send you instructions to reset your password.
-      </div>
-      
-      <div>
-        {isLoading ? (
-          <div className="flex space-x-2">
-            <Button 
-              type="button" 
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white"
-              onClick={handleCancel}
-            >
-              <XCircle className="mr-2 h-4 w-4" />
-              Cancel
-            </Button>
-            <Button 
-              type="button" 
-              className="w-full"
-              disabled={true}
-            >
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {buttonText}
-            </Button>
-          </div>
-        ) : (
-          <Button 
-            type="submit" 
-            className="w-full bg-green-600 hover:bg-green-700 transition-colors"
-          >
-            {buttonText}
+
+        <div className="flex flex-col space-y-2">
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Sending...' : 'Send Reset Instructions'}
           </Button>
-        )}
-      </div>
-      
-      <div className="text-center">
-        <Button
-          type="button"
-          variant="link"
-          onClick={onSwitchToLogin}
-          disabled={isLoading}
-          className="text-green-600 hover:text-green-700"
-        >
-          Back to Sign In
-        </Button>
-      </div>
-    </form>
+          <Button type="button" variant="ghost" onClick={onBackToLogin} className="w-full">
+            Back to Login
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
-}
+};
+
+export default ResetPasswordForm;

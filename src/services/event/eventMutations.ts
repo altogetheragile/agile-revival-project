@@ -22,6 +22,14 @@ export const createEvent = async (eventData: EventFormData): Promise<Event | nul
     
     console.log("Creating event with data:", newEvent);
     
+    toast.error("Operation failed", {
+      description: "Events functionality is currently not available. Database schema update is required."
+    });
+    
+    return null;
+
+    // This code will be enabled once the events table is created
+    /*
     const { result, error } = await executeWithTimeout(
       async (signal) => {
         return await supabase
@@ -63,6 +71,7 @@ export const createEvent = async (eventData: EventFormData): Promise<Event | nul
     console.log("Event created successfully:", result?.data);
     toast.success("Event created successfully");
     return mapDbToEvent(result?.data);
+    */
   } catch (err) {
     console.error("Unexpected error in createEvent:", err);
     toast.error("Failed to create event", {
@@ -89,6 +98,14 @@ export const updateEvent = async (id: string, eventData: EventFormData): Promise
     console.log("Updating event with ID:", id);
     console.log("Update data:", updates);
     
+    toast.error("Operation failed", {
+      description: "Events functionality is currently not available. Database schema update is required."
+    });
+    
+    return null;
+
+    // This code will be enabled once the events table is created
+    /*
     const { result, error } = await executeWithTimeout(
       async (signal) => {
         return await supabase
@@ -131,6 +148,7 @@ export const updateEvent = async (id: string, eventData: EventFormData): Promise
     console.log("Event updated successfully:", result?.data);
     toast.success("Event updated successfully");
     return mapDbToEvent(result?.data);
+    */
   } catch (err) {
     console.error("Unexpected error in updateEvent:", err);
     toast.error("Failed to update event", {
@@ -154,6 +172,14 @@ export const deleteEvent = async (id: string): Promise<boolean> => {
     
     console.log("Deleting event with ID:", id);
     
+    toast.error("Operation failed", {
+      description: "Events functionality is currently not available. Database schema update is required."
+    });
+    
+    return false;
+
+    // This code will be enabled once the events table is created
+    /*
     const { error } = await supabase
       .from('events')
       .delete()
@@ -181,6 +207,7 @@ export const deleteEvent = async (id: string): Promise<boolean> => {
     console.log("Event deleted successfully");
     toast.success("Event deleted successfully");
     return true;
+    */
   } catch (err) {
     console.error("Unexpected error in deleteEvent:", err);
     toast.error("Failed to delete event", {
@@ -205,32 +232,30 @@ export const createEventFromTemplate = async (templateId: string, scheduleData: 
     console.log("Creating event from template ID:", templateId);
     console.log("Schedule data:", scheduleData);
     
-    const { result, error } = await executeWithTimeout(
-      async (signal) => {
-        return await supabase
-          .from('events')
-          .select('*')
-          .eq('id', templateId)
-          .eq('is_template', true)
-          .abortSignal(signal)
-          .maybeSingle();
-      },
-      {
-        timeoutMs: 8000,
-        retries: 1
-      }
-    );
+    toast.error("Operation failed", {
+      description: "Events functionality is currently not available. Database schema update is required."
+    });
     
-    if (error || result?.error || !result?.data) {
-      const actualError = error || result?.error;
-      console.error("Error fetching template:", actualError);
+    return null;
+
+    // This code will be enabled once the events table is created
+    /*
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', templateId)
+      .eq('is_template', true)
+      .single();
+    
+    if (error || !data) {
+      console.error("Error fetching template:", error);
       toast.error("Failed to fetch template", {
-        description: actualError?.message || "Template not found"
+        description: error?.message || "Template not found"
       });
       return null;
     }
     
-    const template = result.data;
+    const template = data;
     console.log("Template found, creating new event");
     
     // Create new event based on template
@@ -250,40 +275,31 @@ export const createEventFromTemplate = async (templateId: string, scheduleData: 
       template_id: templateId,
     };
     
-    const { result: createResult, error: createError } = await executeWithTimeout(
-      async (signal) => {
-        return await supabase
-          .from('events')
-          .insert([newEventData])
-          .select()
-          .abortSignal(signal)
-          .single();
-      },
-      {
-        timeoutMs: 10000,
-        retries: 2
-      }
-    );
+    const { data: newEvent, error: createError } = await supabase
+      .from('events')
+      .insert([newEventData])
+      .select()
+      .single();
       
-    if (createError || createResult?.error) {
-      const actualError = createError || createResult?.error;
-      console.error("Error creating event from template:", actualError);
+    if (createError) {
+      console.error("Error creating event from template:", createError);
       
-      if (actualError?.message?.includes('violates row-level security policy')) {
+      if (createError?.message?.includes('violates row-level security policy')) {
         toast.error("Permission error", {
           description: "You don't have permission to create events. Please contact an administrator."
         });
       } else {
         toast.error("Failed to create event", {
-          description: actualError?.message || "Unknown error occurred"
+          description: createError.message || "Unknown error occurred"
         });
       }
       return null;
     }
     
-    console.log("Event created successfully:", createResult?.data);
+    console.log("Event created successfully:", newEvent);
     toast.success("Event scheduled successfully");
-    return mapDbToEvent(createResult?.data);
+    return mapDbToEvent(newEvent);
+    */
   } catch (error) {
     console.error("Unexpected error creating event from template:", error);
     toast.error("Failed to schedule event", {

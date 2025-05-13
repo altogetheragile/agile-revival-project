@@ -1,155 +1,147 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { cleanupAuthState } from '@/utils/supabase/auth-cleanup';
 
-interface SignupFormProps {
-  onSubmit: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
-  onSwitchToLogin: () => void;
-  loading: boolean;
-  error: string | null;
-}
+const formSchema = z.object({
+  firstName: z.string().min(2, {
+    message: 'First name must be at least 2 characters.',
+  }),
+  lastName: z.string().min(2, {
+    message: 'Last name must be at least 2 characters.',
+  }),
+  email: z.string().email({
+    message: 'Please enter a valid email address.',
+  }),
+  password: z.string().min(6, {
+    message: 'Password must be at least 6 characters.',
+  }),
+});
 
-export default function SignupForm({ 
-  onSubmit, 
-  onSwitchToLogin, 
-  loading, 
-  error 
-}: SignupFormProps) {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    firstName: '',
-    lastName: ''
+const SignupForm = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+    },
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.id]: e.target.value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmitting || loading) return;
-    
-    setIsSubmitting(true);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
     try {
-      await onSubmit(
-        formData.email.trim(), // Trim whitespace
-        formData.password,
-        formData.firstName.trim(), // Trim whitespace
-        formData.lastName.trim() // Trim whitespace
-      );
-    } catch (error) {
+      // Clean up existing auth state to prevent auth limbo
+      cleanupAuthState();
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            first_name: values.firstName,
+            last_name: values.lastName
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success("Registration successful", {
+        description: "Please check your email to verify your account."
+      });
+      
+    } catch (error: any) {
       console.error('Signup error:', error);
+      toast.error("Registration failed", {
+        description: error.message || 'There was a problem with your registration.'
+      });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  const isLoading = loading || isSubmitting;
-  const buttonText = isLoading ? 'Creating Account...' : 'Sign Up';
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <Alert variant="destructive" className="animate-in fade-in-50">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {error}
-            <p className="mt-2 text-sm">
-              If you continue experiencing issues:
-              <ul className="list-disc pl-5 mt-1">
-                <li>Check your internet connection</li>
-                <li>Try again in a few moments</li>
-                <li>Verify your email address is correct</li>
-                <li>Use a password with at least 6 characters</li>
-              </ul>
-            </p>
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      <div className="space-y-2">
-        <Label htmlFor="firstName">First Name</Label>
-        <Input
-          id="firstName"
-          type="text"
-          value={formData.firstName}
-          onChange={handleChange}
-          required
-          autoComplete="given-name"
-          disabled={isLoading}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="John" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="youremail@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="lastName">Last Name</Label>
-        <Input
-          id="lastName"
-          type="text"
-          value={formData.lastName}
-          onChange={handleChange}
-          required
-          autoComplete="family-name"
-          disabled={isLoading}
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="••••••••" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="email">Email Address</Label>
-        <Input
-          id="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          autoComplete="email"
-          disabled={isLoading}
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          autoComplete="new-password"
-          minLength={6}
-          disabled={isLoading}
-        />
-      </div>
-      
-      <div className="pt-2">
-        <Button 
-          type="submit" 
-          className="w-full bg-green-600 hover:bg-green-700 transition-colors"
-          disabled={isLoading}
-        >
-          {buttonText}
+
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? 'Creating account...' : 'Sign Up'}
         </Button>
-      </div>
-      
-      <div className="text-center">
-        <Button
-          type="button"
-          variant="link"
-          onClick={onSwitchToLogin}
-          className="text-green-600 hover:text-green-700"
-          disabled={isLoading}
-        >
-          Already have an account? Sign In
-        </Button>
-      </div>
-    </form>
+      </form>
+    </Form>
   );
-}
+};
+
+export default SignupForm;

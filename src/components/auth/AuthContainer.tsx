@@ -1,14 +1,18 @@
 
 import React from 'react';
 import AuthDivider from './AuthDivider';
-import { LoginView, SignupView, ResetPasswordView } from './views';
-import { useState } from 'react';
+import LoginForm from './LoginForm';
+import SignupForm from './SignupForm';
+import ResetPasswordForm from './ResetPasswordForm';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cleanupAuthState } from '@/utils/supabase/auth-cleanup';
 import { supabase } from '@/integrations/supabase/client';
 
+export type AuthMode = 'login' | 'signup' | 'reset';
+
 const AuthContainer = () => {
-  const [activeTab, setActiveTab] = useState<string>("login");
+  const [activeTab, setActiveTab] = useState<AuthMode>("login");
   
   // Clean up auth state when the auth container mounts
   React.useEffect(() => {
@@ -29,22 +33,22 @@ const AuthContainer = () => {
            activeTab === "signup" ? "Create an account" : "Reset your password"}
         </h2>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab as (value: string) => void}>
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           
           <TabsContent value="login">
-            <LoginView onResetClick={() => setActiveTab("reset")} />
+            <LoginForm onResetClick={() => setActiveTab("reset")} />
           </TabsContent>
           
           <TabsContent value="signup">
-            <SignupView />
+            <SignupForm />
           </TabsContent>
           
           <TabsContent value="reset">
-            <ResetPasswordView onBackToLogin={() => setActiveTab("login")} />
+            <ResetPasswordForm onBackToLogin={() => setActiveTab("login")} />
           </TabsContent>
         </Tabs>
         
