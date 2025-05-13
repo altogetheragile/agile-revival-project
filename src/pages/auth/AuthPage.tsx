@@ -1,5 +1,5 @@
 
-import AuthContainer from "@/components/auth/AuthContainer";
+import AuthForms from "@/components/auth/AuthForms";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanupAuthState } from "@/utils/supabase/auth-cleanup";
@@ -26,5 +26,5 @@ export default function AuthPage() {
     checkAuth();
   }, [navigate]);
 
-  return <AuthContainer />;
+  return <AuthForms />;
 }
