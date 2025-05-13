@@ -1,5 +1,5 @@
 
-import { Copy, Pencil, Trash } from "lucide-react";
+import { Copy, Pencil, Trash, Calendar } from "lucide-react";
 import { Course } from "@/types/course";
 import {
   Table,
@@ -17,13 +17,15 @@ interface CourseTableProps {
   onEdit: (course: Course) => void;
   onDelete: (course: Course) => void;
   onDuplicate: (course: Course) => void;
+  onSchedule?: (course: Course) => void;
 }
 
 export const CourseTable: React.FC<CourseTableProps> = ({
   courses,
   onEdit,
   onDelete,
-  onDuplicate
+  onDuplicate,
+  onSchedule
 }) => {
   if (courses.length === 0) {
     return (
@@ -85,6 +87,16 @@ export const CourseTable: React.FC<CourseTableProps> = ({
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
+                  {course.isTemplate && onSchedule && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onSchedule(course)}
+                      title="Schedule"
+                    >
+                      <Calendar className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
