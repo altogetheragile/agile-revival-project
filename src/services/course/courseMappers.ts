@@ -1,113 +1,80 @@
 
-import { Course, CourseFormData } from '@/types/course';
+import { Course, CourseFormData } from "@/types/course";
 
-interface SupabaseCourse {
-  id: string;
-  title: string;
-  description: string;
-  dates: string;
-  location: string;
-  price: string;
-  instructor: string;
-  image_url?: string;
-  category: string;
-  skill_level: string;
-  format: string;
-  duration: string;
-  status: string;
-  spots_available: number;
-  is_template: boolean;
-  template_id?: string;
-  prerequisites?: string;
-  learning_outcomes?: string[];
-  materials_included?: string[];
-  certification?: string;
-  image_aspect_ratio?: string;
-  image_size?: number;
-  image_layout?: string;
-  created_at?: string;
-  updated_at?: string;
-  created_by?: string;
-}
+// Map database course object to frontend Course type
+export const mapDbToCourse = (dbCourse: any): Course => {
+  // Ensure status is either "draft" or "published"
+  const status = dbCourse.status === "published" ? "published" : "draft";
 
-/**
- * Maps a course from the database format to the application format
- */
-export const mapDbToCourse = (dbCourse: SupabaseCourse): Course => {
-  if (!dbCourse) {
-    console.error("Attempted to map null or undefined database course");
-    throw new Error("Invalid course data");
-  }
-  
-  // Console log for debugging
-  console.log("Mapping DB course to app format:", dbCourse);
-  
   return {
     id: dbCourse.id,
-    title: dbCourse.title || '',
-    description: dbCourse.description || '',
-    dates: dbCourse.dates || '',
-    location: dbCourse.location || '',
-    price: dbCourse.price || '',
-    instructor: dbCourse.instructor || '',
-    imageUrl: dbCourse.image_url || '',
-    category: dbCourse.category || '',
-    skillLevel: (dbCourse.skill_level || 'all-levels') as "beginner" | "intermediate" | "advanced" | "all-levels",
-    format: dbCourse.format || '',
-    duration: dbCourse.duration || '',
-    status: (dbCourse.status || 'draft') as "draft" | "published",
-    spotsAvailable: dbCourse.spots_available || 0,
-    isTemplate: Boolean(dbCourse.is_template),
+    title: dbCourse.title,
+    description: dbCourse.description,
+    dates: dbCourse.dates,
+    location: dbCourse.location,
+    instructor: dbCourse.instructor,
+    price: dbCourse.price,
+    eventType: dbCourse.event_type || "course", // Map the event_type field
+    category: dbCourse.category,
+    spotsAvailable: dbCourse.spots_available,
+    learningOutcomes: dbCourse.learning_outcomes || [],
+    prerequisites: dbCourse.prerequisites || "",
+    targetAudience: dbCourse.target_audience || "",
+    duration: dbCourse.duration || "",
+    skillLevel: dbCourse.skill_level || "all-levels",
+    format: dbCourse.format || "in-person",
+    status: status,
+    googleDriveFolderId: dbCourse.google_drive_folder_id,
+    googleDriveFolderUrl: dbCourse.google_drive_folder_url,
+    isTemplate: dbCourse.is_template || false,
     templateId: dbCourse.template_id,
-    prerequisites: dbCourse.prerequisites || '',
-    learningOutcomes: Array.isArray(dbCourse.learning_outcomes) ? dbCourse.learning_outcomes : [],
-    materials: Array.isArray(dbCourse.materials_included) 
-      ? dbCourse.materials_included.map((mat, index) => ({
-          id: `material-${index}`, 
-          fileName: mat,
-          fileUrl: '',
-          fileType: 'text',
-        }))
-      : [],
-    imageAspectRatio: dbCourse.image_aspect_ratio || '16/9',
+    imageUrl: dbCourse.image_url,
+    imageAspectRatio: dbCourse.image_aspect_ratio || "16/9",
     imageSize: dbCourse.image_size || 100,
-    imageLayout: dbCourse.image_layout || 'standard'
+    imageLayout: dbCourse.image_layout || "standard",
+    materials: dbCourse.materials || []
   };
 };
 
-/**
- * Maps a course from the application format to the database format
- */
-export const mapCourseToDb = (course: CourseFormData): Omit<SupabaseCourse, 'id' | 'created_at' | 'updated_at'> => {
-  if (!course) {
-    console.error("Attempted to map null or undefined course form data");
-    throw new Error("Invalid course form data");
+// Map frontend Course type to database course object
+export const mapCourseToDb = (course: CourseFormData): any => {
+  let processedLearningOutcomes = course.learningOutcomes;
+
+  // Handle the case where learning outcomes are provided as a string (from form input)
+  if (typeof course.learningOutcomes === 'string') {
+    processedLearningOutcomes = course.learningOutcomes
+      .split('\n')
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
   }
-  
-  // Console log for debugging
-  console.log("Mapping app course to DB format:", course);
-  
+
+  // Ensure status is either "draft" or "published"
+  const status = course.status === "published" ? "published" : "draft";
+
   return {
-    title: course.title || '',
-    description: course.description || '',
-    dates: course.dates || '',
-    location: course.location || '',
-    price: course.price || '0',
-    instructor: course.instructor || '',
-    image_url: course.imageUrl || '',
-    category: course.category || '',
-    skill_level: course.skillLevel || '',
-    format: course.format || '',
-    duration: course.duration || '',
-    status: course.status || 'draft',
-    spots_available: Number(course.spotsAvailable) || 0,
-    is_template: course.isTemplate !== undefined ? course.isTemplate : false,
+    title: course.title,
+    description: course.description,
+    dates: course.dates,
+    location: course.location,
+    instructor: course.instructor,
+    price: course.price,
+    event_type: course.eventType || "course", // Map the eventType field to event_type
+    category: course.category,
+    spots_available: Number(course.spotsAvailable),
+    learning_outcomes: processedLearningOutcomes,
+    prerequisites: course.prerequisites,
+    target_audience: course.targetAudience,
+    duration: course.duration,
+    skill_level: course.skillLevel,
+    format: course.format,
+    status: status,
+    google_drive_folder_id: course.googleDriveFolderId,
+    google_drive_folder_url: course.googleDriveFolderUrl,
+    is_template: course.isTemplate || false,
     template_id: course.templateId,
-    prerequisites: course.prerequisites || '',
-    learning_outcomes: Array.isArray(course.learningOutcomes) ? course.learningOutcomes : [],
-    materials_included: Array.isArray(course.materials) ? course.materials.map(material => material.fileName) : [],
-    image_aspect_ratio: course.imageAspectRatio || '16/9',
+    image_url: course.imageUrl,
+    image_aspect_ratio: course.imageAspectRatio || "16/9",
     image_size: course.imageSize || 100,
-    image_layout: course.imageLayout || 'standard',
+    image_layout: course.imageLayout || "standard"
   };
 };

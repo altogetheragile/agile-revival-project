@@ -7,14 +7,15 @@ export interface Course {
   location: string;
   instructor: string;
   price: string;
-  category: string; // Changed from string literal union type to accept any string
+  eventType: string; // New field to distinguish between different event types
+  category: string;
   spotsAvailable: number;
   learningOutcomes?: string[];
   prerequisites?: string;
   targetAudience?: string;
   duration?: string;
   skillLevel?: "beginner" | "intermediate" | "advanced" | "all-levels";
-  format?: string; // Changed from string literal union to any string
+  format?: string;
   status?: "draft" | "published";
   materials?: CourseMaterial[];
   googleDriveFolderId?: string;
@@ -58,22 +59,23 @@ export interface CourseTemplate {
   id: string;
   title: string;
   description: string;
-  category: string; // Changed from string literal union type to accept any string
+  eventType: string; // New field to distinguish between different event types
+  category: string;
   price: string;
   learningOutcomes?: string[];
   prerequisites?: string;
   targetAudience?: string;
   duration?: string;
   skillLevel?: "beginner" | "intermediate" | "advanced" | "all-levels";
-  format?: string; // Changed from string literal to any string
+  format?: string;
   status?: "draft" | "published";
-  imageUrl?: string; // Add imageUrl property
-  imageAspectRatio?: string;  // Added missing property
-  imageSize?: number;  // Added missing property
-  imageLayout?: string;  // Added missing property
+  imageUrl?: string;
+  imageAspectRatio?: string;
+  imageSize?: number;
+  imageLayout?: string;
 }
 
-// New interface for scheduling a course from a template
+// For scheduling a course from a template
 export interface ScheduleCourseFormData {
   templateId: string;
   dates: string;

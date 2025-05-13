@@ -1,108 +1,80 @@
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-const formSchema = z.object({
-  email: z.string().email({
-    message: 'Please enter a valid email address.',
-  }),
-});
+interface ResetPasswordFormProps {
+  onResetClick: (email: string) => Promise<void>;
+  onSwitchToLogin: () => void;
+  loading: boolean;
+  error: string | null;
+  success: boolean;
+}
 
-const ResetPasswordForm = ({ onBackToLogin }: { onBackToLogin: () => void }) => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [emailSent, setEmailSent] = useState<boolean>(false);
-  
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: '',
-    },
-  });
+const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
+  onResetClick,
+  onSwitchToLogin,
+  loading,
+  error,
+  success
+}) => {
+  const [email, setEmail] = useState('');
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) throw error;
-
-      setEmailSent(true);
-      toast.success("Reset email sent", {
-        description: "If an account exists with this email, you'll receive reset instructions."
-      });
-      
-    } catch (error: any) {
-      console.error('Password reset error:', error);
-      
-      // For security reasons, we still show success even if there's an error
-      setEmailSent(true);
-      toast.success("Reset email sent", {
-        description: "If an account exists with this email, you'll receive reset instructions."
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onResetClick(email);
   };
 
-  if (emailSent) {
-    return (
-      <div className="space-y-4">
-        <Alert>
-          <AlertDescription>
-            If an account exists with this email address, we've sent instructions to reset your password.
-          </AlertDescription>
-        </Alert>
-        <Button onClick={onBackToLogin} className="w-full">
-          Back to Login
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2 text-center">
+        <h2 className="text-2xl font-bold">Reset Password</h2>
+        <p className="text-gray-500 dark:text-gray-400">
+          Enter your email to receive a password reset link
+        </p>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="m@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        {error && (
+          <div className="bg-red-50 text-red-600 p-2 rounded-md text-sm">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="bg-green-50 text-green-600 p-2 rounded-md text-sm">
+            Password reset email sent! Check your inbox.
+          </div>
+        )}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={loading || success}
+        >
+          {loading ? "Sending..." : success ? "Email Sent" : "Reset Password"}
+        </Button>
+      </form>
+      <div className="text-center text-sm">
+        Remember your password?{" "}
+        <Button 
+          variant="link" 
+          className="p-0" 
+          onClick={onSwitchToLogin}
+        >
+          Sign in
         </Button>
       </div>
-    );
-  }
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="youremail@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex flex-col space-y-2">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Sending...' : 'Send Reset Instructions'}
-          </Button>
-          <Button type="button" variant="ghost" onClick={onBackToLogin} className="w-full">
-            Back to Login
-          </Button>
-        </div>
-      </form>
-    </Form>
+    </div>
   );
 };
 

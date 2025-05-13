@@ -1,34 +1,21 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { CourseFormData } from "@/types/course";
 import { BasicCourseFields } from "./form-utils/BasicCourseFields";
-import { CourseCategoryFields } from "./form-utils/CourseCategoryFields";
+import { ScheduleFields } from "./form-utils/ScheduleFields";
 import { CourseDetailsFields } from "./form-utils/CourseDetailsFields";
-import { LearningOutcomeField } from "./form-utils/LearningOutcomeField";
-import { CourseFormActions } from "./form-utils/CourseFormActions";
-import { CourseFormatFields } from "./form-utils/CourseFormatFields";
-import { CourseGoogleDriveSection } from "./form-utils/CourseGoogleDriveSection";
-import { CourseInstructorPriceFields } from "./form-utils/CourseInstructorPriceFields";
-import { CourseScheduleFields } from "./form-utils/CourseScheduleFields";
-import { CourseStatusField } from "./form-utils/CourseStatusField";
+import { AdditionalInfoFields } from "./form-utils/AdditionalInfoFields";
 import { CourseImageField } from "./form-utils/CourseImageField";
-import MediaLibrary from "@/components/media/MediaLibrary";
-import { useState, Dispatch, SetStateAction } from "react";
+import { CourseStatusField } from "./form-utils/CourseStatusField";
+import { CourseFormActions } from "./form-utils/CourseFormActions";
 
 interface CourseFormProps {
   initialData?: CourseFormData;
   onSubmit: (data: CourseFormData) => void;
   onCancel: () => void;
-  stayOpenOnSubmit?: boolean;
-  isTemplate?: boolean;
-  // Media library integration props
   onOpenMediaLibrary?: () => void;
-  formData?: CourseFormData | null;
-  setFormData?: Dispatch<SetStateAction<CourseFormData | null>>;
-  // Add the missing prop
-  onPreview?: () => void;
 }
 
 const CourseForm: React.FC<CourseFormProps> = ({
@@ -36,11 +23,12 @@ const CourseForm: React.FC<CourseFormProps> = ({
     title: "",
     description: "",
     dates: "",
-    location: "London", // Default to London
-    instructor: "Alun Davies-Baker", // Default instructor
-    price: "£", // Default price currency symbol
-    category: "scrum",
-    spotsAvailable: 12, // Default available spots
+    location: "",
+    instructor: "",
+    price: "£",
+    eventType: "course", // Default event type
+    category: "programming", // Default category
+    spotsAvailable: 12,
     learningOutcomes: [],
     prerequisites: "",
     targetAudience: "",
@@ -50,38 +38,15 @@ const CourseForm: React.FC<CourseFormProps> = ({
     status: "draft",
     imageAspectRatio: "16/9",
     imageSize: 100,
-    imageLayout: "standard",
-    isTemplate: false
+    imageLayout: "standard"
   },
   onSubmit,
   onCancel,
-  stayOpenOnSubmit = false,
-  isTemplate = false,
-  onOpenMediaLibrary,
-  formData,
-  setFormData,
-  onPreview
+  onOpenMediaLibrary
 }) => {
-  // Initialize the form with either formData (if provided) or initialData
   const form = useForm<CourseFormData>({
-    defaultValues: formData || initialData
+    defaultValues: initialData
   });
-
-  // Update form values when formData changes (e.g., when image is selected from media library)
-  useEffect(() => {
-    if (formData) {
-      // Reset the form with the new data, including the imageUrl and image settings
-      Object.entries(formData).forEach(([key, value]) => {
-        form.setValue(key as any, value);
-      });
-      console.log("Form values updated from formData:", formData);
-    }
-  }, [formData, form]);
-
-  const [mediaLibOpen, setMediaLibOpen] = useState(false);
-  
-  // Check if this is a published non-template course
-  const isPublishedCourse = !isTemplate && initialData?.status === "published";
 
   const handleSubmit = (data: CourseFormData) => {
     // Process learning outcomes if provided as a string
@@ -92,77 +57,24 @@ const CourseForm: React.FC<CourseFormProps> = ({
         .filter(item => item.length > 0);
     }
     
-    // If it's a published course, only allow specific fields to be updated
-    if (isPublishedCourse && initialData) {
-      const updatedData = {
-        ...initialData,
-        // Only allow these fields to be updated for published courses
-        dates: data.dates,
-        location: data.location,
-        instructor: data.instructor,
-        price: data.price,
-        spotsAvailable: Number(data.spotsAvailable),
-        status: data.status
-      };
-      
-      onSubmit(updatedData);
-    } else {
-      // For templates or draft courses, allow full editing
-      onSubmit({
-        ...data,
-        spotsAvailable: Number(data.spotsAvailable),
-        isTemplate: isTemplate
-      });
-    }
+    onSubmit({
+      ...data,
+      spotsAvailable: Number(data.spotsAvailable)
+    });
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {/* Always editable fields */}
-        <BasicCourseFields form={form} readOnly={isPublishedCourse} />
-        <CourseScheduleFields form={form} />
-        <CourseInstructorPriceFields form={form} />
+        <BasicCourseFields form={form} />
+        <ScheduleFields form={form} />
+        <CourseDetailsFields form={form} />
+        <AdditionalInfoFields form={form} />
+        <CourseImageField form={form} onOpenMediaLibrary={onOpenMediaLibrary} />
         <CourseStatusField form={form} />
-        
-        {/* Fields that are non-editable for published courses */}
-        {(!isPublishedCourse) && (
-          <>
-            <CourseCategoryFields form={form} />
-            <CourseDetailsFields form={form} />
-            <CourseFormatFields form={form} />
-            <LearningOutcomeField form={form} />
-            <CourseGoogleDriveSection courseId={initialData?.id} />
-            
-            <CourseImageField 
-              form={form}
-              onOpenMediaLibrary={onOpenMediaLibrary || (() => setMediaLibOpen(true))}
-            />
-
-            {!onOpenMediaLibrary && (
-              <MediaLibrary
-                open={mediaLibOpen}
-                onOpenChange={setMediaLibOpen}
-                onSelect={(url, aspectRatio, size, layout) => {
-                  form.setValue("imageUrl", url, { shouldValidate: true });
-                  form.setValue("imageAspectRatio", aspectRatio || "16/9", { shouldValidate: false });
-                  form.setValue("imageSize", size || 100, { shouldValidate: false });
-                  form.setValue("imageLayout", layout || "standard", { shouldValidate: false });
-                  console.log("Direct form update with URL:", url, "ratio:", aspectRatio, "size:", size, "layout:", layout);
-                  setMediaLibOpen(false);
-                }}
-              />
-            )}
-          </>
-        )}
-
         <CourseFormActions 
           onCancel={onCancel} 
-          isEditing={!!initialData.id}
-          isDraft={form.watch("status") === "draft"}
-          stayOpenOnSubmit={stayOpenOnSubmit}
-          isTemplate={isTemplate}
-          onPreview={onPreview}
+          isEditing={!!initialData.id} 
         />
       </form>
     </Form>

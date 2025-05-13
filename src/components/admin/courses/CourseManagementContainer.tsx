@@ -1,16 +1,14 @@
-import React from "react";
+
+import React, { useState, useEffect } from "react";
 import { Course } from "@/types/course";
 import { CourseManagementHeader } from "./CourseManagementHeader";
 import { CourseTable } from "./CourseTable";
-import CourseRegistrations from "./CourseRegistrations";
-import { useCourseManagement } from "@/hooks/useCourseManagement";
-import { CourseActionButtons } from "./CourseActionButtons";
 import { CourseLoadingState } from "./CourseLoadingState";
 import { CourseErrorAlert } from "./CourseErrorAlert";
 import { CourseDialogs } from "./CourseDialogs";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
-import { createCourseFromTemplate } from "@/services/courseService";
+import { useCourseManagement } from "@/hooks/useCourseManagement";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const CourseManagementContainer: React.FC = () => {
   const {
@@ -27,19 +25,15 @@ export const CourseManagementContainer: React.FC = () => {
     setCurrentCourse,
     deleteCourseId,
     setDeleteCourseId,
-    viewingRegistrations,
-    setViewingRegistrations,
     handleFormSubmit,
     handleDelete,
     handleForceReset
   } = useCourseManagement();
 
   const { toast } = useToast();
-  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<Course | null>(null);
-  const [isScheduling, setIsScheduling] = useState(false);
-  const [mediaLibOpen, setMediaLibOpen] = useState(false);
   const [formData, setFormData] = useState<Course | null>(null);
+  const [mediaLibOpen, setMediaLibOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("all");
 
   const handleAddCourse = () => {
     setCurrentCourse(null);
@@ -56,48 +50,18 @@ export const CourseManagementContainer: React.FC = () => {
     setIsConfirmDialogOpen(true);
   };
 
-  const handleScheduleCourse = (template: Course) => {
-    setSelectedTemplate(template);
-    setScheduleDialogOpen(true);
-  };
-  
-  const handleViewRegistrations = (course: Course) => {
-    setCurrentCourse(course);
-    setViewingRegistrations(true);
-  };
-
-  const handleScheduleSubmit = async (data: any) => {
-    if (!selectedTemplate) {
-      toast({
-        title: "Error",
-        description: "No template selected for scheduling",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      setIsScheduling(true);
-      const scheduledCourse = await createCourseFromTemplate(selectedTemplate.id, data);
-      
-      if (scheduledCourse) {
-        toast({
-          title: "Course scheduled",
-          description: `${scheduledCourse.title} has been scheduled.`,
-        });
-        setScheduleDialogOpen(false);
-        handleForceReset();
-      }
-    } catch (error: any) {
-      console.error("Error scheduling course:", error);
-      toast({
-        title: "Error",
-        description: error?.message || "There was a problem scheduling the course.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsScheduling(false);
-    }
+  const handleDuplicateCourse = (course: Course) => {
+    // Create a copy of the course without the ID
+    const courseCopy: Course = { 
+      ...course,
+      title: `Copy of ${course.title}`,
+      status: 'draft' as "draft"
+    };
+    // Remove the id from the copy
+    delete (courseCopy as any).id;
+    setCurrentCourse(null);
+    setFormData(courseCopy);
+    setIsFormOpen(true);
   };
 
   const handleMediaSelect = (url: string, aspectRatio?: string, size?: number, layout?: string) => {
@@ -113,14 +77,27 @@ export const CourseManagementContainer: React.FC = () => {
     setMediaLibOpen(false);
   };
 
-  if (viewingRegistrations && currentCourse) {
-    return (
-      <CourseRegistrations 
-        course={currentCourse}
-        onBack={() => setViewingRegistrations(false)}
-      />
-    );
-  }
+  // Filter courses by event type
+  const filteredCourses = courses.filter(course => {
+    // First apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = course.title.toLowerCase().includes(searchLower) ||
+        (course.eventType && course.eventType.toLowerCase().includes(searchLower)) ||
+        course.category.toLowerCase().includes(searchLower) ||
+        (course.instructor && course.instructor.toLowerCase().includes(searchLower)) ||
+        (course.location && course.location.toLowerCase().includes(searchLower));
+      
+      if (!matchesSearch) return false;
+    }
+    
+    // Then apply event type filter
+    if (activeTab === "all") return true;
+    return course.eventType === activeTab;
+  });
+  
+  // Get unique event types for tabs
+  const eventTypes = ["all", ...Array.from(new Set(courses.map(c => c.eventType || "course")))];
 
   return (
     <div className="bg-white shadow-md rounded-md p-6">
@@ -130,10 +107,17 @@ export const CourseManagementContainer: React.FC = () => {
         onAddNew={handleAddCourse}
       />
       
-      <CourseActionButtons 
-        onForceReset={handleForceReset}
-        isLoading={isLoading}
-      />
+      <div className="mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="all">
+          <TabsList>
+            {eventTypes.map(type => (
+              <TabsTrigger key={type} value={type} className="capitalize">
+                {type === "all" ? "All Types" : type}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
       
       {loadError && (
         <CourseErrorAlert 
@@ -146,11 +130,10 @@ export const CourseManagementContainer: React.FC = () => {
         <CourseLoadingState />
       ) : (
         <CourseTable 
-          courses={courses}
+          courses={filteredCourses}
           onEdit={handleEditCourse} 
           onDelete={handleDeleteConfirm}
-          onViewRegistrations={handleViewRegistrations}
-          onScheduleCourse={handleScheduleCourse}
+          onDuplicate={handleDuplicateCourse}
         />
       )}
 
@@ -159,19 +142,14 @@ export const CourseManagementContainer: React.FC = () => {
         setIsFormOpen={setIsFormOpen}
         isConfirmDialogOpen={isConfirmDialogOpen}
         setIsConfirmDialogOpen={setIsConfirmDialogOpen}
-        scheduleDialogOpen={scheduleDialogOpen}
-        setScheduleDialogOpen={setScheduleDialogOpen}
-        mediaLibOpen={mediaLibOpen}
-        setMediaLibOpen={setMediaLibOpen}
         currentCourse={currentCourse}
-        selectedTemplate={selectedTemplate}
         formData={formData}
         setFormData={setFormData}
         handleFormSubmit={handleFormSubmit}
         handleDelete={handleDelete}
-        handleScheduleSubmit={handleScheduleSubmit}
+        mediaLibOpen={mediaLibOpen}
+        setMediaLibOpen={setMediaLibOpen}
         handleMediaSelect={handleMediaSelect}
-        isScheduling={isScheduling}
       />
     </div>
   );

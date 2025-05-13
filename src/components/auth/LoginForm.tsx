@@ -1,126 +1,98 @@
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { cleanupAuthState } from '@/utils/supabase/auth-cleanup';
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Link } from 'react-router-dom';
 
-const formSchema = z.object({
-  email: z.string().email({
-    message: 'Please enter a valid email address.',
-  }),
-  password: z.string().min(6, {
-    message: 'Password must be at least 6 characters.',
-  }),
-});
+interface LoginFormProps {
+  onSubmit: (email: string, password: string) => Promise<void>;
+  onSwitchToSignup: () => void;
+  onSwitchToReset: () => void;
+  loading: boolean;
+  error: string | null;
+}
 
-const LoginForm = ({ onResetClick }: { onResetClick: () => void }) => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
+const LoginForm: React.FC<LoginFormProps> = ({
+  onSubmit,
+  onSwitchToSignup,
+  onSwitchToReset,
+  loading,
+  error
+}) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsLoading(true);
-    try {
-      // Clean up existing auth state to prevent auth limbo
-      cleanupAuthState();
-      
-      // Attempt global sign out first
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-        console.warn("[Auth] Pre-login signout failed:", err);
-      }
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        toast.success("Login successful", {
-          description: "You've been signed in successfully."
-        });
-        // Force page reload for a clean state
-        window.location.href = '/';
-      }
-    } catch (error: any) {
-      console.error('Login error:', error);
-      toast.error("Login failed", {
-        description: error.message || 'There was a problem with your login.'
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onSubmit(email, password);
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="youremail@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="flex justify-between items-center">
-          <Button 
-            type="button" 
-            variant="link" 
-            className="p-0 h-auto" 
-            onClick={onResetClick}
-          >
-            Forgot password?
-          </Button>
+    <div className="space-y-4">
+      <div className="space-y-2 text-center">
+        <h2 className="text-2xl font-bold">Login</h2>
+        <p className="text-gray-500 dark:text-gray-400">
+          Enter your email to sign in to your account
+        </p>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="m@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
-
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'Logging in...' : 'Login'}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            <Button 
+              type="button" 
+              variant="link" 
+              className="px-0 font-normal" 
+              onClick={onSwitchToReset}
+            >
+              Forgot password?
+            </Button>
+          </div>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        {error && (
+          <div className="bg-red-50 text-red-600 p-2 rounded-md text-sm">
+            {error}
+          </div>
+        )}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={loading}
+        >
+          {loading ? "Signing in..." : "Sign In"}
         </Button>
       </form>
-    </Form>
+      <div className="text-center text-sm">
+        Don't have an account?{" "}
+        <Button 
+          variant="link" 
+          className="p-0" 
+          onClick={onSwitchToSignup}
+        >
+          Sign up
+        </Button>
+      </div>
+    </div>
   );
 };
 
