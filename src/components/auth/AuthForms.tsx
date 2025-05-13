@@ -7,6 +7,7 @@ import ResetPasswordView from './views/ResetPasswordView';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthError } from '@/hooks/useAuthError';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 type AuthMode = 'login' | 'signup' | 'reset';
 
@@ -15,6 +16,7 @@ const AuthForms = () => {
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, resetPassword } = useAuth();
   const { errorMessage, handleError, setErrorMessage } = useAuthError();
+  const navigate = useNavigate();
 
   const handleLogin = async (email: string, password: string) => {
     setLoading(true);
@@ -22,6 +24,8 @@ const AuthForms = () => {
     try {
       await signIn(email, password);
       toast.success("Login successful");
+      // Add navigation to redirect after successful login
+      navigate('/');
     } catch (error) {
       handleError(error);
     } finally {

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -34,6 +33,16 @@ export function useAuthMethods() {
     }
     
     console.log('Sign in successful');
+    
+    // Add a fallback navigation as a safeguard
+    // This ensures redirection even if component-level navigation fails
+    setTimeout(() => {
+      // Check if we're still on the auth page after successful login
+      if (window.location.pathname.includes('/auth')) {
+        console.log('Fallback navigation triggered');
+        window.location.href = '/';
+      }
+    }, 1000);
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
