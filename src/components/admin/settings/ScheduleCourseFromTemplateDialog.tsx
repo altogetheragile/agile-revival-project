@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -36,6 +37,7 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
         location: "",
         instructor: "",
         price: "",
+        eventType: "course", // Default event type
         category: "",
         spotsAvailable: 0,
         isTemplate: false,
@@ -50,6 +52,7 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
       location: template.location && template.location !== "To Be Determined" ? template.location : "",
       instructor: template.instructor && template.instructor !== "To Be Assigned" ? template.instructor : "",
       price: template.price,
+      eventType: template.eventType || "course", // Use the template's event type
       category: template.category,
       spotsAvailable: 12,
       learningOutcomes: template.learningOutcomes,
@@ -109,3 +112,5 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
     </Dialog>
   );
 };
+
+export default ScheduleCourseFromTemplateDialog;

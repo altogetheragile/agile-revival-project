@@ -181,6 +181,7 @@ export type Database = {
           dates: string
           description: string
           duration: string | null
+          event_type: string | null
           format: string | null
           google_drive_folder_id: string | null
           google_drive_folder_url: string | null
@@ -210,6 +211,7 @@ export type Database = {
           dates: string
           description: string
           duration?: string | null
+          event_type?: string | null
           format?: string | null
           google_drive_folder_id?: string | null
           google_drive_folder_url?: string | null
@@ -239,6 +241,7 @@ export type Database = {
           dates?: string
           description?: string
           duration?: string | null
+          event_type?: string | null
           format?: string | null
           google_drive_folder_id?: string | null
           google_drive_folder_url?: string | null

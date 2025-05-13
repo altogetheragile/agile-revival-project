@@ -86,6 +86,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       id: currentTemplate?.id || 'preview-template',
       title: (formValues.namedItem('title') as HTMLInputElement)?.value || 'Untitled Course',
       description: (formValues.namedItem('description') as HTMLTextAreaElement)?.value || '',
+      eventType: (formValues.namedItem('eventType') as HTMLSelectElement)?.value || 'course',
       category: (formValues.namedItem('category') as HTMLInputElement)?.value || '',
       price: (formValues.namedItem('price') as HTMLInputElement)?.value || '',
       learningOutcomes: (formValues.namedItem('learningOutcomes') as HTMLTextAreaElement)?.value
@@ -173,6 +174,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
                   location: "To Be Determined",
                   instructor: "To Be Assigned",
                   price: "£",
+                  eventType: "course", // Default event type
                   category: "scrum",
                   spotsAvailable: 0,
                   isTemplate: true, // Explicitly set isTemplate to true
@@ -202,22 +204,24 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
         open={mediaLibOpen}
         onOpenChange={setMediaLibOpen}
         onSelect={(url, aspectRatio, size, layout) => {
-          // Fix the type issue by providing required properties
           setFormData(prevData => ({
-            ...(prevData || {}),
-            title: prevData?.title || "",
-            description: prevData?.description || "",
-            dates: prevData?.dates || "Template - No Dates",
-            location: prevData?.location || "To Be Determined",
-            instructor: prevData?.instructor || "To Be Assigned",
-            price: prevData?.price || "",
-            category: prevData?.category || "scrum",
-            spotsAvailable: prevData?.spotsAvailable || 0,
+            ...(prevData || {
+              title: "",
+              description: "",
+              dates: "Template - No Dates",
+              location: "To Be Determined",
+              instructor: "To Be Assigned",
+              price: "£",
+              eventType: "course", // Default event type
+              category: "scrum",
+              spotsAvailable: 0,
+              isTemplate: true,
+              status: "draft"
+            }),
             imageUrl: url,
             imageAspectRatio: aspectRatio || "16/9",
             imageSize: size || 100,
-            imageLayout: layout || "standard",
-            isTemplate: true // Always ensure this is true
+            imageLayout: layout || "standard"
           }));
           setMediaLibOpen(false);
         }}

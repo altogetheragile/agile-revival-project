@@ -10,19 +10,19 @@ interface CourseDialogsProps {
   setIsFormOpen: (open: boolean) => void;
   isConfirmDialogOpen: boolean;
   setIsConfirmDialogOpen: (open: boolean) => void;
-  scheduleDialogOpen: boolean;
-  setScheduleDialogOpen: (open: boolean) => void;
+  scheduleDialogOpen?: boolean;
+  setScheduleDialogOpen?: (open: boolean) => void;
   mediaLibOpen: boolean;
   setMediaLibOpen: (open: boolean) => void;
   currentCourse: Course | null;
-  selectedTemplate: Course | null;
+  selectedTemplate?: Course | null;
   formData: Course | null;
   setFormData: (data: Course | null) => void;
   handleFormSubmit: (data: any) => Promise<void>;
   handleDelete: () => Promise<void>;
-  handleScheduleSubmit: (data: any) => Promise<void>;
+  handleScheduleSubmit?: (data: any) => Promise<void>;
   handleMediaSelect: (url: string, aspectRatio?: string, size?: number, layout?: string) => void;
-  isScheduling: boolean;
+  isScheduling?: boolean;
 }
 
 export const CourseDialogs = ({
@@ -30,19 +30,19 @@ export const CourseDialogs = ({
   setIsFormOpen,
   isConfirmDialogOpen,
   setIsConfirmDialogOpen,
-  scheduleDialogOpen,
-  setScheduleDialogOpen,
+  scheduleDialogOpen = false,
+  setScheduleDialogOpen = () => {},
   mediaLibOpen,
   setMediaLibOpen,
   currentCourse,
-  selectedTemplate,
+  selectedTemplate = null,
   formData,
   setFormData,
   handleFormSubmit,
   handleDelete,
-  handleScheduleSubmit,
+  handleScheduleSubmit = async () => {},
   handleMediaSelect,
-  isScheduling
+  isScheduling = false
 }: CourseDialogsProps) => {
   return (
     <>
