@@ -3,8 +3,10 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CourseForm from "@/components/courses/CourseForm";
-import { Course, CourseFormData } from "@/types/course";
+import { Course, CourseFormData, ScheduleCourseFormData } from "@/types/course";
 import { useScheduleCourse } from "@/hooks/useScheduleCourse";
+import { Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface ScheduleCourseFromTemplateDialogProps {
   open: boolean;
@@ -12,7 +14,6 @@ interface ScheduleCourseFromTemplateDialogProps {
   template: Course | null;
   onSubmit: (data: CourseFormData) => void;
   onCancel: () => void;
-  onOpenMediaLibrary?: () => void;
 }
 
 export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTemplateDialogProps> = ({
@@ -20,15 +21,44 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
   onOpenChange,
   template,
   onSubmit,
-  onCancel,
-  onOpenMediaLibrary
+  onCancel
 }) => {
   const [formData, setFormData] = useState<CourseFormData | null>(null);
   const { scheduleCourse, isScheduling } = useScheduleCourse(() => {
     onOpenChange(false);
   });
 
-  const prepareCourseData = (): CourseFormData => {
+  // Event type display label
+  const getEventTypeLabel = (eventType: string = "course") => {
+    const types: Record<string, string> = {
+      "course": "Course",
+      "workshop": "Workshop",
+      "webinar": "Webinar",
+      "conference": "Conference",
+      "meetup": "Meetup"
+    };
+    return types[eventType.toLowerCase()] || "Event";
+  };
+
+  // Get badge color based on event type
+  const getEventTypeColor = (eventType: string = "course") => {
+    switch (eventType.toLowerCase()) {
+      case "course":
+        return "bg-blue-100 text-blue-800";
+      case "workshop":
+        return "bg-purple-100 text-purple-800";
+      case "webinar":
+        return "bg-amber-100 text-amber-800";
+      case "conference":
+        return "bg-green-100 text-green-800";
+      case "meetup":
+        return "bg-pink-100 text-pink-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const prepareFormData = (): CourseFormData => {
     if (!template) {
       return {
         title: "",
@@ -37,8 +67,8 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
         location: "",
         instructor: "",
         price: "",
-        eventType: "course", // Default event type
         category: "",
+        eventType: "course",
         spotsAvailable: 0,
         isTemplate: false,
         status: "draft"
@@ -52,8 +82,8 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
       location: template.location && template.location !== "To Be Determined" ? template.location : "",
       instructor: template.instructor && template.instructor !== "To Be Assigned" ? template.instructor : "",
       price: template.price,
-      eventType: template.eventType || "course", // Use the template's event type
       category: template.category,
+      eventType: template.eventType || "course",
       spotsAvailable: 12,
       learningOutcomes: template.learningOutcomes,
       prerequisites: template.prerequisites,
@@ -73,14 +103,16 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
 
   const handleFormSubmit = async (data: CourseFormData) => {
     if (template) {
-      await scheduleCourse(template.id, {
+      const scheduleData: ScheduleCourseFormData = {
+        templateId: template.id,
         dates: data.dates || "",
         location: data.location || "",
         instructor: data.instructor || "",
         spotsAvailable: Number(data.spotsAvailable || 0),
-        status: data.status || "draft",
-        templateId: template.id
-      });
+        status: data.status || "draft"
+      };
+      
+      await scheduleCourse(template.id, scheduleData);
     }
     onSubmit(data);
   };
@@ -89,26 +121,35 @@ export const ScheduleCourseFromTemplateDialog: React.FC<ScheduleCourseFromTempla
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>
-            {template ? `Schedule Course: ${template.title}` : "Schedule New Course"}
-          </DialogTitle>
+          <div className="flex items-center gap-2">
+            <DialogTitle>
+              Schedule New {template ? getEventTypeLabel(template.eventType) : "Event"}
+            </DialogTitle>
+            {template?.eventType && (
+              <Badge variant="outline" className={getEventTypeColor(template.eventType)}>
+                {getEventTypeLabel(template.eventType)}
+              </Badge>
+            )}
+          </div>
           <DialogDescription>
-            Schedule a new course instance from this template.
+            {template ? `Create a new scheduled instance of "${template.title}"` : "Schedule a new event instance from this template."}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[70vh] pr-4">
           <CourseForm
-            initialData={prepareCourseData()}
+            initialData={prepareFormData()}
             onSubmit={handleFormSubmit}
             onCancel={onCancel}
-            onOpenMediaLibrary={onOpenMediaLibrary}
             formData={formData}
             setFormData={setFormData}
+            isSubmitting={isScheduling}
+            submitButtonText={isScheduling ? 
+              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Scheduling...</> : 
+              `Schedule ${template ? getEventTypeLabel(template.eventType) : "Event"}`
+            }
           />
         </ScrollArea>
       </DialogContent>
     </Dialog>
   );
 };
-
-export default ScheduleCourseFromTemplateDialog;

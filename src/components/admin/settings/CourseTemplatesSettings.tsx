@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const CourseTemplatesSettings = () => {
   const {
@@ -36,6 +37,7 @@ export const CourseTemplatesSettings = () => {
   const { user, isAdmin } = useAuth();
   const [authChecked, setAuthChecked] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
 
   // First, check authentication state
   useEffect(() => {
@@ -101,13 +103,23 @@ export const CourseTemplatesSettings = () => {
     }
   };
 
+  // Filter templates by event type
+  const filteredTemplates = eventTypeFilter === "all" 
+    ? templates 
+    : templates.filter(template => 
+        (template.eventType || "course").toLowerCase() === eventTypeFilter.toLowerCase()
+      );
+
+  // Get unique event types from templates
+  const eventTypes = ["all", ...new Set(templates.map(t => (t.eventType || "course").toLowerCase()))];
+
   if (!authChecked) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Course Templates</CardTitle>
+          <CardTitle>Event Templates</CardTitle>
           <CardDescription>
-            Manage your course templates and schedule course instances
+            Manage your event templates and schedule events/courses
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -121,9 +133,9 @@ export const CourseTemplatesSettings = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Course Templates</CardTitle>
+          <CardTitle>Event Templates</CardTitle>
           <CardDescription>
-            Manage your course templates and schedule course instances
+            Manage your event templates and schedule events/courses
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -144,9 +156,9 @@ export const CourseTemplatesSettings = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Course Templates</CardTitle>
+          <CardTitle>Event Templates</CardTitle>
           <CardDescription>
-            Manage your course templates and schedule course instances
+            Manage your event templates and schedule events/courses
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -172,9 +184,9 @@ export const CourseTemplatesSettings = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>Course Templates</CardTitle>
+          <CardTitle>Event Templates</CardTitle>
           <CardDescription>
-            Manage your course templates and schedule course instances
+            Manage your event templates and schedule course/event instances
           </CardDescription>
         </div>
         <Button onClick={handleManualRefresh} variant="outline" size="sm">
@@ -182,14 +194,38 @@ export const CourseTemplatesSettings = () => {
         </Button>
       </CardHeader>
       <CardContent>
+        {!isLoading && templates.length > 0 && (
+          <div className="mb-4 flex gap-2 items-center">
+            <span className="text-sm font-medium">Filter:</span>
+            <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="All event types" />
+              </SelectTrigger>
+              <SelectContent>
+                {eventTypes.map(type => (
+                  <SelectItem key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        
         {isLoading ? (
           <TemplateLoadingState />
-        ) : templates.length === 0 ? (
-          <EmptyTemplateState />
+        ) : filteredTemplates.length === 0 ? (
+          templates.length === 0 ? (
+            <EmptyTemplateState />
+          ) : (
+            <div className="p-8 text-center text-gray-500">
+              <p>No templates found with the selected event type.</p>
+            </div>
+          )
         ) : (
           <ScrollArea className="h-[400px]">
             <div className="space-y-4">
-              {templates.map((template) => (
+              {filteredTemplates.map((template) => (
                 <CourseTemplateCard
                   key={template.id}
                   template={template}

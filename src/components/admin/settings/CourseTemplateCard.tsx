@@ -2,8 +2,9 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Calendar } from "lucide-react";
 import { CourseTemplate } from "@/types/course";
+import { Badge } from "@/components/ui/badge";
 
 interface CourseTemplateCardProps {
   template: CourseTemplate;
@@ -11,6 +12,22 @@ interface CourseTemplateCardProps {
   onDelete: (id: string) => void;
   onSchedule: (template: CourseTemplate) => void;
 }
+
+// Function to get appropriate event type badge color
+const getEventTypeColor = (eventType: string | undefined): string => {
+  switch (eventType?.toLowerCase()) {
+    case "course":
+      return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+    case "workshop":
+      return "bg-purple-100 text-purple-800 hover:bg-purple-100";
+    case "webinar":
+      return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+    case "conference":
+      return "bg-green-100 text-green-800 hover:bg-green-100";
+    default:
+      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+  }
+};
 
 export const CourseTemplateCard: React.FC<CourseTemplateCardProps> = ({
   template,
@@ -21,7 +38,12 @@ export const CourseTemplateCard: React.FC<CourseTemplateCardProps> = ({
   return (
     <Card className="border border-muted">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{template.title}</CardTitle>
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-lg">{template.title}</CardTitle>
+          <Badge variant="outline" className={getEventTypeColor(template.eventType)}>
+            {template.eventType || "Course"}
+          </Badge>
+        </div>
         <CardDescription className="text-sm text-muted-foreground">
           {template.category} · {template.duration || "Duration not specified"}
         </CardDescription>
@@ -51,10 +73,9 @@ export const CourseTemplateCard: React.FC<CourseTemplateCardProps> = ({
           size="sm"
           onClick={() => onSchedule(template)}
         >
-          Schedule Course
+          <Calendar className="h-4 w-4 mr-1" /> Schedule
         </Button>
       </CardFooter>
     </Card>
   );
 };
-
