@@ -306,12 +306,17 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     
     console.log("Template found, creating new course:", template.title);
     
-    // Create new course based on template
+    // Fix: Extract id and other auto-generated fields
+    const { 
+      id,
+      created_at, 
+      updated_at,
+      ...templateWithoutSystemFields 
+    } = template;
+    
+    // Create new course based on template without including id
     const newCourseData = {
-      ...template,
-      id: undefined, // Remove ID to get a new one
-      created_at: undefined, // Let DB set this
-      updated_at: undefined, // Let DB set this
+      ...templateWithoutSystemFields,
       dates: scheduleData.dates,
       location: scheduleData.location,
       instructor: scheduleData.instructor,

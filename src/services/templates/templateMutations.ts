@@ -126,9 +126,16 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
     
     console.log("Template found, creating new course:", template.title);
     
+    // Fix: Extract id and other auto-generated fields to omit from the new course
+    const { 
+      id, 
+      created_at, 
+      updated_at,
+      ...templateWithoutSystemFields 
+    } = template;
+    
     const newCourse = {
-      ...template,
-      id: undefined,
+      ...templateWithoutSystemFields,
       dates: scheduleData.dates,
       location: scheduleData.location,
       instructor: scheduleData.instructor,
@@ -137,8 +144,6 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       is_template: false,
       template_id: templateId,
       created_by: user.id, // Use verified user ID
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
     };
     
     // Use executeQuery for better error handling with improved error detection
