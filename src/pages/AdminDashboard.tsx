@@ -8,7 +8,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import CourseManagement from "@/components/admin/CourseManagement";
-import BlogManagement from "@/components/admin/BlogManagement";
+import { BlogManagement } from "@/components/admin/BlogManagement";
 import UserManagement from "@/components/admin/UserManagement";
 import SiteSettings from "@/components/admin/SiteSettings";
 import PageManagement from "@/components/admin/PageManagement";
