@@ -1,5 +1,5 @@
 
-// Re-export all utility functions
+// Export all utilities from the Supabase folder
 export * from './controllers';
 export * from './types';
 export * from './connection';

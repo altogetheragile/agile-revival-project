@@ -287,7 +287,7 @@ export type Database = {
           price: string
           skill_level: string | null
           spots_available: number
-          status: string
+          status: string | null
           target_audience: string | null
           template_id: string | null
           title: string
@@ -316,7 +316,7 @@ export type Database = {
           price: string
           skill_level?: string | null
           spots_available: number
-          status?: string
+          status?: string | null
           target_audience?: string | null
           template_id?: string | null
           title: string
@@ -345,7 +345,7 @@ export type Database = {
           price?: string
           skill_level?: string | null
           spots_available?: number
-          status?: string
+          status?: string | null
           target_audience?: string | null
           template_id?: string | null
           title?: string
@@ -359,6 +359,7 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          role: string | null
           updated_at: string | null
         }
         Insert: {
@@ -366,6 +367,7 @@ export type Database = {
           first_name?: string | null
           id: string
           last_name?: string | null
+          role?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -373,6 +375,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          role?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -481,6 +484,10 @@ export type Database = {
       }
       has_role: {
         Args: { user_id: string; required_role: string }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: { user_id: string }
         Returns: boolean
       }
       update_site_settings: {
