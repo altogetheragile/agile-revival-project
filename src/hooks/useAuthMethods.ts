@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cleanupAuthState } from '@/utils/supabase/auth-cleanup';
 
 export function useAuthMethods() {
   const signIn = async (email: string, password: string) => {
@@ -9,6 +10,17 @@ export function useAuthMethods() {
     
     if (!email || !password) {
       throw new Error('Email and password are required');
+    }
+    
+    // First clean up any existing auth state to prevent auth limbo
+    cleanupAuthState();
+    
+    // Try to do a global sign out first to clear any existing session
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (err) {
+      // Ignore errors here, we're just trying to clean up
+      console.warn("Pre-login cleanup warning:", err);
     }
     
     const { error } = await supabase.auth.signInWithPassword({
@@ -35,6 +47,9 @@ export function useAuthMethods() {
       throw new Error('Password must be at least 6 characters');
     }
     
+    // First clean up any existing auth state
+    cleanupAuthState();
+    
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
@@ -59,14 +74,30 @@ export function useAuthMethods() {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) {
-      console.error('Sign out error:', error);
+    // Use our robust sign out method to prevent auth limbo
+    try {
+      // Clean up auth state first
+      cleanupAuthState();
+      
+      // Then attempt to sign out
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        throw error;
+      }
+      
+      console.log('Sign out successful');
+      
+      // Force page reload for a clean slate
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 100);
+      
+    } catch (error) {
+      console.error('Sign out failed:', error);
       throw error;
     }
-    
-    console.log('Sign out successful');
   };
 
   const resetPassword = async (email: string) => {

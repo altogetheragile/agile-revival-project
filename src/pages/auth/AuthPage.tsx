@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanupAuthState } from "@/utils/supabase/auth-cleanup";
 import { useNavigate } from "react-router-dom";
+import MainLayout from "@/components/layout/MainLayout";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -26,5 +27,11 @@ export default function AuthPage() {
     checkAuth();
   }, [navigate]);
 
-  return <AuthForms />;
+  return (
+    <MainLayout>
+      <div className="flex items-center justify-center py-16 px-4">
+        <AuthForms />
+      </div>
+    </MainLayout>
+  );
 }

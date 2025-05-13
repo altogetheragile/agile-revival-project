@@ -1,102 +1,74 @@
 
-import { Link } from 'react-router-dom';
-import { navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, User, Shield } from 'lucide-react';
-import { useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface AuthButtonProps {
-  closeMenu?: () => void;
   isMobile?: boolean;
+  closeMenu?: () => void;
 }
 
-export const AuthButton = ({ closeMenu, isMobile }: AuthButtonProps) => {
-  const { user, isAdmin, signOut } = useAuth();
-
-  // Debug logging
-  useEffect(() => {
-    console.log("[AuthButton Debug] Auth state:", { 
-      user: !!user, 
-      userId: user?.id,
-      isAdmin 
-    });
-  }, [user, isAdmin]);
-
-  // Handle logout
-  const handleLogout = async (e: React.MouseEvent) => {
-    e.preventDefault();
+export function AuthButton({ isMobile, closeMenu }: AuthButtonProps) {
+  const { user, isLoading, signOut } = useAuth();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const navigate = useNavigate();
+  
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
     try {
       await signOut();
-      closeMenu?.();
+      if (closeMenu) closeMenu();
+      navigate('/auth');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Error signing out:", error);
+    } finally {
+      setIsSigningOut(false);
     }
   };
-
-  // When not logged in - show login button
-  if (!user) {
+  
+  const handleSignIn = () => {
+    if (closeMenu) closeMenu();
+    navigate('/auth');
+  };
+  
+  if (isLoading) {
     return (
-      <Link 
-        to="/auth" 
-        className={isMobile 
-          ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors flex items-center gap-2" 
-          : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple flex items-center gap-2"}
-        onClick={closeMenu}
-      >
-        <LogIn size={18} /> Login
-      </Link>
-    );
-  }
-
-  // When logged in as admin - show admin dashboard link
-  if (isAdmin) {
-    console.log("[AuthButton Debug] Showing admin dashboard link");
-    return (
-      <div className={isMobile ? "space-y-2" : "flex items-center gap-2"}>
-        <Link 
-          to="/admin" 
-          className={isMobile 
-            ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors flex items-center gap-2" 
-            : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple flex items-center gap-2"}
-          onClick={closeMenu}
-        >
-          <Shield size={18} className="text-agile-purple" /> Admin Dashboard
-        </Link>
-        <Button 
-          variant="ghost" 
-          className={isMobile 
-            ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors w-full justify-start"
-            : "text-gray-700 hover:text-agile-purple"}
-          onClick={handleLogout}
-        >
-          <LogOut size={18} /> Logout
-        </Button>
-      </div>
-    );
-  }
-
-  // When logged in as regular user - show account menu
-  return (
-    <div className={isMobile ? "space-y-2" : "flex items-center gap-2"}>
-      <Link 
-        to="/account" 
-        className={isMobile 
-          ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors flex items-center gap-2" 
-          : navigationMenuTriggerStyle() + " bg-transparent hover:bg-accent/50 text-gray-700 hover:text-agile-purple flex items-center gap-2"}
-        onClick={closeMenu}
-      >
-        <User size={18} /> My Account
-      </Link>
-      <Button 
-        variant="ghost" 
-        className={isMobile 
-          ? "text-gray-700 hover:text-agile-purple font-medium py-2 transition-colors w-full justify-start"
-          : "text-gray-700 hover:text-agile-purple"}
-        onClick={handleLogout}
-      >
-        <LogOut size={18} /> Logout
+      <Button variant="ghost" disabled className="flex items-center gap-2">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span>Loading...</span>
       </Button>
-    </div>
+    );
+  }
+  
+  if (user) {
+    return (
+      <Button 
+        variant={isMobile ? "default" : "outline"} 
+        onClick={handleSignOut}
+        disabled={isSigningOut}
+        className={isMobile ? "w-full justify-start" : ""}
+      >
+        {isSigningOut ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            Signing out...
+          </>
+        ) : (
+          "Sign Out"
+        )}
+      </Button>
+    );
+  }
+  
+  return (
+    <Button
+      variant={isMobile ? "default" : "outline"}
+      onClick={handleSignIn}
+      className={isMobile ? "w-full justify-start" : ""}
+    >
+      Sign In
+    </Button>
   );
-};
+}

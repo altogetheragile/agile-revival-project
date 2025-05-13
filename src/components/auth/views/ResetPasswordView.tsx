@@ -1,27 +1,39 @@
 
 import { useAuthForm } from '@/contexts/AuthFormContext';
+import AuthDivider from '../AuthDivider';
 import ResetPasswordForm from '../reset-password/ResetPasswordForm';
+import { useState } from 'react';
+import GoogleSignInButton from '../GoogleSignInButton';
 
 interface ResetPasswordViewProps {
-  onSubmit: (email: string) => Promise<void>;
+  onSubmit: (email: string) => Promise<boolean>;
   error: string | null;
-  resetEmailSent: boolean;
 }
 
-export default function ResetPasswordView({ 
-  onSubmit,
-  error, 
-  resetEmailSent 
-}: ResetPasswordViewProps) {
+export default function ResetPasswordView({ onSubmit, error }: ResetPasswordViewProps) {
   const { loading, setMode } = useAuthForm();
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  
+  const handleSubmit = async (email: string) => {
+    const success = await onSubmit(email);
+    setResetEmailSent(success);
+  };
 
   return (
-    <ResetPasswordForm
-      onSubmit={onSubmit}
-      onSwitchToLogin={() => setMode('login')}
-      loading={loading}
-      error={error}
-      resetEmailSent={resetEmailSent}
-    />
+    <div className="space-y-4">
+      <GoogleSignInButton 
+        mode="login"
+        loading={loading}
+        onError={(error) => console.error(error)}
+      />
+      <AuthDivider />
+      <ResetPasswordForm
+        onSubmit={handleSubmit}
+        onSwitchToLogin={() => setMode('login')}
+        loading={loading}
+        error={error}
+        resetEmailSent={resetEmailSent}
+      />
+    </div>
   );
 }
