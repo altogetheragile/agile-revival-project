@@ -1,10 +1,10 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData } from "@/types/course";
-import { getAllCourses, createCourse, updateCourse, deleteCourse } from "@/services/courseService";
 import { toast } from "sonner";
-import { getCourseById } from "@/services/courseService";
+import { getAllCourses } from "@/services/course/courseQueries";
+import { createCourse, updateCourse, deleteCourse } from "@/services/course/courseMutations";
+import { getCourseById } from "@/services/course/courseQueries";
 
 export const useCourseManagement = () => {
   const [courses, setCourses] = useState<Course[]>([]);

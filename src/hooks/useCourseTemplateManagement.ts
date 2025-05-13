@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { Course, CourseFormData } from '@/types/course';
 import { useToast } from '@/components/ui/use-toast';
-import { createCourse, updateCourse, deleteCourse, getCourseTemplates } from '@/services/courseService';
+import { getCourseTemplates } from '@/services/course/courseQueries';
+import { createCourse, updateCourse, deleteCourse } from '@/services/course/courseMutations';
 
 export const useCourseTemplateManagement = () => {
   const [templates, setTemplates] = useState<Course[]>([]);

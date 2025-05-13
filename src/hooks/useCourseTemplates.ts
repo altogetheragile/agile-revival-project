@@ -1,9 +1,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Course, CourseFormData } from '@/types/course';
-import { getCourseTemplates, createCourse, updateCourse, deleteCourse } from '@/services/courseService';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { getCourseTemplates } from '@/services/course/courseQueries';
+import { createCourse, updateCourse, deleteCourse } from '@/services/course/courseMutations';
 
 export const useCourseTemplates = () => {
   const [templates, setTemplates] = useState<Course[]>([]);

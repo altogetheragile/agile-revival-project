@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { createCourseFromTemplate } from '@/services/courseService';
+import { createCourseFromTemplate } from '@/services/course/courseMutations';
 import { ScheduleCourseFormData } from '@/types/course';
 
 export const useScheduleCourse = (onSuccess?: () => void) => {
