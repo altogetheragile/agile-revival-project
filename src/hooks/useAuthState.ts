@@ -39,7 +39,7 @@ export function useAuthState() {
     }
     
     try {
-      // Call the check_user_role function instead of has_role to avoid recursion
+      // Call the check_user_role function with fully qualified column references
       const { data, error } = await supabase.rpc('check_user_role', {
         user_id: userId,
         required_role: 'admin'

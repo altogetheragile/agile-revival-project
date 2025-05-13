@@ -14,7 +14,7 @@ export async function isUserAdmin(): Promise<boolean> {
       return false;
     }
     
-    // Use check_user_role directly to avoid recursion
+    // Use check_user_role directly with fully qualified references
     const { data, error } = await supabase.rpc('check_user_role', {
       user_id: userData.user.id,
       required_role: 'admin'
@@ -43,7 +43,7 @@ export async function hasRole(role: string): Promise<boolean> {
       return false;
     }
     
-    // Use check_user_role instead of has_role to avoid recursion
+    // Use check_user_role directly with fully qualified references
     const { data, error } = await supabase.rpc('check_user_role', {
       user_id: userData.user.id,
       required_role: role
