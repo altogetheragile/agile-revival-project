@@ -1,104 +1,62 @@
 
+import { supabase } from '@/integrations/supabase/client';
+import { PostgrestError } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
 /**
- * Create an AbortController with timeout
+ * Check if the current user has admin role
  */
-export const createTimeoutController = (timeoutMs: number = 20000): { 
-  controller: AbortController, 
-  timeoutId: NodeJS.Timeout 
-} => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    console.log(`Request timeout after ${timeoutMs}ms`);
-    controller.abort();
-  }, timeoutMs);
-  
-  return { controller, timeoutId };
-};
+export async function isUserAdmin(): Promise<boolean> {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData?.user) {
+      return false;
+    }
+    
+    // Use check_user_role directly to avoid recursion
+    const { data, error } = await supabase.rpc('check_user_role', {
+      user_id: userData.user.id,
+      required_role: 'admin'
+    });
+    
+    if (error) {
+      console.error("Error checking admin role:", error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error("Exception in isUserAdmin:", error);
+    return false;
+  }
+}
 
 /**
- * Execute a function with timeout and retry capabilities
- * @param fn Function to execute
- * @param options Configuration options
- * @returns Result of the function execution
+ * Check if the current user has a specific role
  */
-export async function executeWithTimeout<T>(
-  fn: (signal: AbortSignal) => Promise<T>,
-  {
-    timeoutMs = 20000, // Increased from 10s to 20s
-    retries = 2,      // Increased default retries from 1 to 2
-    retryDelay = 1000,
-    onTimeout,
-    onError,
-    silentRetry = false
-  }: {
-    timeoutMs?: number;
-    retries?: number;
-    retryDelay?: number;
-    onTimeout?: () => void;
-    onError?: (error: any) => void;
-    silentRetry?: boolean;
-  } = {}
-): Promise<{ result: T | null; error: any | null }> {
-  let attempt = 0;
-  
-  while (attempt <= retries) {
-    try {
-      const { controller, timeoutId } = createTimeoutController(timeoutMs);
-      
-      try {
-        const result = await fn(controller.signal);
-        clearTimeout(timeoutId);
-        return { result, error: null };
-      } catch (err) {
-        clearTimeout(timeoutId);
-        
-        if (err instanceof DOMException && err.name === 'AbortError') {
-          if (onTimeout) onTimeout();
-          
-          if (attempt < retries) {
-            if (!silentRetry) {
-              console.log(`Operation timed out (attempt ${attempt + 1}/${retries + 1}), retrying...`);
-              toast.warning(`Request timed out, retrying... (${attempt + 1}/${retries + 1})`);
-            }
-            attempt++;
-            await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(1.5, attempt))); // Reduced exponential backoff
-            continue;
-          }
-          
-          return { 
-            result: null, 
-            error: new Error(`Operation timed out after ${timeoutMs}ms`) 
-          };
-        }
-        
-        if (onError) onError(err);
-        
-        if (attempt < retries) {
-          if (!silentRetry) {
-            console.log(`Operation failed (attempt ${attempt + 1}/${retries + 1}), retrying...`, err);
-          }
-          attempt++;
-          await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(1.5, attempt))); // Reduced exponential backoff
-          continue;
-        }
-        
-        return { result: null, error: err };
-      }
-    } catch (outerError) {
-      if (attempt < retries) {
-        attempt++;
-        await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(1.5, attempt))); // Reduced exponential backoff
-        continue;
-      }
-      
-      return { result: null, error: outerError };
+export async function hasRole(role: string): Promise<boolean> {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData?.user) {
+      return false;
     }
+    
+    // Use check_user_role instead of has_role to avoid recursion
+    const { data, error } = await supabase.rpc('check_user_role', {
+      user_id: userData.user.id,
+      required_role: role
+    });
+    
+    if (error) {
+      console.error(`Error checking ${role} role:`, error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error(`Exception in hasRole(${role}):`, error);
+    return false;
   }
-  
-  return { 
-    result: null, 
-    error: new Error("Maximum retry attempts exceeded") 
-  };
 }

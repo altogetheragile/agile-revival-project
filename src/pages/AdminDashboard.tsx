@@ -13,15 +13,13 @@ import UserManagement from "@/components/admin/UserManagement";
 import SiteSettings from "@/components/admin/SiteSettings";
 import PageManagement from "@/components/admin/PageManagement";
 import AdminMediaManager from "@/components/media/AdminMediaManager";
-import EventsManagement from "@/components/admin/EventsManagement";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
 import AdminBadge from "@/components/user/AdminBadge";
-import { Shield, ShieldAlert } from "lucide-react";
 import { useConnection } from "@/contexts/ConnectionContext";
 import { Alert } from "@/components/ui/alert";
 
 const AdminDashboard = () => {
-  const [currentTab, setCurrentTab] = useState<string>("events");
+  const [currentTab, setCurrentTab] = useState<string>("courses");
   const [isChecking, setIsChecking] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -94,9 +92,8 @@ const AdminDashboard = () => {
               </Alert>
             )}
             
-            <Tabs defaultValue="events" value={currentTab} onValueChange={setCurrentTab} className="w-full">
+            <Tabs defaultValue="courses" value={currentTab} onValueChange={setCurrentTab} className="w-full">
               <TabsList className="mb-8 w-full grid grid-cols-2 md:flex md:w-auto">
-                <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="courses">Courses</TabsTrigger>
                 <TabsTrigger value="blog">Blog</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
@@ -104,10 +101,6 @@ const AdminDashboard = () => {
                 <TabsTrigger value="settings">Settings</TabsTrigger>
                 <TabsTrigger value="media">Media</TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="events" className="pt-4">
-                <EventsManagement />
-              </TabsContent>
               
               <TabsContent value="courses" className="pt-4">
                 <CourseManagement />
