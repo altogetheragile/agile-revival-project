@@ -3,5 +3,5 @@
 // All functionality has been moved to dedicated files in the course/ directory
 
 export * from './course/courseQueries';
-export * from './course/courseMutations';
+export * from './course/mutations';
 export * from './course/courseMappers';
