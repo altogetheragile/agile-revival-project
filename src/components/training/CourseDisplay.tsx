@@ -1,10 +1,10 @@
 
-import { Course, CourseFormData } from "@/types/course";
+import { Course } from "@/types/course";
 import { CourseCategory } from "@/components/courses/CourseCategoryTabs";
 import CourseFilters from "@/components/courses/CourseFilters";
 import CourseScheduleView from "@/components/courses/CourseScheduleView";
 import RefreshIndicator from "@/components/training/RefreshIndicator";
-import { memo } from "react";
+import { memo, useEffect } from "react";
 
 interface CourseDisplayProps {
   courses: Course[];
@@ -27,6 +27,13 @@ const CourseDisplay = memo(({
   onEdit,
   onDelete
 }: CourseDisplayProps) => {
+  // Log the selected tab and courses for debugging
+  useEffect(() => {
+    console.log("CourseDisplay: selectedTab", selectedTab);
+    console.log("CourseDisplay: categories in courses", [...new Set(courses.map(c => c.category))]);
+  }, [selectedTab, courses]);
+
+  // Get filtered courses based on selected category
   const filteredCourses = selectedTab === "all" 
     ? courses 
     : courses.filter(course => course.category === selectedTab);
@@ -44,7 +51,7 @@ const CourseDisplay = memo(({
       <CourseFilters
         selectedTab={selectedTab}
         onTabChange={(value) => onTabChange(value as CourseCategory)}
-        filteredCourses={filteredCourses}
+        filteredCourses={courses} // Pass all courses for proper counting in tabs
       />
       
       <RefreshIndicator isRefreshing={isRefreshing} />

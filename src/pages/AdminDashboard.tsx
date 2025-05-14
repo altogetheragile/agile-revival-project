@@ -17,6 +17,8 @@ import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
 import AdminBadge from "@/components/user/AdminBadge";
 import { useConnection } from "@/contexts/ConnectionContext";
 import { Alert } from "@/components/ui/alert";
+import RefreshControls from "@/components/training/RefreshControls";
+import { useOptimisticCourses } from "@/hooks/useOptimisticCourses";
 
 const AdminDashboard = () => {
   const [currentTab, setCurrentTab] = useState<string>("courses");
@@ -25,6 +27,11 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { isAdmin, isAuthReady, user } = useAuth();
   const { connectionState, checkConnection } = useConnection();
+  const { 
+    isRefreshing, 
+    handleManualRefresh, 
+    handleForceReset 
+  } = useOptimisticCourses();
   
   useEffect(() => {
     setIsChecking(false);
@@ -90,6 +97,14 @@ const AdminDashboard = () => {
                   </p>
                 </div>
               </Alert>
+            )}
+            
+            {currentTab === "courses" && (
+              <RefreshControls 
+                isRefreshing={isRefreshing}
+                onManualRefresh={handleManualRefresh}
+                onForceReset={handleForceReset}
+              />
             )}
             
             <Tabs defaultValue="courses" value={currentTab} onValueChange={setCurrentTab} className="w-full">

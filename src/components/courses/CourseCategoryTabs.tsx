@@ -17,18 +17,18 @@ const CourseCategoryTabs = ({
   onTabChange, 
   filteredCourses 
 }: CourseCategoryTabsProps) => {
-  // Use centralized categories (including "all")
   return (
     <Tabs 
       value={selectedTab} 
       onValueChange={onTabChange} 
       className="w-full"
     >
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full md:grid-cols-4 grid-cols-2">
         {COURSE_CATEGORIES.map((category) => (
           <TabsTrigger 
             key={category.value} 
             value={category.value}
+            className="whitespace-nowrap"
           >
             {category.label} ({category.value === "all" 
               ? filteredCourses.length 

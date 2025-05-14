@@ -12,8 +12,8 @@ import { DeleteConfirmationDialog } from "@/components/admin/users/DeleteConfirm
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { useOptimisticCourses } from "@/hooks/useOptimisticCourses";
-import RefreshControls from "@/components/training/RefreshControls";
 import CourseDisplay from "@/components/training/CourseDisplay";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TrainingScheduleContainer = () => {
   // Updated to use string type for CourseCategory
@@ -23,6 +23,7 @@ const TrainingScheduleContainer = () => {
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
   const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
   const { toast: uiToast } = useToast();
+  const { isAdmin } = useAuth();
   
   // Use optimistic hook for course data management
   const {
@@ -36,9 +37,6 @@ const TrainingScheduleContainer = () => {
     handleManualRefresh,
     handleForceReset
   } = useOptimisticCourses();
-  
-  // Simplified admin check - always true for demo purposes
-  const isAdmin = true;
 
   useEffect(() => {
     // Set up periodic background refresh at a reduced frequency (30 seconds)
@@ -103,19 +101,13 @@ const TrainingScheduleContainer = () => {
         <section className="section-container">
           <TrainingHeader />
           
-          <RefreshControls 
-            isRefreshing={isRefreshing}
-            onManualRefresh={handleManualRefresh}
-            onForceReset={handleForceReset}
-          />
-          
           <CourseDisplay
             courses={courses}
             selectedTab={selectedTab}
             onTabChange={setSelectedTab}
             isInitialLoading={isInitialLoading}
             isRefreshing={isRefreshing}
-            isAdmin={isAdmin}
+            isAdmin={!!isAdmin}
             onEdit={handleEditCourse}
             onDelete={handleDeleteCourse}
           />
