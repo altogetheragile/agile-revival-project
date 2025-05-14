@@ -23,6 +23,9 @@ export const updateCourse = async (
       return null;
     }
     
+    // Log the incoming courseData ID to verify it's consistent
+    console.log("Input data ID:", courseData.id);
+    
     // Check if user is authenticated
     const user = await getAuthenticatedUser();
     if (!user) return null;
@@ -34,9 +37,6 @@ export const updateCourse = async (
       });
       return null;
     }
-
-    // Log the incoming courseData
-    console.log("Input course data:", courseData);
 
     // Apply any necessary transformations to the course data
     const dbCourseData = mapCourseToDb(courseData);
@@ -108,6 +108,7 @@ export const updateCourse = async (
           image_layout: courseData.imageLayout
         };
         
+        console.log("Propagating template changes to derived courses:", id);
         propagationResult = await updateCoursesFromTemplate(id, propagateFields);
         
         if (!propagationResult.success && propagationResult.error) {

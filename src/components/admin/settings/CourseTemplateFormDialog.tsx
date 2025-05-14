@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,7 +12,6 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 
 interface CourseTemplateFormDialogProps {
   open: boolean;
@@ -90,6 +90,9 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
     if (currentTemplate) {
       console.log("Setting initial form data with template ID:", currentTemplate.id);
       setFormData(templateToCourseFormData(currentTemplate));
+    } else {
+      // Clear form data when creating a new template
+      setFormData(null);
     }
   }, [currentTemplate]);
 
@@ -153,13 +156,21 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
     
     if (currentTemplate) {
       console.log("Editing existing template with ID:", currentTemplate.id);
-      templateData.id = currentTemplate.id;
+      console.log("Template data ID before update:", templateData.id);
+      
+      // Ensure we're using the template ID
+      if (!templateData.id && currentTemplate.id) {
+        console.log("Setting missing ID from currentTemplate");
+        templateData.id = currentTemplate.id;
+      }
+      
+      console.log("Calling onSubmit with template data, ID check:", templateData.id);
+      console.log("Propagation setting:", propagateChanges);
     } else {
       console.log("Creating new template (no ID yet)");
+      // Ensure no ID is set for new templates
+      delete templateData.id;
     }
-    
-    console.log("Calling onSubmit with template data, ID check:", templateData.id);
-    console.log("Propagation setting:", propagateChanges);
     
     try {
       // Pass the propagation flag to onSubmit
@@ -194,7 +205,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
           
           {!authError && (
             <ScrollArea className="max-h-[70vh] pr-4">
-              {/* Debug ID display for development */}
+              {/* Debug ID display */}
               {currentTemplate && (
                 <div className="text-xs text-muted-foreground mb-2 p-1 bg-muted rounded">
                   Editing template ID: {currentTemplate.id}

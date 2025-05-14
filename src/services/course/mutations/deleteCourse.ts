@@ -31,7 +31,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     // First verify the course exists
     const { data: existingCourse, error: fetchError } = await supabase
       .from('courses')
-      .select('id, title')
+      .select('id, title, is_template')
       .eq('id', id)
       .single();
     
@@ -50,6 +50,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     }
     
     console.log(`Course found, deleting: ${existingCourse.title} (${existingCourse.id})`);
+    console.log(`Is template: ${existingCourse.is_template}`);
 
     // Use optimized query with better error handling
     const { error } = await executeQuery<any>(
@@ -72,7 +73,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     }
 
     console.log("Course deleted successfully:", id);
-    toast.success("Course deleted successfully");
+    toast.success(existingCourse.is_template ? "Template deleted successfully" : "Course deleted successfully");
     return true;
   } catch (err) {
     console.error("Exception in deleteCourse:", err);

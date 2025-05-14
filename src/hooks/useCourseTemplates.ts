@@ -1,10 +1,10 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Course, CourseFormData } from '@/types/course';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCourseTemplates } from '@/services/course/courseQueries';
 import { createCourse, updateCourse, deleteCourse } from '@/services/course/courseMutations';
-import { updateCoursesFromTemplate } from '@/services/templates/templateMutations';
 import { useSiteSettings } from '@/contexts/site-settings';
 
 export const useCourseTemplates = () => {
@@ -50,6 +50,7 @@ export const useCourseTemplates = () => {
 
   const handleEditTemplate = (template: Course) => {
     console.log("Editing template:", template);
+    console.log("Template ID being set:", template.id);
     setCurrentTemplate(template);
     setIsFormOpen(true);
   };
@@ -57,10 +58,24 @@ export const useCourseTemplates = () => {
   const handleDeleteTemplate = async (templateId: string) => {
     try {
       console.log("Deleting template with ID:", templateId);
+      
+      // Confirm deletion with the user
+      if (!window.confirm("Are you sure you want to delete this template? This cannot be undone.")) {
+        console.log("Template deletion cancelled by user");
+        return;
+      }
+      
       const success = await deleteCourse(templateId);
+      console.log("Delete operation result:", success);
+      
       if (success) {
+        // Only reload templates if deletion was successful
         await loadTemplates();
         toast.success("Template deleted successfully");
+      } else {
+        toast.error("Failed to delete template", {
+          description: "The operation did not complete successfully"
+        });
       }
     } catch (error) {
       console.error("Error deleting template:", error);
@@ -76,11 +91,12 @@ export const useCourseTemplates = () => {
   };
 
   // Handle template update and propagation to courses
-  const handleFormSubmit = async (data: CourseFormData) => {
+  const handleFormSubmit = async (data: CourseFormData, propagateChanges: boolean = false) => {
     try {
       setIsUpdating(true);
       console.log("Form submitted with data:", data);
       console.log("Form data ID:", data.id || "No ID in form data");
+      console.log("Propagate changes flag:", propagateChanges);
       
       // Ensure required fields have default values and isTemplate is true
       const templateData: CourseFormData = {
@@ -118,38 +134,21 @@ export const useCourseTemplates = () => {
         
         console.log("Final template ID for update:", templateId);
         console.log("Final template data:", templateData);
+        console.log("Calling updateCourse with ID:", templateId);
+        console.log("Propagate changes:", propagateChanges);
         
-        const updated = await updateCourse(templateId, templateData);
+        // Pass explicit propagateChanges parameter to updateCourse
+        const updated = await updateCourse(templateId, templateData, propagateChanges);
         
         if (updated) {
           // Template was updated successfully
           await loadTemplates();
           setIsFormOpen(false);
-          toast.success("Template updated successfully");
-          
-          // Now handle propagation to courses based on sync mode
-          if (templateSyncMode === 'always') {
-            // Automatically propagate changes
-            await propagateTemplateChanges(templateId, updated);
-          } else if (templateSyncMode === 'prompt') {
-            // Ask user before propagating
-            const shouldPropagate = window.confirm(
-              "Do you want to update all courses created from this template with the new changes?"
-            );
-            if (shouldPropagate) {
-              await propagateTemplateChanges(templateId, updated);
-            } else {
-              toast.info("Courses not updated", { 
-                description: "Template changes were not applied to existing courses."
-              });
-            }
-          } else {
-            // 'never' mode - don't propagate
-            console.log("Template sync disabled. Not propagating changes to courses.");
-          }
+          // Toast is handled in updateCourse with details about propagation
         } else {
+          console.error("Update operation returned null");
           toast.error("Failed to update template", {
-            description: "The update operation did not return a valid template."
+            description: "The update operation did not return a valid template"
           });
         }
       } else {
@@ -160,8 +159,9 @@ export const useCourseTemplates = () => {
           setIsFormOpen(false);
           toast.success("Template created successfully");
         } else {
+          console.error("Create operation returned null");
           toast.error("Failed to create template", {
-            description: "The create operation did not return a valid template."
+            description: "The create operation did not return a valid template"
           });
         }
       }
@@ -172,31 +172,6 @@ export const useCourseTemplates = () => {
       });
     } finally {
       setIsUpdating(false);
-    }
-  };
-
-  // Propagate template changes to derived courses
-  const propagateTemplateChanges = async (templateId: string, templateData: Course) => {
-    try {
-      const updatedCount = await updateCoursesFromTemplate(templateId, templateData);
-      
-      if (updatedCount > 0) {
-        toast.success(`Updated ${updatedCount} course${updatedCount === 1 ? '' : 's'}`, {
-          description: `Changes from the template were applied to ${updatedCount} existing course${updatedCount === 1 ? '' : 's'}.`
-        });
-      } else {
-        toast.info("No courses to update", {
-          description: "No courses found that were created from this template."
-        });
-      }
-      
-      return updatedCount;
-    } catch (error) {
-      console.error("Error propagating template changes:", error);
-      toast.error("Failed to update courses", {
-        description: "There was an error applying template changes to courses."
-      });
-      return 0;
     }
   };
 
