@@ -11,12 +11,14 @@ import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 
 interface CourseTemplateFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentTemplate: Course | null;
-  onSubmit: (data: CourseFormData) => void;
+  onSubmit: (data: CourseFormData, propagateChanges?: boolean) => void;
   onCancel: () => void;
 }
 
@@ -38,6 +40,13 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
   // State for media library
   const [mediaLibOpen, setMediaLibOpen] = useState(false);
   const [formData, setFormData] = useState<CourseFormData | null>(null);
+
+  // State for propagation option - with user preference persistence
+  const [propagateChanges, setPropagateChanges] = useState<boolean>(() => {
+    // Initialize from localStorage if available
+    const saved = localStorage.getItem("propagateChanges");
+    return saved === "true";
+  });
 
   // Check authentication status when dialog opens
   useEffect(() => {
@@ -151,9 +160,11 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
     }
     
     console.log("Submitting template data with ID check:", templateData.id);
+    console.log("Propagation setting:", propagateChanges);
     
     try {
-      onSubmit(templateData);
+      // Pass the propagation flag to onSubmit
+      onSubmit(templateData, propagateChanges);
     } catch (error) {
       console.error("Error submitting template:", error);
       toast.error("Failed to save template", {
@@ -213,6 +224,32 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
                 setFormData={setFormData}
                 onPreview={handlePreview}
               />
+              
+              {/* Propagation checkbox */}
+              {currentTemplate && (
+                <div className="mt-4 border-t pt-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="propagate-changes"
+                      checked={propagateChanges}
+                      onCheckedChange={(checked) => {
+                        const newValue = checked === true;
+                        setPropagateChanges(newValue);
+                        localStorage.setItem("propagateChanges", newValue.toString());
+                      }} 
+                    />
+                    <label 
+                      htmlFor="propagate-changes" 
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Update all scheduled courses from this template
+                    </label>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 ml-6">
+                    This will update title, description, content fields, and imagery for all courses created from this template.
+                  </p>
+                </div>
+              )}
             </ScrollArea>
           )}
         </DialogContent>

@@ -67,7 +67,7 @@ export const useCourseTemplateManagement = () => {
     setIsScheduleDialogOpen(true);
   };
 
-  const handleFormSubmit = async (data: CourseFormData) => {
+  const handleFormSubmit = async (data: CourseFormData, propagateChanges: boolean = false) => {
     try {
       const templateData = {
         ...data,
@@ -79,14 +79,13 @@ export const useCourseTemplateManagement = () => {
       };
 
       if (currentTemplate) {
-        const updated = await updateCourse(currentTemplate.id, templateData);
+        console.log("Updating template with propagation:", propagateChanges);
+        const updated = await updateCourse(currentTemplate.id, templateData, propagateChanges);
+        
         if (updated) {
           await loadTemplates();
           setIsFormOpen(false);
-          toast({
-            title: "Success",
-            description: "Template updated successfully"
-          });
+          // Toast is handled in updateCourse with details about propagation
         }
       } else {
         const created = await createCourse(templateData);

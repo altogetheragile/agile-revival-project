@@ -5,11 +5,17 @@ import { toast } from "sonner";
 import { mapDbToCourse, mapCourseToDb } from "../courseMappers";
 import { executeQuery } from "@/utils/supabase/query";
 import { getAuthenticatedUser, checkAdminRole, handleMutationError } from "./baseCourseMutation";
+import { updateCoursesFromTemplate } from "@/services/templates/templatePropagation";
 
-export const updateCourse = async (id: string, courseData: CourseFormData): Promise<Course | null> => {
+export const updateCourse = async (
+  id: string, 
+  courseData: CourseFormData, 
+  propagateChanges: boolean = false
+): Promise<Course | null> => {
   try {
     console.log("Updating course:", id, courseData);
     console.log("Course ID type:", typeof id);
+    console.log("Propagate changes:", propagateChanges);
     
     if (!id) {
       console.error("Missing ID for update operation");
@@ -73,7 +79,61 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
     }
 
     console.log("Course updated successfully:", data);
-    toast.success(courseData.isTemplate ? "Template updated successfully" : "Course updated successfully");
+    
+    // Handle propagation to derived courses if this is a template
+    let propagationResult = { updatedCount: 0, updatedFields: [] as string[] };
+    
+    if (courseData.isTemplate && propagateChanges) {
+      try {
+        // Fields that should be propagated to derived courses
+        const propagateFields = {
+          title: courseData.title,
+          description: courseData.description,
+          category: courseData.category,
+          learning_outcomes: courseData.learningOutcomes as string[],
+          prerequisites: courseData.prerequisites,
+          target_audience: courseData.targetAudience,
+          duration: courseData.duration,
+          skill_level: courseData.skillLevel,
+          format: courseData.format,
+          price: courseData.price,
+          event_type: courseData.eventType,
+          image_url: courseData.imageUrl,
+          image_aspect_ratio: courseData.imageAspectRatio,
+          image_size: courseData.imageSize,
+          image_layout: courseData.imageLayout
+        };
+        
+        propagationResult = await updateCoursesFromTemplate(id, propagateFields);
+        
+        if (!propagationResult.success && propagationResult.error) {
+          console.error("Error propagating changes:", propagationResult.error);
+          // Show error but don't fail the whole operation since the template was updated
+          toast.error("Warning: Template updated but some courses failed to update", {
+            description: propagationResult.error
+          });
+        } else if (propagationResult.updatedCount > 0) {
+          const fieldsList = propagationResult.updatedFields.length > 0 
+            ? `: ${propagationResult.updatedFields.join(', ')}` 
+            : '';
+            
+          console.log(`Propagated changes to ${propagationResult.updatedCount} courses${fieldsList}`);
+        }
+      } catch (propagateError) {
+        console.error("Exception during propagation:", propagateError);
+        // Show warning but don't fail the whole operation
+        toast.error("Warning: Template updated but propagation to courses failed");
+      }
+    }
+    
+    // Prepare success message based on propagation status
+    const successMessage = courseData.isTemplate 
+      ? propagateChanges && propagationResult.updatedCount > 0
+        ? `Template updated and ${propagationResult.updatedCount} course(s) updated`
+        : "Template updated successfully"
+      : "Course updated successfully";
+      
+    toast.success(successMessage);
     
     return mapDbToCourse(data);
   } catch (err) {
