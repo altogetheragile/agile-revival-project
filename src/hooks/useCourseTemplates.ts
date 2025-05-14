@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCourseTemplates } from '@/services/course/courseQueries';
 import { createCourse, updateCourse, deleteCourse } from '@/services/course/courseMutations';
+import { updateCoursesFromTemplate } from '@/services/templates/templateMutations';
+import { useSiteSettings } from '@/contexts/site-settings';
 
 export const useCourseTemplates = () => {
   const [templates, setTemplates] = useState<Course[]>([]);
@@ -12,8 +14,13 @@ export const useCourseTemplates = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState<Course | null>(null);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   
   const { user, isAdmin } = useAuth();
+  const { settings } = useSiteSettings();
+  
+  // Get template sync preferences from settings or use default (prompt)
+  const templateSyncMode = settings?.templates?.syncMode || 'prompt';
   
   const loadTemplates = useCallback(async () => {
     setIsLoading(true);
@@ -69,8 +76,10 @@ export const useCourseTemplates = () => {
     setIsScheduleDialogOpen(true);
   };
 
+  // Handle template update and propagation to courses
   const handleFormSubmit = async (data: CourseFormData) => {
     try {
+      setIsUpdating(true);
       console.log("Form submitted with data:", data);
       
       // Ensure required fields have default values and isTemplate is true
@@ -89,10 +98,33 @@ export const useCourseTemplates = () => {
       if (currentTemplate) {
         console.log("Updating existing template with ID:", currentTemplate.id);
         const updated = await updateCourse(currentTemplate.id, templateData);
+        
         if (updated) {
+          // Template was updated successfully
           await loadTemplates();
           setIsFormOpen(false);
           toast.success("Template updated successfully");
+          
+          // Now handle propagation to courses based on sync mode
+          if (templateSyncMode === 'always') {
+            // Automatically propagate changes
+            await propagateTemplateChanges(currentTemplate.id, updated);
+          } else if (templateSyncMode === 'prompt') {
+            // Ask user before propagating
+            const shouldPropagate = window.confirm(
+              "Do you want to update all courses created from this template with the new changes?"
+            );
+            if (shouldPropagate) {
+              await propagateTemplateChanges(currentTemplate.id, updated);
+            } else {
+              toast.info("Courses not updated", { 
+                description: "Template changes were not applied to existing courses."
+              });
+            }
+          } else {
+            // 'never' mode - don't propagate
+            console.log("Template sync disabled. Not propagating changes to courses.");
+          }
         }
       } else {
         console.log("Creating new template");
@@ -108,6 +140,33 @@ export const useCourseTemplates = () => {
       toast.error("Error saving template", {
         description: error?.message || "Failed to save the template"
       });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Propagate template changes to derived courses
+  const propagateTemplateChanges = async (templateId: string, templateData: Course) => {
+    try {
+      const updatedCount = await updateCoursesFromTemplate(templateId, templateData);
+      
+      if (updatedCount > 0) {
+        toast.success(`Updated ${updatedCount} course${updatedCount === 1 ? '' : 's'}`, {
+          description: `Changes from the template were applied to ${updatedCount} existing course${updatedCount === 1 ? '' : 's'}.`
+        });
+      } else {
+        toast.info("No courses to update", {
+          description: "No courses found that were created from this template."
+        });
+      }
+      
+      return updatedCount;
+    } catch (error) {
+      console.error("Error propagating template changes:", error);
+      toast.error("Failed to update courses", {
+        description: "There was an error applying template changes to courses."
+      });
+      return 0;
     }
   };
 
@@ -124,6 +183,8 @@ export const useCourseTemplates = () => {
     handleDeleteTemplate,
     handleScheduleCourse,
     handleFormSubmit,
-    loadTemplates
+    loadTemplates,
+    isUpdating,
+    templateSyncMode
   };
 };

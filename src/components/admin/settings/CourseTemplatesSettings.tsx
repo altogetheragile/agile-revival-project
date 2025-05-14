@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +15,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 
 export const CourseTemplatesSettings = () => {
   const {
@@ -31,7 +31,9 @@ export const CourseTemplatesSettings = () => {
     handleDeleteTemplate,
     handleScheduleCourse,
     handleFormSubmit,
-    loadTemplates
+    loadTemplates,
+    isUpdating,
+    templateSyncMode
   } = useCourseTemplates();
 
   const { user, isAdmin } = useAuth();
@@ -189,26 +191,40 @@ export const CourseTemplatesSettings = () => {
             Manage your event templates and schedule course/event instances
           </CardDescription>
         </div>
-        <Button onClick={handleManualRefresh} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-1" /> Refresh
-        </Button>
+        <div className="flex items-center space-x-2">
+          {isUpdating && (
+            <div className="flex items-center text-sm text-muted-foreground mr-2">
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              <span>Updating...</span>
+            </div>
+          )}
+          <Button onClick={handleManualRefresh} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {!isLoading && templates.length > 0 && (
-          <div className="mb-4 flex gap-2 items-center">
-            <span className="text-sm font-medium">Filter:</span>
-            <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All event types" />
-              </SelectTrigger>
-              <SelectContent>
-                {eventTypes.map(type => (
-                  <SelectItem key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2">
+            <div className="flex gap-2 items-center">
+              <span className="text-sm font-medium">Filter:</span>
+              <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All event types" />
+                </SelectTrigger>
+                <SelectContent>
+                  {eventTypes.map(type => (
+                    <SelectItem key={type} value={type}>
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="text-xs text-muted-foreground mt-2 sm:mt-0 sm:ml-auto">
+              Sync mode: <span className="font-medium">{templateSyncMode === 'always' ? 'Automatic' : templateSyncMode === 'prompt' ? 'Ask before syncing' : 'Manual'}</span>
+            </div>
           </div>
         )}
         

@@ -6,6 +6,7 @@ import { fallbackTemplates } from "./templateData";
 import { mapDbToCourse } from "./templateMappers";
 import { executeQuery } from "@/utils/supabase/query";
 import { User } from "@supabase/supabase-js";
+import { getCoursesByTemplateId } from "./templateQueries";
 
 export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
   try {
@@ -190,5 +191,77 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
       description: "There was an unexpected error scheduling the course."
     });
     return null;
+  }
+};
+
+/**
+ * Updates all courses derived from a template with specified fields from the template
+ * @param templateId The ID of the template that was updated
+ * @param updatedFields Fields from the template that should be propagated to courses
+ * @returns Number of courses updated
+ */
+export const updateCoursesFromTemplate = async (templateId: string, templateData: Course): Promise<number> => {
+  try {
+    console.log(`Syncing changes from template ${templateId} to derived courses`);
+    
+    // Get all courses created from this template
+    const derivedCourses = await getCoursesByTemplateId(templateId);
+    
+    if (!derivedCourses || derivedCourses.length === 0) {
+      console.log(`No courses found derived from template ${templateId}`);
+      return 0;
+    }
+    
+    console.log(`Found ${derivedCourses.length} courses derived from template ${templateId}`);
+    
+    // These are the fields we want to sync from the template to the courses
+    // Only sync fields that shouldn't be independently customized
+    const fieldsToSync = {
+      title: templateData.title,
+      description: templateData.description,
+      category: templateData.category,
+      price: templateData.price,
+      learning_outcomes: templateData.learningOutcomes,
+      prerequisites: templateData.prerequisites,
+      target_audience: templateData.targetAudience,
+      duration: templateData.duration,
+      skill_level: templateData.skillLevel,
+      format: templateData.format,
+      event_type: templateData.eventType,
+      image_url: templateData.imageUrl,
+      image_aspect_ratio: templateData.imageAspectRatio,
+      image_layout: templateData.imageLayout,
+      image_size: templateData.imageSize
+    };
+    
+    // Log the fields being synchronized
+    console.log("Syncing the following fields from template to courses:", Object.keys(fieldsToSync));
+    
+    // Count successful updates
+    let updatedCount = 0;
+    
+    // Update each course one by one to provide better error control
+    for (const course of derivedCourses) {
+      const { error } = await supabase
+        .from('courses')
+        .update(fieldsToSync)
+        .eq('id', course.id)
+        .eq('template_id', templateId);
+        
+      if (error) {
+        console.error(`Error updating course ${course.id} from template:`, error);
+      } else {
+        updatedCount++;
+      }
+    }
+    
+    console.log(`Successfully updated ${updatedCount} of ${derivedCourses.length} courses`);
+    return updatedCount;
+  } catch (err) {
+    console.error("Error in updateCoursesFromTemplate:", err);
+    toast.error("Failed to sync template changes", {
+      description: "There was an error updating courses from the template."
+    });
+    return 0;
   }
 };
