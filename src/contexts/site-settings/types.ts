@@ -1,3 +1,4 @@
+
 export interface GeneralSettings {
   siteName: string;
   tagline: string;
@@ -9,6 +10,21 @@ export interface GeneralSettings {
   timeFormat: string;
   currency: string;
   language: string;
+  defaultLanguage?: string;
+  location?: {
+    address: string;
+    city: string;
+    country: string;
+  };
+  socialMedia?: {
+    twitter: string;
+    facebook: string;
+    linkedin: string;
+    instagram: string;
+    youtube: string;
+    tiktok?: string;
+    bluesky?: string;
+  };
 }
 
 export interface InterfaceSettings {
@@ -20,6 +36,13 @@ export interface InterfaceSettings {
   fontSize: string;
   accentColor: string;
   grayColor: string;
+  colorScheme?: string;
+  themeMode?: string;
+  animationSpeed?: string;
+  logoUrl?: string;
+  faviconUrl?: string;
+  homepageLayout?: string;
+  navigationStyle?: string;
 }
 
 export interface SecuritySettings {
@@ -27,6 +50,10 @@ export interface SecuritySettings {
   passwordPolicy: string;
   sessionTimeout: number;
   allowedIPs: string[];
+  requirePasswordReset?: boolean;
+  passwordResetDays?: number;
+  strongPasswords?: boolean;
+  twoFactorAuth?: boolean;
 }
 
 export interface UserSettings {
@@ -34,6 +61,10 @@ export interface UserSettings {
   registrationEnabled: boolean;
   approvalRequired: boolean;
   defaultAvatar: string;
+  allowSocialSignIn?: boolean;
+  requireEmailVerification?: boolean;
+  allowUserRegistration?: boolean;
+  autoApproveUsers?: boolean;
 }
 
 export interface SocialMediaSettings {
@@ -42,6 +73,8 @@ export interface SocialMediaSettings {
   instagram: string;
   linkedin: string;
   youtube: string;
+  tiktok?: string;
+  bluesky?: string;
 }
 
 export interface ServicesSettings {
@@ -50,6 +83,7 @@ export interface ServicesSettings {
   paymentGateway: string;
   analyticsTool: string;
   liveChatTool: string;
+  emailProvider?: string;
 }
 
 export interface GoogleDriveSettings {
@@ -63,10 +97,20 @@ export interface CourseFilterSettings {
   categories: string[];
   tags: string[];
   difficultyLevels: string[];
+  category?: string[];
+  skillLevel?: string[];
+  format?: string[];
 }
 
 export interface TemplateSettings {
   syncMode?: 'always' | 'prompt' | 'never';
+}
+
+export interface PageSettings {
+  id: string;
+  title: string;
+  url: string;
+  sections: any[];
 }
 
 export interface AllSettings {
@@ -79,4 +123,5 @@ export interface AllSettings {
   googleDrive: GoogleDriveSettings;
   courseFilters: CourseFilterSettings;
   templates: TemplateSettings;
+  pages?: PageSettings[];
 }

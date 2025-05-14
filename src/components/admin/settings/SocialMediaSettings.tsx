@@ -47,15 +47,30 @@ export const SocialMediaSettings = () => {
         tiktok: settings.general.socialMedia.tiktok || "",
         bluesky: settings.general.socialMedia.bluesky || "",
       });
+    } else if (!isLoading && settings.social) {
+      // Alternative: use the social settings directly if available
+      form.reset({
+        twitter: settings.social.twitter || "",
+        linkedin: settings.social.linkedin || "",
+        facebook: settings.social.facebook || "",
+        instagram: settings.social.instagram || "",
+        tiktok: settings.social.tiktok || "",
+        bluesky: settings.social.bluesky || "",
+      });
     }
-  }, [isLoading, settings.general, form]);
+  }, [isLoading, settings.general, settings.social, form]);
 
   const onSubmit = async (data: SocialMediaFormValues) => {
     try {
-      await updateSettings("general", {
-        ...settings.general,
-        socialMedia: data,
-      });
+      // Update either general.socialMedia or social directly based on your structure
+      if (settings.general && settings.general.socialMedia) {
+        await updateSettings("general", {
+          ...settings.general,
+          socialMedia: data,
+        });
+      } else {
+        await updateSettings("social", data);
+      }
       await refreshSettings();
       toast({
         title: "Social Media Settings updated",

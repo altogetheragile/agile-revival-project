@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageSections } from "./pages/PageSections";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,8 @@ const DEFAULT_PAGE = {
 const PageManagement = () => {
   const { settings, updateSettings, isLoading } = useSiteSettings();
   const { toast } = useToast();
-  const [pages, setPages] = useState(settings.pages || []);
-  const [activePageId, setActivePageId] = useState(pages[0]?.id || "home");
+  const [pages, setPages] = useState([]);
+  const [activePageId, setActivePageId] = useState("home");
   const [isAddPageOpen, setIsAddPageOpen] = useState(false);
   const [newPage, setNewPage] = useState({ title: "", url: "" });
   const [saving, setSaving] = useState(false);
@@ -109,17 +109,17 @@ const PageManagement = () => {
   };
 
   // Initialize with default page if no pages exist
-  React.useEffect(() => {
+  useEffect(() => {
     if (settings.pages && settings.pages.length > 0) {
       setPages(settings.pages);
       setActivePageId(settings.pages[0].id);
-    } else if (!isLoading && (!pages || pages.length === 0)) {
+    } else if (!isLoading) {
       setPages([DEFAULT_PAGE]);
       setActivePageId(DEFAULT_PAGE.id);
       // Save default page if no pages exist
       updateSettings("pages", [DEFAULT_PAGE]);
     }
-  }, [settings.pages, isLoading]);
+  }, [settings.pages, isLoading, updateSettings]);
 
   // Get the active page
   const activePage = pages.find(p => p.id === activePageId) || DEFAULT_PAGE;

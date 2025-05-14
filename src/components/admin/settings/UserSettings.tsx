@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -28,19 +29,19 @@ export const UserSettings = () => {
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
-    defaultValues: settings.user as UserSettingsType,
+    defaultValues: settings.users as unknown as UserSettingsType,
   });
 
   useEffect(() => {
-    console.log("UserSettings received settings:", settings.user);
+    console.log("UserSettings received settings:", settings.users);
     if (!isLoading) {
-      form.reset(settings.user as UserSettingsType);
+      form.reset(settings.users as unknown as UserSettingsType);
     }
-  }, [isLoading, settings.user, form]);
+  }, [isLoading, settings.users, form]);
 
   const onSubmit = async (data: UserFormValues) => {
     console.log("Submitting User Settings:", data);
-    await updateSettings('user', data);
+    await updateSettings('users', data);
   };
 
   if (isLoading) {

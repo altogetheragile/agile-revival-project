@@ -27,7 +27,7 @@ export const SettingsHeader = () => {
       await Promise.all([
         updateSettings('general', defaultSettings.general),
         updateSettings('interface', defaultSettings.interface),
-        updateSettings('user', defaultSettings.user),
+        updateSettings('users', defaultSettings.users),
         updateSettings('security', defaultSettings.security)
       ]);
       

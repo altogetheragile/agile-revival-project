@@ -13,6 +13,7 @@ export const socialMediaSchema = z.object({
   linkedin: z.string().url().optional().or(z.literal('')),
   facebook: z.string().url().optional().or(z.literal('')),
   instagram: z.string().url().optional().or(z.literal('')),
+  youtube: z.string().url().optional().or(z.literal('')),
   tiktok: z.string().url().optional().or(z.literal('')),
   bluesky: z.string().url().optional().or(z.literal('')),
 });

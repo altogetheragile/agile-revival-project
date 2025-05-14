@@ -52,17 +52,8 @@ export const GeneralSettings = () => {
         defaultLanguage: settings.general.defaultLanguage || "en",
         timezone: settings.general.timezone || "UTC",
         currency: settings.general.currency || "USD",
-        location: {
-          address: location.address || "",
-          city: location.city || "",
-          country: location.country || "",
-        },
-        socialMedia: {
-          twitter: socialMedia.twitter || "",
-          linkedin: socialMedia.linkedin || "",
-          facebook: socialMedia.facebook || "",
-          instagram: socialMedia.instagram || "",
-        },
+        location,
+        socialMedia,
       });
     }
   }, [isLoading, settings.general, form]);

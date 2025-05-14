@@ -70,8 +70,12 @@ const DEFAULT_SERVICES = [
 
 const ServicesSection = () => {
   const { settings } = useSiteSettings?.() || {};
-  // Fallback to default if not in context (e.g., SSR/build)
-  const services = (settings && settings.services?.length ? settings.services : DEFAULT_SERVICES);
+  
+  // Check if settings and services exist and if services has custom service items with a map method
+  const serviceItems = settings?.services?.serviceItems || [];
+  
+  // Use default services if no custom services are defined
+  const displayServices = serviceItems.length > 0 ? serviceItems : DEFAULT_SERVICES;
 
   return (
     <section id="services" className="section-container bg-gradient-to-b from-white to-agile-purple-light">
@@ -80,7 +84,7 @@ const ServicesSection = () => {
         Our experienced coaches provide personalized leadership development and team coaching services to help build sustainable agile practices in your organization.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {services.map((service, index) => (
+        {displayServices.map((service, index) => (
           <div key={index} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
             <ServiceCard {...service} />
           </div>
