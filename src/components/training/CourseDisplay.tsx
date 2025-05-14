@@ -37,10 +37,11 @@ const CourseDisplay = memo(({
     );
   }, [selectedTab, courses]);
 
-  // Get filtered courses based on selected category
-  const filteredCourses = selectedTab === "all" 
+  // Get filtered courses based on selected category (with case-insensitive comparison)
+  // Compare categories case-insensitively to handle inconsistent DB capitalization
+  const filteredCourses = selectedTab.toLowerCase() === "all" 
     ? courses 
-    : courses.filter(course => course.category === selectedTab);
+    : courses.filter(course => course.category.toLowerCase() === selectedTab.toLowerCase());
 
   if (isInitialLoading) {
     return (

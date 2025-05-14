@@ -38,9 +38,10 @@ const CourseCategoryFilter = ({
         <SelectContent>
           <SelectGroup>
             {COURSE_CATEGORIES.map((category) => {
-              const count = category.value === "all" 
+              // Compare categories case-insensitively to handle inconsistent DB capitalization
+              const count = category.value.toLowerCase() === "all" 
                 ? courses.length 
-                : courses.filter(c => c.category === category.value).length;
+                : courses.filter(c => c.category.toLowerCase() === category.value.toLowerCase()).length;
                 
               return (
                 <SelectItem key={category.value} value={category.value}>
