@@ -64,6 +64,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
   // Convert template to course form data for editing
   const templateToCourseFormData = (template: Course): CourseFormData => {
     console.log("Converting template to form data:", template);
+    console.log("Template ID being preserved:", template.id); // Add explicit logging for ID
     return {
       ...template,
       id: template.id, // Explicitly include ID to ensure it's preserved
@@ -128,15 +129,20 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       return;
     }
     
-    // Ensure isTemplate is always true before submitting
+    // Explicitly preserve the template ID when editing
     const templateData = {
       ...data,
       isTemplate: true,
-      // If we're editing an existing template, make sure to pass its ID
-      ...(currentTemplate && { id: currentTemplate.id })
     };
     
-    console.log("Submitting template data:", templateData);
+    if (currentTemplate) {
+      console.log("Editing existing template with ID:", currentTemplate.id);
+      templateData.id = currentTemplate.id;
+    } else {
+      console.log("Creating new template (no ID yet)");
+    }
+    
+    console.log("Submitting template data with ID check:", templateData.id);
     
     try {
       onSubmit(templateData);

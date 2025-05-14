@@ -17,6 +17,9 @@ export const SettingsSync = () => {
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const MAX_RECONNECT_ATTEMPTS = 5;
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Ref to track last successful settings update
+  const lastSuccessfulUpdateRef = useRef<Date | null>(null);
 
   const setupRealtimeSubscription = async () => {
     try {
@@ -28,6 +31,8 @@ export const SettingsSync = () => {
         return () => {}; // Return empty cleanup function to avoid errors
       }
 
+      console.log("Setting up realtime subscription for settings changes...");
+      
       const channel = supabase
         .channel('schema-db-changes')
         .on(
@@ -38,7 +43,9 @@ export const SettingsSync = () => {
             table: 'site_settings'
           },
           async (payload) => {
-            console.log('Settings changed:', payload);
+            console.log('Settings changed (realtime):', payload);
+            lastSuccessfulUpdateRef.current = new Date();
+            
             try {
               await refreshSettings();
               
@@ -129,6 +136,20 @@ export const SettingsSync = () => {
       }
     }, delay);
   };
+  
+  // Function to force refresh settings on an interval
+  const setupPeriodicRefresh = () => {
+    const refreshInterval = setInterval(() => {
+      if (connectionState.isConnected) {
+        console.log("Performing periodic settings refresh");
+        refreshSettings().catch(error => {
+          console.error("Error during periodic settings refresh:", error);
+        });
+      }
+    }, 60000); // Refresh every minute
+    
+    return () => clearInterval(refreshInterval);
+  };
 
   useEffect(() => {
     // Only set up realtime if database is connected
@@ -149,11 +170,21 @@ export const SettingsSync = () => {
         console.error("Failed to set up realtime subscription:", error);
       });
     
+    // Set up periodic refresh as a fallback
+    const cleanupRefresh = setupPeriodicRefresh();
+    
+    // Initial refresh on component mount
+    refreshSettings().catch(error => {
+      console.error("Error during initial settings refresh:", error);
+    });
+    
     // Return a cleanup function for useEffect
     return () => {
       if (cleanupFunction) {
         cleanupFunction();
       }
+      
+      cleanupRefresh();
       
       // Also clear any reconnect timeout if component unmounts
       if (reconnectTimeoutRef.current) {

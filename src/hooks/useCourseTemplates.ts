@@ -81,6 +81,7 @@ export const useCourseTemplates = () => {
     try {
       setIsUpdating(true);
       console.log("Form submitted with data:", data);
+      console.log("Form data ID:", data.id || "No ID in form data");
       
       // Ensure required fields have default values and isTemplate is true
       const templateData: CourseFormData = {
@@ -98,8 +99,22 @@ export const useCourseTemplates = () => {
       if (currentTemplate) {
         console.log("Updating existing template with ID:", currentTemplate.id);
         
-        // Ensure we pass the correct ID from the currentTemplate
-        const updated = await updateCourse(currentTemplate.id, templateData);
+        // Log all critical fields for debugging
+        console.log("ID check before update:", {
+          currentTemplateId: currentTemplate.id,
+          dataId: data.id,
+          templateDataId: templateData.id
+        });
+        
+        // Ensure we're using the correct ID - prioritize the current template ID
+        const templateId = currentTemplate.id;
+        
+        // Make sure the ID matches what we expect
+        if (!templateId) {
+          throw new Error("Missing template ID for update");
+        }
+        
+        const updated = await updateCourse(templateId, templateData);
         
         if (updated) {
           // Template was updated successfully
@@ -110,14 +125,14 @@ export const useCourseTemplates = () => {
           // Now handle propagation to courses based on sync mode
           if (templateSyncMode === 'always') {
             // Automatically propagate changes
-            await propagateTemplateChanges(currentTemplate.id, updated);
+            await propagateTemplateChanges(templateId, updated);
           } else if (templateSyncMode === 'prompt') {
             // Ask user before propagating
             const shouldPropagate = window.confirm(
               "Do you want to update all courses created from this template with the new changes?"
             );
             if (shouldPropagate) {
-              await propagateTemplateChanges(currentTemplate.id, updated);
+              await propagateTemplateChanges(templateId, updated);
             } else {
               toast.info("Courses not updated", { 
                 description: "Template changes were not applied to existing courses."
@@ -127,6 +142,10 @@ export const useCourseTemplates = () => {
             // 'never' mode - don't propagate
             console.log("Template sync disabled. Not propagating changes to courses.");
           }
+        } else {
+          toast.error("Failed to update template", {
+            description: "The update operation did not return a valid template."
+          });
         }
       } else {
         console.log("Creating new template");
@@ -135,6 +154,10 @@ export const useCourseTemplates = () => {
           await loadTemplates();
           setIsFormOpen(false);
           toast.success("Template created successfully");
+        } else {
+          toast.error("Failed to create template", {
+            description: "The create operation did not return a valid template."
+          });
         }
       }
     } catch (error: any) {

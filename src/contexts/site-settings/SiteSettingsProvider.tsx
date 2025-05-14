@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, ReactNode, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +26,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
   const { toast: uiToast } = useToast();
   const isInitialLoad = useRef(true);
   const MAX_RETRIES = 3;
+  const lastUpdateRef = useRef<string | null>(null);
   
   const { connectionState, checkConnection } = useConnection();
 
@@ -61,6 +63,8 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
           return;
         }
       }
+      
+      console.log("Fetching settings from database...");
       
       // Use executeQuery helper with 20s timeout (increased from 10s)
       const { data, error } = await executeQuery<SiteSetting[]>(
@@ -105,12 +109,16 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       }
 
       if (data && data.length > 0) {
+        console.log("Received settings data:", data.length, "items");
+        
         // Create a new settings object starting with the defaults
         const newSettings: AllSettings = { ...defaultSettings };
         
         try {
           // Process each setting from the database
           data.forEach(setting => {
+            console.log(`Processing setting: ${setting.key} =`, setting.value);
+            
             // Handle nested settings (with dot notation in key)
             if (setting.key.includes('.')) {
               const [parent, child] = setting.key.split('.');
@@ -147,7 +155,8 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
             }
           });
           
-          console.log("Fetched settings:", newSettings);
+          console.log("Processed settings:", newSettings);
+          lastUpdateRef.current = new Date().toISOString();
           setSettings(newSettings);
         } catch (parseError) {
           console.error("Error processing settings:", parseError);
@@ -216,45 +225,77 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         }
       }
       
-      // Use our executeQuery helper with increased timeout
-      const { error } = await executeQuery<any>(
-        async (signal) => await supabase.rpc('update_site_settings', {
-          setting_key: key,
-          setting_value: values,
-        }),
-        {
-          timeoutMs: 20000, // Increased from 10s to 20s
-          errorMessage: `Failed to update ${key} settings`,
-          retries: 2,  // Increased from 1 to 2 retries
-          onError: !silentMode ? (err) => {
+      // Use executeQuery helper with multiple explicit retries
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const { data, error } = await executeQuery<any>(
+            async (signal) => await supabase.rpc('update_site_settings', {
+              setting_key: key,
+              setting_value: values,
+            }),
+            {
+              timeoutMs: 20000, // Increased from 10s to 20s
+              errorMessage: `Failed to update ${key} settings (attempt ${attempt + 1})`,
+              retries: 0,  // We'll handle retries manually
+              showErrorToast: false // We'll handle errors manually
+            }
+          );
+          
+          if (error) {
+            console.error(`Error updating settings (attempt ${attempt + 1}):`, error);
+            if (attempt === 2) {
+              // Final attempt failed
+              if (!silentMode) {
+                uiToast({
+                  title: "Error",
+                  description: `Failed to update ${key} settings after multiple attempts`,
+                  variant: "destructive",
+                });
+              }
+              return;
+            }
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+            continue;
+          }
+          
+          // Success - update state and break out of retry loop
+          console.log(`Successfully updated ${key} settings`);
+          
+          // Update local state immediately
+          setSettings(prev => ({
+            ...prev,
+            [key]: values
+          }));
+          
+          // Update last successful update timestamp
+          lastUpdateRef.current = new Date().toISOString();
+          
+          if (!silentMode && !isInitialLoad.current) {
+            uiToast({
+              title: "Settings updated",
+              description: `${key.charAt(0).toUpperCase() + key.slice(1)} settings have been saved`,
+            });
+          } else {
+            console.log("Silent update completed for", key);
+          }
+          
+          // Success - no need to continue retrying
+          break;
+        } catch (attemptError) {
+          console.error(`Exception in updateSettings attempt ${attempt + 1}:`, attemptError);
+          if (attempt === 2) {
+            // Final attempt failed with exception
             uiToast({
               title: "Error",
-              description: `Failed to update ${key} settings`,
+              description: "An unexpected error occurred",
               variant: "destructive",
             });
-          } : undefined
+          }
         }
-      );
-
-      if (error) {
-        return;
-      }
-
-      setSettings(prev => ({
-        ...prev,
-        [key]: values
-      }));
-
-      if (!silentMode && !isInitialLoad.current) {
-        uiToast({
-          title: "Settings updated",
-          description: `${key.charAt(0).toUpperCase() + key.slice(1)} settings have been saved`,
-        });
-      } else {
-        console.log("Silent update completed for", key);
       }
     } catch (error) {
-      console.error("Exception updating settings:", error);
+      console.error("Exception in updateSettings:", error);
       uiToast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -274,6 +315,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
 
   useEffect(() => {
     try {
+      console.log("Initial settings fetch...");
       fetchSettings(false); // Not silent on initial load
     } catch (error) {
       console.error("Error in settings provider useEffect:", error);
