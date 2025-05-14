@@ -6,7 +6,7 @@ import TrainingScheduleContainer from "@/components/training/TrainingScheduleCon
 const TrainingSchedule = () => {
   return (
     <MainLayout>
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto pt-24 pb-8">
         <TrainingHeader />
         <TrainingScheduleContainer />
       </div>
