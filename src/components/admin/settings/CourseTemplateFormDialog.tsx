@@ -77,6 +77,14 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
     };
   };
 
+  // Initialize form data when currentTemplate changes
+  useEffect(() => {
+    if (currentTemplate) {
+      console.log("Setting initial form data with template ID:", currentTemplate.id);
+      setFormData(templateToCourseFormData(currentTemplate));
+    }
+  }, [currentTemplate]);
+
   // Handle preview request
   const handlePreview = () => {
     // Get current form values
@@ -176,6 +184,13 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
           
           {!authError && (
             <ScrollArea className="max-h-[70vh] pr-4">
+              {/* Debug ID display for development */}
+              {currentTemplate && (
+                <div className="text-xs text-muted-foreground mb-2 p-1 bg-muted rounded">
+                  Editing template ID: {currentTemplate.id}
+                </div>
+              )}
+              
               <CourseForm
                 initialData={currentTemplate ? templateToCourseFormData(currentTemplate) : {
                   title: "",

@@ -262,11 +262,26 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
           // Success - update state and break out of retry loop
           console.log(`Successfully updated ${key} settings`);
           
-          // Update local state immediately
-          setSettings(prev => ({
-            ...prev,
-            [key]: values
-          }));
+          // Important: Update local state immediately to reflect changes in the UI
+          setSettings(prev => {
+            // For nested updates like 'general.siteName', handle differently
+            if (key.includes('.')) {
+              const [parent, child] = key.split('.');
+              return {
+                ...prev,
+                [parent]: {
+                  ...prev[parent as keyof AllSettings],
+                  [child]: values
+                }
+              };
+            }
+            
+            // For regular top-level settings
+            return {
+              ...prev,
+              [key]: values
+            };
+          });
           
           // Update last successful update timestamp
           lastUpdateRef.current = new Date().toISOString();
@@ -327,7 +342,14 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
     settings,
     isLoading,
     updateSettings,
-    refreshSettings,
+    refreshSettings: async () => {
+      console.log("Refreshing settings...");
+      try {
+        await fetchSettings(true); // Use silent mode for refresh
+      } catch (error) {
+        console.error("Error during settings refresh:", error);
+      }
+    },
   };
 
   return (

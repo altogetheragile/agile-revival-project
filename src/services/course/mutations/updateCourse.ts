@@ -29,6 +29,10 @@ export const updateCourse = async (id: string, courseData: CourseFormData): Prom
       return null;
     }
 
+    // Log the incoming courseData
+    console.log("Input course data:", courseData);
+
+    // Apply any necessary transformations to the course data
     const dbCourseData = mapCourseToDb(courseData);
     
     // Create update data object directly without destructuring

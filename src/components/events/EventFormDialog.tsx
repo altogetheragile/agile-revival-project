@@ -21,9 +21,10 @@ interface EventFormDialogProps {
 
 // Convert Event to EventFormData for the form
 const convertToFormData = (event: Event): EventFormData => {
+  console.log("Converting event to form data with ID:", event.id);
   return {
     ...event,
-    id: event.id,
+    id: event.id, // Explicitly preserve ID
     // Include Google Drive folder information if available
     googleDriveFolderId: event.googleDriveFolderId || "",
     googleDriveFolderUrl: event.googleDriveFolderUrl || "",
@@ -57,10 +58,12 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   // Update formData when currentEvent or external formData changes
   useEffect(() => {
     if (currentEvent) {
+      console.log("EventFormDialog - setting form data from currentEvent with ID:", currentEvent.id);
       const convertedData = convertToFormData(currentEvent);
       setLocalFormData(convertedData);
       setFormKey(Date.now()); // Force re-render with fresh data
     } else if (formData) {
+      console.log("EventFormDialog - setting form data from formData:", formData);
       setLocalFormData(formData);
       setFormKey(Date.now());
     } else {
@@ -116,6 +119,15 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   
   // Handle form submission ensuring image settings are included
   const handleSubmit = (data: EventFormData) => {
+    // Preserve ID when submitting
+    if (currentEvent) {
+      console.log("Submitting event update with ID:", currentEvent.id);
+      data.id = currentEvent.id; // Explicitly set ID
+    } else if (localFormData?.id) {
+      console.log("Preserving existing form data ID:", localFormData.id);
+      data.id = localFormData.id;
+    }
+    
     // Preserve all image settings when submitting
     const submissionData = {
       ...data,
@@ -128,6 +140,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       eventType: data.eventType || localFormData?.eventType || "event"
     };
     
+    console.log("Final event form submission data with ID:", submissionData.id);
     onSubmit(submissionData);
   };
   
@@ -146,6 +159,13 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             </div>
           </DialogHeader>
           <ScrollArea className="max-h-[70vh] pr-4">
+            {/* Debug ID display for development */}
+            {(currentEvent || localFormData?.id) && (
+              <div className="text-xs text-muted-foreground mb-2 p-1 bg-muted rounded">
+                Editing event ID: {currentEvent?.id || localFormData?.id}
+              </div>
+            )}
+            
             <EventForm 
               key={formKey}
               initialData={localFormData || undefined}

@@ -16,6 +16,9 @@ export const InterfaceSettings = () => {
   const { toast } = useToast();
   const { settings, updateSettings, isLoading } = useSiteSettings();
 
+  // Console log to verify what settings are loaded
+  console.log("InterfaceSettings component - current settings:", settings.interface);
+
   const form = useForm<InterfaceFormValues>({
     resolver: zodResolver(interfaceFormSchema),
     defaultValues: {
@@ -25,9 +28,11 @@ export const InterfaceSettings = () => {
     },
   });
 
+  // Update form when settings change
   useEffect(() => {
     console.log("InterfaceSettings received settings:", settings.interface);
-    if (!isLoading) {
+    if (!isLoading && settings.interface) {
+      // Reset form with current settings from context
       form.reset({
         ...settings.interface as InterfaceSettingsType,
         primaryColor: settings.interface?.primaryColor || "",
@@ -39,7 +44,13 @@ export const InterfaceSettings = () => {
   const onSubmit = async (data: InterfaceFormValues) => {
     console.log("Submitting Interface Settings:", data);
     try {
+      // Log before updating
+      console.log("Before update, currentSettings:", settings.interface);
+      
+      // Update settings in context/database
       await updateSettings('interface', data);
+      
+      // Success message
       toast({
         title: "Settings saved",
         description: "Interface settings have been updated successfully",
@@ -60,6 +71,14 @@ export const InterfaceSettings = () => {
 
   return (
     <div className="space-y-6">
+      {/* Debug display - remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="p-2 bg-slate-100 rounded text-xs overflow-auto max-h-32 mb-4">
+          <p className="font-medium">Current settings data:</p>
+          <pre>{JSON.stringify(settings.interface, null, 2)}</pre>
+        </div>
+      )}
+      
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <BrandingSection form={form} />

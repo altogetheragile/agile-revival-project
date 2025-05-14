@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Course, CourseFormData } from '@/types/course';
 import { toast } from 'sonner';
@@ -106,13 +105,19 @@ export const useCourseTemplates = () => {
           templateDataId: templateData.id
         });
         
-        // Ensure we're using the correct ID - prioritize the current template ID
-        const templateId = currentTemplate.id;
+        // Ensure we're using the correct ID - prioritize the ID from data if it exists, otherwise use currentTemplate.id
+        const templateId = data.id || currentTemplate.id;
         
         // Make sure the ID matches what we expect
         if (!templateId) {
           throw new Error("Missing template ID for update");
         }
+        
+        // Ensure ID exists in templateData for the update operation
+        templateData.id = templateId;
+        
+        console.log("Final template ID for update:", templateId);
+        console.log("Final template data:", templateData);
         
         const updated = await updateCourse(templateId, templateData);
         
