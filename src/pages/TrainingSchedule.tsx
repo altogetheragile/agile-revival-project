@@ -4,8 +4,6 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { Course, CourseFormData } from "@/types/course";
-import { updateCourse, deleteCourse } from "@/services/courseService";
-import { getScheduledCourses } from "@/services/course/courseQueries";
 import { CourseCategory } from "@/components/courses/CourseCategoryTabs";
 import TrainingHeader from "@/components/courses/TrainingHeader";
 import CourseFilters from "@/components/courses/CourseFilters";
@@ -16,44 +14,41 @@ import { DeleteConfirmationDialog } from "@/components/admin/users/DeleteConfirm
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { toast } from "sonner";
+import { useOptimisticCourses } from "@/hooks/useOptimisticCourses";
 
 const TrainingSchedule = () => {
   // Updated to use string type for CourseCategory
   const [selectedTab, setSelectedTab] = useState<CourseCategory>("all");
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
   const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
   const { toast: uiToast } = useToast();
   
+  // Replace the previous course state and loading state with our optimistic hook
+  const {
+    courses,
+    isInitialLoading,
+    isRefreshing,
+    loadError,
+    refreshCoursesInBackground,
+    optimisticUpdateCourse,
+    optimisticDeleteCourse,
+    handleManualRefresh,
+    handleForceReset
+  } = useOptimisticCourses();
+  
   // Simplified admin check - always true for demo purposes
   const isAdmin = true;
 
   useEffect(() => {
-    refreshCourses();
-    
-    // Set up periodic refresh
+    // Set up periodic background refresh at a reduced frequency (30 seconds)
     const intervalId = setInterval(() => {
-      refreshCourses();
-    }, 10000);
+      refreshCoursesInBackground();
+    }, 30000); // Reduced from 10000 (10s) to 30000 (30s)
     
     return () => clearInterval(intervalId);
-  }, []);
-
-  const refreshCourses = async () => {
-    try {
-      setIsLoading(true);
-      const scheduledCourses = await getScheduledCourses();
-      setCourses(scheduledCourses);
-    } catch (error) {
-      console.error("Error fetching courses:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [refreshCoursesInBackground]);
 
   const filteredCourses = selectedTab === "all" 
     ? courses 
@@ -73,14 +68,8 @@ const TrainingSchedule = () => {
     if (!currentCourse) return;
 
     try {
-      const updated = await updateCourse(currentCourse.id, data);
-      if (updated) {
-        await refreshCourses();
-        uiToast({
-          title: "Course updated",
-          description: `"${data.title}" has been updated successfully.`
-        });
-      }
+      // Use optimistic update instead of waiting for the API call
+      await optimisticUpdateCourse(currentCourse.id, data);
       setIsFormOpen(false);
       setCurrentCourse(null);
     } catch (error) {
@@ -96,14 +85,8 @@ const TrainingSchedule = () => {
   const handleDelete = async () => {
     if (deleteCourseId) {
       try {
-        const success = await deleteCourse(deleteCourseId);
-        if (success) {
-          await refreshCourses();
-          uiToast({
-            title: "Course deleted",
-            description: "The course has been removed successfully."
-          });
-        }
+        // Use optimistic delete instead of waiting for the API call
+        await optimisticDeleteCourse(deleteCourseId);
       } catch (error) {
         console.error("Error deleting course:", error);
         uiToast({
@@ -116,23 +99,6 @@ const TrainingSchedule = () => {
         setDeleteCourseId(null);
       }
     }
-  };
-  
-  const handleManualRefresh = async () => {
-    await refreshCourses();
-    toast.success("Refreshed", {
-      description: "Course data has been refreshed from the database."
-    });
-  };
-  
-  // Add a reset function to force a global cache reset and page reload
-  const handleForceReset = () => {
-    toast.success("Cache reset", {
-      description: "The page will reload to refresh data."
-    });
-    
-    // Force reload the current page
-    window.location.reload();
   };
 
   return (
@@ -147,10 +113,11 @@ const TrainingSchedule = () => {
               variant="outline"
               size="sm"
               onClick={handleManualRefresh}
-              className="text-gray-600 border-gray-300 hover:bg-gray-50"
+              disabled={isRefreshing}
+              className="text-gray-600 border-gray-300 hover:bg-gray-50 flex items-center"
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh Data
+              <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+              {isRefreshing ? "Refreshing..." : "Refresh Data"}
             </Button>
             
             <Button
@@ -170,17 +137,26 @@ const TrainingSchedule = () => {
             filteredCourses={filteredCourses}
           />
           
-          {isLoading ? (
+          {isInitialLoading ? (
             <div className="text-center py-12">
               <p className="text-gray-500">Loading courses...</p>
             </div>
           ) : (
-            <CourseScheduleView 
-              courses={filteredCourses} 
-              isAdmin={isAdmin} // Always pass true to enable editing
-              onEdit={handleEditCourse}
-              onDelete={handleDeleteCourse}
-            />
+            <>
+              {isRefreshing && (
+                <div className="bg-blue-50 text-blue-700 text-xs py-1 px-2 rounded-md mb-2 flex items-center justify-center">
+                  <RefreshCw className="h-3 w-3 animate-spin mr-1" /> 
+                  Refreshing data...
+                </div>
+              )}
+              
+              <CourseScheduleView 
+                courses={filteredCourses} 
+                isAdmin={isAdmin} // Always pass true to enable editing
+                onEdit={handleEditCourse}
+                onDelete={handleDeleteCourse}
+              />
+            </>
           )}
           
           <CustomTrainingCTA />

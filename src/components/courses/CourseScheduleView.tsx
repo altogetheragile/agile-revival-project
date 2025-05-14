@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { Course } from "@/types/course";
 import CourseList from "./CourseList";
 import CourseGrid from "./CourseGrid";
@@ -12,7 +12,7 @@ interface CourseScheduleViewProps {
   onDelete?: (course: Course) => void;
 }
 
-const CourseScheduleView: React.FC<CourseScheduleViewProps> = ({ 
+const CourseScheduleView: React.FC<CourseScheduleViewProps> = memo(({ 
   courses,
   isAdmin,
   onEdit,
@@ -43,6 +43,8 @@ const CourseScheduleView: React.FC<CourseScheduleViewProps> = ({
       onDelete={isAdmin ? onDelete : undefined}
     />
   );
-};
+});
+
+CourseScheduleView.displayName = "CourseScheduleView";
 
 export default CourseScheduleView;

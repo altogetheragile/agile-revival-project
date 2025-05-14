@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { Course } from "@/types/course";
 import CourseCard from "./CourseCard";
 
@@ -10,7 +10,8 @@ interface CourseListProps {
   isMobile?: boolean;
 }
 
-const CourseList: React.FC<CourseListProps> = ({ courses, onEdit, onDelete, isMobile }) => {
+// Using React.memo to prevent unnecessary re-renders
+const CourseList: React.FC<CourseListProps> = memo(({ courses, onEdit, onDelete, isMobile }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {courses.map((course) => (
@@ -24,6 +25,8 @@ const CourseList: React.FC<CourseListProps> = ({ courses, onEdit, onDelete, isMo
       ))}
     </div>
   );
-};
+});
+
+CourseList.displayName = "CourseList";
 
 export default CourseList;

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Course } from "@/types/course";
 import { 
@@ -22,7 +22,8 @@ interface CourseGridProps {
   onDelete?: (course: Course) => void;
 }
 
-const CourseGrid: React.FC<CourseGridProps> = ({ courses, onEdit, onDelete }) => {
+// Using React.memo to prevent unnecessary re-renders
+const CourseGrid: React.FC<CourseGridProps> = memo(({ courses, onEdit, onDelete }) => {
   const navigate = useNavigate();
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [registrationOpen, setRegistrationOpen] = useState(false);
@@ -361,6 +362,8 @@ const CourseGrid: React.FC<CourseGridProps> = ({ courses, onEdit, onDelete }) =>
       />
     </>
   );
-};
+});
+
+CourseGrid.displayName = "CourseGrid";
 
 export default CourseGrid;
