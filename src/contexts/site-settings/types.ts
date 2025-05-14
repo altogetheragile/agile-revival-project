@@ -1,87 +1,82 @@
-// Types for our various settings
-import { CourseCategoryConfig } from "@/constants/courseCategories";
-
-export type GeneralSettings = {
+export interface GeneralSettings {
   siteName: string;
+  tagline: string;
   contactEmail: string;
-  contactPhone?: string;
-  defaultLanguage: string;
+  contactPhone: string;
+  address: string;
   timezone: string;
+  dateFormat: string;
+  timeFormat: string;
   currency: string;
-  location: {
-    address: string;
-    city: string;
-    country: string;
-  };
-  socialMedia: {
-    twitter?: string;
-    linkedin?: string;
-    facebook?: string;
-    instagram?: string;
-    tiktok?: string;
-    bluesky?: string;
-  };
-};
+  language: string;
+}
 
-export type InterfaceSettings = {
-  logoUrl?: string;
-  faviconUrl?: string;
-  primaryColor?: string;
-  secondaryColor?: string;
-  homepageLayout: string;
-  navigationStyle: string;
-};
+export interface InterfaceSettings {
+  theme: 'light' | 'dark' | 'system';
+  primaryColor: string;
+  secondaryColor: string;
+  borderRadius: 'none' | 'sm' | 'md' | 'lg' | 'full';
+  fontFamily: string;
+  fontSize: string;
+  accentColor: string;
+  grayColor: string;
+}
 
-export type UserSettings = {
-  defaultRole: string;
-  allowSocialSignIn: boolean;
-  requireEmailVerification: boolean;
-  allowUserRegistration: boolean;
-  autoApproveUsers: boolean;
-};
-
-export type SecuritySettings = {
+export interface SecuritySettings {
+  enable2FA: boolean;
+  passwordPolicy: string;
   sessionTimeout: number;
-  requirePasswordReset: boolean;
-  passwordResetDays?: number;
-  twoFactorAuth: boolean;
-  strongPasswords: boolean;
-};
+  allowedIPs: string[];
+}
 
-// Page section types
-export type PageSection = {
-  id: string;
-  type: string;
-  title: string;
-  content: string;
+export interface UserSettings {
+  defaultRole: string;
+  registrationEnabled: boolean;
+  approvalRequired: boolean;
+  defaultAvatar: string;
+}
+
+export interface SocialMediaSettings {
+  twitter: string;
+  facebook: string;
+  instagram: string;
+  linkedin: string;
+  youtube: string;
+}
+
+export interface ServicesSettings {
+  mailProvider: string;
+  smsProvider: string;
+  paymentGateway: string;
+  analyticsTool: string;
+  liveChatTool: string;
+}
+
+export interface GoogleDriveSettings {
   enabled: boolean;
-  settings?: any;
-};
+  clientId: string;
+  clientSecret: string;
+  folderId: string;
+}
 
-// Page structure
-export type Page = {
-  id: string;
-  title: string;
-  url: string;
-  sections: PageSection[];
-};
+export interface CourseFilterSettings {
+  categories: string[];
+  tags: string[];
+  difficultyLevels: string[];
+}
 
-// Combined settings types
-export type AllSettings = {
+export interface TemplateSettings {
+  syncMode?: 'always' | 'prompt' | 'never';
+}
+
+export interface AllSettings {
   general: GeneralSettings;
   interface: InterfaceSettings;
-  user: UserSettings;
   security: SecuritySettings;
-  courseCategories?: CourseCategoryConfig[];
-  skillLevels?: { value: string; label: string }[];
-  services?: any[];
-  pages?: Page[];
-  [key: string]: any;
-};
-
-export interface SiteSettingsContextType {
-  settings: AllSettings;
-  isLoading: boolean;
-  updateSettings: (key: string, values: any, silentMode?: boolean) => Promise<void>;
-  refreshSettings: () => Promise<void>;
+  users: UserSettings;
+  social: SocialMediaSettings;
+  services: ServicesSettings;
+  googleDrive: GoogleDriveSettings;
+  courseFilters: CourseFilterSettings;
+  templates: TemplateSettings;
 }
