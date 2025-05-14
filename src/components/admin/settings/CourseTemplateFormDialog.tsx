@@ -66,6 +66,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
     console.log("Converting template to form data:", template);
     return {
       ...template,
+      id: template.id, // Explicitly include ID to ensure it's preserved
       isTemplate: true, // Always ensure this is set to true for templates
       // Provide defaults for required fields
       dates: template.dates || "Template - No Dates",
@@ -130,8 +131,11 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
     // Ensure isTemplate is always true before submitting
     const templateData = {
       ...data,
-      isTemplate: true
+      isTemplate: true,
+      // If we're editing an existing template, make sure to pass its ID
+      ...(currentTemplate && { id: currentTemplate.id })
     };
+    
     console.log("Submitting template data:", templateData);
     
     try {

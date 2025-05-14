@@ -97,6 +97,8 @@ export const useCourseTemplates = () => {
 
       if (currentTemplate) {
         console.log("Updating existing template with ID:", currentTemplate.id);
+        
+        // Ensure we pass the correct ID from the currentTemplate
         const updated = await updateCourse(currentTemplate.id, templateData);
         
         if (updated) {
