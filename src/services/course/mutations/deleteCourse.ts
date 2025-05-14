@@ -6,16 +6,50 @@ import { getAuthenticatedUser, checkAdminRole, handleMutationError } from "./bas
 
 export const deleteCourse = async (id: string): Promise<boolean> => {
   try {
-    console.log("Deleting course:", id);
+    console.log("Deleting course with ID:", id);
+    console.log("ID type:", typeof id);
+    
+    if (!id) {
+      console.error("Missing ID for delete operation");
+      toast.error("Delete failed: Missing ID");
+      return false;
+    }
     
     // Check if user is authenticated
     const user = await getAuthenticatedUser();
-    if (!user) return false;
+    if (!user) {
+      console.error("Authentication failed or user not found");
+      return false;
+    }
 
     // Verify admin role
     if (!(await checkAdminRole(user.id))) {
+      console.error("User lacks admin privileges required for deletion");
       return false;
     }
+
+    // First verify the course exists
+    const { data: existingCourse, error: fetchError } = await supabase
+      .from('courses')
+      .select('id, title')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError) {
+      console.error("Error verifying course exists:", fetchError);
+      handleMutationError(fetchError, "Failed to locate course for deletion");
+      return false;
+    }
+    
+    if (!existingCourse) {
+      console.error("Course not found with ID:", id);
+      toast.error("Failed to delete course", {
+        description: "Course not found with the provided ID"
+      });
+      return false;
+    }
+    
+    console.log(`Course found, deleting: ${existingCourse.title} (${existingCourse.id})`);
 
     // Use optimized query with better error handling
     const { error } = await executeQuery<any>(
@@ -32,13 +66,16 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     );
 
     if (error) {
+      console.error("Error in deleteCourse:", error);
       handleMutationError(error, "Failed to delete course");
       return false;
     }
 
+    console.log("Course deleted successfully:", id);
     toast.success("Course deleted successfully");
     return true;
   } catch (err) {
+    console.error("Exception in deleteCourse:", err);
     handleMutationError(err, "Failed to delete course");
     return false;
   }

@@ -43,13 +43,23 @@ export const useCourseTemplateManagement = () => {
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
+    console.log("Attempting to delete template with ID:", templateId);
     try {
       const success = await deleteCourse(templateId);
+      console.log("Delete operation result:", success);
+      
       if (success) {
+        // Only reload templates if deletion was successful
         await loadTemplates();
         toast({
           title: "Success",
           description: "Template deleted successfully"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete template - operation did not complete successfully",
+          variant: "destructive"
         });
       }
     } catch (error) {
@@ -69,6 +79,9 @@ export const useCourseTemplateManagement = () => {
 
   const handleFormSubmit = async (data: CourseFormData, propagateChanges: boolean = false) => {
     try {
+      console.log("Form submitted with data:", data);
+      console.log("Propagate changes flag:", propagateChanges);
+
       const templateData = {
         ...data,
         isTemplate: true,
@@ -79,15 +92,34 @@ export const useCourseTemplateManagement = () => {
       };
 
       if (currentTemplate) {
-        console.log("Updating template with propagation:", propagateChanges);
+        console.log("Updating template with ID:", currentTemplate.id);
+        console.log("Template data ID before update:", templateData.id);
+        
+        // Ensure we're using the template ID
+        if (!templateData.id && currentTemplate.id) {
+          console.log("Setting missing ID from currentTemplate");
+          templateData.id = currentTemplate.id;
+        }
+        
+        console.log("Calling updateCourse with ID:", templateData.id);
+        console.log("Propagate changes:", propagateChanges);
+        
         const updated = await updateCourse(currentTemplate.id, templateData, propagateChanges);
         
         if (updated) {
           await loadTemplates();
           setIsFormOpen(false);
           // Toast is handled in updateCourse with details about propagation
+        } else {
+          console.error("Update operation returned null");
+          toast({
+            title: "Error",
+            description: "Failed to update template - no data returned",
+            variant: "destructive"
+          });
         }
       } else {
+        console.log("Creating new template");
         const created = await createCourse(templateData);
         if (created) {
           await loadTemplates();
@@ -95,6 +127,13 @@ export const useCourseTemplateManagement = () => {
           toast({
             title: "Success",
             description: "Template created successfully"
+          });
+        } else {
+          console.error("Create operation returned null");
+          toast({
+            title: "Error",
+            description: "Failed to create template - no data returned",
+            variant: "destructive"
           });
         }
       }

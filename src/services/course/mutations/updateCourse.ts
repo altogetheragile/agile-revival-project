@@ -13,7 +13,7 @@ export const updateCourse = async (
   propagateChanges: boolean = false
 ): Promise<Course | null> => {
   try {
-    console.log("Updating course:", id, courseData);
+    console.log("Updating course:", id, "Data:", courseData);
     console.log("Course ID type:", typeof id);
     console.log("Propagate changes:", propagateChanges);
     

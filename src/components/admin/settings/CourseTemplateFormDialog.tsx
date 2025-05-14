@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -127,7 +126,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
     setPreviewOpen(true);
   };
 
-  // Handle form submission with additional error handling
+  // Handle form submission with additional error handling and debugging
   const handleSubmit = async (data: CourseFormData) => {
     // Double check authentication
     const { data: { session } } = await supabase.auth.getSession();
@@ -159,7 +158,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       console.log("Creating new template (no ID yet)");
     }
     
-    console.log("Submitting template data with ID check:", templateData.id);
+    console.log("Calling onSubmit with template data, ID check:", templateData.id);
     console.log("Propagation setting:", propagateChanges);
     
     try {
