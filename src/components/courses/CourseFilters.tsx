@@ -11,11 +11,16 @@ interface CourseFiltersProps {
 }
 
 const CourseFilters = ({ selectedTab, onTabChange, filteredCourses }: CourseFiltersProps) => {
+  const handleTabChange = (value: string) => {
+    console.log("CourseFilters: Tab change requested to", value);
+    onTabChange(value);
+  };
+
   return (
     <div className="flex justify-between items-center mb-8">
       <CourseCategoryTabs
         selectedTab={selectedTab}
-        onTabChange={onTabChange}
+        onTabChange={handleTabChange}
         filteredCourses={filteredCourses}
       />
     </div>

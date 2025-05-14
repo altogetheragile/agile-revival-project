@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
@@ -10,7 +10,6 @@ import CustomTrainingCTA from "@/components/courses/CustomTrainingCTA";
 import CourseFormDialog from "@/components/courses/CourseFormDialog";
 import { DeleteConfirmationDialog } from "@/components/admin/users/DeleteConfirmationDialog";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 import { useOptimisticCourses } from "@/hooks/useOptimisticCourses";
 import CourseDisplay from "@/components/training/CourseDisplay";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,11 +40,18 @@ const TrainingScheduleContainer = () => {
   useEffect(() => {
     // Set up periodic background refresh at a reduced frequency (30 seconds)
     const intervalId = setInterval(() => {
-      refreshCoursesInBackground();
+      if (isAdmin) {
+        refreshCoursesInBackground();
+      }
     }, 30000); // Reduced from 10000 (10s) to 30000 (30s)
     
     return () => clearInterval(intervalId);
-  }, [refreshCoursesInBackground]);
+  }, [refreshCoursesInBackground, isAdmin]);
+
+  const handleTabChange = (value: CourseCategory) => {
+    console.log("TrainingScheduleContainer: Changing tab to", value);
+    setSelectedTab(value);
+  };
 
   const handleEditCourse = (course: Course) => {
     setCurrentCourse(course);
@@ -94,6 +100,12 @@ const TrainingScheduleContainer = () => {
     }
   };
 
+  useEffect(() => {
+    // Log initial state for debugging
+    console.log("TrainingScheduleContainer: Initial selectedTab", selectedTab);
+    console.log("TrainingScheduleContainer: Courses count", courses.length);
+  }, [selectedTab, courses]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -104,7 +116,7 @@ const TrainingScheduleContainer = () => {
           <CourseDisplay
             courses={courses}
             selectedTab={selectedTab}
-            onTabChange={setSelectedTab}
+            onTabChange={handleTabChange}
             isInitialLoading={isInitialLoading}
             isRefreshing={isRefreshing}
             isAdmin={!!isAdmin}

@@ -17,6 +17,9 @@ const CourseCategoryTabs = ({
   onTabChange, 
   filteredCourses 
 }: CourseCategoryTabsProps) => {
+  console.log("CourseCategoryTabs rendering with selectedTab:", selectedTab);
+  console.log("Available categories:", COURSE_CATEGORIES.map(c => c.value));
+  
   return (
     <Tabs 
       value={selectedTab} 
@@ -24,17 +27,25 @@ const CourseCategoryTabs = ({
       className="w-full"
     >
       <TabsList className="grid w-full md:grid-cols-4 grid-cols-2">
-        {COURSE_CATEGORIES.map((category) => (
-          <TabsTrigger 
-            key={category.value} 
-            value={category.value}
-            className="whitespace-nowrap"
-          >
-            {category.label} ({category.value === "all" 
-              ? filteredCourses.length 
-              : filteredCourses.filter(c => c.category === category.value).length})
-          </TabsTrigger>
-        ))}
+        {COURSE_CATEGORIES.map((category) => {
+          const count = category.value === "all" 
+            ? filteredCourses.length 
+            : filteredCourses.filter(c => c.category === category.value).length;
+          
+          return (
+            <TabsTrigger 
+              key={category.value} 
+              value={category.value}
+              className="whitespace-nowrap"
+              onClick={() => {
+                console.log("Tab clicked:", category.value);
+                onTabChange(category.value);
+              }}
+            >
+              {category.label} ({count})
+            </TabsTrigger>
+          );
+        })}
       </TabsList>
     </Tabs>
   );

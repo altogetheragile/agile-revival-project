@@ -30,7 +30,11 @@ const CourseDisplay = memo(({
   // Log the selected tab and courses for debugging
   useEffect(() => {
     console.log("CourseDisplay: selectedTab", selectedTab);
+    console.log("CourseDisplay: courses count", courses.length);
     console.log("CourseDisplay: categories in courses", [...new Set(courses.map(c => c.category))]);
+    console.log("CourseDisplay: filtered courses count", 
+      selectedTab === "all" ? courses.length : courses.filter(c => c.category === selectedTab).length
+    );
   }, [selectedTab, courses]);
 
   // Get filtered courses based on selected category
@@ -46,11 +50,16 @@ const CourseDisplay = memo(({
     );
   }
 
+  const handleTabChange = (value: string) => {
+    console.log("Tab change handler called with:", value);
+    onTabChange(value as CourseCategory);
+  };
+
   return (
     <>
       <CourseFilters
         selectedTab={selectedTab}
-        onTabChange={(value) => onTabChange(value as CourseCategory)}
+        onTabChange={handleTabChange}
         filteredCourses={courses} // Pass all courses for proper counting in tabs
       />
       
