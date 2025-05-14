@@ -31,7 +31,9 @@ const convertToFormData = (event: Event): EventFormData => {
     imageUrl: event.imageUrl || "",
     imageAspectRatio: event.imageAspectRatio || "16/9",
     imageSize: event.imageSize || 100,
-    imageLayout: event.imageLayout || "standard"
+    imageLayout: event.imageLayout || "standard",
+    // Ensure eventType is included
+    eventType: event.eventType || "event"
   };
 };
 
@@ -92,6 +94,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       instructor: "",
       price: "",
       category: "",
+      eventType: "event", // Add default eventType
       spotsAvailable: 0,
       status: "draft" as const,
       imageUrl: finalUrl,
@@ -120,7 +123,9 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       imageUrl: data.imageUrl || (localFormData?.imageUrl || ""),
       imageAspectRatio: data.imageAspectRatio || localFormData?.imageAspectRatio || "16/9",
       imageSize: data.imageSize !== undefined ? data.imageSize : localFormData?.imageSize || 100,
-      imageLayout: data.imageLayout || localFormData?.imageLayout || "standard"
+      imageLayout: data.imageLayout || localFormData?.imageLayout || "standard",
+      // Ensure eventType is included
+      eventType: data.eventType || localFormData?.eventType || "event"
     };
     
     onSubmit(submissionData);

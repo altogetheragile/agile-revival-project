@@ -15,6 +15,7 @@ export const mapDbToEvent = (dbEvent: any): Event => {
     instructor: dbEvent.instructor,
     price: dbEvent.price,
     category: dbEvent.category,
+    eventType: dbEvent.event_type || "event", // Add eventType with default
     spotsAvailable: dbEvent.spots_available,
     learningOutcomes: dbEvent.learning_outcomes || [],
     prerequisites: dbEvent.prerequisites || "",
@@ -58,6 +59,7 @@ export const mapEventToDb = (event: EventFormData): any => {
     instructor: event.instructor,
     price: event.price,
     category: event.category,
+    event_type: event.eventType || "event", // Add eventType mapping to database field
     spots_available: Number(event.spotsAvailable),
     learning_outcomes: processedLearningOutcomes,
     prerequisites: event.prerequisites,

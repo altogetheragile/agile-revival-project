@@ -27,6 +27,7 @@ const EventForm: React.FC<EventFormProps> = ({
     instructor: "",
     price: "£",
     category: "workshop",
+    eventType: "event", // Added default eventType
     spotsAvailable: 12,
     learningOutcomes: [],
     prerequisites: "",

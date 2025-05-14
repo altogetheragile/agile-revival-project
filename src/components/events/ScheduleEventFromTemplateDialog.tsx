@@ -38,6 +38,7 @@ export const ScheduleEventFromTemplateDialog: React.FC<ScheduleEventFromTemplate
         instructor: "",
         price: "",
         category: "",
+        eventType: "event", // Default event type
         spotsAvailable: 0,
         isTemplate: false,
         status: "draft"
@@ -52,6 +53,7 @@ export const ScheduleEventFromTemplateDialog: React.FC<ScheduleEventFromTemplate
       instructor: template.instructor && template.instructor !== "To Be Assigned" ? template.instructor : "",
       price: template.price,
       category: template.category,
+      eventType: template.eventType || "event", // Use template event type or default
       spotsAvailable: 12,
       learningOutcomes: template.learningOutcomes,
       prerequisites: template.prerequisites,
@@ -77,7 +79,8 @@ export const ScheduleEventFromTemplateDialog: React.FC<ScheduleEventFromTemplate
         instructor: data.instructor || "",
         spotsAvailable: Number(data.spotsAvailable || 0),
         status: data.status || "draft",
-        templateId: template.id
+        templateId: template.id,
+        eventType: data.eventType || template.eventType || "event" // Add eventType to scheduling data
       });
     }
     onSubmit(data);
