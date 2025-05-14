@@ -54,18 +54,16 @@ const TrainingScheduleContainer = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <CourseDisplay
-        courses={courses}
-        selectedTab={selectedCategory}
-        onTabChange={handleCategoryChange}
-        isInitialLoading={isLoading}
-        isRefreshing={isRefreshing}
-        isAdmin={isAdmin}
-        onEdit={handleEditCourse}
-        onDelete={handleDeleteCourse}
-      />
-    </div>
+    <CourseDisplay
+      courses={courses}
+      selectedTab={selectedCategory}
+      onTabChange={handleCategoryChange}
+      isInitialLoading={isLoading}
+      isRefreshing={isRefreshing}
+      isAdmin={isAdmin}
+      onEdit={handleEditCourse}
+      onDelete={handleDeleteCourse}
+    />
   );
 };
 
