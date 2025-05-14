@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import {
   FormControl,
   FormField,
@@ -9,21 +9,42 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
+import { CategorySelect } from "./CategorySelect";
+import { CategoryInput } from "./CategoryInput";
+import { useCategoryManagement } from "@/hooks/useCategoryManagement";
+import { useEventTypeManagement } from "@/hooks/useEventTypeManagement";
+import { EventTypeSelect } from "./EventTypeSelect";
+import { EventTypeInput } from "./EventTypeInput";
 
 interface BasicCourseFieldsProps {
   form: UseFormReturn<CourseFormData>;
 }
 
 export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) => {
+  // Category management
+  const {
+    categories,
+    addMode: categoryAddMode,
+    setAddMode: setCategoryAddMode,
+    newCategory,
+    setNewCategory,
+    handleAddCategory,
+    handleDeleteCategory
+  } = useCategoryManagement();
+
+  // Event type management
+  const {
+    eventTypes,
+    addMode: eventTypeAddMode,
+    setAddMode: setEventTypeAddMode,
+    newEventType,
+    setNewEventType,
+    handleAddEventType,
+    handleDeleteEventType
+  } = useEventTypeManagement();
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Basic Information</h3>
@@ -70,23 +91,39 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
           <FormItem>
             <FormLabel>Event Type</FormLabel>
             <FormControl>
-              <Select 
-                value={field.value} 
-                onValueChange={field.onChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select event type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="workshop">Workshop</SelectItem>
-                  <SelectItem value="course">Course</SelectItem>
-                  <SelectItem value="webinar">Webinar</SelectItem>
-                  <SelectItem value="conference">Conference</SelectItem>
-                  <SelectItem value="meetup">Meetup</SelectItem>
-                  <SelectItem value="training">Training</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              {eventTypeAddMode ? (
+                <EventTypeInput
+                  value={newEventType}
+                  onChange={setNewEventType}
+                  onAdd={() => handleAddEventType((value) => {
+                    field.onChange(value);
+                    setEventTypeAddMode(false);
+                  })}
+                  onCancel={() => setEventTypeAddMode(false)}
+                />
+              ) : (
+                <EventTypeSelect
+                  eventTypes={eventTypes}
+                  value={field.value}
+                  onValueChange={(value) => {
+                    if (value === "__add_event_type__") {
+                      setEventTypeAddMode(true);
+                    } else {
+                      field.onChange(value);
+                    }
+                  }}
+                  onDelete={(value, e) => {
+                    // If the current value is being deleted, reset to a default
+                    if (value === field.value) {
+                      field.onChange(eventTypes[0]?.value || "");
+                    }
+                    
+                    handleDeleteEventType(value, () => {
+                      // This callback is called when deletion is successful
+                    });
+                  }}
+                />
+              )}
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -101,23 +138,39 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
           <FormItem>
             <FormLabel>Category</FormLabel>
             <FormControl>
-              <Select 
-                value={field.value} 
-                onValueChange={field.onChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="programming">Programming</SelectItem>
-                  <SelectItem value="design">Design</SelectItem>
-                  <SelectItem value="business">Business</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="personal-dev">Personal Development</SelectItem>
-                  <SelectItem value="leadership">Leadership</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              {categoryAddMode ? (
+                <CategoryInput
+                  value={newCategory}
+                  onChange={setNewCategory}
+                  onAdd={() => handleAddCategory((value) => {
+                    field.onChange(value);
+                    setCategoryAddMode(false);
+                  })}
+                  onCancel={() => setCategoryAddMode(false)}
+                />
+              ) : (
+                <CategorySelect
+                  categories={categories}
+                  value={field.value}
+                  onValueChange={(value) => {
+                    if (value === "__add_category__") {
+                      setCategoryAddMode(true);
+                    } else {
+                      field.onChange(value);
+                    }
+                  }}
+                  onDelete={(value, e) => {
+                    // If the current value is being deleted, reset to a default
+                    if (value === field.value) {
+                      field.onChange(categories[0]?.value || "");
+                    }
+                    
+                    handleDeleteCategory(value, () => {
+                      // This callback is called when deletion is successful
+                    });
+                  }}
+                />
+              )}
             </FormControl>
             <FormMessage />
           </FormItem>

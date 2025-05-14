@@ -9,21 +9,42 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { EventFormData } from "@/types/event";
+import { CategorySelect } from "../../courses/form-utils/CategorySelect";
+import { CategoryInput } from "../../courses/form-utils/CategoryInput";
+import { EventTypeSelect } from "../../courses/form-utils/EventTypeSelect";
+import { EventTypeInput } from "../../courses/form-utils/EventTypeInput";
+import { useCategoryManagement } from "@/hooks/useCategoryManagement";
+import { useEventTypeManagement } from "@/hooks/useEventTypeManagement";
 
 interface BasicEventFieldsProps {
   form: UseFormReturn<EventFormData>;
 }
 
 export const BasicEventFields: React.FC<BasicEventFieldsProps> = ({ form }) => {
+  // Category management
+  const {
+    categories,
+    addMode: categoryAddMode,
+    setAddMode: setCategoryAddMode,
+    newCategory,
+    setNewCategory,
+    handleAddCategory,
+    handleDeleteCategory
+  } = useCategoryManagement();
+
+  // Event type management
+  const {
+    eventTypes,
+    addMode: eventTypeAddMode,
+    setAddMode: setEventTypeAddMode,
+    newEventType,
+    setNewEventType,
+    handleAddEventType,
+    handleDeleteEventType
+  } = useEventTypeManagement();
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Basic Information</h3>
@@ -64,29 +85,92 @@ export const BasicEventFields: React.FC<BasicEventFieldsProps> = ({ form }) => {
       
       <FormField
         control={form.control}
-        name="category"
-        rules={{ required: "Category is required" }}
+        name="eventType"
+        rules={{ required: "Event type is required" }}
         render={({ field }) => (
           <FormItem>
             <FormLabel>Event Type</FormLabel>
             <FormControl>
-              <Select 
-                value={field.value} 
-                onValueChange={field.onChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select event type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="workshop">Workshop</SelectItem>
-                  <SelectItem value="course">Course</SelectItem>
-                  <SelectItem value="webinar">Webinar</SelectItem>
-                  <SelectItem value="conference">Conference</SelectItem>
-                  <SelectItem value="meetup">Meetup</SelectItem>
-                  <SelectItem value="training">Training</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              {eventTypeAddMode ? (
+                <EventTypeInput
+                  value={newEventType}
+                  onChange={setNewEventType}
+                  onAdd={() => handleAddEventType((value) => {
+                    field.onChange(value);
+                    setEventTypeAddMode(false);
+                  })}
+                  onCancel={() => setEventTypeAddMode(false)}
+                />
+              ) : (
+                <EventTypeSelect
+                  eventTypes={eventTypes}
+                  value={field.value || ""}
+                  onValueChange={(value) => {
+                    if (value === "__add_event_type__") {
+                      setEventTypeAddMode(true);
+                    } else {
+                      field.onChange(value);
+                    }
+                  }}
+                  onDelete={(value, e) => {
+                    // If the current value is being deleted, reset to a default
+                    if (value === field.value) {
+                      field.onChange(eventTypes[0]?.value || "");
+                    }
+                    
+                    handleDeleteEventType(value, () => {
+                      // This callback is called when deletion is successful
+                    });
+                  }}
+                />
+              )}
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={form.control}
+        name="category"
+        rules={{ required: "Category is required" }}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Category</FormLabel>
+            <FormControl>
+              {categoryAddMode ? (
+                <CategoryInput
+                  value={newCategory}
+                  onChange={setNewCategory}
+                  onAdd={() => handleAddCategory((value) => {
+                    field.onChange(value);
+                    setCategoryAddMode(false);
+                  })}
+                  onCancel={() => setCategoryAddMode(false)}
+                />
+              ) : (
+                <CategorySelect
+                  categories={categories}
+                  value={field.value}
+                  onValueChange={(value) => {
+                    if (value === "__add_category__") {
+                      setCategoryAddMode(true);
+                    } else {
+                      field.onChange(value);
+                    }
+                  }}
+                  onDelete={(value, e) => {
+                    // If the current value is being deleted, reset to a default
+                    if (value === field.value) {
+                      field.onChange(categories[0]?.value || "");
+                    }
+                    
+                    handleDeleteCategory(value, () => {
+                      // This callback is called when deletion is successful
+                    });
+                  }}
+                />
+              )}
             </FormControl>
             <FormMessage />
           </FormItem>

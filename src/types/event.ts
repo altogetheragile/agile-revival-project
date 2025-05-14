@@ -1,4 +1,3 @@
-
 export interface Event {
   id: string;
   title: string;
@@ -8,6 +7,7 @@ export interface Event {
   instructor: string;
   price: string;
   category: string;
+  eventType: string; // Made this field required
   spotsAvailable: number;
   learningOutcomes?: string[];
   prerequisites?: string;
@@ -25,7 +25,6 @@ export interface Event {
   imageAspectRatio?: string;
   imageSize?: number;
   imageLayout?: string;
-  eventType?: string; // Add eventType field to match Course
 }
 
 export interface EventMaterial {
@@ -49,7 +48,7 @@ export type EventFormData = Omit<Event, "id"> & {
   imageAspectRatio?: string;
   imageSize?: number;
   imageLayout?: string;
-  eventType?: string; // Add eventType field to match CourseFormData
+  eventType: string; // Made this field required
 };
 
 export interface EventWithFormData extends Omit<Event, "learningOutcomes"> {
