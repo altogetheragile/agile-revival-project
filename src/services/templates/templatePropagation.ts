@@ -1,10 +1,18 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Define and export the interface for the return type
+export interface TemplatePropagationResult {
+  success: boolean;
+  error?: string;
+  updatedFields: string[];
+  updatedCount: number;
+}
+
 export async function updateCoursesFromTemplate(
   templateId: string,
   updatedFields: Partial<UpdateableCourseFields>
-): Promise<{ success: boolean; error?: string; updatedFields: string[]; updatedCount: number }> {
+): Promise<TemplatePropagationResult> {
   // Filter out undefined fields
   const changedKeys = Object.keys(updatedFields)
     .filter(key => updatedFields[key as keyof UpdateableCourseFields] !== undefined);

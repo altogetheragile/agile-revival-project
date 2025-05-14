@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { mapDbToCourse, mapCourseToDb } from "../courseMappers";
 import { executeQuery } from "@/utils/supabase/query";
 import { getAuthenticatedUser, checkAdminRole, handleMutationError } from "./baseCourseMutation";
-import { updateCoursesFromTemplate } from "@/services/templates/templatePropagation";
+import { updateCoursesFromTemplate, TemplatePropagationResult } from "@/services/templates/templatePropagation";
 
 export const updateCourse = async (
   id: string, 
@@ -81,7 +81,11 @@ export const updateCourse = async (
     console.log("Course updated successfully:", data);
     
     // Handle propagation to derived courses if this is a template
-    let propagationResult = { updatedCount: 0, updatedFields: [] as string[] };
+    let propagationResult: TemplatePropagationResult = { 
+      success: true, 
+      updatedCount: 0, 
+      updatedFields: [] 
+    };
     
     if (courseData.isTemplate && propagateChanges) {
       try {
