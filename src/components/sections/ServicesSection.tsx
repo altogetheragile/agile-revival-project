@@ -3,6 +3,7 @@ import { Activity, Compass, BarChart3, Users, Laptop, Puzzle } from "lucide-reac
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { useSiteSettings } from "@/contexts/site-settings/useSiteSettings";
+import { ServiceItem } from "@/contexts/site-settings/types";
 
 const iconMap: Record<string, any> = {
   Compass,
@@ -71,7 +72,7 @@ const DEFAULT_SERVICES = [
 const ServicesSection = () => {
   const { settings } = useSiteSettings?.() || {};
   
-  // Check if settings and services exist and if services has custom service items with a map method
+  // Check if settings and services exist and if services has serviceItems
   const serviceItems = settings?.services?.serviceItems || [];
   
   // Use default services if no custom services are defined

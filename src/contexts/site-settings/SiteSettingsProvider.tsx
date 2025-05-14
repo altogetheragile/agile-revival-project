@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, ReactNode, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -106,12 +105,28 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       }
 
       if (data && data.length > 0) {
-        const newSettings = { ...defaultSettings };
+        // Create a new settings object starting with the defaults
+        const newSettings: AllSettings = { ...defaultSettings };
+        
         try {
+          // Process each setting from the database
           data.forEach(setting => {
-            if (setting.key in newSettings && setting.key !== 'courseTemplates') {
+            // Handle nested settings (with dot notation in key)
+            if (setting.key.includes('.')) {
+              const [parent, child] = setting.key.split('.');
+              if (parent in newSettings && typeof newSettings[parent as keyof AllSettings] === 'object') {
+                if (newSettings[parent as keyof AllSettings] === null) {
+                  (newSettings[parent as keyof AllSettings] as any) = {};
+                }
+                (newSettings[parent as keyof AllSettings] as any)[child] = setting.value;
+              }
+            }
+            // Handle direct settings (flat structure)
+            else if (setting.key in newSettings && setting.key !== 'courseTemplates') {
               const currentValue = newSettings[setting.key as keyof AllSettings];
               const newValue = setting.value;
+              
+              // For object values, perform a deep merge
               if (
                 typeof currentValue === 'object' && 
                 currentValue !== null &&
@@ -120,12 +135,18 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
                 newValue !== null &&
                 !Array.isArray(newValue)
               ) {
-                newSettings[setting.key as keyof AllSettings] = deepMergeObjects(currentValue, newValue);
-              } else {
-                newSettings[setting.key as keyof AllSettings] = newValue;
+                newSettings[setting.key as keyof AllSettings] = deepMergeObjects(
+                  currentValue, 
+                  newValue
+                ) as any;
+              } 
+              // For array or primitive values, directly replace
+              else {
+                newSettings[setting.key as keyof AllSettings] = newValue as any;
               }
             }
           });
+          
           console.log("Fetched settings:", newSettings);
           setSettings(newSettings);
         } catch (parseError) {

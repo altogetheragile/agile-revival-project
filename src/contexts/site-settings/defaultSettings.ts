@@ -77,7 +77,8 @@ export const defaultSettings: AllSettings = {
     analyticsTool: 'Google Analytics',
     paymentGateway: 'Stripe',
     liveChatTool: 'Intercom',
-    emailProvider: 'SMTP'
+    emailProvider: 'SMTP',
+    serviceItems: []
   },
   googleDrive: {
     enabled: false,
@@ -96,5 +97,11 @@ export const defaultSettings: AllSettings = {
   templates: {
     syncMode: 'prompt',
   },
-  pages: []
+  pages: [],
+  
+  // Add default values for the new properties
+  courseFormats: [],
+  courseCategories: [],
+  eventTypes: [],
+  skillLevels: []
 };

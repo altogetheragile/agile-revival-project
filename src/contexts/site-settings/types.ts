@@ -77,6 +77,13 @@ export interface SocialMediaSettings {
   bluesky?: string;
 }
 
+export interface ServiceItem {
+  title: string;
+  description: string;
+  icon: string;
+  url: string;
+}
+
 export interface ServicesSettings {
   mailProvider: string;
   smsProvider: string;
@@ -84,6 +91,7 @@ export interface ServicesSettings {
   analyticsTool: string;
   liveChatTool: string;
   emailProvider?: string;
+  serviceItems?: ServiceItem[];
 }
 
 export interface GoogleDriveSettings {
@@ -113,6 +121,35 @@ export interface PageSettings {
   sections: any[];
 }
 
+// Add new interfaces for the additional settings
+export interface CourseFormatSettings {
+  courseFormats?: Array<{
+    value: string;
+    label: string;
+  }>;
+}
+
+export interface CategorySettings {
+  courseCategories?: Array<{
+    value: string;
+    label: string;
+  }>;
+}
+
+export interface EventTypeSettings {
+  eventTypes?: Array<{
+    value: string;
+    label: string;
+  }>;
+}
+
+export interface SkillLevelSettings {
+  skillLevels?: Array<{
+    value: string;
+    label: string;
+  }>;
+}
+
 export interface AllSettings {
   general: GeneralSettings;
   interface: InterfaceSettings;
@@ -124,4 +161,10 @@ export interface AllSettings {
   courseFilters: CourseFilterSettings;
   templates: TemplateSettings;
   pages?: PageSettings[];
+  
+  // Add direct access to the new settings (flat structure)
+  courseFormats?: Array<{ value: string; label: string; }>;
+  courseCategories?: Array<{ value: string; label: string; }>;
+  eventTypes?: Array<{ value: string; label: string; }>;
+  skillLevels?: Array<{ value: string; label: string; }>;
 }

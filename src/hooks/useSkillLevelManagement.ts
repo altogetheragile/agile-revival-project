@@ -88,6 +88,6 @@ export const useSkillLevelManagement = () => {
     newSkillLevel,
     setNewSkillLevel,
     handleAddSkillLevel,
-    handleDeleteSkillLevel,
+    handleDeleteSkillLevel
   };
 };
