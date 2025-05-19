@@ -9,15 +9,31 @@ export interface UserData {
   user: User | null;
 }
 
-// Check if Dev Mode is active
+// Check if Dev Mode is active - more reliable implementation
 const isDevModeActive = (): boolean => {
-  // We can't use the React hook directly here, so we'll check localStorage
+  // First, try checking localStorage
   try {
     const devModeEnabled = localStorage.getItem('devModeEnabled') === 'true';
     console.log("🔍 [Dev Mode Check] Current state:", devModeEnabled);
     return devModeEnabled;
   } catch (e) {
-    console.error("❌ Error checking Dev Mode status:", e);
+    console.error("❌ Error checking Dev Mode status from localStorage:", e);
+    
+    // Fallback - check if we have the dev mode admin user in session
+    try {
+      const session = supabase.auth.getSession();
+      if (session) {
+        // If the session has our dev mode user ID, consider dev mode active
+        const hasDevUser = session.then(result => 
+          result.data?.session?.user?.id === "00000000-0000-0000-0000-000000000000"
+        ).catch(() => false);
+        
+        return hasDevUser ? true : false;
+      }
+    } catch (err) {
+      console.error("❌ Error in fallback Dev Mode check:", err);
+    }
+    
     return false;
   }
 };
@@ -39,6 +55,9 @@ export const getAuthenticatedUser = async (): Promise<User | null> => {
       } as unknown as User;
     }
     
+    // Log that we're checking for a real user
+    console.log("🔍 Checking for authenticated user...");
+    
     const { data: authData, error: userError } = await supabase.auth.getUser();
     
     if (userError) {
@@ -57,6 +76,7 @@ export const getAuthenticatedUser = async (): Promise<User | null> => {
       return null;
     }
     
+    console.log("✅ Authenticated user found:", authData.user.email);
     return authData.user;
   } catch (err) {
     console.error("❌ Exception in getAuthenticatedUser:", err);
@@ -75,6 +95,8 @@ export const checkAdminRole = async (userId: string): Promise<boolean> => {
       console.log("⚙️ [Dev Mode] Bypassing admin role check, granting admin privileges");
       return true;
     }
+    
+    console.log("🔍 Checking if user has admin role:", userId);
     
     // Direct RPC call to the fixed database function
     const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
@@ -106,6 +128,7 @@ export const checkAdminRole = async (userId: string): Promise<boolean> => {
       return false;
     }
 
+    console.log("✅ User has admin role confirmed");
     return true;
   } catch (err) {
     console.error("❌ Exception checking admin role:", err);

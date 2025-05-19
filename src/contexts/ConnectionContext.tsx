@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { executeQuery } from '@/utils/supabase/query';
+import { useDevMode } from '@/contexts/DevModeContext';
 
 interface ConnectionState {
   isConnected: boolean;
@@ -51,8 +52,24 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 5;
   const connectionCheckIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const { devMode } = useDevMode();
+
+  // Add a specific flag for connection check failure to improve debugging
+  const connectionCheckFailRef = React.useRef<{
+    count: number,
+    lastError: any
+  }>({
+    count: 0,
+    lastError: null
+  });
 
   const checkConnection = useCallback(async (silent = false): Promise<boolean> => {
+    // In Dev Mode, we should log the attempt but we don't need to wait for a response
+    // We'll still try the real connection but won't block UI
+    if (devMode) {
+      console.log("⚙️ [Dev Mode] Connection check - still trying real connection but won't block UI");
+    }
+
     // Use cache if available and not expired
     const now = Date.now();
     if (now - connectionCache.timestamp < connectionCache.ttl) {
@@ -76,6 +93,8 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     
     try {
+      console.log("🏓 Testing connection with ping request...");
+      
       const startTime = Date.now();
       const { data, error } = await executeQuery<any[]>(
         async (signal) => await supabase
@@ -83,7 +102,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           .select('key')
           .limit(1),
         {
-          timeoutMs: 20000, // Increased from 5s to 20s for reliability
+          timeoutMs: 20000, // 20s timeout for reliability
           showErrorToast: false,
           silentRetry: true,
           retries: 1 // Add a retry for connection checks
@@ -92,6 +111,16 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       const responseTime = Date.now() - startTime;
       const isConnected = !error;
+      
+      // Log details about the connection check
+      if (isConnected) {
+        console.log(`✅ Connection check succeeded in ${responseTime}ms`);
+        connectionCheckFailRef.current.count = 0;
+      } else {
+        connectionCheckFailRef.current.count++;
+        connectionCheckFailRef.current.lastError = error;
+        console.error(`❌ Connection check failed (attempt #${connectionCheckFailRef.current.count}):`, error);
+      }
       
       // Update the connection cache
       connectionCache.isConnected = isConnected;
@@ -117,7 +146,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           });
           setRetryCount(0);
         } else if (!isConnected) {
-          console.error("Connection check failed:", error);
+          console.error("❓ Connection check failed:", error);
         }
       } else if (!isConnected) {
         // Track consecutive errors even in silent mode
@@ -129,7 +158,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       return isConnected;
     } catch (err) {
-      console.error("Error checking connection:", err);
+      console.error("💔 Error checking connection:", err);
       
       // Update the connection cache for errors too
       connectionCache.isConnected = false;
@@ -155,12 +184,12 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       return false;
     }
-  }, [state.isChecking, state.reconnecting]);
+  }, [state.isChecking, state.reconnecting, devMode]);
   
   // Monitor for consecutive connection failures that could indicate RLS recursion issues
   useEffect(() => {
     if (state.consecutiveErrors >= 3) {
-      console.error(`Multiple consecutive connection errors (${state.consecutiveErrors}). Possible RLS recursion issue.`);
+      console.error(`❗ Multiple consecutive connection errors (${state.consecutiveErrors}). Possible RLS recursion issue.`);
       // Specific toast for potential RLS recursion issues after multiple failures
       if (state.consecutiveErrors === 3) {
         toast.error("Database connection issues detected", {
@@ -197,7 +226,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setState(prev => ({ ...prev, reconnecting: true }));
     
     setTimeout(async () => {
-      console.log(`Attempting reconnection ${retryCount + 1}/${MAX_RETRIES}...`);
+      console.log(`🔄 Attempting reconnection ${retryCount + 1}/${MAX_RETRIES}...`);
       const isConnected = await checkConnection(true);
       
       if (isConnected) {
@@ -231,7 +260,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     connectionCheckIntervalRef.current = setInterval(() => {
       checkConnection(true).then(isConnected => {
         if (!isConnected && !state.reconnecting) {
-          console.log("Connection check failed, scheduling reconnection...");
+          console.log("❌ Connection check failed, scheduling reconnection...");
           scheduleReconnection();
         }
       });

@@ -20,6 +20,9 @@ interface SiteSetting {
   value: any;
 }
 
+// LocalStorage key for cached settings
+const SETTINGS_CACHE_KEY = "site_settings_cache";
+
 export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) => {
   const [settings, setSettings] = useState<AllSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,21 +35,60 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
   const { connectionState, checkConnection } = useConnection();
   const { devMode } = useDevMode();
 
+  // Helper function to load cached settings from localStorage
+  const loadCachedSettings = useCallback((): AllSettings | null => {
+    try {
+      const cachedSettingsJson = localStorage.getItem(SETTINGS_CACHE_KEY);
+      if (!cachedSettingsJson) return null;
+      
+      const cachedSettings = JSON.parse(cachedSettingsJson);
+      console.log("📋 Loaded cached settings from localStorage:", cachedSettings);
+      return cachedSettings;
+    } catch (error) {
+      console.error("❌ Error loading cached settings:", error);
+      return null;
+    }
+  }, []);
+
+  // Helper function to save settings to localStorage
+  const saveCachedSettings = useCallback((settingsToCache: AllSettings) => {
+    try {
+      localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(settingsToCache));
+      console.log("💾 Saved settings to localStorage cache");
+    } catch (error) {
+      console.error("❌ Error saving settings to cache:", error);
+    }
+  }, []);
+
   const fetchSettings = useCallback(async (silentMode = false) => {
     try {
       if (!silentMode) {
         setIsLoading(true);
       }
       
+      // First try to load cached settings
+      const cachedSettings = loadCachedSettings();
+      
       // Check connection first - use the shared connection state
       if (!connectionState.isConnected) {
         // Try to re-establish connection
         await checkConnection();
         
-        // If still not connected but this is initial load, use default settings
+        // If still not connected but this is initial load, use cached or default settings
         if (!connectionState.isConnected && isInitialLoad.current) {
-          console.log("Connection check failed on initial load, using default settings");
-          setSettings(defaultSettings);
+          console.log("Connection check failed on initial load, using cached or default settings");
+          
+          if (cachedSettings) {
+            console.log("📋 Using cached settings for initial load");
+            setSettings(cachedSettings);
+            toast.info("Using cached settings", { 
+              description: "Unable to connect to the database. Using previously saved settings."
+            });
+          } else {
+            console.log("⚠️ No cached settings found, using defaults");
+            setSettings(defaultSettings);
+          }
+          
           if (!silentMode) {
             setIsLoading(false);
           }
@@ -56,9 +98,19 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         
         // For non-initial loads, if disconnected, show warning and use cached settings
         if (!connectionState.isConnected && !isInitialLoad.current) {
-          toast.warning("Using cached settings", {
-            description: "Unable to connect to the database. Using previously loaded settings."
-          });
+          if (cachedSettings) {
+            console.log("📋 Using cached settings (non-initial load, disconnected)");
+            setSettings(cachedSettings);
+            toast.warning("Using cached settings", {
+              description: "Unable to connect to the database. Using previously saved settings."
+            });
+          } else {
+            console.log("⚠️ No cached settings found while disconnected");
+            toast.error("Connection issue", {
+              description: "Unable to connect to the database and no cached settings found."
+            });
+          }
+          
           if (!silentMode) {
             setIsLoading(false);
           }
@@ -66,7 +118,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         }
       }
       
-      console.log("Fetching settings from database...");
+      console.log("🔍 Fetching settings from database...");
       
       // Use executeQuery helper with 20s timeout (increased from 10s)
       const { data, error } = await executeQuery<SiteSetting[]>(
@@ -74,21 +126,33 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
           .from('site_settings')
           .select('key, value'),
         {
-          timeoutMs: 20000, // Increased from 10s to 20s to match our global setting
+          timeoutMs: 20000, // 20 seconds timeout
           errorMessage: "Failed to load site settings",
-          retries: silentMode ? 0 : 2, // Increased from 1 to 2 retries
+          retries: silentMode ? 0 : 2,
           onError: !silentMode && !isInitialLoad.current ? (err) => {
-            uiToast({
-              title: "Error",
-              description: "Failed to load site settings, using defaults",
-              variant: "destructive",
-            });
+            console.error("💔 Error loading settings:", err);
+            
+            // If we have cached settings, use them as fallback
+            const cachedFallback = loadCachedSettings();
+            if (cachedFallback) {
+              setSettings(cachedFallback);
+              uiToast({
+                title: "Using cached settings",
+                description: "Failed to load settings from database, using cached version",
+              });
+            } else {
+              uiToast({
+                title: "Error",
+                description: "Failed to load site settings, using defaults",
+                variant: "destructive",
+              });
+            }
           } : undefined
         }
       );
 
       if (error || !data) {
-        console.error("Error fetching settings:", error);
+        console.error("❌ Error fetching settings:", error);
         
         setRetryCount(prev => prev + 1);
         if (!silentMode) {
@@ -111,7 +175,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
       }
 
       if (data && data.length > 0) {
-        console.log("Received settings data:", data.length, "items");
+        console.log("✅ Received settings data:", data.length, "items");
         
         // Create a new settings object starting with the defaults
         const newSettings: AllSettings = { ...defaultSettings };
@@ -119,7 +183,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         try {
           // Process each setting from the database
           data.forEach(setting => {
-            console.log(`Processing setting: ${setting.key} =`, setting.value);
+            console.log(`🔄 Processing setting: ${setting.key} =`, setting.value);
             
             // Handle nested settings (with dot notation in key)
             if (setting.key.includes('.')) {
@@ -157,17 +221,21 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
             }
           });
           
-          console.log("Processed settings:", newSettings);
+          console.log("🎯 Processed settings:", newSettings);
           lastUpdateRef.current = new Date().toISOString();
           setSettings(newSettings);
+          
+          // Save to cache for offline/fallback use
+          saveCachedSettings(newSettings);
+          
         } catch (parseError) {
-          console.error("Error processing settings:", parseError);
+          console.error("❌ Error processing settings:", parseError);
         }
       } else {
-        console.log("No settings found, using defaults:", defaultSettings);
+        console.log("⚠️ No settings found, using defaults:", defaultSettings);
       }
     } catch (error) {
-      console.error("Exception fetching settings:", error);
+      console.error("❌ Exception fetching settings:", error);
       
       if (!silentMode) {
         uiToast({
@@ -182,7 +250,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         isInitialLoad.current = false;
       }
     }
-  }, [uiToast, retryCount, connectionState, checkConnection]);
+  }, [uiToast, retryCount, connectionState, checkConnection, loadCachedSettings, saveCachedSettings]);
 
   useEffect(() => {
     if (retryCount > 0 && retryCount < MAX_RETRIES) {
@@ -214,205 +282,161 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         "Connection state:", connectionState.isConnected,
         "Dev Mode:", devMode);
       
-      let shouldUpdateLocalState = false;
-      let shouldShowSuccess = false;
+      // Always update local state and cache first for responsive UX
+      setSettings(prev => {
+        // For nested updates like 'general.siteName', handle differently
+        let updatedSettings: AllSettings;
+        if (key.includes('.')) {
+          const [parent, child] = key.split('.');
+          updatedSettings = {
+            ...prev,
+            [parent]: {
+              ...prev[parent as keyof AllSettings],
+              [child]: values
+            }
+          };
+        } else {
+          // For regular top-level settings
+          updatedSettings = {
+            ...prev,
+            [key]: values
+          };
+        }
+        
+        // Cache the updated settings immediately
+        saveCachedSettings(updatedSettings);
+        return updatedSettings;
+      });
       
-      // Skip actual DB updates if in Dev Mode AND not connected
-      // But still update local state to provide a good UX in Dev Mode
+      let shouldShowSuccess = true;
+      
+      // Skip database updates entirely if in Dev Mode AND not connected
       if (devMode && !connectionState.isConnected) {
-        console.log("⚙️ Dev Mode active and disconnected - bypassing database update");
-        shouldUpdateLocalState = true;
-        shouldShowSuccess = true;
+        console.log("⚙️ Dev Mode active and disconnected - skipping database update");
         
         if (!silentMode) {
           toast.info("Dev Mode Update", {
-            description: `Settings updated locally only (database disconnected)`
+            description: `Settings saved locally. Changes will persist until page refresh but won't be stored in database.`
           });
         }
-      } 
-      // Normal path - try to connect to DB if needed
-      else {
-        // Check connection first if not in Dev Mode
-        if (!devMode && !connectionState.isConnected) {
-          console.log("📶 Not in Dev Mode and not connected - checking connection");
-          // Try to re-establish connection
-          await checkConnection();
-          
-          if (!connectionState.isConnected) {
-            console.log("❌ Connection check failed - cannot update settings");
-            uiToast({
-              title: "Error",
-              description: "Cannot update settings: database is not connected",
-              variant: "destructive",
-            });
-            return;
-          }
-        }
         
+        // Early return after local state update
+        lastUpdateRef.current = new Date().toISOString();
+        return;
+      }
+      
+      // For all other cases, try to connect if needed
+      if (!connectionState.isConnected) {
+        console.log("📶 Not connected - checking connection");
+        // Try to re-establish connection
+        await checkConnection();
+      }
+      
+      // Only proceed with database operation if connected
+      if (connectionState.isConnected) {
         console.log("🚀 Attempting RPC call to update_site_settings");
         
-        // Try the RPC update - with explicit error handling
+        // Try the RPC update with explicit error handling
         try {
-          // Use executeQuery helper with multiple explicit retries
           const { data, error } = await executeQuery<any>(
             async (signal) => await supabase.rpc('update_site_settings', {
               setting_key: key,
               setting_value: values,
             }),
             {
-              timeoutMs: 20000, // Increased from 10s to 20s
-              errorMessage: `Failed to update ${key} settings`,
-              retries: 0,  // Handle retries manually
-              showErrorToast: false // Handle errors manually
+              timeoutMs: 20000,
+              errorMessage: `Failed to update ${key} settings in database`,
+              retries: 1,
+              showErrorToast: false
             }
           );
           
           if (error) {
-            console.error(`❌ Error updating settings:`, error);
+            console.error(`❌ Error updating settings in database:`, error);
             
-            // In Dev Mode, still update local state even if RPC fails
             if (devMode) {
-              console.log("⚙️ Dev Mode active - updating local state despite RPC error");
-              shouldUpdateLocalState = true;
-              shouldShowSuccess = true;
-              
-              if (!silentMode) {
-                toast.info("Dev Mode Update", {
-                  description: `Settings updated locally only (database error: ${error.message})`
-                });
-              }
+              // In Dev Mode, we already updated local state, so just show a warning
+              toast.warning("Settings saved locally only", {
+                description: `Database update failed but settings saved locally. Error: ${error.message}`
+              });
             } else {
-              // Normal error handling in non-Dev Mode
-              if (!silentMode) {
-                uiToast({
-                  title: "Error",
-                  description: `Failed to update ${key} settings: ${error.message}`,
-                  variant: "destructive",
-                });
-              }
+              // In normal mode, alert the user more strongly
+              toast.error("Settings not saved to database", {
+                description: `Local changes made but not saved to database. Error: ${error.message}`
+              });
             }
+            
+            // Still update last update timestamp
+            lastUpdateRef.current = new Date().toISOString();
+            return;
           } else {
             console.log(`✅ Successfully updated ${key} settings in database`);
-            shouldUpdateLocalState = true;
-            shouldShowSuccess = true;
+            // Update last update timestamp for successful DB update
+            lastUpdateRef.current = new Date().toISOString();
           }
         } catch (attemptError) {
           console.error(`❌ Exception in updateSettings:`, attemptError);
           
-          // In Dev Mode, still update local state even if exception occurs
-          if (devMode) {
-            console.log("⚙️ Dev Mode active - updating local state despite exception");
-            shouldUpdateLocalState = true;
-            shouldShowSuccess = true;
-            
-            if (!silentMode) {
-              toast.info("Dev Mode Update", {
-                description: `Settings updated locally only (error occurred)`
-              });
-            }
-          } else {
-            // Normal error handling in non-Dev Mode
-            if (!silentMode) {
-              uiToast({
-                title: "Error",
-                description: "An unexpected error occurred while updating settings",
-                variant: "destructive",
-              });
-            }
+          if (!silentMode) {
+            toast.error("Database error", {
+              description: "An unexpected error occurred while updating settings in database"
+            });
           }
+        }
+      } else {
+        // We're not connected, but we already updated local state
+        console.log("❌ Not connected to database - settings saved locally only");
+        
+        if (!silentMode) {
+          toast.warning("Settings saved locally only", {
+            description: "Could not connect to database. Changes will be lost on page refresh."
+          });
         }
       }
       
-      // Always update local state in Dev Mode, or if successful in normal mode
-      if (shouldUpdateLocalState) {
-        console.log(`📝 Updating local state for ${key}:`, values);
+      // Show success toast if not in silent mode and should show success
+      if (shouldShowSuccess && !silentMode && !isInitialLoad.current) {
+        let saveMessage = "Settings have been updated";
         
-        // Update local state immediately to reflect changes in the UI
-        setSettings(prev => {
-          // For nested updates like 'general.siteName', handle differently
-          if (key.includes('.')) {
-            const [parent, child] = key.split('.');
-            return {
-              ...prev,
-              [parent]: {
-                ...prev[parent as keyof AllSettings],
-                [child]: values
-              }
-            };
-          }
-          
-          // For regular top-level settings
-          return {
-            ...prev,
-            [key]: values
-          };
-        });
-        
-        // Update last successful update timestamp
-        lastUpdateRef.current = new Date().toISOString();
-        
-        // Show success toast if not in silent mode and should show success
-        if (shouldShowSuccess && !silentMode && !isInitialLoad.current) {
-          uiToast({
-            title: "Settings updated",
-            description: `${key.charAt(0).toUpperCase() + key.slice(1)} settings have been ${devMode ? 'saved locally' : 'saved'}`,
-          });
-        } else {
-          console.log("Silent update completed for", key);
+        if (devMode && !connectionState.isConnected) {
+          saveMessage = "Settings saved locally (Dev Mode)";
+        } else if (!connectionState.isConnected) {
+          saveMessage = "Settings saved locally only";
         }
+        
+        uiToast({
+          title: "Settings updated",
+          description: `${key.charAt(0).toUpperCase() + key.slice(1)} ${saveMessage}`,
+        });
+      } else {
+        console.log("Silent update completed for", key);
       }
     } catch (error) {
       console.error("❌ Uncaught exception in updateSettings:", error);
       
-      // Always update local state in Dev Mode, even on uncaught errors
-      if (devMode) {
-        console.log("⚙️ Dev Mode active - updating local state despite uncaught error");
-        
-        // Update local state optimistically
-        setSettings(prev => {
-          if (key.includes('.')) {
-            const [parent, child] = key.split('.');
-            return {
-              ...prev,
-              [parent]: {
-                ...prev[parent as keyof AllSettings],
-                [child]: values
-              }
-            };
-          }
-          return { ...prev, [key]: values };
-        });
-        
-        if (!silentMode) {
-          toast.info("Dev Mode Update", {
-            description: `Settings updated locally only (uncaught error)`
-          });
-        }
-      } else {
-        uiToast({
-          title: "Error",
-          description: "An unexpected error occurred",
-          variant: "destructive",
-        });
-      }
+      uiToast({
+        title: "Error",
+        description: "An unexpected error occurred while saving settings",
+        variant: "destructive",
+      });
     }
   };
 
   const refreshSettings = async () => {
-    console.log("Refreshing settings...");
+    console.log("🔄 Refreshing settings...");
     try {
       await fetchSettings(true); // Use silent mode for refresh
     } catch (error) {
-      console.error("Error during settings refresh:", error);
+      console.error("❌ Error during settings refresh:", error);
     }
   };
 
   useEffect(() => {
     try {
-      console.log("Initial settings fetch...");
+      console.log("🚀 Initial settings fetch...");
       fetchSettings(false); // Not silent on initial load
     } catch (error) {
-      console.error("Error in settings provider useEffect:", error);
+      console.error("❌ Error in settings provider useEffect:", error);
       setIsLoading(false);
     }
   }, [fetchSettings]);
@@ -422,11 +446,11 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
     isLoading,
     updateSettings,
     refreshSettings: async () => {
-      console.log("Refreshing settings...");
+      console.log("🔄 Refreshing settings...");
       try {
         await fetchSettings(true); // Use silent mode for refresh
       } catch (error) {
-        console.error("Error during settings refresh:", error);
+        console.error("❌ Error during settings refresh:", error);
       }
     },
   };

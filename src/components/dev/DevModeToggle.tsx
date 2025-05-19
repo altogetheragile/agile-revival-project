@@ -3,26 +3,33 @@ import { useDevMode } from '@/contexts/DevModeContext';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Shield, ShieldOff, ShieldAlert, X } from 'lucide-react';
+import { AlertCircle, Shield, ShieldOff, ShieldAlert, X, Database, DatabaseOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useConnection } from '@/contexts/ConnectionContext';
 
 const DevModeToggle = () => {
   const { devMode, toggleDevMode } = useDevMode();
   const [expanded, setExpanded] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const { connectionState, checkConnection } = useConnection();
   
   // Show expanded state initially when Dev Mode is active
   useEffect(() => {
     if (devMode) {
       setExpanded(true);
     }
-  }, []);
+  }, [devMode]);
 
   const handleToggle = () => {
     const newState = !devMode;
     toggleDevMode();
+    
+    // Check connection after toggling Dev Mode
+    setTimeout(() => {
+      checkConnection();
+    }, 500);
     
     // Show toast when changing the state
     if (newState) {
@@ -48,6 +55,23 @@ const DevModeToggle = () => {
     }
   };
 
+  // Check connection manually
+  const handleCheckConnection = () => {
+    toast.loading("Checking connection...", { id: "connection-check" });
+    checkConnection()
+      .then(isConnected => {
+        if (isConnected) {
+          toast.success("Database connected", { id: "connection-check" });
+        } else {
+          toast.error("Database disconnected", { id: "connection-check" });
+        }
+      })
+      .catch(error => {
+        toast.error("Connection check failed", { id: "connection-check" });
+        console.error("Connection check error:", error);
+      });
+  };
+
   if (minimized) {
     return (
       <Button
@@ -64,7 +88,7 @@ const DevModeToggle = () => {
 
   return (
     <div className="fixed bottom-4 left-4 z-50">
-      <div className={`bg-white border rounded-lg shadow-lg p-4 w-64 transition-all duration-200 ${
+      <div className={`bg-white border rounded-lg shadow-lg p-4 w-72 transition-all duration-200 ${
         devMode ? 'border-red-500 shadow-red-100' : ''
       }`}>
         <div className="flex items-center justify-between mb-2">
@@ -93,6 +117,29 @@ const DevModeToggle = () => {
               <X size={14} />
             </Button>
           </div>
+        </div>
+        
+        {/* Show database connection status */}
+        <div className="flex items-center gap-2 mb-2 text-xs">
+          {connectionState.isConnected ? (
+            <div className="flex items-center text-green-700">
+              <Database size={14} className="mr-1" />
+              Database connected
+            </div>
+          ) : (
+            <div className="flex items-center text-red-700">
+              <DatabaseOff size={14} className="mr-1" />
+              Database disconnected
+            </div>
+          )}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 text-xs ml-auto" 
+            onClick={handleCheckConnection}
+          >
+            Check
+          </Button>
         </div>
         
         {devMode && (
@@ -127,6 +174,7 @@ const DevModeToggle = () => {
               <li>Admin access is granted to all routes</li>
               <li>Database RLS policies are ignored</li>
               <li>This state persists across page refreshes</li>
+              <li>Changes are saved locally in browser storage</li>
             </ul>
             <div className="flex justify-between mt-2">
               <button 
