@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useDevMode } from '@/contexts/DevModeContext';
-import { useConnection } from '@/contexts/ConnectionContext';
+import { useConnection } from '@/contexts/connection';
 import { DevModeToggleHeader } from './DevModeToggleHeader';
 import { DatabaseConnectionStatus } from './DatabaseConnectionStatus';
 import { DevModeWarning } from './DevModeWarning';

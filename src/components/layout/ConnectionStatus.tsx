@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { useConnection } from "@/contexts/ConnectionContext";
+import { useConnection } from "@/contexts/connection";
 import { cn } from "@/lib/utils";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
