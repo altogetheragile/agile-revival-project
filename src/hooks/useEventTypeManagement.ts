@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { useSiteSettings } from "@/contexts/site-settings";
+import { EventType, getEventTypes, createEventType, deleteEventType } from "@/services/event/eventTypeService";
 
-// Default event types if none are found in settings
+// Default event types if none are found in database
 const DEFAULT_EVENT_TYPES = [
   { value: "workshop", label: "Workshop" },
   { value: "course", label: "Course" },
@@ -19,61 +19,59 @@ export const useEventTypeManagement = () => {
   const [addMode, setAddMode] = useState(false);
   const [newEventType, setNewEventType] = useState("");
   const { toast } = useToast();
-  const { settings, updateSettings } = useSiteSettings();
 
-  // Initialize event types from site settings if available, otherwise use defaults
+  // Initialize event types from database
   useEffect(() => {
-    const initEventTypes = () => {
-      if (settings.eventTypes && Array.isArray(settings.eventTypes)) {
-        setEventTypes(
-          settings.eventTypes.map(type => ({
-            value: type.value,
-            label: type.label
-          }))
-        );
-      } else {
-        // Fallback to default event types
+    const initEventTypes = async () => {
+      try {
+        const types = await getEventTypes();
+        
+        if (types && types.length > 0) {
+          setEventTypes(
+            types.map(type => ({
+              value: type.value,
+              label: type.label
+            }))
+          );
+        } else {
+          // Fallback to default event types if none found in database
+          setEventTypes(DEFAULT_EVENT_TYPES);
+        }
+      } catch (error) {
+        console.error("Error initializing event types:", error);
+        // Fallback to defaults on error
         setEventTypes(DEFAULT_EVENT_TYPES);
       }
     };
     
     initEventTypes();
-  }, [settings]);
-
-  const saveEventTypesToSettings = async (updatedEventTypes: { value: string; label: string }[]) => {
-    try {
-      // Save to site settings
-      await updateSettings('eventTypes', updatedEventTypes);
-      
-      console.log("Event types saved successfully:", updatedEventTypes);
-      return true;
-    } catch (error) {
-      console.error("Error saving event types:", error);
-      return false;
-    }
-  };
+  }, []);
 
   const handleAddEventType = async (onAdd: (value: string) => void) => {
     if (
       newEventType.trim() &&
       !eventTypes.some(opt => opt.value.toLowerCase() === newEventType.trim().toLowerCase())
     ) {
-      const newType = { value: newEventType.trim().toLowerCase(), label: newEventType.trim() };
-      const updatedEventTypes = [...eventTypes, newType];
+      const value = newEventType.trim().toLowerCase().replace(/\s+/g, "-");
+      const label = newEventType.trim();
       
-      const success = await saveEventTypesToSettings(updatedEventTypes);
-      
-      if (success) {
-        setEventTypes(updatedEventTypes);
-        onAdd(newType.value);
-        setAddMode(false);
-        setNewEventType("");
+      try {
+        const created = await createEventType({ value, label });
         
-        toast({
-          title: "Event type added",
-          description: `"${newType.label}" has been added to event types.`
-        });
-      } else {
+        if (created) {
+          const newType = { value: created.value, label: created.label };
+          setEventTypes(prev => [...prev, newType]);
+          onAdd(newType.value);
+          setAddMode(false);
+          setNewEventType("");
+          
+          toast({
+            title: "Event type added",
+            description: `"${newType.label}" has been added to event types.`
+          });
+        }
+      } catch (error) {
+        console.error("Error adding event type:", error);
         toast({
           title: "Error",
           description: "There was a problem adding the event type.",
@@ -85,25 +83,32 @@ export const useEventTypeManagement = () => {
 
   const handleDeleteEventType = async (value: string, onDelete: (value: string) => void) => {
     try {
-      console.log("Deleting event type:", value);
-      const updatedEventTypes = eventTypes.filter(type => type.value !== value);
-      const deletedEventType = eventTypes.find(type => type.value === value);
+      const typeToDelete = eventTypes.find(type => type.value === value);
+      if (!typeToDelete) return;
       
-      const success = await saveEventTypesToSettings(updatedEventTypes);
+      // Find the event type in the database by value
+      const allTypes = await getEventTypes();
+      const dbType = allTypes.find(t => t.value === value);
+      
+      if (!dbType) {
+        console.error(`Event type with value ${value} not found in database`);
+        toast({
+          title: "Error",
+          description: "Could not find this event type in the database.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const success = await deleteEventType(dbType.id);
       
       if (success) {
-        setEventTypes(updatedEventTypes); // Update local state
+        setEventTypes(prev => prev.filter(type => type.value !== value));
         onDelete(value);
         
         toast({
           title: "Event type deleted",
-          description: `"${deletedEventType?.label || value}" has been removed from event types.`
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "There was a problem deleting the event type.",
-          variant: "destructive"
+          description: `"${typeToDelete.label}" has been removed from event types.`
         });
       }
     } catch (error) {

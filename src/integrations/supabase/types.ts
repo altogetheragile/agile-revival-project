@@ -182,6 +182,7 @@ export type Database = {
           description: string
           duration: string | null
           event_type: string | null
+          event_type_id: string | null
           format: string | null
           google_drive_folder_id: string | null
           google_drive_folder_url: string | null
@@ -212,6 +213,7 @@ export type Database = {
           description: string
           duration?: string | null
           event_type?: string | null
+          event_type_id?: string | null
           format?: string | null
           google_drive_folder_id?: string | null
           google_drive_folder_url?: string | null
@@ -242,6 +244,7 @@ export type Database = {
           description?: string
           duration?: string | null
           event_type?: string | null
+          event_type_id?: string | null
           format?: string | null
           google_drive_folder_id?: string | null
           google_drive_folder_url?: string | null
@@ -263,6 +266,41 @@ export type Database = {
           template_id?: string | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "event_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_types: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          slug: string | null
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          slug?: string | null
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          slug?: string | null
+          updated_at?: string
+          value?: string
         }
         Relationships: []
       }

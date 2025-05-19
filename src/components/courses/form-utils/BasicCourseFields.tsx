@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FormControl,
   FormField,
@@ -13,10 +13,11 @@ import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
 import { CategorySelect } from "./CategorySelect";
 import { CategoryInput } from "./CategoryInput";
-import { useCategoryManagement } from "@/hooks/useCategoryManagement";
-import { useEventTypeManagement } from "@/hooks/useEventTypeManagement";
 import { EventTypeSelect } from "./EventTypeSelect";
 import { EventTypeInput } from "./EventTypeInput";
+import { useCategoryManagement } from "@/hooks/useCategoryManagement";
+import { useEventTypeManagement } from "@/hooks/useEventTypeManagement";
+import { getEventTypes } from "@/services/event/eventTypeService";
 
 interface BasicCourseFieldsProps {
   form: UseFormReturn<CourseFormData>;
@@ -104,7 +105,7 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
               ) : (
                 <EventTypeSelect
                   eventTypes={eventTypes}
-                  value={field.value}
+                  value={field.value || ""}
                   onValueChange={(value) => {
                     if (value === "__add_event_type__") {
                       setEventTypeAddMode(true);

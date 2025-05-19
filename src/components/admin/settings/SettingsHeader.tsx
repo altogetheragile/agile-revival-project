@@ -1,79 +1,29 @@
 
-import React from 'react';
-import { Button } from "@/components/ui/button";
-import { useSiteSettings } from '@/contexts/site-settings';
-import { defaultSettings } from '@/contexts/site-settings/defaultSettings';
-import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle, RotateCcw, Save } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import React from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export const SettingsHeader = () => {
-  const { settings, updateSettings, refreshSettings } = useSiteSettings();
-  const { toast } = useToast();
+interface SettingsTabsProps {
+  activeTab: string;
+  onChange: (value: string) => void;
+}
 
-  const handleResetAll = async () => {
-    try {
-      // Reset each settings category
-      await Promise.all([
-        updateSettings('general', defaultSettings.general),
-        updateSettings('interface', defaultSettings.interface),
-        updateSettings('users', defaultSettings.users),
-        updateSettings('security', defaultSettings.security)
-      ]);
-      
-      await refreshSettings();
-      
-      toast({
-        title: "Settings Reset",
-        description: "All settings have been restored to their default values",
-      });
-    } catch (error) {
-      console.error('Error resetting settings:', error);
-      toast({
-        title: "Reset Failed",
-        description: "Failed to reset settings to defaults",
-        variant: "destructive",
-      });
-    }
-  };
-
+const SettingsHeader: React.FC<SettingsTabsProps> = ({ activeTab, onChange }) => {
   return (
-    <div className="flex justify-between items-center mb-6 pb-4 border-b">
-      <h1 className="text-2xl font-bold">Site Settings</h1>
-      <div className="flex gap-2">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-2">
-              <RotateCcw className="h-4 w-4" />
-              Reset All
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Reset All Settings?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will reset all settings to their default values. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleResetAll} className="bg-destructive">
-                Reset All
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+    <div className="border-b mb-6 pb-4">
+      <h1 className="text-2xl font-bold mb-4">Settings</h1>
+      <Tabs value={activeTab} onValueChange={onChange}>
+        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 w-full">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="interface">Interface</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="event-types">Event Types</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="services">Services</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+        </TabsList>
+      </Tabs>
     </div>
   );
 };
+
+export default SettingsHeader;
