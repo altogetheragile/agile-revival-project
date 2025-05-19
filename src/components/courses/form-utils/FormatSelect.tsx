@@ -21,7 +21,8 @@ export const FormatSelect: React.FC<FormatSelectProps> = ({
   value, 
   onChange, 
   onValueChange,
-  formats = [] 
+  formats = [],
+  onDelete
 }) => {
   const handleChange = (newValue: string) => {
     onValueChange(newValue);

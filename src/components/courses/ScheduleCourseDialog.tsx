@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { UseFormReturn, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -90,7 +90,7 @@ const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
               {/* Date Range Fields */}
-              <DateRangeFields 
+              <DateRangeFields<ScheduleCourseFormData>
                 form={form} 
                 required={true} 
               />

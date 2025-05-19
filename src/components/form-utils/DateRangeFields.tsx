@@ -20,7 +20,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-interface DateRangeFieldsProps<T extends { startDate?: string | Date | null, endDate?: string | Date | null }> {
+// Define a generic type that ensures the form data has startDate and endDate properties
+interface DateRangeFormData {
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
+  [key: string]: any;
+}
+
+interface DateRangeFieldsProps<T extends DateRangeFormData> {
   form: UseFormReturn<T>;
   className?: string;
   startFieldLabel?: string;
@@ -28,7 +35,7 @@ interface DateRangeFieldsProps<T extends { startDate?: string | Date | null, end
   required?: boolean;
 }
 
-export function DateRangeFields<T extends { startDate?: string | Date | null, endDate?: string | Date | null }>({
+export function DateRangeFields<T extends DateRangeFormData>({
   form,
   className,
   startFieldLabel = "Start Date",
@@ -48,8 +55,8 @@ export function DateRangeFields<T extends { startDate?: string | Date | null, en
   };
 
   // Get start and end dates from the form
-  const startDate = parseDate(form.watch('startDate' as any));
-  const endDate = parseDate(form.watch('endDate' as any));
+  const startDate = parseDate(form.watch('startDate'));
+  const endDate = parseDate(form.watch('endDate'));
 
   // Update end date if start date is changed to be later
   useEffect(() => {
@@ -91,11 +98,11 @@ export function DateRangeFields<T extends { startDate?: string | Date | null, en
                   mode="single"
                   selected={field.value ? new Date(field.value) : undefined}
                   onSelect={(date) => {
-                    field.onChange(date as any);
+                    field.onChange(date);
                     // If end date is not set or is before start date, set it to start date
-                    const endDate = parseDate(form.watch('endDate' as any));
+                    const endDate = parseDate(form.watch('endDate'));
                     if (!endDate || (date && endDate < date)) {
-                      form.setValue('endDate' as any, date as any);
+                      form.setValue('endDate' as any, date);
                     }
                   }}
                   disabled={(date) => date < new Date("1900-01-01")}
@@ -140,7 +147,7 @@ export function DateRangeFields<T extends { startDate?: string | Date | null, en
                   mode="single"
                   selected={field.value ? new Date(field.value) : undefined}
                   onSelect={(date) => {
-                    field.onChange(date as any);
+                    field.onChange(date);
                   }}
                   disabled={(date) => 
                     date < new Date("1900-01-01") || 

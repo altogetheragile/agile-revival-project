@@ -27,8 +27,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
-import { getAllCategories, createCategory, Category } from "@/services/category/categoryService";
+import { getAllCategories, createCategory } from "@/services/category/categoryService";
 
+// Use a consistent type definition
 interface Category {
   id?: string;
   value: string;
@@ -158,7 +159,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
               <CommandGroup>
                 {categories.map((category) => (
                   <CommandItem
-                    key={category.id}
+                    key={category.id || category.value}
                     value={category.value}
                     onSelect={(currentValue) => {
                       onValueChange(currentValue);
