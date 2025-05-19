@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Course } from "@/types/course";
-import { mapDbCourseToCourse } from "./courseMappers";
+import { mapDbToCourse } from "./courseMappers";
 import { EventType, getEventTypeById } from "@/services/event/eventTypeService";
 
 export const getAllCourses = async (): Promise<Course[]> => {
@@ -28,7 +28,7 @@ export const getAllCourses = async (): Promise<Course[]> => {
         }
       }
       
-      return mapDbCourseToCourse({
+      return mapDbToCourse({
         ...dbCourse,
         eventType
       });
@@ -72,7 +72,7 @@ export const getCourseById = async (id: string): Promise<Course | null> => {
       }
     }
 
-    return mapDbCourseToCourse({
+    return mapDbToCourse({
       ...data,
       eventType
     });
@@ -109,7 +109,7 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
         }
       }
       
-      return mapDbCourseToCourse({
+      return mapDbToCourse({
         ...dbCourse,
         eventType
       });
@@ -146,7 +146,7 @@ export const getScheduledCourses = async (): Promise<Course[]> => {
         }
       }
       
-      return mapDbCourseToCourse({
+      return mapDbToCourse({
         ...dbCourse,
         eventType
       });
@@ -183,7 +183,7 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
         }
       }
       
-      return mapDbCourseToCourse({
+      return mapDbToCourse({
         ...dbCourse,
         eventType
       });
@@ -194,5 +194,5 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
   }
 };
 
-// Re-export other functions
-export * from './queries/index';
+// Don't try to import from non-existent module
+// export * from './queries/index'; - Removed this line

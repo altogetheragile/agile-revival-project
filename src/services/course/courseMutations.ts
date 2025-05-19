@@ -3,7 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Course, CourseFormData } from "@/types/course";
 import { toast } from "sonner";
 import { getEventTypeByValue } from "@/services/event/eventTypeService";
-import { createCourse as baseCreateCourse, updateCourse as baseUpdateCourse } from './mutations';
+import { 
+  createCourse as baseCreateCourse, 
+  updateCourse as baseUpdateCourse,
+  deleteCourse,
+  createCourseFromTemplate
+} from './mutations';
 
 /**
  * Create a new course
@@ -67,7 +72,7 @@ export const updateCourse = async (
     };
 
     // Use the base update course function
-    return await baseUpdateCourse(id, enrichedData, propagateChanges);
+    return await baseUpdateCourse(id, enrichedData as CourseFormData, propagateChanges);
   } catch (error) {
     console.error("Error in updateCourse:", error);
     toast.error("Failed to update course", {
@@ -78,4 +83,4 @@ export const updateCourse = async (
 };
 
 // Re-export other functions to maintain the API
-export { deleteCourse } from './mutations';
+export { deleteCourse, createCourseFromTemplate } from './mutations';

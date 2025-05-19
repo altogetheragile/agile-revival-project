@@ -1,3 +1,4 @@
+
 // Export all course mutation functions
 export { createCourse } from './createCourse';
 export { updateCourse } from './updateCourse';
