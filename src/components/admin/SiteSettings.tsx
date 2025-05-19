@@ -13,6 +13,7 @@ import { SettingsHeader } from "./settings/SettingsHeader";
 import { SettingsSync } from "./settings/SettingsSync";
 import { CourseFilterSettings } from "./settings/CourseFilterSettings";
 import { TemplateSettings } from "./settings/TemplateSettings";
+import { DevModeToggle } from "@/components/dev/DevModeToggle";
 
 const SiteSettings = () => {
   return (
@@ -22,7 +23,7 @@ const SiteSettings = () => {
         <SettingsSync />
         
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="mb-6 grid grid-cols-2 md:grid-cols-9 gap-2">
+          <TabsList className="mb-6 grid grid-cols-2 md:grid-cols-10 gap-2">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="interface">Interface</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
@@ -32,6 +33,7 @@ const SiteSettings = () => {
             <TabsTrigger value="services">Services</TabsTrigger>
             <TabsTrigger value="courses">Course Filters</TabsTrigger>
             <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="devtools" className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800">Dev Tools</TabsTrigger>
           </TabsList>
           
           <TabsContent value="general" className="space-y-6">
@@ -68,6 +70,22 @@ const SiteSettings = () => {
           
           <TabsContent value="templates" className="space-y-6">
             <TemplateSettings />
+          </TabsContent>
+          
+          <TabsContent value="devtools" className="space-y-6">
+            <div className="p-6 border rounded-lg bg-yellow-50">
+              <h2 className="text-xl font-bold mb-4">Developer Tools</h2>
+              <p className="mb-6 text-gray-600">These tools are intended for development and debugging purposes only.</p>
+              
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2">Dev Mode</h3>
+                <p className="mb-4 text-sm text-gray-500">
+                  When enabled, Dev Mode bypasses authentication checks and database connection requirements,
+                  allowing you to work with the UI even when backend services are unavailable.
+                </p>
+                <DevModeToggle />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

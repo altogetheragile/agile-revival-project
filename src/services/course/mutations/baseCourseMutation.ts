@@ -3,15 +3,41 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { executeQuery } from "@/utils/supabase/query";
 import { User } from "@supabase/supabase-js";
+import { useDevMode } from "@/contexts/DevModeContext";
 
 // Interface for authentication data response matching the actual structure
 export interface UserData {
   user: User | null;
 }
 
+// Check if Dev Mode is active
+const isDevModeActive = (): boolean => {
+  // We can't use the React hook directly here, so we'll check localStorage
+  try {
+    return localStorage.getItem('devModeEnabled') === 'true';
+  } catch (e) {
+    console.error("Error checking Dev Mode status:", e);
+    return false;
+  }
+};
+
 // Shared utility for getting authenticated user
 export const getAuthenticatedUser = async (): Promise<User | null> => {
   try {
+    // In Dev Mode, return a mock user with admin privileges
+    if (isDevModeActive()) {
+      console.log("[Dev Mode] Bypassing authentication check, returning mock admin user");
+      return {
+        id: "00000000-0000-0000-0000-000000000000",
+        email: "dev@example.com",
+        role: "authenticated",
+        app_metadata: { provider: "dev_mode" },
+        user_metadata: { name: "Dev Mode User" },
+        aud: "authenticated",
+        created_at: new Date().toISOString()
+      } as unknown as User;
+    }
+    
     const { data: authData, error: userError } = await supabase.auth.getUser();
     
     if (userError) {
@@ -43,6 +69,12 @@ export const getAuthenticatedUser = async (): Promise<User | null> => {
 // Utility to check if user has admin role
 export const checkAdminRole = async (userId: string): Promise<boolean> => {
   try {
+    // In Dev Mode, always return true for admin role
+    if (isDevModeActive()) {
+      console.log("[Dev Mode] Bypassing admin role check, granting admin privileges");
+      return true;
+    }
+    
     // Direct RPC call to the fixed database function
     const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
       async () => await supabase.rpc('check_user_role', {

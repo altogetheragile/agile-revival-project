@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, ReactNode, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +8,7 @@ import { deepMergeObjects } from "./deepMergeObjects";
 import { toast } from "sonner";
 import { useConnection } from "@/contexts/ConnectionContext";
 import { executeQuery } from "@/utils/supabase/query";
+import { useDevMode } from "@/contexts/DevModeContext";
 
 interface SiteSettingsProviderProps {
   children: ReactNode;
@@ -29,6 +29,7 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
   const lastUpdateRef = useRef<string | null>(null);
   
   const { connectionState, checkConnection } = useConnection();
+  const { devMode } = useDevMode();
 
   const fetchSettings = useCallback(async (silentMode = false) => {
     try {
@@ -208,10 +209,12 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
 
   const updateSettings = async (key: string, values: any, silentMode: boolean = false) => {
     try {
-      console.log(`Updating ${key} settings:`, values);
+      console.log(`🔄 Attempting to update ${key} settings:`, values, 
+        "Connection state:", connectionState.isConnected,
+        "Dev Mode:", devMode);
       
-      // Check connection first - use the shared connection state
-      if (!connectionState.isConnected) {
+      // Skip connection check if Dev Mode is active
+      if (!devMode && !connectionState.isConnected) {
         // Try to re-establish connection
         await checkConnection();
         
