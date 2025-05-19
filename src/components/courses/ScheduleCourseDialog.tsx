@@ -9,6 +9,7 @@ import { Course, ScheduleCourseFormData } from "@/types/course";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { CourseScheduleFields } from "./form-utils/CourseScheduleFields";
+import { DateRangeFields } from "@/components/form-utils/DateRangeFields";
 import MediaLibrary from "@/components/media/MediaLibrary";
 import { Loader2 } from "lucide-react";
 
@@ -34,7 +35,8 @@ const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({
   const form = useForm<ScheduleCourseFormData>({
     defaultValues: {
       templateId: template?.id || "",
-      dates: "",
+      startDate: null,
+      endDate: null,
       location: "London",
       instructor: "Alun Davies-Baker",
       spotsAvailable: 12,
@@ -57,7 +59,8 @@ const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({
     if (template && open) {
       form.reset({
         templateId: template.id,
-        dates: "",
+        startDate: null,
+        endDate: null,
         location: "London",
         instructor: "Alun Davies-Baker",
         spotsAvailable: 12,
@@ -85,8 +88,23 @@ const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              {/* Course Schedule Fields */}
-              <CourseScheduleFields form={form as any} />
+              {/* Date Range Fields */}
+              <DateRangeFields form={form} required={true} />
+              
+              {/* Location Field */}
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., London" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               {/* Instructor Field */}
               <FormField

@@ -1,78 +1,230 @@
 
-import React from "react";
-import { X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronsUpDown, PlusCircle } from "lucide-react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-
-interface Category {
-  value: string;
-  label: string;
-}
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
+import { getAllCategories, createCategory, Category } from "@/services/category/categoryService";
 
 interface CategorySelectProps {
-  categories: Category[];
   value: string;
-  onValueChange: (value: string) => void;
-  onDelete: (value: string, e: React.MouseEvent) => void;
+  onChange: (value: string) => void;
+  className?: string;
 }
 
 export const CategorySelect: React.FC<CategorySelectProps> = ({
-  categories,
   value,
-  onValueChange,
-  onDelete
+  onChange,
+  className
 }) => {
-  return (
-    <Select
-      onValueChange={val => {
-        onValueChange(val);
-      }}
-      value={value}
-      defaultValue={value}
-    >
-      <SelectTrigger>
-        <SelectValue placeholder="Select or create a category" />
-      </SelectTrigger>
-      <SelectContent className="min-w-[200px] z-[100]">
-        {categories.map(category => (
-          <div 
-            key={category.value} 
-            className="flex items-center justify-between px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer group relative"
-          >
-            <SelectItem 
-              value={category.value} 
-              className="flex-1 cursor-pointer"
-            >
-              {category.label}
-            </SelectItem>
-            <button
-              type="button"
-              className="ml-2 h-5 w-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelete(category.value, e);
-              }}
-              aria-label={`Delete category ${category.label}`}
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        ))}
+  const [open, setOpen] = useState(false);
+  const [newCategoryOpen, setNewCategoryOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [newLabel, setNewLabel] = useState("");
+  const [newValue, setNewValue] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-        <SelectItem
-          key="add-category"
-          value="__add_category__"
-          className="text-blue-600 cursor-pointer border-t border-muted"
-        >
-          + Add new category
-        </SelectItem>
-      </SelectContent>
-    </Select>
+  // Load categories on component mount
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    setLoading(true);
+    try {
+      const data = await getAllCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load categories",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNewCategory = async () => {
+    if (!newLabel.trim() || !newValue.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide both a label and a value",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const category = await createCategory({
+        label: newLabel.trim(),
+        value: newValue.trim().toLowerCase()
+      });
+      
+      if (category) {
+        toast({
+          title: "Success",
+          description: "New category created"
+        });
+        setNewCategoryOpen(false);
+        fetchCategories();
+        onChange(category.value);
+        
+        // Reset form
+        setNewLabel("");
+        setNewValue("");
+      }
+    } catch (error) {
+      console.error("Failed to create category:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create new category",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const currentCategory = categories.find((category) => category.value === value);
+
+  return (
+    <div className={className}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between"
+            disabled={loading}
+          >
+            {value
+              ? currentCategory?.label || value
+              : "Select category..."}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0">
+          <Command>
+            <CommandInput placeholder="Search categories..." />
+            <CommandList>
+              <CommandEmpty>No category found.</CommandEmpty>
+              <CommandGroup>
+                {categories.map((category) => (
+                  <CommandItem
+                    key={category.id}
+                    value={category.value}
+                    onSelect={(currentValue) => {
+                      onChange(currentValue);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === category.value ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {category.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              <CommandSeparator />
+              <CommandGroup>
+                <CommandItem
+                  onSelect={() => {
+                    setOpen(false);
+                    setNewCategoryOpen(true);
+                  }}
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create new category
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      <Dialog open={newCategoryOpen} onOpenChange={setNewCategoryOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add new category</DialogTitle>
+            <DialogDescription>
+              Create a new course category
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="label" className="text-right">
+                Display Label
+              </Label>
+              <Input
+                id="label"
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                placeholder="e.g., User Experience"
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="value" className="text-right">
+                Value ID
+              </Label>
+              <Input
+                id="value"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                placeholder="e.g., ux-design"
+                className="col-span-3"
+              />
+              <p className="text-xs text-muted-foreground col-start-2 col-span-3">
+                This is used internally and in URLs. Use lowercase with hyphens.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setNewCategoryOpen(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleNewCategory} disabled={loading}>
+              {loading ? "Creating..." : "Create Category"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };

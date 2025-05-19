@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { createCourseFromTemplate } from '@/services/course/mutations';
 import { ScheduleCourseFormData } from '@/types/course';
+import { formatDate } from '@/lib/utils';
 
 export const useScheduleCourse = (onSuccess?: () => void) => {
   const [isScheduling, setIsScheduling] = useState(false);
@@ -12,9 +13,19 @@ export const useScheduleCourse = (onSuccess?: () => void) => {
       setIsScheduling(true);
       console.log("Scheduling course from template:", templateId, data);
       
+      // Generate dates string for backward compatibility if startDate and endDate are provided
+      let dates = data.dates || "";
+      if (data.startDate && data.endDate) {
+        const startDateStr = formatDate(data.startDate);
+        const endDateStr = formatDate(data.endDate);
+        dates = startDateStr === endDateStr ? startDateStr : `${startDateStr} - ${endDateStr}`;
+      }
+      
       const scheduledCourse = await createCourseFromTemplate(templateId, {
         templateId,
-        dates: data.dates,
+        dates,
+        startDate: data.startDate,
+        endDate: data.endDate,
         location: data.location,
         instructor: data.instructor,
         spotsAvailable: Number(data.spotsAvailable),

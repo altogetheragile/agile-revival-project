@@ -3,75 +3,96 @@ import { supabase } from "@/integrations/supabase/client";
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { toast } from "sonner";
 import { mapDbToCourse } from "../courseMappers";
-import { handleMutationError } from "./baseCourseMutation";
 
-// Create a course from template
-export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
+/**
+ * Create a new course instance from a template
+ * @param templateId Template ID to use as a base
+ * @param scheduleData Schedule-specific data to apply to the new instance
+ * @returns The created course or null if creation failed
+ */
+export const createCourseFromTemplate = async (
+  templateId: string,
+  scheduleData: ScheduleCourseFormData
+): Promise<Course | null> => {
   try {
-    console.log("Creating course from template ID:", templateId);
-    console.log("Schedule data:", scheduleData);
-    
-    const { data: template, error: templateError } = await supabase
+    // First, get the template course
+    const { data: templateData, error: templateError } = await supabase
       .from('courses')
       .select('*')
       .eq('id', templateId)
       .eq('is_template', true)
-      .maybeSingle();
-    
-    if (templateError || !template) {
+      .single();
+
+    if (templateError) {
       console.error("Error fetching template:", templateError);
-      toast.error("Failed to fetch template", {
-        description: templateError?.message || "Template not found"
+      toast.error("Template not found", {
+        description: "Could not find the template to create from"
       });
       return null;
     }
-    
-    console.log("Template found, creating new course:", template.title);
-    
-    // Extract id and other auto-generated fields
-    const { 
-      id,
-      created_at, 
-      updated_at,
-      ...templateWithoutSystemFields 
-    } = template;
-    
-    // Create new course based on template without including id
+
+    // Create a new course based on the template
     const newCourseData = {
-      ...templateWithoutSystemFields,
-      dates: scheduleData.dates,
+      ...templateData,
+      title: templateData.title,
+      description: templateData.description,
+      dates: scheduleData.dates || "",
+      start_date: scheduleData.startDate || null,
+      end_date: scheduleData.endDate || null,
       location: scheduleData.location,
       instructor: scheduleData.instructor,
+      price: templateData.price,
       spots_available: scheduleData.spotsAvailable,
+      category: templateData.category,
+      category_id: templateData.category_id,
+      event_type: templateData.event_type,
+      event_type_id: templateData.event_type_id,
+      learning_outcomes: templateData.learning_outcomes,
+      prerequisites: templateData.prerequisites,
+      target_audience: templateData.target_audience,
+      duration: templateData.duration,
+      skill_level: templateData.skill_level,
+      skill_level_id: templateData.skill_level_id,
+      format: templateData.format,
       status: scheduleData.status || 'draft',
+      image_url: templateData.image_url,
+      image_aspect_ratio: templateData.image_aspect_ratio,
+      image_size: templateData.image_size,
+      image_layout: templateData.image_layout,
       is_template: false,
-      template_id: templateId,
+      template_id: templateId
     };
-    
-    // Remove any database internal fields
-    delete newCourseData.created_by;
-    
-    const { data: createdCourse, error: createError } = await supabase
+
+    // Remove unnecessary fields from the new course data
+    delete newCourseData.id;
+    delete newCourseData.created_at;
+    delete newCourseData.updated_at;
+
+    // Insert the new course
+    const { data: newCourse, error: insertError } = await supabase
       .from('courses')
-      .insert([newCourseData])
+      .insert(newCourseData)
       .select()
       .single();
-      
-    if (createError) {
-      console.error("Error creating course from template:", createError);
+
+    if (insertError) {
+      console.error("Error creating course from template:", insertError);
       toast.error("Failed to create course", {
-        description: createError.message
+        description: insertError.message
       });
       return null;
     }
-    
-    console.log("Course created successfully:", createdCourse.title);
-    toast.success("Course scheduled successfully", {
-      description: `${createdCourse.title} has been scheduled.`
+
+    toast.success("Course created from template", {
+      description: `${newCourse.title} has been scheduled.`
     });
-    return mapDbToCourse(createdCourse);
-  } catch (error) {
-    handleMutationError(error, "Failed to schedule course");
+    
+    return mapDbToCourse(newCourse);
+  } catch (error: any) {
+    console.error("Error in createCourseFromTemplate:", error);
+    toast.error("Failed to create course", {
+      description: error?.message || "An unexpected error occurred"
+    });
     return null;
   }
 };

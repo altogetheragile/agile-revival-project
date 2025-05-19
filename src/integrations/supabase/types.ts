@@ -87,6 +87,30 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       course_materials: {
         Row: {
           course_id: string
@@ -176,11 +200,13 @@ export type Database = {
       courses: {
         Row: {
           category: string
+          category_id: string | null
           created_at: string | null
           created_by: string | null
           dates: string
           description: string
           duration: string | null
+          end_date: string | null
           event_type: string | null
           event_type_id: string | null
           format: string | null
@@ -198,7 +224,9 @@ export type Database = {
           prerequisites: string | null
           price: string
           skill_level: string | null
+          skill_level_id: string | null
           spots_available: number
+          start_date: string | null
           status: string | null
           target_audience: string | null
           template_id: string | null
@@ -207,11 +235,13 @@ export type Database = {
         }
         Insert: {
           category: string
+          category_id?: string | null
           created_at?: string | null
           created_by?: string | null
           dates: string
           description: string
           duration?: string | null
+          end_date?: string | null
           event_type?: string | null
           event_type_id?: string | null
           format?: string | null
@@ -229,7 +259,9 @@ export type Database = {
           prerequisites?: string | null
           price: string
           skill_level?: string | null
+          skill_level_id?: string | null
           spots_available: number
+          start_date?: string | null
           status?: string | null
           target_audience?: string | null
           template_id?: string | null
@@ -238,11 +270,13 @@ export type Database = {
         }
         Update: {
           category?: string
+          category_id?: string | null
           created_at?: string | null
           created_by?: string | null
           dates?: string
           description?: string
           duration?: string | null
+          end_date?: string | null
           event_type?: string | null
           event_type_id?: string | null
           format?: string | null
@@ -260,7 +294,9 @@ export type Database = {
           prerequisites?: string | null
           price?: string
           skill_level?: string | null
+          skill_level_id?: string | null
           spots_available?: number
+          start_date?: string | null
           status?: string | null
           target_audience?: string | null
           template_id?: string | null
@@ -269,10 +305,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "courses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "courses_event_type_id_fkey"
             columns: ["event_type_id"]
             isOneToOne: false
             referencedRelation: "event_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courses_skill_level_id_fkey"
+            columns: ["skill_level_id"]
+            isOneToOne: false
+            referencedRelation: "skill_levels"
             referencedColumns: ["id"]
           },
         ]
@@ -352,6 +402,30 @@ export type Database = {
           key?: string
           updated_at?: string | null
           value?: Json
+        }
+        Relationships: []
+      }
+      skill_levels: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          updated_at?: string
+          value?: string
         }
         Relationships: []
       }

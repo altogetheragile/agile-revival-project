@@ -4,12 +4,13 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { CourseFormData } from "@/types/course";
 import { BasicCourseFields } from "./form-utils/BasicCourseFields";
-import { ScheduleFields } from "./form-utils/ScheduleFields";
+import { CourseScheduleFields } from "./form-utils/CourseScheduleFields";
 import { CourseDetailsFields } from "./form-utils/CourseDetailsFields";
 import { AdditionalInfoFields } from "./form-utils/AdditionalInfoFields";
 import { CourseImageField } from "./form-utils/CourseImageField";
 import { CourseStatusField } from "./form-utils/CourseStatusField";
 import { CourseFormActions } from "./form-utils/CourseFormActions";
+import { formatDate } from "@/lib/utils";
 
 interface CourseFormProps {
   initialData?: CourseFormData;
@@ -29,7 +30,8 @@ const CourseForm: React.FC<CourseFormProps> = ({
   initialData = {
     title: "",
     description: "",
-    dates: "",
+    startDate: null,
+    endDate: null,
     location: "",
     instructor: "",
     price: "£",
@@ -71,6 +73,13 @@ const CourseForm: React.FC<CourseFormProps> = ({
         .filter(item => item.length > 0);
     }
     
+    // Generate dates field for backward compatibility if startDate and endDate are provided
+    if (data.startDate && data.endDate) {
+      const startDateStr = formatDate(data.startDate);
+      const endDateStr = formatDate(data.endDate);
+      data.dates = startDateStr === endDateStr ? startDateStr : `${startDateStr} - ${endDateStr}`;
+    }
+    
     onSubmit({
       ...data,
       spotsAvailable: Number(data.spotsAvailable)
@@ -81,7 +90,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <BasicCourseFields form={form} />
-        <ScheduleFields form={form} />
+        <CourseScheduleFields form={form} />
         <CourseDetailsFields form={form} />
         <AdditionalInfoFields form={form} />
         <CourseImageField form={form} onOpenMediaLibrary={onOpenMediaLibrary} />
