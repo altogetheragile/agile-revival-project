@@ -1,9 +1,8 @@
-
 import { useDevMode } from '@/contexts/DevModeContext';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Shield, ShieldOff, ShieldAlert, X, Database, DatabaseOff } from 'lucide-react';
+import { AlertCircle, Shield, ShieldOff, ShieldAlert, X, Database, X as XIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -128,7 +127,8 @@ const DevModeToggle = () => {
             </div>
           ) : (
             <div className="flex items-center text-red-700">
-              <DatabaseOff size={14} className="mr-1" />
+              <Database size={14} className="mr-1 opacity-50" />
+              <XIcon size={12} className="absolute text-red-700" />
               Database disconnected
             </div>
           )}
