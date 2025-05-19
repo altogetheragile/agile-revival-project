@@ -39,7 +39,7 @@ export const FormatSelect: React.FC<FormatSelectProps> = ({
         <SelectItem value="hybrid">Hybrid</SelectItem>
         <SelectItem value="self-paced">Self-Paced</SelectItem>
         {formats.map(format => (
-          <SelectItem key={format.id} value={format.value}>
+          <SelectItem key={format.id || format.value} value={format.value}>
             {format.label}
           </SelectItem>
         ))}

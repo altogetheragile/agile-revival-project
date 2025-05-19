@@ -8,11 +8,17 @@ import {
   SelectValue
 } from "@/components/ui/select";
 
+interface SkillLevel {
+  id?: string;
+  value: string;
+  label: string;
+}
+
 interface SkillLevelSelectProps {
   value: string;
   onChange?: (value: string) => void;
   onValueChange: (value: string) => void;
-  skillLevels?: Array<{ id: string; value: string; label: string }>;
+  skillLevels?: SkillLevel[];
 }
 
 export const SkillLevelSelect: React.FC<SkillLevelSelectProps> = ({ 
@@ -37,7 +43,7 @@ export const SkillLevelSelect: React.FC<SkillLevelSelectProps> = ({
         <SelectItem value="advanced">Advanced</SelectItem>
         <SelectItem value="all-levels">All Levels</SelectItem>
         {skillLevels.map(level => (
-          <SelectItem key={level.id} value={level.value}>
+          <SelectItem key={level.id || level.value} value={level.value}>
             {level.label}
           </SelectItem>
         ))}

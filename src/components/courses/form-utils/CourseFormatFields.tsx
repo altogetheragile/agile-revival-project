@@ -19,6 +19,7 @@ import { CourseFormData } from "@/types/course";
 import { useCourseFormatManagement } from "@/hooks/useCourseFormatManagement";
 import { FormatSelect } from "./FormatSelect";
 import { FormatInput } from "./FormatInput";
+import { CourseFormat } from "@/types/courseFormat";
 
 interface CourseFormatFieldsProps {
   form: UseFormReturn<CourseFormData>;

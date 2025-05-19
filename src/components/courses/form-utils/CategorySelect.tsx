@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, PlusCircle } from "lucide-react";
@@ -30,10 +29,16 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { getAllCategories, createCategory, Category } from "@/services/category/categoryService";
 
+interface Category {
+  id?: string;
+  value: string;
+  label: string;
+}
+
 interface CategorySelectProps {
   value: string;
   onValueChange: (value: string) => void;
-  categories?: { value: string; label: string; }[];
+  categories?: Category[];
   className?: string;
   onDelete?: (value: string, e: React.MouseEvent) => void;
 }
@@ -66,7 +71,12 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     setLoading(true);
     try {
       const data = await getAllCategories();
-      setCategories(data);
+      // Ensure each category has an id property
+      const categoriesWithId = data.map(cat => ({
+        ...cat,
+        id: cat.id || cat.value
+      }));
+      setCategories(categoriesWithId);
     } catch (error) {
       console.error("Failed to fetch categories:", error);
       toast({

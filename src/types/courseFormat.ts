@@ -1,5 +1,6 @@
 
 export type CourseFormat = {
+  id?: string;
   value: string;
   label: string;
 };
