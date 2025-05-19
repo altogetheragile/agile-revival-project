@@ -31,7 +31,7 @@ export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }
               <FormControl>
                 <EventTypeSelect 
                   value={field.value || ""} 
-                  onChange={field.onChange}
+                  onValueChange={field.onChange}
                 />
               </FormControl>
               <FormMessage />
@@ -49,7 +49,7 @@ export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }
               <FormControl>
                 <CategorySelect 
                   value={field.value || ""} 
-                  onChange={field.onChange}
+                  onValueChange={field.onChange}
                 />
               </FormControl>
               <FormMessage />
@@ -101,7 +101,7 @@ export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }
               <FormControl>
                 <FormatSelect
                   value={field.value || "in-person"}
-                  onChange={field.onChange}
+                  onValueChange={field.onChange}
                 />
               </FormControl>
               <FormMessage />
@@ -119,7 +119,7 @@ export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }
               <FormControl>
                 <SkillLevelSelect
                   value={field.value || "all-levels"}
-                  onChange={field.onChange}
+                  onValueChange={field.onChange}
                 />
               </FormControl>
               <FormMessage />

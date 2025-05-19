@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CourseScheduleFields } from "./form-utils/CourseScheduleFields";
 import { DateRangeFields } from "@/components/form-utils/DateRangeFields";
 import MediaLibrary from "@/components/media/MediaLibrary";
 import { Loader2 } from "lucide-react";

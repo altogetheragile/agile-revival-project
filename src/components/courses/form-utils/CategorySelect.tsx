@@ -32,14 +32,18 @@ import { getAllCategories, createCategory, Category } from "@/services/category/
 
 interface CategorySelectProps {
   value: string;
-  onChange: (value: string) => void;
+  onValueChange: (value: string) => void;
+  categories?: { value: string; label: string; }[];
   className?: string;
+  onDelete?: (value: string, e: React.MouseEvent) => void;
 }
 
 export const CategorySelect: React.FC<CategorySelectProps> = ({
   value,
-  onChange,
-  className
+  onValueChange,
+  categories: propCategories,
+  className,
+  onDelete
 }) => {
   const [open, setOpen] = useState(false);
   const [newCategoryOpen, setNewCategoryOpen] = useState(false);
@@ -49,10 +53,14 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  // Load categories on component mount
+  // Load categories from props or fetch them
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    if (propCategories) {
+      setCategories(propCategories);
+    } else {
+      fetchCategories();
+    }
+  }, [propCategories]);
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -95,7 +103,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         });
         setNewCategoryOpen(false);
         fetchCategories();
-        onChange(category.value);
+        onValueChange(category.value);
         
         // Reset form
         setNewLabel("");
@@ -143,7 +151,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                     key={category.id}
                     value={category.value}
                     onSelect={(currentValue) => {
-                      onChange(currentValue);
+                      onValueChange(currentValue);
                       setOpen(false);
                     }}
                   >

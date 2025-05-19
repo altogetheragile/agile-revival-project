@@ -17,7 +17,6 @@ import { EventTypeSelect } from "./EventTypeSelect";
 import { EventTypeInput } from "./EventTypeInput";
 import { useCategoryManagement } from "@/hooks/useCategoryManagement";
 import { useEventTypeManagement } from "@/hooks/useEventTypeManagement";
-import { getEventTypes } from "@/services/event/eventTypeService";
 
 interface BasicCourseFieldsProps {
   form: UseFormReturn<CourseFormData>;
@@ -151,7 +150,6 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
                 />
               ) : (
                 <CategorySelect
-                  categories={categories}
                   value={field.value}
                   onValueChange={(value) => {
                     if (value === "__add_category__") {
