@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GoogleDriveSettings } from "./settings/GoogleDriveSettings";
@@ -13,7 +12,7 @@ import { SettingsHeader } from "./settings/SettingsHeader";
 import { SettingsSync } from "./settings/SettingsSync";
 import { CourseFilterSettings } from "./settings/CourseFilterSettings";
 import { TemplateSettings } from "./settings/TemplateSettings";
-import { DevModeToggle } from "@/components/dev/DevModeToggle";
+import DevModeToggle from "@/components/dev/DevModeToggle";
 
 const SiteSettings = () => {
   return (
