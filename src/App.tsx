@@ -12,7 +12,7 @@ import CourseDetails from '@/pages/CourseDetails';
 import UnauthorizedPage from '@/pages/UnauthorizedPage';
 import { SiteSettingsProvider } from '@/contexts/site-settings';
 import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider as AuthContextProvider } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import DevModeToggle from '@/components/dev/DevModeToggle';
 import { DevModeProvider } from '@/contexts/DevModeContext';
 import { Toaster as SonnerToaster } from 'sonner';
@@ -21,20 +21,18 @@ import CustomCoaching from './pages/services/CustomCoaching';
 import LeadershipCoaching from './pages/services/LeadershipCoaching';
 import PerformanceMetrics from './pages/services/PerformanceMetrics';
 import TeamCoaching from './pages/services/TeamCoaching';
-import { ConnectionProvider } from '@/contexts/ConnectionContext';
+import { ConnectionProvider } from '@/contexts/connection';
 
 import './App.css';
 import ErrorBoundary from './components/layout/ErrorBoundary';
 
 function App() {
-  // Removed the automatic seeding useEffect hook that was causing RLS policy errors
-
   return (
     <ErrorBoundary>
       <DevModeProvider>
         <ConnectionProvider>
           <SiteSettingsProvider>
-            <AuthContextProvider>
+            <AuthProvider>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/admin/*" element={<AdminDashboard />} />
@@ -59,7 +57,7 @@ function App() {
                 closeButton={true}
                 richColors={true} 
               />
-            </AuthContextProvider>
+            </AuthProvider>
           </SiteSettingsProvider>
         </ConnectionProvider>
       </DevModeProvider>

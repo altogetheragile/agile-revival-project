@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { AuthFormProvider } from '@/contexts/AuthFormContext';
 import LoginView from './views/LoginView';
 import SignupView from './views/SignupView';
 import ResetPasswordView from './views/ResetPasswordView';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { useAuthError } from '@/hooks/useAuthError';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
