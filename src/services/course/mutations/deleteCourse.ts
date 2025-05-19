@@ -7,11 +7,13 @@ import { getAuthenticatedUser, checkAdminRole, handleMutationError } from "./bas
 export const deleteCourse = async (id: string): Promise<boolean> => {
   try {
     console.log("Deleting course with ID:", id);
-    console.log("ID type:", typeof id);
     
-    if (!id) {
-      console.error("Missing ID for delete operation");
-      toast.error("Delete failed: Missing ID");
+    // Validate the ID parameter
+    if (!id || typeof id !== 'string') {
+      console.error("Missing or invalid ID for delete operation:", id);
+      toast.error("Delete failed", {
+        description: "Missing or invalid course ID"
+      });
       return false;
     }
     
@@ -53,7 +55,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     console.log(`Is template: ${existingCourse.is_template}`);
 
     // Use optimized query with better error handling
-    const { error } = await executeQuery<any>(
+    const { error } = await executeQuery(
       async () => await supabase
         .from('courses')
         .delete()

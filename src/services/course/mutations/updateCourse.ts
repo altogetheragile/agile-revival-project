@@ -13,18 +13,17 @@ export const updateCourse = async (
   propagateChanges: boolean = false
 ): Promise<Course | null> => {
   try {
-    console.log("Updating course:", id, "Data:", courseData);
-    console.log("Course ID type:", typeof id);
-    console.log("Propagate changes:", propagateChanges);
+    console.log("Updating course:", id);
+    console.log("Course data:", courseData);
     
-    if (!id) {
-      console.error("Missing ID for update operation");
-      toast.error("Update failed: Missing ID");
+    // Validate the ID parameter
+    if (!id || typeof id !== 'string') {
+      console.error("Missing or invalid ID for update operation:", id);
+      toast.error("Update failed", {
+        description: "Missing or invalid course ID"
+      });
       return null;
     }
-    
-    // Log the incoming courseData ID to verify it's consistent
-    console.log("Input data ID:", courseData.id);
     
     // Check if user is authenticated
     const user = await getAuthenticatedUser();
@@ -38,6 +37,19 @@ export const updateCourse = async (
       return null;
     }
 
+    // First verify the course exists
+    const { data: existingCourse, error: fetchError } = await supabase
+      .from('courses')
+      .select('id')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError || !existingCourse) {
+      console.error("Error verifying course exists:", fetchError || "Course not found");
+      handleMutationError(fetchError || new Error("Course not found"), "Failed to locate course for update");
+      return null;
+    }
+
     // Apply any necessary transformations to the course data
     const dbCourseData = mapCourseToDb(courseData);
     
@@ -46,7 +58,7 @@ export const updateCourse = async (
     console.log("Update data prepared:", updateData);
     
     // Use optimized query with better error handling
-    const { data, error } = await executeQuery<any>(
+    const { data, error } = await executeQuery(
       async () => await supabase
         .from('courses')
         .update({ 
