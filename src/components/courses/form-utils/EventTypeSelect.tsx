@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 
 interface EventType {
+  id?: string;
   value: string;
   label: string;
 }
@@ -46,7 +47,7 @@ export const EventTypeSelect: React.FC<EventTypeSelectProps> = ({
       <SelectContent className="min-w-[200px] z-[100]">
         {eventTypes.map(type => (
           <div
-            key={type.value}
+            key={type.id || type.value}
             className="flex items-center justify-between px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer group relative"
           >
             <SelectItem

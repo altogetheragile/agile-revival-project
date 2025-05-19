@@ -88,7 +88,10 @@ const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
               {/* Date Range Fields */}
-              <DateRangeFields form={form} required={true} />
+              <DateRangeFields 
+                form={form} 
+                required={true} 
+              />
               
               {/* Location Field */}
               <FormField

@@ -7,17 +7,21 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { CourseFormat } from "@/types/courseFormat";
 
 interface FormatSelectProps {
   value: string;
   onChange?: (value: string) => void;
   onValueChange: (value: string) => void;
+  formats?: CourseFormat[];
+  onDelete?: (value: string, e: React.MouseEvent) => void;
 }
 
 export const FormatSelect: React.FC<FormatSelectProps> = ({ 
   value, 
   onChange, 
-  onValueChange 
+  onValueChange,
+  formats = [] 
 }) => {
   const handleChange = (newValue: string) => {
     onValueChange(newValue);
@@ -34,6 +38,11 @@ export const FormatSelect: React.FC<FormatSelectProps> = ({
         <SelectItem value="online">Online</SelectItem>
         <SelectItem value="hybrid">Hybrid</SelectItem>
         <SelectItem value="self-paced">Self-Paced</SelectItem>
+        {formats.map(format => (
+          <SelectItem key={format.id} value={format.value}>
+            {format.label}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );

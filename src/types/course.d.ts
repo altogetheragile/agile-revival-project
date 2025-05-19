@@ -35,12 +35,17 @@ export interface Course {
 
 export interface CourseFormData extends Omit<Course, 'id'> {
   id?: string;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
+  category_id?: string;
+  skill_level_id?: string;
+  event_type_id?: string;
 }
 
 export interface ScheduleCourseFormData {
   templateId: string;
-  startDate?: string | Date;
-  endDate?: string | Date;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
   dates?: string; // Keeping for backward compatibility
   location: string;
   instructor: string;

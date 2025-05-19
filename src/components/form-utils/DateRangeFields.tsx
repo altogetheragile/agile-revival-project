@@ -20,7 +20,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-interface DateRangeFieldsProps<T extends { startDate?: Date | string | null; endDate?: Date | string | null; }> {
+interface DateRangeFieldsProps<T> {
   form: UseFormReturn<T>;
   className?: string;
   startFieldLabel?: string;
@@ -28,7 +28,7 @@ interface DateRangeFieldsProps<T extends { startDate?: Date | string | null; end
   required?: boolean;
 }
 
-export function DateRangeFields<T extends { startDate?: Date | string | null; endDate?: Date | string | null; }>({
+export function DateRangeFields<T>({
   form,
   className,
   startFieldLabel = "Start Date",
@@ -47,20 +47,23 @@ export function DateRangeFields<T extends { startDate?: Date | string | null; en
     }
   };
 
-  const startDate = parseDate(form.watch('startDate' as any));
-  const endDate = parseDate(form.watch('endDate' as any));
+  // Cast form to access startDate and endDate properties
+  // This is a TypeScript workaround - we assert the form type has these properties
+  const formAny = form as any;
+  const startDate = parseDate(formAny.watch('startDate'));
+  const endDate = parseDate(formAny.watch('endDate'));
 
   // Update end date if start date is changed to be later
   useEffect(() => {
     if (startDate && endDate && startDate > endDate) {
-      form.setValue('endDate' as any, startDate);
+      formAny.setValue('endDate', startDate);
     }
-  }, [startDate, endDate, form]);
+  }, [startDate, endDate, formAny]);
 
   return (
     <div className={cn("grid gap-4 md:grid-cols-2", className)}>
       <FormField
-        control={form.control}
+        control={form.control as any}
         name={'startDate' as any}
         rules={{ required: required ? "Start date is required" : false }}
         render={({ field }) => (
@@ -92,13 +95,14 @@ export function DateRangeFields<T extends { startDate?: Date | string | null; en
                   onSelect={(date) => {
                     field.onChange(date);
                     // If end date is not set or is before start date, set it to start date
-                    const endDate = parseDate(form.watch('endDate' as any));
+                    const endDate = parseDate(formAny.watch('endDate'));
                     if (!endDate || (date && endDate < date)) {
-                      form.setValue('endDate' as any, date);
+                      formAny.setValue('endDate', date);
                     }
                   }}
                   disabled={(date) => date < new Date("1900-01-01")}
                   initialFocus
+                  className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>
@@ -108,7 +112,7 @@ export function DateRangeFields<T extends { startDate?: Date | string | null; en
       />
 
       <FormField
-        control={form.control}
+        control={form.control as any}
         name={'endDate' as any}
         rules={{ required: required ? "End date is required" : false }}
         render={({ field }) => (
@@ -143,6 +147,7 @@ export function DateRangeFields<T extends { startDate?: Date | string | null; en
                     (startDate ? date < startDate : false)
                   }
                   initialFocus
+                  className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>

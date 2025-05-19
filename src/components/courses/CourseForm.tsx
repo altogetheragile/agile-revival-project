@@ -13,7 +13,7 @@ import { CourseFormActions } from "./form-utils/CourseFormActions";
 import { formatDate } from "@/lib/utils";
 
 interface CourseFormProps {
-  initialData?: CourseFormData;
+  initialData?: Partial<CourseFormData>;
   onSubmit: (data: CourseFormData) => void;
   onCancel: () => void;
   onOpenMediaLibrary?: () => void;
@@ -61,7 +61,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
   submitButtonText
 }) => {
   const form = useForm<CourseFormData>({
-    defaultValues: initialData
+    defaultValues: initialData as CourseFormData
   });
 
   const handleSubmit = (data: CourseFormData) => {

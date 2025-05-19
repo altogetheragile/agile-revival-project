@@ -22,7 +22,9 @@ export const CourseScheduleFields: React.FC<CourseScheduleFieldsProps> = ({ form
       <h3 className="text-lg font-medium">Schedule Information</h3>
       
       {/* Date Range Fields */}
-      <DateRangeFields form={form} />
+      <DateRangeFields 
+        form={form}
+      />
       
       {/* Location Field */}
       <FormField
