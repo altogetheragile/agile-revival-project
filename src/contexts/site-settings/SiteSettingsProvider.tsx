@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, ReactNode, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -213,24 +214,46 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
         "Connection state:", connectionState.isConnected,
         "Dev Mode:", devMode);
       
-      // Skip connection check if Dev Mode is active
-      if (!devMode && !connectionState.isConnected) {
-        // Try to re-establish connection
-        await checkConnection();
-        
-        if (!connectionState.isConnected) {
-          uiToast({
-            title: "Error",
-            description: "Cannot update settings: database is not connected",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
+      let shouldUpdateLocalState = false;
+      let shouldShowSuccess = false;
       
-      // Use executeQuery helper with multiple explicit retries
-      for (let attempt = 0; attempt < 3; attempt++) {
+      // Skip actual DB updates if in Dev Mode AND not connected
+      // But still update local state to provide a good UX in Dev Mode
+      if (devMode && !connectionState.isConnected) {
+        console.log("⚙️ Dev Mode active and disconnected - bypassing database update");
+        shouldUpdateLocalState = true;
+        shouldShowSuccess = true;
+        
+        if (!silentMode) {
+          toast.info("Dev Mode Update", {
+            description: `Settings updated locally only (database disconnected)`
+          });
+        }
+      } 
+      // Normal path - try to connect to DB if needed
+      else {
+        // Check connection first if not in Dev Mode
+        if (!devMode && !connectionState.isConnected) {
+          console.log("📶 Not in Dev Mode and not connected - checking connection");
+          // Try to re-establish connection
+          await checkConnection();
+          
+          if (!connectionState.isConnected) {
+            console.log("❌ Connection check failed - cannot update settings");
+            uiToast({
+              title: "Error",
+              description: "Cannot update settings: database is not connected",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+        
+        console.log("🚀 Attempting RPC call to update_site_settings");
+        
+        // Try the RPC update - with explicit error handling
         try {
+          // Use executeQuery helper with multiple explicit retries
           const { data, error } = await executeQuery<any>(
             async (signal) => await supabase.rpc('update_site_settings', {
               setting_key: key,
@@ -238,87 +261,140 @@ export const SiteSettingsProvider = ({ children }: SiteSettingsProviderProps) =>
             }),
             {
               timeoutMs: 20000, // Increased from 10s to 20s
-              errorMessage: `Failed to update ${key} settings (attempt ${attempt + 1})`,
-              retries: 0,  // We'll handle retries manually
-              showErrorToast: false // We'll handle errors manually
+              errorMessage: `Failed to update ${key} settings`,
+              retries: 0,  // Handle retries manually
+              showErrorToast: false // Handle errors manually
             }
           );
           
           if (error) {
-            console.error(`Error updating settings (attempt ${attempt + 1}):`, error);
-            if (attempt === 2) {
-              // Final attempt failed
+            console.error(`❌ Error updating settings:`, error);
+            
+            // In Dev Mode, still update local state even if RPC fails
+            if (devMode) {
+              console.log("⚙️ Dev Mode active - updating local state despite RPC error");
+              shouldUpdateLocalState = true;
+              shouldShowSuccess = true;
+              
+              if (!silentMode) {
+                toast.info("Dev Mode Update", {
+                  description: `Settings updated locally only (database error: ${error.message})`
+                });
+              }
+            } else {
+              // Normal error handling in non-Dev Mode
               if (!silentMode) {
                 uiToast({
                   title: "Error",
-                  description: `Failed to update ${key} settings after multiple attempts`,
+                  description: `Failed to update ${key} settings: ${error.message}`,
                   variant: "destructive",
                 });
               }
-              return;
             }
-            // Wait before retrying
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-            continue;
-          }
-          
-          // Success - update state and break out of retry loop
-          console.log(`Successfully updated ${key} settings`);
-          
-          // Important: Update local state immediately to reflect changes in the UI
-          setSettings(prev => {
-            // For nested updates like 'general.siteName', handle differently
-            if (key.includes('.')) {
-              const [parent, child] = key.split('.');
-              return {
-                ...prev,
-                [parent]: {
-                  ...prev[parent as keyof AllSettings],
-                  [child]: values
-                }
-              };
-            }
-            
-            // For regular top-level settings
-            return {
-              ...prev,
-              [key]: values
-            };
-          });
-          
-          // Update last successful update timestamp
-          lastUpdateRef.current = new Date().toISOString();
-          
-          if (!silentMode && !isInitialLoad.current) {
-            uiToast({
-              title: "Settings updated",
-              description: `${key.charAt(0).toUpperCase() + key.slice(1)} settings have been saved`,
-            });
           } else {
-            console.log("Silent update completed for", key);
+            console.log(`✅ Successfully updated ${key} settings in database`);
+            shouldUpdateLocalState = true;
+            shouldShowSuccess = true;
           }
-          
-          // Success - no need to continue retrying
-          break;
         } catch (attemptError) {
-          console.error(`Exception in updateSettings attempt ${attempt + 1}:`, attemptError);
-          if (attempt === 2) {
-            // Final attempt failed with exception
-            uiToast({
-              title: "Error",
-              description: "An unexpected error occurred",
-              variant: "destructive",
-            });
+          console.error(`❌ Exception in updateSettings:`, attemptError);
+          
+          // In Dev Mode, still update local state even if exception occurs
+          if (devMode) {
+            console.log("⚙️ Dev Mode active - updating local state despite exception");
+            shouldUpdateLocalState = true;
+            shouldShowSuccess = true;
+            
+            if (!silentMode) {
+              toast.info("Dev Mode Update", {
+                description: `Settings updated locally only (error occurred)`
+              });
+            }
+          } else {
+            // Normal error handling in non-Dev Mode
+            if (!silentMode) {
+              uiToast({
+                title: "Error",
+                description: "An unexpected error occurred while updating settings",
+                variant: "destructive",
+              });
+            }
           }
         }
       }
+      
+      // Always update local state in Dev Mode, or if successful in normal mode
+      if (shouldUpdateLocalState) {
+        console.log(`📝 Updating local state for ${key}:`, values);
+        
+        // Update local state immediately to reflect changes in the UI
+        setSettings(prev => {
+          // For nested updates like 'general.siteName', handle differently
+          if (key.includes('.')) {
+            const [parent, child] = key.split('.');
+            return {
+              ...prev,
+              [parent]: {
+                ...prev[parent as keyof AllSettings],
+                [child]: values
+              }
+            };
+          }
+          
+          // For regular top-level settings
+          return {
+            ...prev,
+            [key]: values
+          };
+        });
+        
+        // Update last successful update timestamp
+        lastUpdateRef.current = new Date().toISOString();
+        
+        // Show success toast if not in silent mode and should show success
+        if (shouldShowSuccess && !silentMode && !isInitialLoad.current) {
+          uiToast({
+            title: "Settings updated",
+            description: `${key.charAt(0).toUpperCase() + key.slice(1)} settings have been ${devMode ? 'saved locally' : 'saved'}`,
+          });
+        } else {
+          console.log("Silent update completed for", key);
+        }
+      }
     } catch (error) {
-      console.error("Exception in updateSettings:", error);
-      uiToast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      console.error("❌ Uncaught exception in updateSettings:", error);
+      
+      // Always update local state in Dev Mode, even on uncaught errors
+      if (devMode) {
+        console.log("⚙️ Dev Mode active - updating local state despite uncaught error");
+        
+        // Update local state optimistically
+        setSettings(prev => {
+          if (key.includes('.')) {
+            const [parent, child] = key.split('.');
+            return {
+              ...prev,
+              [parent]: {
+                ...prev[parent as keyof AllSettings],
+                [child]: values
+              }
+            };
+          }
+          return { ...prev, [key]: values };
+        });
+        
+        if (!silentMode) {
+          toast.info("Dev Mode Update", {
+            description: `Settings updated locally only (uncaught error)`
+          });
+        }
+      } else {
+        uiToast({
+          title: "Error",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
+      }
     }
   };
 

@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { executeQuery } from "@/utils/supabase/query";
 import { User } from "@supabase/supabase-js";
-import { useDevMode } from "@/contexts/DevModeContext";
 
 // Interface for authentication data response matching the actual structure
 export interface UserData {
@@ -14,9 +13,11 @@ export interface UserData {
 const isDevModeActive = (): boolean => {
   // We can't use the React hook directly here, so we'll check localStorage
   try {
-    return localStorage.getItem('devModeEnabled') === 'true';
+    const devModeEnabled = localStorage.getItem('devModeEnabled') === 'true';
+    console.log("🔍 [Dev Mode Check] Current state:", devModeEnabled);
+    return devModeEnabled;
   } catch (e) {
-    console.error("Error checking Dev Mode status:", e);
+    console.error("❌ Error checking Dev Mode status:", e);
     return false;
   }
 };
@@ -26,7 +27,7 @@ export const getAuthenticatedUser = async (): Promise<User | null> => {
   try {
     // In Dev Mode, return a mock user with admin privileges
     if (isDevModeActive()) {
-      console.log("[Dev Mode] Bypassing authentication check, returning mock admin user");
+      console.log("⚙️ [Dev Mode] Bypassing authentication check, returning mock admin user");
       return {
         id: "00000000-0000-0000-0000-000000000000",
         email: "dev@example.com",
@@ -41,7 +42,7 @@ export const getAuthenticatedUser = async (): Promise<User | null> => {
     const { data: authData, error: userError } = await supabase.auth.getUser();
     
     if (userError) {
-      console.error("Error getting authenticated user:", userError);
+      console.error("❌ Error getting authenticated user:", userError);
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
       });
@@ -49,7 +50,7 @@ export const getAuthenticatedUser = async (): Promise<User | null> => {
     }
     
     if (!authData?.user) {
-      console.error("No authenticated user found");
+      console.error("❌ No authenticated user found");
       toast.error("Authentication required", {
         description: "You must be logged in to perform this action."
       });
@@ -58,7 +59,7 @@ export const getAuthenticatedUser = async (): Promise<User | null> => {
     
     return authData.user;
   } catch (err) {
-    console.error("Exception in getAuthenticatedUser:", err);
+    console.error("❌ Exception in getAuthenticatedUser:", err);
     toast.error("Authentication error", {
       description: "Failed to verify authentication status."
     });
@@ -71,7 +72,7 @@ export const checkAdminRole = async (userId: string): Promise<boolean> => {
   try {
     // In Dev Mode, always return true for admin role
     if (isDevModeActive()) {
-      console.log("[Dev Mode] Bypassing admin role check, granting admin privileges");
+      console.log("⚙️ [Dev Mode] Bypassing admin role check, granting admin privileges");
       return true;
     }
     
@@ -90,7 +91,7 @@ export const checkAdminRole = async (userId: string): Promise<boolean> => {
     );
 
     if (roleError) {
-      console.error("Error checking admin role:", roleError);
+      console.error("❌ Error checking admin role:", roleError);
       toast.error("Permission check failed", {
         description: "Unable to verify admin permissions."
       });
@@ -98,7 +99,7 @@ export const checkAdminRole = async (userId: string): Promise<boolean> => {
     }
 
     if (!isAdmin) {
-      console.error("User lacks admin role:", userId);
+      console.error("❌ User lacks admin role:", userId);
       toast.error("Access denied", {
         description: "Admin privileges required for this action."
       });
@@ -107,7 +108,7 @@ export const checkAdminRole = async (userId: string): Promise<boolean> => {
 
     return true;
   } catch (err) {
-    console.error("Exception checking admin role:", err);
+    console.error("❌ Exception checking admin role:", err);
     toast.error("Permission check failed", {
       description: "Unable to verify admin permissions due to an error."
     });
@@ -117,7 +118,7 @@ export const checkAdminRole = async (userId: string): Promise<boolean> => {
 
 // Handles standard error messaging
 export const handleMutationError = (error: any, defaultMessage: string): void => {
-  console.error(`Error in course mutation: ${defaultMessage}`, error);
+  console.error(`❌ Error in course mutation: ${defaultMessage}`, error);
   
   // Enhanced error messaging
   let errorMessage = defaultMessage;
