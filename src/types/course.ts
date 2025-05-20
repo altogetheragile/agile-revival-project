@@ -1,6 +1,4 @@
 
-// src/types/course.ts
-
 // Base properties shared by all course-related types
 interface CourseBase {
   title: string;
@@ -18,6 +16,19 @@ interface CourseBase {
   imageLayout?: string;
   price?: string;
   duration?: string;
+}
+
+// Material type definition
+export interface CourseMaterial {
+  id: string;
+  courseId: string;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize?: number;
+  description?: string;
+  uploadedAt?: string;
+  uploadedBy?: string;
 }
 
 // Database model with all required fields
@@ -52,6 +63,11 @@ export interface Course {
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string | null;
+  materials?: CourseMaterial[];
+  // Additional properties for mapping
+  event_type_id?: string;
+  category_id?: string;
+  skill_level_id?: string;
 }
 
 // Form data with optional ID (for editing)
@@ -84,6 +100,11 @@ export interface CourseFormData {
   googleDriveFolderId?: string | null;
   googleDriveFolderUrl?: string | null;
   deletedAt?: string | null;
+  materials?: CourseMaterial[];
+  // Additional properties for mapping
+  event_type_id?: string;
+  category_id?: string;
+  skill_level_id?: string;
 }
 
 // Template specific type

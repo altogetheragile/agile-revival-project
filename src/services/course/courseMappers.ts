@@ -37,7 +37,7 @@ export const mapDbToCourse = (dbCourse: any): Course => {
     imageAspectRatio: dbCourse.image_aspect_ratio || "16/9",
     imageSize: dbCourse.image_size || 100,
     imageLayout: dbCourse.image_layout || "standard",
-    materials: dbCourse.materials || []
+    materials: dbCourse.materials || [],
   };
 };
 
@@ -85,6 +85,7 @@ export const mapCourseToDb = (course: CourseFormData): any => {
     image_url: course.imageUrl,
     image_aspect_ratio: course.imageAspectRatio || "16/9",
     image_size: course.imageSize || 100,
-    image_layout: course.imageLayout || "standard"
+    image_layout: course.imageLayout || "standard",
+    materials: course.materials || []
   };
 };
