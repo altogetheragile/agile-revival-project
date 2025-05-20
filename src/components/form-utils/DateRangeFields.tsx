@@ -25,8 +25,8 @@ interface DateRangeFieldsProps<T extends FieldValues> {
   className?: string;
   startFieldLabel?: string;
   endFieldLabel?: string;
-  startField?: string;
-  endField?: string;
+  startField: Path<T>;
+  endField: Path<T>;
   required?: boolean;
 }
 
@@ -35,8 +35,8 @@ export function DateRangeFields<T extends FieldValues>({
   className,
   startFieldLabel = "Start Date",
   endFieldLabel = "End Date",
-  startField = "startDate",
-  endField = "endDate",
+  startField,
+  endField,
   required = false
 }: DateRangeFieldsProps<T>) {
   // Helper to parse dates which could be strings or Date objects
@@ -52,8 +52,8 @@ export function DateRangeFields<T extends FieldValues>({
   };
 
   // Get start and end dates from the form using the provided field names
-  const startDateValue = form.watch(startField as Path<T>);
-  const endDateValue = form.watch(endField as Path<T>);
+  const startDateValue = form.watch(startField);
+  const endDateValue = form.watch(endField);
   
   const startDate = parseDate(startDateValue as string | Date);
   const endDate = parseDate(endDateValue as string | Date);
@@ -61,7 +61,7 @@ export function DateRangeFields<T extends FieldValues>({
   // Update end date if start date is changed to be later
   useEffect(() => {
     if (startDate && endDate && startDate > endDate) {
-      form.setValue(endField as Path<T>, startDate as any, {
+      form.setValue(endField, startDate as PathValue<T, Path<T>>, {
         shouldValidate: true
       });
     }
@@ -71,7 +71,7 @@ export function DateRangeFields<T extends FieldValues>({
     <div className={cn("grid gap-4 md:grid-cols-2", className)}>
       <FormField
         control={form.control}
-        name={startField as Path<T>}
+        name={startField}
         rules={{ required: required ? "Start date is required" : false }}
         render={({ field }) => (
           <FormItem className="flex flex-col">
@@ -102,9 +102,9 @@ export function DateRangeFields<T extends FieldValues>({
                   onSelect={(date) => {
                     field.onChange(date);
                     // If end date is not set or is before start date, set it to start date
-                    const endDate = parseDate(form.watch(endField as Path<T>) as string | Date);
+                    const endDate = parseDate(form.watch(endField) as string | Date);
                     if (!endDate || (date && endDate < date)) {
-                      form.setValue(endField as Path<T>, date as any, {
+                      form.setValue(endField, date as PathValue<T, Path<T>>, {
                         shouldValidate: true
                       });
                     }
@@ -122,7 +122,7 @@ export function DateRangeFields<T extends FieldValues>({
 
       <FormField
         control={form.control}
-        name={endField as Path<T>}
+        name={endField}
         rules={{ required: required ? "End date is required" : false }}
         render={({ field }) => (
           <FormItem className="flex flex-col">
