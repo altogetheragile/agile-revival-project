@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { CourseManagementHeader } from "./CourseManagementHeader";
 import { CourseTable } from "./CourseTable";
@@ -7,7 +6,6 @@ import { CourseErrorAlert } from "./CourseErrorAlert";
 import { CourseDialogs } from "./CourseDialogs";
 import { useCourseManagement } from "@/hooks/useCourseManagement";
 import { useCourseFiltering } from "@/hooks/useCourseFiltering";
-import { useCourseActions } from "@/hooks/useCourseActions";
 import { useMediaLibraryDialog } from "@/hooks/useMediaLibraryDialog";
 import { useScheduleCourseDialog } from "@/hooks/useScheduleCourseDialog";
 import { CourseTypeTabs } from "./CourseTypeTabs";
@@ -22,19 +20,7 @@ export const CourseManagementContainer: React.FC = () => {
     handleFormSubmit,
     handleDelete,
     handleForceReset,
-    refreshCourses
-  } = useCourseManagement();
-
-  const {
-    searchTerm,
-    setSearchTerm,
-    activeTab,
-    setActiveTab,
-    filteredCourses,
-    eventTypes
-  } = useCourseFiltering(courses);
-
-  const {
+    refreshCourses,
     currentCourse,
     setCurrentCourse,
     isFormOpen,
@@ -48,7 +34,16 @@ export const CourseManagementContainer: React.FC = () => {
     handleDeleteConfirm,
     handleDuplicateCourse,
     initializeSetFormData
-  } = useCourseActions();
+  } = useCourseManagement();
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    activeTab,
+    setActiveTab,
+    filteredCourses,
+    eventTypes
+  } = useCourseFiltering(courses);
 
   const {
     mediaLibOpen,
