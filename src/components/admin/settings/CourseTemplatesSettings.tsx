@@ -1,9 +1,10 @@
+
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, RefreshCw } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Course } from "@/types/course";
+import { Course, CourseTemplate } from "@/types/course";
 import { CourseTemplateCard } from "./CourseTemplateCard";
 import { CourseTemplateFormDialog } from "./CourseTemplateFormDialog";
 import { ScheduleCourseFromTemplateDialog } from "./ScheduleCourseFromTemplateDialog";

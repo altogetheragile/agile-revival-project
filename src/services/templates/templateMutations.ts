@@ -1,4 +1,3 @@
-
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,6 +6,7 @@ import { mapDbToCourse } from "./templateMappers";
 import { executeQuery } from "@/utils/supabase/query";
 import { User } from "@supabase/supabase-js";
 import { getCoursesByTemplateId } from "./templateQueries";
+import { normalizeLearningOutcomes, formatDateForDb } from "@/utils/dateUtils";
 
 export const createCourseFromTemplate = async (templateId: string, scheduleData: ScheduleCourseFormData): Promise<Course | null> => {
   try {
