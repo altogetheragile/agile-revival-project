@@ -4,12 +4,13 @@ import { Course } from "@/types/course";
 
 export const useCourseFiltering = (courses: Course[]) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("scheduled");
   
   // Extract unique event types for filtering
   const eventTypes = useMemo(() => {
     const types = new Set<string>();
-    types.add("all"); // Always include "all" option
+    types.add("scheduled"); // Add tab for scheduled events
+    types.add("templates"); // Add tab for templates
     
     courses.forEach(course => {
       if (course.eventType) {
@@ -22,11 +23,19 @@ export const useCourseFiltering = (courses: Course[]) => {
 
   // Filter courses based on search term and active tab (event type)
   const filteredCourses = useMemo(() => {
-    // First filter out deleted and templates - we want to show only active, schedulable events
-    const activeEvents = courses.filter(course => !course.isTemplate && !course.deletedAt);
-    
-    // Then apply search and tab filters
-    return activeEvents.filter(course => {
+    // Apply search filter
+    return courses.filter(course => {
+      // Don't show templates in scheduled view or vice versa
+      if (activeTab === "scheduled" && course.isTemplate) return false;
+      if (activeTab === "templates" && !course.isTemplate) return false;
+      
+      // Handle filtering by specific event type
+      if (activeTab !== "scheduled" && activeTab !== "templates" && 
+          course.eventType?.toLowerCase() !== activeTab.toLowerCase()) {
+        return false;
+      }
+      
+      // Apply text search
       const matchesSearch = 
         course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -35,11 +44,7 @@ export const useCourseFiltering = (courses: Course[]) => {
         course.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.eventType?.toLowerCase().includes(searchTerm.toLowerCase());
         
-      const matchesTab = 
-        activeTab === "all" || 
-        course.eventType?.toLowerCase() === activeTab.toLowerCase();
-        
-      return matchesSearch && matchesTab;
+      return matchesSearch;
     });
   }, [courses, searchTerm, activeTab]);
 

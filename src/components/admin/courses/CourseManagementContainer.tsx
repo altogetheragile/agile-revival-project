@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { CourseManagementHeader } from "./CourseManagementHeader";
 import { CourseTable } from "./CourseTable";
 import { CourseLoadingState } from "./CourseLoadingState";
@@ -11,13 +11,12 @@ import { useCourseActions } from "@/hooks/useCourseActions";
 import { useMediaLibraryDialog } from "@/hooks/useMediaLibraryDialog";
 import { useScheduleCourseDialog } from "@/hooks/useScheduleCourseDialog";
 import { CourseTypeTabs } from "./CourseTypeTabs";
-import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { CourseTemplatesSection } from "./CourseTemplatesSection";
 
 export const CourseManagementContainer: React.FC = () => {
   const {
     courses,
+    templates,
     isLoading,
     loadError,
     handleFormSubmit,
@@ -71,30 +70,24 @@ export const CourseManagementContainer: React.FC = () => {
     handleScheduleSubmit
   } = useScheduleCourseDialog(refreshCourses);
   
-  const navigate = useNavigate();
-  
-  const handleNavigateToTemplates = () => {
-    navigate('/admin?tab=settings&section=templates');
-  };
+  // Set initial active tab to "scheduled" for clarity
+  useState(() => {
+    if (activeTab === "all") {
+      setActiveTab("scheduled");
+    }
+  });
+
+  // View mode determines whether we're viewing scheduled events or templates
+  const isTemplateView = activeTab === "templates";
 
   return (
     <div className="bg-white shadow-md rounded-md p-6">
-      <div className="flex justify-between items-center mb-4">
-        <CourseManagementHeader 
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onAddNew={handleAddCourse}
-        />
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleNavigateToTemplates}
-          className="flex items-center gap-1"
-        >
-          <Settings size={16} />
-          <span>Manage Templates</span>
-        </Button>
-      </div>
+      <CourseManagementHeader 
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onAddNew={handleAddCourse}
+        isTemplateView={isTemplateView}
+      />
       
       <CourseTypeTabs 
         activeTab={activeTab} 
@@ -111,6 +104,14 @@ export const CourseManagementContainer: React.FC = () => {
       
       {isLoading ? (
         <CourseLoadingState />
+      ) : isTemplateView ? (
+        <CourseTemplatesSection
+          templates={templates}
+          onEdit={handleEditCourse}
+          onDelete={handleDeleteConfirm}
+          onSchedule={handleScheduleCourse}
+          onDuplicate={handleDuplicateCourse}
+        />
       ) : (
         <CourseTable 
           courses={filteredCourses}

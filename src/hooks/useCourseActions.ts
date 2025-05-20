@@ -7,13 +7,38 @@ export const useCourseActions = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
+  const [setFormDataCallback, setSetFormDataCallback] = useState<((data: Course | null) => void) | null>(null);
 
-  const handleAddCourse = () => {
-    setCurrentCourse(null);
+  const initializeSetFormData = (callback: (data: Course | null) => void) => {
+    setSetFormDataCallback(() => callback);
+  };
+
+  const handleAddCourse = (isTemplate = false) => {
+    // Create a new empty course with appropriate defaults based on type
+    const newCourse: Partial<Course> = {
+      title: "",
+      description: "",
+      dates: "",
+      location: isTemplate ? "To Be Determined" : "",
+      instructor: isTemplate ? "To Be Assigned" : "",
+      price: "",
+      category: "programming", // Default category
+      eventType: "course", // Default event type
+      spotsAvailable: isTemplate ? 0 : 10,
+      isTemplate: isTemplate,
+      status: "draft",
+      // Default image settings
+      imageAspectRatio: "16/9",
+      imageSize: 100,
+      imageLayout: "standard"
+    };
+    
+    setCurrentCourse(newCourse as Course);
     setIsFormOpen(true);
   };
 
   const handleEditCourse = (course: Course) => {
+    console.log("Editing course:", course);
     setCurrentCourse(course);
     setIsFormOpen(true);
   };
@@ -33,17 +58,10 @@ export const useCourseActions = () => {
     // Remove the id from the copy
     delete (courseCopy as any).id;
     setCurrentCourse(null);
-    setFormData(courseCopy);
+    if (setFormDataCallback) {
+      setFormDataCallback(courseCopy);
+    }
     setIsFormOpen(true);
-  };
-
-  // This is intentionally declared but not initialized
-  // It will be set by the component that uses this hook
-  let setFormData: (data: Course | null) => void;
-  
-  // Function to initialize setFormData
-  const initializeSetFormData = (setter: (data: Course | null) => void) => {
-    setFormData = setter;
   };
 
   return {

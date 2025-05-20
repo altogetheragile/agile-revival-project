@@ -9,6 +9,7 @@ import { getCourseById } from "@/services/course/courseQueries";
 
 export const useCourseManagement = () => {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [templates, setTemplates] = useState<Course[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
@@ -17,7 +18,7 @@ export const useCourseManagement = () => {
   const [viewingRegistrations, setViewingRegistrations] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [showDeleted, setShowDeleted] = useState(false); // New state for showing/hiding deleted items
+  const [showDeleted, setShowDeleted] = useState(false); // State for showing/hiding deleted items
   const { toast: uiToast } = useToast();
 
   const loadCourses = useCallback(async () => {
@@ -34,15 +35,19 @@ export const useCourseManagement = () => {
         console.log(`Loaded ${allCourses.length} courses successfully`);
       }
       
-      // In the management view, we're only showing templates
-      // Filter based on isTemplate=true and respect the showDeleted state
-      const templateCourses = allCourses.filter(course => {
+      // Filter courses based on deletedAt status
+      const filteredCourses = allCourses.filter(course => {
         if (!showDeleted && course.deletedAt) return false;
-        return course.isTemplate === true;
+        return true;
       });
+
+      // Separate templates and scheduled courses
+      const templateCourses = filteredCourses.filter(course => course.isTemplate === true);
+      const scheduledCourses = filteredCourses.filter(course => course.isTemplate !== true);
       
-      console.log(`Filtered to ${templateCourses.length} template courses`);
-      setCourses(templateCourses);
+      console.log(`Filtered to ${templateCourses.length} template courses and ${scheduledCourses.length} scheduled courses`);
+      setTemplates(templateCourses);
+      setCourses(scheduledCourses);
     } catch (error: any) {
       console.error("Error loading courses:", error);
       setLoadError(error?.message || "Failed to load courses");
@@ -63,34 +68,16 @@ export const useCourseManagement = () => {
     loadCourses();
   }, [loadCourses]);
 
-  const filteredCourses = courses.filter(course => {
-    // First check if we should filter out deleted courses
-    if (!showDeleted && course.deletedAt) return false;
-    
-    // Then apply search filter
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      course.title.toLowerCase().includes(searchLower) ||
-      course.category.toLowerCase().includes(searchLower) ||
-      (course.instructor && course.instructor.toLowerCase().includes(searchLower))
-    );
-  });
-
   const handleFormSubmit = async (data: CourseFormData) => {
     try {
       console.log("Submitting course form data:", data);
       
-      // Always set isTemplate to true for courses managed here
-      const templateData = {
-        ...data,
-        isTemplate: true
-      };
-      
-      console.log("Using template data:", templateData);
+      // We now handle both template and scheduled event types here
+      console.log("Is this a template?", data.isTemplate);
 
       if (currentCourse) {
         console.log("Updating existing course:", currentCourse.id);
-        const updated = await updateCourse(currentCourse.id, templateData);
+        const updated = await updateCourse(currentCourse.id, data);
         
         if (updated) {
           console.log("Course updated successfully");
@@ -101,20 +88,20 @@ export const useCourseManagement = () => {
             setCurrentCourse(updatedCourse);
           }
           uiToast({
-            title: "Template updated",
+            title: data.isTemplate ? "Template updated" : "Event updated",
             description: `"${data.title}" has been updated successfully.`
           });
           setIsFormOpen(false);
         }
       } else {
         console.log("Creating new course");
-        const created = await createCourse(templateData);
+        const created = await createCourse(data);
         
         if (created) {
           console.log("Course created successfully");
           await loadCourses();
           uiToast({
-            title: "Template created",
+            title: data.isTemplate ? "Template created" : "Event created",
             description: `"${data.title}" has been created successfully.`
           });
           setIsFormOpen(false);
@@ -124,7 +111,7 @@ export const useCourseManagement = () => {
       console.error("Error handling course submission:", error);
       
       // Enhanced error handling
-      let errorMessage = "There was a problem saving the course template.";
+      let errorMessage = "There was a problem saving the event.";
       if (error.message?.includes('infinite recursion detected')) {
         errorMessage = "Permission configuration issue detected. Please try again in a few moments.";
       } else if (error.message?.includes('violates row-level security policy')) {
@@ -146,15 +133,15 @@ export const useCourseManagement = () => {
         if (success) {
           await loadCourses();
           uiToast({
-            title: "Template deleted",
-            description: "The event template has been removed successfully."
+            title: "Event deleted",
+            description: "The event has been removed successfully."
           });
         }
       } catch (error: any) {
         console.error("Error deleting course:", error);
         
         // Enhanced error handling
-        let errorMessage = "There was a problem deleting the template.";
+        let errorMessage = "There was a problem deleting the event.";
         if (error.message?.includes('infinite recursion detected')) {
           errorMessage = "Permission configuration issue detected. Please try again in a few moments.";
         } else if (error.message?.includes('violates row-level security policy')) {
@@ -187,7 +174,8 @@ export const useCourseManagement = () => {
   };
 
   return {
-    courses: filteredCourses,
+    courses,
+    templates,
     searchTerm,
     setSearchTerm,
     isFormOpen,

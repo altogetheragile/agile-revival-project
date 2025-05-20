@@ -1,7 +1,9 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { CourseFormData } from "@/types/course";
 import { BasicCourseFields } from "./form-utils/BasicCourseFields";
 import { CourseScheduleFields } from "./form-utils/CourseScheduleFields";
@@ -45,6 +47,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
     skillLevel: "all-levels",
     format: "in-person",
     status: "draft",
+    isTemplate: false,
     imageAspectRatio: "16/9",
     imageSize: 100,
     imageLayout: "standard"
@@ -53,16 +56,40 @@ const CourseForm: React.FC<CourseFormProps> = ({
   onCancel,
   onOpenMediaLibrary,
   stayOpenOnSubmit = false,
-  isTemplate = false,
   formData,
   setFormData,
   onPreview,
   isSubmitting = false,
   submitButtonText
 }) => {
+  const [isTemplateMode, setIsTemplateMode] = useState(initialData.isTemplate || false);
   const form = useForm<CourseFormData>({
     defaultValues: initialData as CourseFormData
   });
+
+  // Update form mode when template switch changes
+  const handleTemplateToggle = (checked: boolean) => {
+    setIsTemplateMode(checked);
+    form.setValue("isTemplate", checked);
+    
+    // Set default values appropriate for templates or scheduled events
+    if (checked) {
+      form.setValue("location", "To Be Determined");
+      form.setValue("instructor", "To Be Assigned");
+      form.setValue("spotsAvailable", 0);
+    } else {
+      // Only reset these if they have template default values
+      if (form.getValues("location") === "To Be Determined") {
+        form.setValue("location", "");
+      }
+      if (form.getValues("instructor") === "To Be Assigned") {
+        form.setValue("instructor", "");
+      }
+      if (form.getValues("spotsAvailable") === 0) {
+        form.setValue("spotsAvailable", 12);
+      }
+    }
+  };
 
   const handleSubmit = (data: CourseFormData) => {
     // Process learning outcomes if provided as a string
@@ -82,15 +109,34 @@ const CourseForm: React.FC<CourseFormProps> = ({
     
     onSubmit({
       ...data,
-      spotsAvailable: Number(data.spotsAvailable)
+      spotsAvailable: Number(data.spotsAvailable),
+      isTemplate: isTemplateMode
     });
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        {/* Template toggle switch */}
+        <div className="flex items-center space-x-2 mb-6 pb-4 border-b">
+          <Switch 
+            id="template-mode" 
+            checked={isTemplateMode}
+            onCheckedChange={handleTemplateToggle}
+          />
+          <Label htmlFor="template-mode" className="font-medium">
+            {isTemplateMode ? "Template Mode" : "Scheduled Event Mode"}
+          </Label>
+          <p className="ml-4 text-sm text-muted-foreground">
+            {isTemplateMode 
+              ? "Creating a reusable template for future events" 
+              : "Creating a specific scheduled event"
+            }
+          </p>
+        </div>
+        
         <BasicCourseFields form={form} />
-        <CourseScheduleFields form={form} />
+        <CourseScheduleFields form={form} isTemplate={isTemplateMode} />
         <CourseDetailsFields form={form} />
         <AdditionalInfoFields form={form} />
         <CourseImageField form={form} onOpenMediaLibrary={onOpenMediaLibrary || (() => {})} />
@@ -101,7 +147,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
           isDraft={initialData.status === "draft"} 
           onPreview={onPreview}
           isSubmitting={isSubmitting}
-          customSubmitText={submitButtonText}
+          customSubmitText={submitButtonText || (isTemplateMode ? "Save Template" : "Save Event")}
         />
       </form>
     </Form>
