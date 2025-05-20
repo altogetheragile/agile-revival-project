@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -32,7 +31,13 @@ export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }
   const handleEventTypeDelete = (value: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    handleDeleteEventType(value);
+    handleDeleteEventType(value, () => {
+      // Simple noop callback function to satisfy the second parameter requirement
+      // If the currently selected value was deleted, you might want to reset the field
+      if (form.getValues("eventType") === value) {
+        form.setValue("eventType", "");
+      }
+    });
   };
 
   return (
