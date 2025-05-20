@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CourseForm from "./CourseForm";
@@ -151,7 +150,9 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
       imageUrl: data.imageUrl || (formData?.imageUrl || ""),
       imageAspectRatio: data.imageAspectRatio || formData?.imageAspectRatio || "16/9",
       imageSize: data.imageSize !== undefined ? data.imageSize : formData?.imageSize || 100,
-      imageLayout: data.imageLayout || formData?.imageLayout || "standard"
+      imageLayout: data.imageLayout || formData?.imageLayout || "standard",
+      // Ensure status is provided with a default
+      status: data.status || "draft"
     };
     
     console.log("Submitting course with image settings:", {

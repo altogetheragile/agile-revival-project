@@ -197,7 +197,7 @@ export const createCourseFromTemplate = async (templateId: string, scheduleData:
 /**
  * Updates all courses derived from a template with specified fields from the template
  * @param templateId The ID of the template that was updated
- * @param updatedFields Fields from the template that should be propagated to courses
+ * @param templateData Template data with fields that should be propagated
  * @returns Number of courses updated
  */
 export const updateCoursesFromTemplate = async (templateId: string, templateData: Course): Promise<number> => {
@@ -214,6 +214,9 @@ export const updateCoursesFromTemplate = async (templateId: string, templateData
     
     console.log(`Found ${derivedCourses.length} courses derived from template ${templateId}`);
     
+    // Process learning outcomes to ensure proper format for database
+    const processedLearningOutcomes = normalizeLearningOutcomes(templateData.learningOutcomes);
+    
     // These are the fields we want to sync from the template to the courses
     // Only sync fields that shouldn't be independently customized
     const fieldsToSync = {
@@ -221,7 +224,7 @@ export const updateCoursesFromTemplate = async (templateId: string, templateData
       description: templateData.description,
       category: templateData.category,
       price: templateData.price,
-      learning_outcomes: templateData.learningOutcomes,
+      learning_outcomes: processedLearningOutcomes,
       prerequisites: templateData.prerequisites,
       target_audience: templateData.targetAudience,
       duration: templateData.duration,

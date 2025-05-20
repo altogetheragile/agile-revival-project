@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Calendar } from "lucide-react";
-import { CourseTemplate } from "@/types/course";
+import { Course, CourseTemplate } from "@/types/course";
 import { Badge } from "@/components/ui/badge";
 
 interface CourseTemplateCardProps {

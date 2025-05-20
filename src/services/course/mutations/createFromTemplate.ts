@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { toast } from "sonner";
 import { mapDbToCourse } from "../courseMappers";
+import { formatDateForDb, normalizeLearningOutcomes } from "@/utils/dateUtils";
 
 /**
  * Create a new course instance from a template
@@ -37,8 +38,8 @@ export const createCourseFromTemplate = async (
       title: templateData.title,
       description: templateData.description,
       dates: scheduleData.dates || "",
-      start_date: scheduleData.startDate || null,
-      end_date: scheduleData.endDate || null,
+      start_date: formatDateForDb(scheduleData.startDate),
+      end_date: formatDateForDb(scheduleData.endDate),
       location: scheduleData.location,
       instructor: scheduleData.instructor,
       price: templateData.price,
@@ -71,7 +72,7 @@ export const createCourseFromTemplate = async (
     // Insert the new course
     const { data: newCourse, error: insertError } = await supabase
       .from('courses')
-      .insert(newCourseData)
+      .insert([newCourseData])
       .select()
       .single();
 

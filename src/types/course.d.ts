@@ -52,3 +52,23 @@ export interface ScheduleCourseFormData {
   spotsAvailable: number;
   status: "draft" | "published";
 }
+
+export interface CourseTemplate extends Omit<Course, 'id' | 'status'> {
+  id: string;
+  title: string;
+  description: string;
+  eventType?: string;
+  category?: string;
+  price?: string;
+  learningOutcomes?: string[];
+  prerequisites?: string;
+  targetAudience?: string;
+  duration?: string;
+  skillLevel?: string;
+  format?: string;
+  status?: "draft" | "published";
+  imageUrl?: string;
+  imageAspectRatio?: string;
+  imageSize?: number;
+  imageLayout?: string;
+}
