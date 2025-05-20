@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -71,17 +72,33 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
   // Convert template to course form data for editing
   const templateToCourseFormData = (template: Course): CourseFormData => {
     console.log("Converting template to form data:", template);
-    console.log("Template ID being preserved:", template.id); // Add explicit logging for ID
     return {
-      ...template,
       id: template.id, // Explicitly include ID to ensure it's preserved
-      isTemplate: true, // Always ensure this is set to true for templates
-      // Provide defaults for required fields
+      title: template.title,
+      description: template.description,
       dates: template.dates || "Template - No Dates",
+      startDate: template.startDate || null,
+      endDate: template.endDate || null,
       location: template.location || "To Be Determined",
       instructor: template.instructor || "To Be Assigned",
+      price: template.price || "",
+      category: template.category || "",
+      eventType: template.eventType || "course",
+      format: template.format || "in-person",
+      skillLevel: template.skillLevel || "all-levels",
       spotsAvailable: template.spotsAvailable || 0,
-      status: template.status || "draft" // Ensure status is always provided
+      isTemplate: true, // Always ensure this is set to true for templates
+      status: template.status || "draft", // Ensure status is always provided
+      imageUrl: template.imageUrl || "",
+      imageAspectRatio: template.imageAspectRatio || "16/9",
+      imageSize: template.imageSize || 100,
+      imageLayout: template.imageLayout || "standard",
+      learningOutcomes: template.learningOutcomes || [],
+      prerequisites: template.prerequisites || null,
+      targetAudience: template.targetAudience || null,
+      duration: template.duration || "",
+      googleDriveFolderId: template.googleDriveFolderId || null,
+      googleDriveFolderUrl: template.googleDriveFolderUrl || null
     };
   };
 
@@ -113,8 +130,8 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       learningOutcomes: normalizeLearningOutcomes(
         (formValues.namedItem('learningOutcomes') as HTMLTextAreaElement)?.value
       ),
-      prerequisites: (formValues.namedItem('prerequisites') as HTMLTextAreaElement)?.value || '',
-      targetAudience: (formValues.namedItem('targetAudience') as HTMLTextAreaElement)?.value || '',
+      prerequisites: (formValues.namedItem('prerequisites') as HTMLTextAreaElement)?.value || null,
+      targetAudience: (formValues.namedItem('targetAudience') as HTMLTextAreaElement)?.value || null,
       duration: (formValues.namedItem('duration') as HTMLInputElement)?.value || '',
       skillLevel: (formValues.namedItem('skillLevel') as HTMLSelectElement)?.value as any || 'all-levels',
       format: (formValues.namedItem('format') as HTMLSelectElement)?.value || '',
@@ -123,7 +140,8 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       imageAspectRatio: currentTemplate?.imageAspectRatio || "16/9",
       imageSize: currentTemplate?.imageSize || 100,
       imageLayout: currentTemplate?.imageLayout || "standard",
-      spotsAvailable: parseInt((formValues.namedItem('spotsAvailable') as HTMLInputElement)?.value || '0', 10) || 0
+      spotsAvailable: parseInt((formValues.namedItem('spotsAvailable') as HTMLInputElement)?.value || '0', 10) || 0,
+      isTemplate: true
     };
     
     setPreviewData(previewTemplate);
@@ -157,7 +175,6 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
     
     if (currentTemplate) {
       console.log("Editing existing template with ID:", currentTemplate.id);
-      console.log("Template data ID before update:", templateData.id);
       
       // Ensure we're using the template ID
       if (!templateData.id && currentTemplate.id) {
@@ -303,7 +320,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
 };
 
 function normalizeLearningOutcomes(input: string): string[] {
-  return input.split('\n')
+  return input?.split('\n')
     .filter(line => line.trim().length > 0)
-    .map(line => line.trim());
+    .map(line => line.trim()) || [];
 }

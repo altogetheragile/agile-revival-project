@@ -57,6 +57,7 @@ export const CourseScheduleFields: React.FC<CourseScheduleFieldsProps> = ({ form
               <Input 
                 placeholder="e.g., 2 days, 6 hours" 
                 {...field} 
+                value={field.value || ""}
               />
             </FormControl>
             <FormMessage />

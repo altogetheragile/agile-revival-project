@@ -28,11 +28,10 @@ export const CourseGoogleDriveSection: React.FC<CourseGoogleDriveSectionProps> =
       <GoogleDriveFolder 
         courseId={courseId || "new-course"}
         courseTitle={courseTitle || "New Course"}
-        folderId={googleDriveFolderId}
-        folderUrl={googleDriveFolderUrl}
+        folderId={googleDriveFolderId || ""}
+        folderUrl={googleDriveFolderUrl || ""}
         onFolderCreated={handleFolderCreated}
       />
     </div>
   );
 };
-

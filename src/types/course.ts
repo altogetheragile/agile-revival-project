@@ -1,63 +1,130 @@
 
 // src/types/course.ts
 
+// Base properties shared by all course-related types
+interface CourseBase {
+  title: string;
+  description: string;
+  category: string;
+  eventType?: string;
+  format?: string;
+  skillLevel?: string;
+  learningOutcomes?: string[];
+  prerequisites?: string | null;
+  targetAudience?: string | null;
+  imageUrl?: string;
+  imageAspectRatio?: string;
+  imageSize?: number;
+  imageLayout?: string;
+  price?: string;
+  duration?: string;
+}
+
+// Database model with all required fields
 export interface Course {
   id: string;
   title: string;
   description: string;
   dates: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
   location: string;
   instructor: string;
   price: string;
   category: string;
-  eventType?: string; // Changed from courseType to eventType for consistency
+  eventType?: string;
   format?: string;
   skillLevel?: string;
   spotsAvailable: number;
-  isTemplate: boolean;
-  status?: string;
   imageUrl?: string;
-  imageSize?: number;
   imageAspectRatio?: string;
+  imageSize?: number;
   imageLayout?: string;
   learningOutcomes?: string[];
   prerequisites?: string | null;
   targetAudience?: string | null;
+  duration?: string;
+  isTemplate?: boolean;
+  status?: string;
+  templateId?: string | null;
   googleDriveFolderId?: string | null;
   googleDriveFolderUrl?: string | null;
   createdAt?: string;
   updatedAt?: string;
-  templateId?: string | null;
-  deletedAt?: string | null; // New field for soft deletion
+  deletedAt?: string | null;
 }
 
-// Form data interface
+// Form data with optional ID (for editing)
 export interface CourseFormData {
+  id?: string;
   title: string;
   description: string;
   dates: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
   location: string;
   instructor: string;
   price: string;
   category: string;
-  eventType?: string; 
+  eventType?: string;
   format?: string;
   skillLevel?: string;
   spotsAvailable: number;
+  imageUrl?: string;
+  imageAspectRatio?: string;
+  imageSize?: number;
+  imageLayout?: string;
+  learningOutcomes?: string[] | string;
+  prerequisites?: string | null;
+  targetAudience?: string | null;
+  duration?: string;
   isTemplate?: boolean;
   status?: string;
-  imageUrl?: string;
-  imageSize?: number;
-  imageAspectRatio?: string;
-  imageLayout?: string;
+  templateId?: string | null;
+  googleDriveFolderId?: string | null;
+  googleDriveFolderUrl?: string | null;
+  deletedAt?: string | null;
+}
+
+// Template specific type
+export interface CourseTemplate {
+  id: string;
+  title: string;
+  description: string;
+  eventType?: string;
+  category?: string;
+  price?: string;
   learningOutcomes?: string[];
-  prerequisites?: string;
-  targetAudience?: string;
-  deletedAt?: string | null; // New field for soft deletion
+  prerequisites?: string | null;
+  targetAudience?: string | null;
+  duration?: string;
+  skillLevel?: string;
+  format?: string;
+  status?: string;
+  imageUrl?: string;
+  imageAspectRatio?: string;
+  imageSize?: number;
+  imageLayout?: string;
+  spotsAvailable: number;
+  isTemplate: boolean;
+}
+
+// Simplified form for scheduling from template
+export interface ScheduleCourseFormData {
+  templateId: string;
+  title?: string;
+  description?: string;
+  dates: string;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
+  location: string;
+  instructor: string;
+  spotsAvailable: number;
+  status: string;
+  eventType?: string;
+  price?: string;
+  category?: string;
+  isTemplate?: boolean;
 }
 
 // Registration form data
@@ -69,24 +136,4 @@ export interface RegistrationFormData {
   phone: string;
   company?: string;
   additionalNotes?: string;
-}
-
-// Course scheduling form data
-export interface ScheduleCourseFormData {
-  title: string;
-  description: string;
-  dates: string;
-  startDate?: string; 
-  endDate?: string;
-  location: string;
-  instructor: string;
-  price: string;
-  category: string;
-  eventType?: string;
-  format?: string;
-  skillLevel?: string;
-  spotsAvailable: number;
-  isTemplate: boolean;
-  status: string;
-  templateId?: string;
 }

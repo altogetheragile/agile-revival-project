@@ -184,6 +184,7 @@ export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }
                 placeholder="What participants need to know before attending"
                 className="min-h-20"
                 {...field} 
+                value={field.value || ""}
               />
             </FormControl>
             <FormMessage />
@@ -202,7 +203,8 @@ export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }
               <Textarea 
                 placeholder="Who is this event for?"
                 className="min-h-20"
-                {...field} 
+                {...field}
+                value={field.value || ""} 
               />
             </FormControl>
             <FormMessage />

@@ -93,7 +93,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
         <CourseScheduleFields form={form} />
         <CourseDetailsFields form={form} />
         <AdditionalInfoFields form={form} />
-        <CourseImageField form={form} onOpenMediaLibrary={onOpenMediaLibrary} />
+        <CourseImageField form={form} onOpenMediaLibrary={onOpenMediaLibrary || (() => {})} />
         <CourseStatusField form={form} />
         <CourseFormActions 
           onCancel={onCancel} 

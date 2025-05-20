@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock, MapPin, Users } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
-import { Course, CourseTemplate } from "@/types/course";
+import { CourseTemplate } from "@/types/course";
 
 interface CourseTemplatePreviewProps {
   open: boolean;

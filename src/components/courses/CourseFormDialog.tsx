@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CourseForm from "./CourseForm";
@@ -28,8 +29,22 @@ const convertToFormData = (course: Course): CourseFormData => {
   });
 
   return {
-    ...course,
     id: course.id,
+    title: course.title,
+    description: course.description,
+    dates: course.dates,
+    startDate: course.startDate,
+    endDate: course.endDate,
+    location: course.location,
+    instructor: course.instructor,
+    price: course.price,
+    category: course.category,
+    eventType: course.eventType,
+    format: course.format,
+    skillLevel: course.skillLevel,
+    spotsAvailable: course.spotsAvailable,
+    isTemplate: course.isTemplate,
+    status: course.status,
     // Include Google Drive folder information
     googleDriveFolderId: course.googleDriveFolderId,
     googleDriveFolderUrl: course.googleDriveFolderUrl,
@@ -37,7 +52,11 @@ const convertToFormData = (course: Course): CourseFormData => {
     imageUrl: course.imageUrl || "",
     imageAspectRatio: course.imageAspectRatio || "16/9",
     imageSize: course.imageSize || 100,
-    imageLayout: course.imageLayout || "standard"
+    imageLayout: course.imageLayout || "standard",
+    learningOutcomes: course.learningOutcomes || [],
+    prerequisites: course.prerequisites,
+    targetAudience: course.targetAudience,
+    duration: course.duration
   };
 };
 
