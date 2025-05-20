@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 interface CourseTemplatesSectionProps {
   templates: Course[];
   onEdit: (course: Course) => void;
-  onDelete: (courseId: string) => void;
+  onDelete: (course: Course) => void;  // Changed from (courseId: string) to (course: Course)
   onSchedule: (course: Course) => void;
   onDuplicate: (course: Course) => void;
 }
@@ -68,7 +68,7 @@ export const CourseTemplatesSection: React.FC<CourseTemplatesSectionProps> = ({
             key={template.id}
             template={toCourseTemplate(template)}
             onEdit={() => onEdit(template)}
-            onDelete={() => onDelete(template.id)}
+            onDelete={() => onDelete(template)}  // Changed to pass the full template object
             onSchedule={() => onSchedule(template)}
             onDuplicate={() => onDuplicate(template)}
           />

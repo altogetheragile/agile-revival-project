@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData } from "@/types/course";
@@ -127,36 +126,47 @@ export const useCourseManagement = () => {
   };
 
   const handleDelete = async () => {
-    if (deleteCourseId) {
-      try {
-        const success = await deleteCourse(deleteCourseId);
-        if (success) {
-          await loadCourses();
-          uiToast({
-            title: "Event deleted",
-            description: "The event has been removed successfully."
-          });
-        }
-      } catch (error: any) {
-        console.error("Error deleting course:", error);
-        
-        // Enhanced error handling
-        let errorMessage = "There was a problem deleting the event.";
-        if (error.message?.includes('infinite recursion detected')) {
-          errorMessage = "Permission configuration issue detected. Please try again in a few moments.";
-        } else if (error.message?.includes('violates row-level security policy')) {
-          errorMessage = "You don't have permission to perform this action.";
-        }
-        
+    if (!deleteCourseId) {
+      console.error("Deletion attempted with no course ID specified");
+      toast.error("Error", {
+        description: "Cannot delete: No course was selected"
+      });
+      setIsConfirmDialogOpen(false);
+      return;
+    }
+
+    try {
+      console.log("Attempting to delete course with ID:", deleteCourseId);
+      const success = await deleteCourse(deleteCourseId);
+      
+      if (success) {
+        await loadCourses();
         uiToast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive"
+          title: "Event deleted",
+          description: "The event has been removed successfully."
         });
-      } finally {
-        setIsConfirmDialogOpen(false);
-        setDeleteCourseId(null);
+      } else {
+        throw new Error("Failed to delete the course for unknown reasons");
       }
+    } catch (error: any) {
+      console.error("Error deleting course:", error);
+      
+      // Enhanced error handling
+      let errorMessage = "There was a problem deleting the event.";
+      if (error.message?.includes('infinite recursion detected')) {
+        errorMessage = "Permission configuration issue detected. Please try again in a few moments.";
+      } else if (error.message?.includes('violates row-level security policy')) {
+        errorMessage = "You don't have permission to perform this action.";
+      }
+      
+      uiToast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsConfirmDialogOpen(false);
+      setDeleteCourseId(null);
     }
   };
 

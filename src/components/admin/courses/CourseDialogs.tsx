@@ -1,7 +1,6 @@
-
 import { Course } from "@/types/course";
 import CourseFormDialog from "@/components/courses/CourseFormDialog";
-import { DeleteConfirmationDialog } from "../users/DeleteConfirmationDialog";
+import { CourseDeleteConfirmationDialog } from "./CourseDeleteConfirmationDialog";
 import ScheduleCourseDialog from "@/components/courses/ScheduleCourseDialog";
 import MediaLibrary from "@/components/media/MediaLibrary";
 
@@ -57,10 +56,11 @@ export const CourseDialogs = ({
         setFormData={setFormData}
       />
 
-      <DeleteConfirmationDialog 
+      <CourseDeleteConfirmationDialog
         open={isConfirmDialogOpen}
         onOpenChange={setIsConfirmDialogOpen}
         onConfirm={handleDelete}
+        isTemplate={currentCourse?.isTemplate}
       />
 
       <ScheduleCourseDialog

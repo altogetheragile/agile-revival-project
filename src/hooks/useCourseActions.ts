@@ -44,6 +44,8 @@ export const useCourseActions = () => {
   };
 
   const handleDeleteConfirm = (course: Course) => {
+    console.log("Setting up deletion for course:", course.id, course.title);
+    setCurrentCourse(course); // Add this line to track the current course for the dialog
     setDeleteCourseId(course.id);
     setIsConfirmDialogOpen(true);
   };

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 interface CourseTemplateCardProps {
   template: CourseTemplate;
   onEdit: (template: CourseTemplate) => void;
-  onDelete: (templateId: string) => void;
+  onDelete: (template: CourseTemplate) => void;  // Changed from (templateId: string) to (template: CourseTemplate)
   onSchedule: (template: CourseTemplate) => void;
   onDuplicate: (template: CourseTemplate) => void;
 }
@@ -67,7 +67,7 @@ export const CourseTemplateCard: React.FC<CourseTemplateCardProps> = ({
                 size="sm" 
                 variant="destructive" 
                 className="bg-rose-100 hover:bg-rose-200 text-rose-600 hover:text-rose-700" 
-                onClick={() => onDelete(template.id)}
+                onClick={() => onDelete(template)}  // Changed to pass the full template
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
