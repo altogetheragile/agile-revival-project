@@ -19,13 +19,15 @@ interface SkillLevelSelectProps {
   onChange?: (value: string) => void;
   onValueChange: (value: string) => void;
   skillLevels?: SkillLevel[];
+  disabled?: boolean;
 }
 
 export const SkillLevelSelect: React.FC<SkillLevelSelectProps> = ({ 
   value, 
   onChange, 
   onValueChange,
-  skillLevels = []
+  skillLevels = [],
+  disabled = false
 }) => {
   const handleChange = (newValue: string) => {
     onValueChange(newValue);
@@ -33,7 +35,7 @@ export const SkillLevelSelect: React.FC<SkillLevelSelectProps> = ({
   };
 
   return (
-    <Select onValueChange={handleChange} value={value} defaultValue={value}>
+    <Select onValueChange={handleChange} value={value} defaultValue={value} disabled={disabled}>
       <SelectTrigger>
         <SelectValue placeholder="Select skill level" />
       </SelectTrigger>

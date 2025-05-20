@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import SettingsHeader from "./settings/SettingsHeader";
 import { GeneralSettings } from "./settings/GeneralSettings";
@@ -11,8 +11,18 @@ import { CourseTemplatesSettings } from "./settings/CourseTemplatesSettings";
 import { EventTypesSettings } from "./settings/EventTypesSettings";
 import { SettingsSync } from "./settings/SettingsSync";
 
-const SiteSettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("general");
+interface SiteSettingsProps {
+  initialSection?: string;
+}
+
+const SiteSettings: React.FC<SiteSettingsProps> = ({ initialSection }) => {
+  const [activeTab, setActiveTab] = useState(initialSection || "general");
+
+  useEffect(() => {
+    if (initialSection) {
+      setActiveTab(initialSection);
+    }
+  }, [initialSection]);
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)] bg-background">

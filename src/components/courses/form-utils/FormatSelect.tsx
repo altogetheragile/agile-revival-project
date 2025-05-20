@@ -15,6 +15,7 @@ interface FormatSelectProps {
   onValueChange: (value: string) => void;
   formats?: CourseFormat[];
   onDelete?: (value: string, e: React.MouseEvent) => void;
+  disabled?: boolean;
 }
 
 export const FormatSelect: React.FC<FormatSelectProps> = ({ 
@@ -22,7 +23,8 @@ export const FormatSelect: React.FC<FormatSelectProps> = ({
   onChange, 
   onValueChange,
   formats = [],
-  onDelete
+  onDelete,
+  disabled = false
 }) => {
   const handleChange = (newValue: string) => {
     onValueChange(newValue);
@@ -30,7 +32,7 @@ export const FormatSelect: React.FC<FormatSelectProps> = ({
   };
 
   return (
-    <Select onValueChange={handleChange} value={value} defaultValue={value}>
+    <Select onValueChange={handleChange} value={value} defaultValue={value} disabled={disabled}>
       <SelectTrigger>
         <SelectValue placeholder="Select format" />
       </SelectTrigger>
