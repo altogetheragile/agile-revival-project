@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Course } from "@/types/course";
+import { Course, CourseTemplate } from "@/types/course";
 import { CourseTemplateCard } from "./CourseTemplateCard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, Layout } from "lucide-react";
@@ -13,6 +13,29 @@ interface CourseTemplatesSectionProps {
   onSchedule: (course: Course) => void;
   onDuplicate: (course: Course) => void;
 }
+
+// Mapper function to convert Course to CourseTemplate
+const toCourseTemplate = (course: Course): CourseTemplate => ({
+  id: course.id,
+  title: course.title,
+  description: course.description,
+  category: course.category || "General",
+  eventType: course.eventType,
+  format: course.format,
+  skillLevel: course.skillLevel,
+  price: course.price,
+  learningOutcomes: course.learningOutcomes || [],
+  prerequisites: course.prerequisites,
+  targetAudience: course.targetAudience,
+  duration: course.duration,
+  imageUrl: course.imageUrl,
+  imageAspectRatio: course.imageAspectRatio,
+  imageSize: course.imageSize,
+  imageLayout: course.imageLayout,
+  spotsAvailable: course.spotsAvailable || 0,
+  status: course.status,
+  isTemplate: true
+});
 
 export const CourseTemplatesSection: React.FC<CourseTemplatesSectionProps> = ({
   templates,
@@ -43,10 +66,10 @@ export const CourseTemplatesSection: React.FC<CourseTemplatesSectionProps> = ({
         {templates.map((template) => (
           <CourseTemplateCard
             key={template.id}
-            template={template}
-            onEdit={onEdit}
+            template={toCourseTemplate(template)}
+            onEdit={() => onEdit(template)}
             onDelete={() => onDelete(template.id)}
-            onSchedule={onSchedule}
+            onSchedule={() => onSchedule(template)}
             onDuplicate={() => onDuplicate(template)}
           />
         ))}

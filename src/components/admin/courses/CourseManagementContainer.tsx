@@ -108,7 +108,7 @@ export const CourseManagementContainer: React.FC = () => {
         <CourseTemplatesSection
           templates={templates}
           onEdit={handleEditCourse}
-          onDelete={handleDeleteConfirm}
+          onDelete={(courseId) => handleDelete(courseId)}
           onSchedule={handleScheduleCourse}
           onDuplicate={handleDuplicateCourse}
         />
