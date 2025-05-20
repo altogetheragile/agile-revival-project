@@ -6,6 +6,8 @@ export const mapDbToCourse = (dbCourse: any): Course => ({
   title: dbCourse.title,
   description: dbCourse.description,
   dates: dbCourse.dates,
+  startDate: dbCourse.start_date || null,
+  endDate: dbCourse.end_date || null,
   location: dbCourse.location,
   instructor: dbCourse.instructor,
   price: dbCourse.price,
