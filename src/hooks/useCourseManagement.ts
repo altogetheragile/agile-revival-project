@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Course, CourseFormData } from "@/types/course";
@@ -16,6 +17,7 @@ export const useCourseManagement = () => {
   const [viewingRegistrations, setViewingRegistrations] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [showDeleted, setShowDeleted] = useState(false); // New state for showing/hiding deleted items
   const { toast: uiToast } = useToast();
 
   const loadCourses = useCallback(async () => {
@@ -33,7 +35,12 @@ export const useCourseManagement = () => {
       }
       
       // In the management view, we're only showing templates
-      const templateCourses = allCourses.filter(course => course.isTemplate === true);
+      // Filter based on isTemplate=true and respect the showDeleted state
+      const templateCourses = allCourses.filter(course => {
+        if (!showDeleted && course.deletedAt) return false;
+        return course.isTemplate === true;
+      });
+      
       console.log(`Filtered to ${templateCourses.length} template courses`);
       setCourses(templateCourses);
     } catch (error: any) {
@@ -50,13 +57,17 @@ export const useCourseManagement = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [showDeleted]);
 
   useEffect(() => {
     loadCourses();
   }, [loadCourses]);
 
   const filteredCourses = courses.filter(course => {
+    // First check if we should filter out deleted courses
+    if (!showDeleted && course.deletedAt) return false;
+    
+    // Then apply search filter
     const searchLower = searchTerm.toLowerCase();
     return (
       course.title.toLowerCase().includes(searchLower) ||
@@ -136,7 +147,7 @@ export const useCourseManagement = () => {
           await loadCourses();
           uiToast({
             title: "Template deleted",
-            description: "The course template has been removed successfully."
+            description: "The event template has been removed successfully."
           });
         }
       } catch (error: any) {
@@ -164,10 +175,15 @@ export const useCourseManagement = () => {
 
   const handleForceReset = () => {
     toast.success("Cache reset", {
-      description: "The course data has been refreshed from the database."
+      description: "The event data has been refreshed from the database."
     });
     
     loadCourses();
+  };
+
+  // Toggle showing deleted courses
+  const toggleShowDeleted = () => {
+    setShowDeleted(prev => !prev);
   };
 
   return {
@@ -186,6 +202,8 @@ export const useCourseManagement = () => {
     setViewingRegistrations,
     isLoading,
     loadError,
+    showDeleted,
+    toggleShowDeleted,
     handleFormSubmit,
     handleDelete,
     handleForceReset,

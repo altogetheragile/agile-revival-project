@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Course } from "@/types/course";
 import { mapDbToCourse } from "./courseMappers";
@@ -30,7 +31,8 @@ export const getAllCourses = async (): Promise<Course[]> => {
       
       return mapDbToCourse({
         ...dbCourse,
-        eventType
+        eventType,
+        deletedAt: dbCourse.deleted_at
       });
     }));
   } catch (error) {
@@ -45,7 +47,6 @@ export const getCourseById = async (id: string): Promise<Course | null> => {
       .from('courses')
       .select('*, event_types(*)')
       .eq('id', id)
-      .is('deleted_at', null) // Only get non-deleted course
       .single();
 
     if (error) {
@@ -75,7 +76,8 @@ export const getCourseById = async (id: string): Promise<Course | null> => {
 
     return mapDbToCourse({
       ...data,
-      eventType
+      eventType,
+      deletedAt: data.deleted_at
     });
   } catch (error) {
     console.error(`Error getting course with ID ${id}:`, error);
@@ -90,6 +92,7 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
       .select('*, event_types(*)')
       .eq('category', category)
       .eq('is_template', false)
+      .is('deleted_at', null) // Only get non-deleted courses
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -112,7 +115,8 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
       
       return mapDbToCourse({
         ...dbCourse,
-        eventType
+        eventType,
+        deletedAt: dbCourse.deleted_at
       });
     }));
   } catch (error) {
@@ -152,7 +156,8 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
       
       return mapDbToCourse({
         ...dbCourse,
-        eventType
+        eventType,
+        deletedAt: dbCourse.deleted_at
       });
     }));
   } catch (error) {
@@ -163,15 +168,21 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
 
 /**
  * Get scheduled courses (non-templates)
+ * Optionally include deleted courses if showDeleted is true
  */
-export const getScheduledCourses = async (): Promise<Course[]> => {
+export const getScheduledCourses = async (showDeleted = false): Promise<Course[]> => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('courses')
       .select('*, event_types(*)')
-      .eq('is_template', false)
-      .is('deleted_at', null)  // Only get non-deleted courses
-      .order('created_at', { ascending: false });
+      .eq('is_template', false);
+    
+    // Only filter by deleted_at if showDeleted is false
+    if (!showDeleted) {
+      query = query.is('deleted_at', null);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw error;
     
@@ -193,7 +204,8 @@ export const getScheduledCourses = async (): Promise<Course[]> => {
       
       return mapDbToCourse({
         ...dbCourse,
-        eventType
+        eventType,
+        deletedAt: dbCourse.deleted_at
       });
     }));
   } catch (error) {
@@ -201,6 +213,3 @@ export const getScheduledCourses = async (): Promise<Course[]> => {
     throw error;
   }
 };
-
-// Don't try to import from non-existent module
-// export * from './queries/index'; - Removed this line

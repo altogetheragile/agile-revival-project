@@ -22,11 +22,11 @@ export const useCourseFiltering = (courses: Course[]) => {
 
   // Filter courses based on search term and active tab (event type)
   const filteredCourses = useMemo(() => {
-    // Filter out templates - we want to show only schedulable events
-    const nonTemplates = courses.filter(course => !course.isTemplate);
+    // First filter out deleted and templates - we want to show only active, schedulable events
+    const activeEvents = courses.filter(course => !course.isTemplate && !course.deletedAt);
     
     // Then apply search and tab filters
-    return nonTemplates.filter(course => {
+    return activeEvents.filter(course => {
       const matchesSearch = 
         course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||

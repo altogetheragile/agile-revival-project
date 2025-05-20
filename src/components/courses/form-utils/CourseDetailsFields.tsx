@@ -28,6 +28,13 @@ export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }
     handleDeleteEventType
   } = useEventTypeManagement();
 
+  // Create a handler for the delete button that matches the expected prop type
+  const handleEventTypeDelete = (value: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleDeleteEventType(value);
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Event Details</h3>
@@ -45,7 +52,7 @@ export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }
                   eventTypes={eventTypes}
                   value={field.value || ""} 
                   onValueChange={field.onChange}
-                  onDelete={handleDeleteEventType}
+                  onDelete={handleEventTypeDelete}
                 />
               </FormControl>
               <FormMessage />
@@ -193,7 +200,7 @@ export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }
             <FormLabel>Target Audience</FormLabel>
             <FormControl>
               <Textarea 
-                placeholder="Who is this course for?"
+                placeholder="Who is this event for?"
                 className="min-h-20"
                 {...field} 
               />

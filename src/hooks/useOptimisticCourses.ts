@@ -10,6 +10,7 @@ export const useOptimisticCourses = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<Error | null>(null);
+  const [showDeleted, setShowDeleted] = useState(false); // New state for showing/hiding deleted items
   const previousCoursesRef = useRef<Course[]>([]);
   const { toast: uiToast } = useToast();
 
@@ -20,8 +21,14 @@ export const useOptimisticCourses = () => {
         setIsRefreshing(true);
       }
       const scheduledCourses = await getScheduledCourses();
-      setCourses(scheduledCourses);
-      previousCoursesRef.current = scheduledCourses;
+      
+      // Filter courses based on deletedAt status
+      const filteredCourses = scheduledCourses.filter(course => 
+        showDeleted ? true : !course.deletedAt
+      );
+      
+      setCourses(filteredCourses);
+      previousCoursesRef.current = filteredCourses;
       setLoadError(null);
     } catch (error) {
       console.error("Error fetching courses:", error);
@@ -30,25 +37,31 @@ export const useOptimisticCourses = () => {
       setIsInitialLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [showDeleted]);
 
   // Refresh courses in the background without loading state
   const refreshCoursesInBackground = useCallback(async () => {
     try {
       const scheduledCourses = await getScheduledCourses();
-      setCourses(scheduledCourses);
-      previousCoursesRef.current = scheduledCourses;
+      
+      // Filter courses based on deletedAt status
+      const filteredCourses = scheduledCourses.filter(course => 
+        showDeleted ? true : !course.deletedAt
+      );
+      
+      setCourses(filteredCourses);
+      previousCoursesRef.current = filteredCourses;
       setLoadError(null);
     } catch (error) {
       console.error("Error refreshing courses in background:", error);
       // Don't update the loadError state for background refreshes
     }
-  }, []);
+  }, [showDeleted]);
 
   // Initial load
   useEffect(() => {
     fetchCourses(true);
-  }, [fetchCourses]);
+  }, [fetchCourses, showDeleted]);
 
   // Optimistic update of a course
   const optimisticUpdateCourse = useCallback(async (courseId: string, courseData: any) => {
@@ -74,14 +87,14 @@ export const useOptimisticCourses = () => {
     toast.promise(
       updateCourse(courseId, courseData),
       {
-        loading: 'Updating course...',
+        loading: 'Updating event...',
         success: (result) => {
           if (!result) {
             // If update failed, revert to previous state
             setCourses(previousCoursesRef.current);
-            return "Failed to update course";
+            return "Failed to update event";
           }
-          return "Course updated successfully";
+          return "Event updated successfully";
         },
         error: (error) => {
           // Revert to previous state on error
@@ -99,22 +112,37 @@ export const useOptimisticCourses = () => {
     // Store previous courses state
     previousCoursesRef.current = [...courses];
     
-    // Remove course from local state immediately
-    const updatedCourses = courses.filter((course) => course.id !== courseId);
-    setCourses(updatedCourses);
+    // Find the course to update
+    const courseIndex = courses.findIndex((course) => course.id === courseId);
+    if (courseIndex === -1) return false;
+    
+    // When using soft delete, we mark the course as deleted locally
+    if (!showDeleted) {
+      // Remove course from local state immediately (for non-deleted view)
+      const updatedCourses = courses.filter((course) => course.id !== courseId);
+      setCourses(updatedCourses);
+    } else {
+      // If showing deleted items, update the item to have a deletedAt timestamp
+      const updatedCourses = [...courses];
+      updatedCourses[courseIndex] = {
+        ...updatedCourses[courseIndex],
+        deletedAt: new Date().toISOString()
+      };
+      setCourses(updatedCourses);
+    }
     
     // Show subtle notification that we're deleting
     toast.promise(
       deleteCourse(courseId),
       {
-        loading: 'Deleting course...',
+        loading: 'Removing event...',
         success: (result) => {
           if (!result) {
             // If deletion failed, revert to previous state
             setCourses(previousCoursesRef.current);
-            return "Failed to delete course";
+            return "Failed to delete event";
           }
-          return "Course deleted successfully";
+          return "Event removed successfully";
         },
         error: (error) => {
           // Revert to previous state on error
@@ -125,7 +153,7 @@ export const useOptimisticCourses = () => {
     );
     
     return true;
-  }, [courses]);
+  }, [courses, showDeleted]);
 
   // Manual refresh function that shows a toast message
   const handleManualRefresh = useCallback(async () => {
@@ -133,12 +161,17 @@ export const useOptimisticCourses = () => {
     toast.promise(
       fetchCourses(false),
       {
-        loading: 'Refreshing courses...',
-        success: "Courses refreshed successfully",
-        error: "Failed to refresh courses",
+        loading: 'Refreshing events...',
+        success: "Events refreshed successfully",
+        error: "Failed to refresh events",
       }
     );
   }, [fetchCourses]);
+
+  // Toggle showing deleted courses
+  const toggleShowDeleted = useCallback(() => {
+    setShowDeleted(prev => !prev);
+  }, []);
 
   // Handle hard reset (reload page)
   const handleForceReset = useCallback(() => {
@@ -154,6 +187,8 @@ export const useOptimisticCourses = () => {
     isInitialLoading,
     isRefreshing,
     loadError,
+    showDeleted,
+    toggleShowDeleted,
     refreshCourses: fetchCourses,
     refreshCoursesInBackground,
     optimisticUpdateCourse,
