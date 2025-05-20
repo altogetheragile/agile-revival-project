@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCourseById } from "@/services/courseService";
@@ -11,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import RegistrationDialog from "@/components/courses/RegistrationDialog";
 import { Course } from "@/types/course";
+import { normalizeLearningOutcomes } from "@/utils/dateUtils";
 
 const CourseDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -165,11 +165,14 @@ const CourseDetails = () => {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold mb-3">What You'll Learn</h3>
                   {course.learningOutcomes && course.learningOutcomes.length > 0 ? (
-                    <ul className="list-disc list-inside space-y-2 text-gray-700">
-                      {course.learningOutcomes.map((outcome, index) => (
-                        <li key={index}>{outcome}</li>
-                      ))}
-                    </ul>
+                    <div className="mt-8">
+                      <h3 className="text-xl font-semibold mb-4">Learning Outcomes</h3>
+                      <ul className="list-disc pl-5 space-y-2">
+                        {normalizeLearningOutcomes(course.learningOutcomes).map((outcome, index) => (
+                          <li key={index} className="text-gray-600">{outcome}</li>
+                        ))}
+                      </ul>
+                    </div>
                   ) : (
                     <ul className="list-disc list-inside space-y-2 text-gray-700">
                       <li>Understand the key principles and practices of {course.category} methodology</li>

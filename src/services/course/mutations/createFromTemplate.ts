@@ -48,7 +48,7 @@ export const createCourseFromTemplate = async (
       category_id: templateData.category_id,
       event_type: templateData.event_type,
       event_type_id: templateData.event_type_id,
-      learning_outcomes: templateData.learning_outcomes,
+      learning_outcomes: normalizeLearningOutcomes(templateData.learning_outcomes),
       prerequisites: templateData.prerequisites,
       target_audience: templateData.target_audience,
       duration: templateData.duration,

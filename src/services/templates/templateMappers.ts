@@ -1,5 +1,6 @@
 
 import { Course } from "@/types/course";
+import { normalizeLearningOutcomes } from "@/utils/dateUtils";
 
 export const mapDbToCourse = (dbCourse: any): Course => ({
   id: dbCourse.id,
@@ -13,13 +14,13 @@ export const mapDbToCourse = (dbCourse: any): Course => ({
   price: dbCourse.price,
   category: dbCourse.category,
   spotsAvailable: dbCourse.spots_available,
-  learningOutcomes: dbCourse.learning_outcomes,
+  learningOutcomes: normalizeLearningOutcomes(dbCourse.learning_outcomes),
   prerequisites: dbCourse.prerequisites,
   targetAudience: dbCourse.target_audience,
   duration: dbCourse.duration,
   skillLevel: dbCourse.skill_level,
   format: dbCourse.format,
-  status: dbCourse.status,
+  status: dbCourse.status || "draft", // Ensure default status
   materials: dbCourse.materials || [],
   googleDriveFolderId: dbCourse.google_drive_folder_id,
   googleDriveFolderUrl: dbCourse.google_drive_folder_url,

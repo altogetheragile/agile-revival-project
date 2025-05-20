@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -245,10 +244,10 @@ export const CourseTemplatesSettings = () => {
               {filteredTemplates.map((template) => (
                 <CourseTemplateCard
                   key={template.id}
-                  template={template}
-                  onEdit={handleEditTemplate}
+                  template={template as CourseTemplate}
+                  onEdit={(courseTemplate: CourseTemplate) => handleEditTemplate(courseTemplate as Course)}
                   onDelete={handleDeleteTemplate}
-                  onSchedule={handleScheduleCourse}
+                  onSchedule={(courseTemplate: CourseTemplate) => handleScheduleCourse(courseTemplate as Course)}
                 />
               ))}
             </div>

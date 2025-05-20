@@ -53,7 +53,7 @@ export interface ScheduleCourseFormData {
   status: "draft" | "published";
 }
 
-export interface CourseTemplate extends Omit<Course, 'id' | 'status'> {
+export interface CourseTemplate {
   id: string;
   title: string;
   description: string;
@@ -71,4 +71,5 @@ export interface CourseTemplate extends Omit<Course, 'id' | 'status'> {
   imageAspectRatio?: string;
   imageSize?: number;
   imageLayout?: string;
+  spotsAvailable: number; // Added this required field
 }

@@ -108,7 +108,8 @@ const CourseFormDialog: React.FC<CourseFormDialogProps> = ({
           imageUrl: finalUrl,
           imageAspectRatio: aspectRatio || "16/9",
           imageSize: size || 100,
-          imageLayout: layout || "standard"
+          imageLayout: layout || "standard",
+          status: "draft" // Ensure status is included
         };
         return newData;
       }

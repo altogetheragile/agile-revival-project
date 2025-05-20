@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -81,7 +80,8 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       dates: template.dates || "Template - No Dates",
       location: template.location || "To Be Determined",
       instructor: template.instructor || "To Be Assigned",
-      spotsAvailable: template.spotsAvailable || 0
+      spotsAvailable: template.spotsAvailable || 0,
+      status: template.status || "draft" // Ensure status is always provided
     };
   };
 
@@ -110,9 +110,9 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       eventType: (formValues.namedItem('eventType') as HTMLSelectElement)?.value || 'course',
       category: (formValues.namedItem('category') as HTMLInputElement)?.value || '',
       price: (formValues.namedItem('price') as HTMLInputElement)?.value || '',
-      learningOutcomes: (formValues.namedItem('learningOutcomes') as HTMLTextAreaElement)?.value
-        .split('\n')
-        .filter(line => line.trim().length > 0),
+      learningOutcomes: normalizeLearningOutcomes(
+        (formValues.namedItem('learningOutcomes') as HTMLTextAreaElement)?.value
+      ),
       prerequisites: (formValues.namedItem('prerequisites') as HTMLTextAreaElement)?.value || '',
       targetAudience: (formValues.namedItem('targetAudience') as HTMLTextAreaElement)?.value || '',
       duration: (formValues.namedItem('duration') as HTMLInputElement)?.value || '',
@@ -122,7 +122,8 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       imageUrl: (formValues.namedItem('imageUrl') as HTMLInputElement)?.value || '',
       imageAspectRatio: currentTemplate?.imageAspectRatio || "16/9",
       imageSize: currentTemplate?.imageSize || 100,
-      imageLayout: currentTemplate?.imageLayout || "standard"
+      imageLayout: currentTemplate?.imageLayout || "standard",
+      spotsAvailable: parseInt((formValues.namedItem('spotsAvailable') as HTMLInputElement)?.value || '0', 10) || 0
     };
     
     setPreviewData(previewTemplate);
@@ -300,3 +301,9 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
     </>
   );
 };
+
+function normalizeLearningOutcomes(input: string): string[] {
+  return input.split('\n')
+    .filter(line => line.trim().length > 0)
+    .map(line => line.trim());
+}
