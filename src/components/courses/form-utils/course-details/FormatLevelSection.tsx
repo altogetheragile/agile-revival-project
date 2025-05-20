@@ -8,9 +8,10 @@ import { SkillLevelSelect } from "../SkillLevelSelect";
 
 interface FormatLevelSectionProps {
   form: UseFormReturn<CourseFormData>;
+  disabled?: boolean;
 }
 
-export const FormatLevelSection: React.FC<FormatLevelSectionProps> = ({ form }) => {
+export const FormatLevelSection: React.FC<FormatLevelSectionProps> = ({ form, disabled = false }) => {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {/* Format Select */}
@@ -24,6 +25,7 @@ export const FormatLevelSection: React.FC<FormatLevelSectionProps> = ({ form }) 
               <FormatSelect
                 value={field.value || "in-person"}
                 onValueChange={field.onChange}
+                disabled={disabled}
               />
             </FormControl>
             <FormMessage />
@@ -42,6 +44,7 @@ export const FormatLevelSection: React.FC<FormatLevelSectionProps> = ({ form }) 
               <SkillLevelSelect
                 value={field.value || "all-levels"}
                 onValueChange={field.onChange}
+                disabled={disabled}
               />
             </FormControl>
             <FormMessage />

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -21,7 +21,13 @@ import RefreshControls from "@/components/training/RefreshControls";
 import { useOptimisticCourses } from "@/hooks/useOptimisticCourses";
 
 const AdminDashboard = () => {
-  const [currentTab, setCurrentTab] = useState<string>("events");  // Changed default tab from "courses" to "events"
+  // Get URL params to determine initial tab
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const tabFromUrl = queryParams.get('tab');
+  const sectionFromUrl = queryParams.get('section');
+  
+  const [currentTab, setCurrentTab] = useState<string>(tabFromUrl || "events");
   const [isChecking, setIsChecking] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -32,6 +38,17 @@ const AdminDashboard = () => {
     handleManualRefresh, 
     handleForceReset 
   } = useOptimisticCourses();
+  
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    setCurrentTab(value);
+    const newParams = new URLSearchParams();
+    newParams.set('tab', value);
+    if (value === 'settings' && sectionFromUrl) {
+      newParams.set('section', sectionFromUrl);
+    }
+    navigate(`?${newParams.toString()}`, { replace: true });
+  };
   
   useEffect(() => {
     setIsChecking(false);
@@ -60,18 +77,6 @@ const AdminDashboard = () => {
       checkConnection();
     }
   }, [isAuthReady, checkConnection]);
-
-  // Log state for debugging purposes
-  useEffect(() => {
-    console.log("Admin Dashboard State:", { 
-      currentTab, 
-      isChecking, 
-      isAuthReady, 
-      isAdmin: isAdmin || false,
-      hasUser: !!user,
-      connectionStatus: connectionState.isConnected ? 'connected' : 'disconnected'
-    });
-  }, [currentTab, isChecking, isAuthReady, isAdmin, user, connectionState]);
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -107,7 +112,7 @@ const AdminDashboard = () => {
               />
             )}
             
-            <Tabs defaultValue="events" value={currentTab} onValueChange={setCurrentTab} className="w-full">
+            <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="mb-8 w-full grid grid-cols-2 md:flex md:w-auto">
                 <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="blog">Blog</TabsTrigger>
@@ -134,7 +139,7 @@ const AdminDashboard = () => {
               </TabsContent>
               
               <TabsContent value="settings" className="pt-4">
-                <SiteSettings />
+                <SiteSettings initialSection={sectionFromUrl || undefined} />
               </TabsContent>
 
               <TabsContent value="media" className="pt-4">

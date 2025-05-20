@@ -7,9 +7,10 @@ import { CourseFormData } from "@/types/course";
 
 interface AvailableSpotsFieldProps {
   form: UseFormReturn<CourseFormData>;
+  disabled?: boolean;
 }
 
-export const AvailableSpotsField: React.FC<AvailableSpotsFieldProps> = ({ form }) => {
+export const AvailableSpotsField: React.FC<AvailableSpotsFieldProps> = ({ form, disabled = false }) => {
   return (
     <FormField
       control={form.control}
@@ -21,6 +22,7 @@ export const AvailableSpotsField: React.FC<AvailableSpotsFieldProps> = ({ form }
             <Input 
               type="number" 
               min={0} 
+              disabled={disabled}
               {...field} 
               onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
             />

@@ -7,9 +7,10 @@ import { CourseFormData } from "@/types/course";
 
 interface InstructorPriceSectionProps {
   form: UseFormReturn<CourseFormData>;
+  disabled?: boolean;
 }
 
-export const InstructorPriceSection: React.FC<InstructorPriceSectionProps> = ({ form }) => {
+export const InstructorPriceSection: React.FC<InstructorPriceSectionProps> = ({ form, disabled = false }) => {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {/* Instructor Field */}
@@ -20,7 +21,11 @@ export const InstructorPriceSection: React.FC<InstructorPriceSectionProps> = ({ 
           <FormItem>
             <FormLabel>Instructor</FormLabel>
             <FormControl>
-              <Input placeholder="e.g., John Smith" {...field} />
+              <Input 
+                placeholder="e.g., John Smith" 
+                disabled={disabled}
+                {...field} 
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -35,7 +40,11 @@ export const InstructorPriceSection: React.FC<InstructorPriceSectionProps> = ({ 
           <FormItem>
             <FormLabel>Price</FormLabel>
             <FormControl>
-              <Input placeholder="e.g., £1,200 + VAT" {...field} />
+              <Input 
+                placeholder="e.g., £1,200 + VAT" 
+                disabled={disabled}
+                {...field} 
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

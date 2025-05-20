@@ -1,81 +1,80 @@
 
 import React from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Calendar } from "lucide-react";
-import { Course, CourseTemplate } from "@/types/course";
+import { Edit, Trash2, Calendar, AlertTriangle } from "lucide-react";
+import { CourseTemplate } from "@/types/course";
 import { Badge } from "@/components/ui/badge";
 
 interface CourseTemplateCardProps {
   template: CourseTemplate;
   onEdit: (template: CourseTemplate) => void;
-  onDelete: (id: string) => void;
+  onDelete: (templateId: string) => void;
   onSchedule: (template: CourseTemplate) => void;
 }
-
-// Function to get appropriate event type badge color
-const getEventTypeColor = (eventType: string | undefined): string => {
-  switch (eventType?.toLowerCase()) {
-    case "course":
-      return "bg-blue-100 text-blue-800 hover:bg-blue-100";
-    case "workshop":
-      return "bg-purple-100 text-purple-800 hover:bg-purple-100";
-    case "webinar":
-      return "bg-amber-100 text-amber-800 hover:bg-amber-100";
-    case "conference":
-      return "bg-green-100 text-green-800 hover:bg-green-100";
-    default:
-      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
-  }
-};
 
 export const CourseTemplateCard: React.FC<CourseTemplateCardProps> = ({
   template,
   onEdit,
   onDelete,
-  onSchedule,
+  onSchedule
 }) => {
+  const eventTypeLabel = template.eventType || "Course";
+  const categoryLabel = template.category || "General";
+  
   return (
-    <Card className="border border-muted">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-lg">{template.title}</CardTitle>
-          <Badge variant="outline" className={getEventTypeColor(template.eventType)}>
-            {template.eventType || "Course"}
-          </Badge>
+    <Card className="overflow-hidden border border-gray-200">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg">{template.title}</h3>
+              <Badge variant="outline" className="capitalize">{eventTypeLabel}</Badge>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              {template.description && template.description.length > 100
+                ? `${template.description.substring(0, 100)}...`
+                : template.description}
+            </div>
+            
+            <div className="flex items-center gap-2 text-xs mt-2">
+              <Badge variant="secondary" className="font-normal">{categoryLabel}</Badge>
+              {template.format && (
+                <Badge variant="secondary" className="font-normal capitalize">{template.format}</Badge>
+              )}
+              {template.skillLevel && (
+                <Badge variant="secondary" className="font-normal capitalize">{template.skillLevel}</Badge>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => onEdit(template)}>
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button 
+                size="sm" 
+                variant="destructive" 
+                className="bg-rose-100 hover:bg-rose-200 text-rose-600 hover:text-rose-700" 
+                onClick={() => onDelete(template.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <Button 
+              size="sm" 
+              variant="default" 
+              className="mt-1" 
+              onClick={() => onSchedule(template)}
+            >
+              <Calendar className="h-4 w-4 mr-1" /> Schedule
+            </Button>
+          </div>
         </div>
-        <CardDescription className="text-sm text-muted-foreground">
-          {template.category} · {template.duration || "Duration not specified"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pb-2">
-        <p className="text-sm truncate">{template.description}</p>
-        <p className="text-sm font-medium mt-2">{template.price}</p>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(template)}
-          >
-            <Edit className="h-4 w-4 mr-1" /> Edit
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => onDelete(template.id)}
-          >
-            <Trash2 className="h-4 w-4 mr-1" /> Delete
-          </Button>
-        </div>
-        <Button
-          size="sm"
-          onClick={() => onSchedule(template)}
-        >
-          <Calendar className="h-4 w-4 mr-1" /> Schedule
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

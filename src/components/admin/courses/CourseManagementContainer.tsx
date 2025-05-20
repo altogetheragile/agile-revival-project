@@ -11,6 +11,9 @@ import { useCourseActions } from "@/hooks/useCourseActions";
 import { useMediaLibraryDialog } from "@/hooks/useMediaLibraryDialog";
 import { useScheduleCourseDialog } from "@/hooks/useScheduleCourseDialog";
 import { CourseTypeTabs } from "./CourseTypeTabs";
+import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const CourseManagementContainer: React.FC = () => {
   const {
@@ -67,14 +70,31 @@ export const CourseManagementContainer: React.FC = () => {
     handleScheduleCourse,
     handleScheduleSubmit
   } = useScheduleCourseDialog(refreshCourses);
+  
+  const navigate = useNavigate();
+  
+  const handleNavigateToTemplates = () => {
+    navigate('/admin?tab=settings&section=templates');
+  };
 
   return (
     <div className="bg-white shadow-md rounded-md p-6">
-      <CourseManagementHeader 
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        onAddNew={handleAddCourse}
-      />
+      <div className="flex justify-between items-center mb-4">
+        <CourseManagementHeader 
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onAddNew={handleAddCourse}
+        />
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleNavigateToTemplates}
+          className="flex items-center gap-1"
+        >
+          <Settings size={16} />
+          <span>Manage Templates</span>
+        </Button>
+      </div>
       
       <CourseTypeTabs 
         activeTab={activeTab} 
