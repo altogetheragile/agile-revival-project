@@ -92,7 +92,9 @@ const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({
               {/* Date Range Fields */}
               <DateRangeFields<ScheduleCourseFormData>
                 form={form} 
-                required={true} 
+                required={true}
+                startField="startDate"
+                endField="endDate"
               />
               
               {/* Location Field */}

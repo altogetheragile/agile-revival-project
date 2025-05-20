@@ -24,6 +24,8 @@ export const CourseScheduleFields: React.FC<CourseScheduleFieldsProps> = ({ form
       {/* Date Range Fields */}
       <DateRangeFields<CourseFormData> 
         form={form}
+        startField="startDate"
+        endField="endDate"
       />
       
       {/* Location Field */}

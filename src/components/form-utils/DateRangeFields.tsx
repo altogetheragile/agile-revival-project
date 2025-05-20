@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, Path, FieldValues, PathValue } from "react-hook-form";
 import { 
   FormControl, 
   FormField, 
@@ -17,29 +17,26 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-// Define a generic type that ensures the form data has startDate and endDate properties
-interface DateRangeFormData {
-  startDate?: string | Date | null;
-  endDate?: string | Date | null;
-  [key: string]: any;
-}
-
-interface DateRangeFieldsProps<T extends DateRangeFormData> {
+// Define a generic type for form data
+interface DateRangeFieldsProps<T extends FieldValues> {
   form: UseFormReturn<T>;
   className?: string;
   startFieldLabel?: string;
   endFieldLabel?: string;
+  startField?: string;
+  endField?: string;
   required?: boolean;
 }
 
-export function DateRangeFields<T extends DateRangeFormData>({
+export function DateRangeFields<T extends FieldValues>({
   form,
   className,
   startFieldLabel = "Start Date",
   endFieldLabel = "End Date",
+  startField = "startDate",
+  endField = "endDate",
   required = false
 }: DateRangeFieldsProps<T>) {
   // Helper to parse dates which could be strings or Date objects
@@ -54,22 +51,27 @@ export function DateRangeFields<T extends DateRangeFormData>({
     }
   };
 
-  // Get start and end dates from the form
-  const startDate = parseDate(form.watch('startDate'));
-  const endDate = parseDate(form.watch('endDate'));
+  // Get start and end dates from the form using the provided field names
+  const startDateValue = form.watch(startField as Path<T>);
+  const endDateValue = form.watch(endField as Path<T>);
+  
+  const startDate = parseDate(startDateValue as string | Date);
+  const endDate = parseDate(endDateValue as string | Date);
 
   // Update end date if start date is changed to be later
   useEffect(() => {
     if (startDate && endDate && startDate > endDate) {
-      form.setValue('endDate' as any, startDate as any);
+      form.setValue(endField as Path<T>, startDate as any, {
+        shouldValidate: true
+      });
     }
-  }, [startDate, endDate, form]);
+  }, [startDate, endDate, form, endField]);
 
   return (
     <div className={cn("grid gap-4 md:grid-cols-2", className)}>
       <FormField
         control={form.control}
-        name={'startDate' as any}
+        name={startField as Path<T>}
         rules={{ required: required ? "Start date is required" : false }}
         render={({ field }) => (
           <FormItem className="flex flex-col">
@@ -85,7 +87,7 @@ export function DateRangeFields<T extends DateRangeFormData>({
                     )}
                   >
                     {field.value ? (
-                      format(new Date(field.value), "PPP")
+                      format(new Date(field.value as string | Date), "PPP")
                     ) : (
                       <span>Select date</span>
                     )}
@@ -96,13 +98,15 @@ export function DateRangeFields<T extends DateRangeFormData>({
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={field.value ? new Date(field.value) : undefined}
+                  selected={field.value ? new Date(field.value as string | Date) : undefined}
                   onSelect={(date) => {
                     field.onChange(date);
                     // If end date is not set or is before start date, set it to start date
-                    const endDate = parseDate(form.watch('endDate'));
+                    const endDate = parseDate(form.watch(endField as Path<T>) as string | Date);
                     if (!endDate || (date && endDate < date)) {
-                      form.setValue('endDate' as any, date);
+                      form.setValue(endField as Path<T>, date as any, {
+                        shouldValidate: true
+                      });
                     }
                   }}
                   disabled={(date) => date < new Date("1900-01-01")}
@@ -118,7 +122,7 @@ export function DateRangeFields<T extends DateRangeFormData>({
 
       <FormField
         control={form.control}
-        name={'endDate' as any}
+        name={endField as Path<T>}
         rules={{ required: required ? "End date is required" : false }}
         render={({ field }) => (
           <FormItem className="flex flex-col">
@@ -134,7 +138,7 @@ export function DateRangeFields<T extends DateRangeFormData>({
                     )}
                   >
                     {field.value ? (
-                      format(new Date(field.value), "PPP")
+                      format(new Date(field.value as string | Date), "PPP")
                     ) : (
                       <span>Select date</span>
                     )}
@@ -145,7 +149,7 @@ export function DateRangeFields<T extends DateRangeFormData>({
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={field.value ? new Date(field.value) : undefined}
+                  selected={field.value ? new Date(field.value as string | Date) : undefined}
                   onSelect={(date) => {
                     field.onChange(date);
                   }}
