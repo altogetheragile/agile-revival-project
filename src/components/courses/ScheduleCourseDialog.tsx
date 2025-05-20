@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Course, ScheduleCourseFormData } from "@/types/course";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { DateRangeFields } from "@/components/form-utils/DateRangeFields";
+import { ScheduleCourseFields } from "@/components/form-utils/ScheduleCourseFields";
 import MediaLibrary from "@/components/media/MediaLibrary";
 import { Loader2 } from "lucide-react";
 
@@ -90,11 +90,9 @@ const ScheduleCourseDialog: React.FC<ScheduleCourseDialogProps> = ({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
               {/* Date Range Fields */}
-              <DateRangeFields<ScheduleCourseFormData>
-                form={form} 
+              <ScheduleCourseFields
+                form={form}
                 required={true}
-                startField="startDate"
-                endField="endDate"
               />
               
               {/* Location Field */}
