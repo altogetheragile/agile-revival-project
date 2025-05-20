@@ -21,7 +21,7 @@ import RefreshControls from "@/components/training/RefreshControls";
 import { useOptimisticCourses } from "@/hooks/useOptimisticCourses";
 
 const AdminDashboard = () => {
-  const [currentTab, setCurrentTab] = useState<string>("courses");
+  const [currentTab, setCurrentTab] = useState<string>("events");  // Changed default tab from "courses" to "events"
   const [isChecking, setIsChecking] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -99,7 +99,7 @@ const AdminDashboard = () => {
               </Alert>
             )}
             
-            {currentTab === "courses" && (
+            {currentTab === "events" && (
               <RefreshControls 
                 isRefreshing={isRefreshing}
                 onManualRefresh={handleManualRefresh}
@@ -107,9 +107,9 @@ const AdminDashboard = () => {
               />
             )}
             
-            <Tabs defaultValue="courses" value={currentTab} onValueChange={setCurrentTab} className="w-full">
+            <Tabs defaultValue="events" value={currentTab} onValueChange={setCurrentTab} className="w-full">
               <TabsList className="mb-8 w-full grid grid-cols-2 md:flex md:w-auto">
-                <TabsTrigger value="courses">Courses</TabsTrigger>
+                <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="blog">Blog</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
                 <TabsTrigger value="pages">Pages</TabsTrigger>
@@ -117,7 +117,7 @@ const AdminDashboard = () => {
                 <TabsTrigger value="media">Media</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="courses" className="pt-4">
+              <TabsContent value="events" className="pt-4">
                 <CourseManagement />
               </TabsContent>
               

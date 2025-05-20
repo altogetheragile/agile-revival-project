@@ -4,9 +4,14 @@ import { toast } from "sonner";
 import { executeQuery } from "@/utils/supabase/query";
 import { getAuthenticatedUser, checkAdminRole, handleMutationError } from "./baseCourseMutation";
 
+/**
+ * Soft-deletes a course by setting the deleted_at field 
+ * @param id Course ID to delete
+ * @returns Boolean indicating success
+ */
 export const deleteCourse = async (id: string): Promise<boolean> => {
   try {
-    console.log("Deleting course with ID:", id);
+    console.log("Soft-deleting course with ID:", id);
     
     // Validate the ID parameter
     if (!id || typeof id !== 'string') {
@@ -30,11 +35,12 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
       return false;
     }
 
-    // First verify the course exists
+    // First verify the course exists and check for dependencies
     const { data: existingCourse, error: fetchError } = await supabase
       .from('courses')
       .select('id, title, is_template')
       .eq('id', id)
+      .is('deleted_at', null)
       .single();
     
     if (fetchError) {
@@ -51,14 +57,34 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
       return false;
     }
     
-    console.log(`Course found, deleting: ${existingCourse.title} (${existingCourse.id})`);
+    // Check for dependent registrations if this is not a template
+    if (!existingCourse.is_template) {
+      const { data: registrations, error: regError } = await supabase
+        .from('course_registrations')
+        .select('id')
+        .eq('course_id', id)
+        .limit(1);
+      
+      if (!regError && registrations && registrations.length > 0) {
+        console.log("Course has existing registrations, warning the user");
+        toast.warning("This course has registrations", {
+          description: "Consider unpublishing instead of deleting to preserve registration data"
+        });
+        // We still allow deletion, but warn the user
+      }
+    }
+    
+    console.log(`Course found, soft-deleting: ${existingCourse.title} (${existingCourse.id})`);
     console.log(`Is template: ${existingCourse.is_template}`);
 
-    // Use optimized query with better error handling
+    // Use optimized query with better error handling - update deleted_at instead of deleting
     const { error } = await executeQuery(
       async () => await supabase
         .from('courses')
-        .delete()
+        .update({
+          deleted_at: new Date().toISOString(),
+          status: 'deleted'
+        })
         .eq('id', id),
       {
         timeoutMs: 20000,
@@ -75,7 +101,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     }
 
     console.log("Course deleted successfully:", id);
-    toast.success(existingCourse.is_template ? "Template deleted successfully" : "Course deleted successfully");
+    toast.success(existingCourse.is_template ? "Template deleted successfully" : "Event deleted successfully");
     return true;
   } catch (err) {
     console.error("Exception in deleteCourse:", err);

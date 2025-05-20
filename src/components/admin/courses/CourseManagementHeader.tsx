@@ -17,8 +17,8 @@ export const CourseManagementHeader: React.FC<CourseManagementHeaderProps> = ({
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <div>
-        <h1 className="text-2xl font-bold mb-1">Course & Event Management</h1>
-        <p className="text-muted-foreground text-sm">Manage your courses, workshops, webinars, and other educational events</p>
+        <h1 className="text-2xl font-bold mb-1">Event Management</h1>
+        <p className="text-muted-foreground text-sm">Manage your events, courses, workshops, webinars, and other educational activities</p>
       </div>
       
       <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -26,7 +26,7 @@ export const CourseManagementHeader: React.FC<CourseManagementHeaderProps> = ({
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search courses and events..."
+            placeholder="Search events..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-9 w-full"
@@ -35,7 +35,7 @@ export const CourseManagementHeader: React.FC<CourseManagementHeaderProps> = ({
         
         <Button onClick={onAddNew}>
           <Plus className="h-4 w-4 mr-1.5" />
-          Add New
+          Add Event
         </Button>
       </div>
     </div>

@@ -30,8 +30,8 @@ export const CourseTable: React.FC<CourseTableProps> = ({
   if (courses.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">No courses or events found.</p>
-        <p className="text-sm text-muted-foreground mt-1">Get started by adding your first course or event.</p>
+        <p className="text-muted-foreground">No events found.</p>
+        <p className="text-sm text-muted-foreground mt-1">Get started by adding your first event.</p>
       </div>
     );
   }
@@ -44,7 +44,7 @@ export const CourseTable: React.FC<CourseTableProps> = ({
             <TableHead>Title</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Category</TableHead>
-            <TableHead>Dates</TableHead>
+            <TableHead>Date</TableHead>
             <TableHead>Location</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-[120px]">Actions</TableHead>
@@ -56,11 +56,11 @@ export const CourseTable: React.FC<CourseTableProps> = ({
               <TableCell className="font-medium">{course.title}</TableCell>
               <TableCell>
                 <Badge variant="outline">
-                  {course.eventType || "Course"}
+                  {course.eventType || "Event"}
                 </Badge>
               </TableCell>
               <TableCell>{course.category}</TableCell>
-              <TableCell>{course.dates}</TableCell>
+              <TableCell>{course.dates || (course.startDate && course.endDate ? `${new Date(course.startDate).toLocaleDateString()} - ${new Date(course.endDate).toLocaleDateString()}` : "TBD")}</TableCell>
               <TableCell>{course.location}</TableCell>
               <TableCell>
                 <Badge

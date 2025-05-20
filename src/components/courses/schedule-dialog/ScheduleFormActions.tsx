@@ -32,7 +32,7 @@ export const ScheduleFormActions: React.FC<ScheduleFormActionsProps> = ({
             Scheduling...
           </>
         ) : (
-          "Schedule Course"
+          "Schedule Event"
         )}
       </Button>
     </div>

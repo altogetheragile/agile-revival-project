@@ -23,7 +23,7 @@ export const ScheduleStatusField: React.FC<ScheduleStatusFieldProps> = ({ form }
       name="status"
       render={({ field }) => (
         <FormItem className="space-y-3">
-          <FormLabel>Status</FormLabel>
+          <FormLabel>Publication Status</FormLabel>
           <FormControl>
             <RadioGroup
               onValueChange={field.onChange}
@@ -32,11 +32,11 @@ export const ScheduleStatusField: React.FC<ScheduleStatusFieldProps> = ({ form }
             >
               <div className="flex items-center space-x-3">
                 <RadioGroupItem value="draft" id="draft" />
-                <Label htmlFor="draft">Draft</Label>
+                <Label htmlFor="draft">Draft - Only visible to admins</Label>
               </div>
               <div className="flex items-center space-x-3">
                 <RadioGroupItem value="published" id="published" />
-                <Label htmlFor="published">Published</Label>
+                <Label htmlFor="published">Published - Visible to everyone</Label>
               </div>
             </RadioGroup>
           </FormControl>

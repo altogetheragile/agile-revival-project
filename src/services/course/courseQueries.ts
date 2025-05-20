@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Course } from "@/types/course";
 import { mapDbToCourse } from "./courseMappers";
@@ -8,7 +7,8 @@ export const getAllCourses = async (): Promise<Course[]> => {
   try {
     const { data, error } = await supabase
       .from('courses')
-      .select('*, event_types(*)');
+      .select('*, event_types(*)')
+      .is('deleted_at', null); // Only get non-deleted courses
 
     if (error) throw error;
     
@@ -45,6 +45,7 @@ export const getCourseById = async (id: string): Promise<Course | null> => {
       .from('courses')
       .select('*, event_types(*)')
       .eq('id', id)
+      .is('deleted_at', null) // Only get non-deleted course
       .single();
 
     if (error) {
@@ -120,54 +121,20 @@ export const getCoursesByCategory = async (category: string): Promise<Course[]> 
   }
 };
 
-export const getScheduledCourses = async (): Promise<Course[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('courses')
-      .select('*, event_types(*)')
-      .eq('is_template', false)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    // Map database courses to Course objects, handling the new event_type_id relation
-    return Promise.all(data.map(async (dbCourse) => {
-      let eventType = dbCourse.event_type;
-      
-      // If we have an event_types relation, use that
-      if (dbCourse.event_types) {
-        eventType = dbCourse.event_types.value;
-      }
-      // If we still don't have an event type but have an event_type_id, fetch it
-      else if (dbCourse.event_type_id && !eventType) {
-        const eventTypeObj = await getEventTypeById(dbCourse.event_type_id);
-        if (eventTypeObj) {
-          eventType = eventTypeObj.value;
-        }
-      }
-      
-      return mapDbToCourse({
-        ...dbCourse,
-        eventType
-      });
-    }));
-  } catch (error) {
-    console.error("Error getting scheduled courses:", error);
-    throw error;
-  }
-};
-
+/**
+ * Get all published course templates
+ */
 export const getCourseTemplates = async (): Promise<Course[]> => {
   try {
     const { data, error } = await supabase
       .from('courses')
       .select('*, event_types(*)')
       .eq('is_template', true)
-      .order('created_at', { ascending: false });
+      .is('deleted_at', null);  // Only get non-deleted templates
 
     if (error) throw error;
-
-    // Map database courses to Course objects, handling the new event_type_id relation
+    
+    // Map database courses to Course objects
     return Promise.all(data.map(async (dbCourse) => {
       let eventType = dbCourse.event_type;
       
@@ -190,6 +157,47 @@ export const getCourseTemplates = async (): Promise<Course[]> => {
     }));
   } catch (error) {
     console.error("Error getting course templates:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get scheduled courses (non-templates)
+ */
+export const getScheduledCourses = async (): Promise<Course[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*, event_types(*)')
+      .eq('is_template', false)
+      .is('deleted_at', null)  // Only get non-deleted courses
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    
+    // Map database courses to Course objects
+    return Promise.all(data.map(async (dbCourse) => {
+      let eventType = dbCourse.event_type;
+      
+      // If we have an event_types relation, use that
+      if (dbCourse.event_types) {
+        eventType = dbCourse.event_types.value;
+      }
+      // If we still don't have an event type but have an event_type_id, fetch it
+      else if (dbCourse.event_type_id && !eventType) {
+        const eventTypeObj = await getEventTypeById(dbCourse.event_type_id);
+        if (eventTypeObj) {
+          eventType = eventTypeObj.value;
+        }
+      }
+      
+      return mapDbToCourse({
+        ...dbCourse,
+        eventType
+      });
+    }));
+  } catch (error) {
+    console.error("Error getting scheduled courses:", error);
     throw error;
   }
 };

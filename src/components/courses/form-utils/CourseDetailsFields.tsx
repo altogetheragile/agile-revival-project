@@ -10,15 +10,27 @@ import { CategorySelect } from "./CategorySelect";
 import { FormatSelect } from "./FormatSelect";
 import { SkillLevelSelect } from "./SkillLevelSelect";
 import { LearningOutcomeField } from "./LearningOutcomeField";
+import { useEventTypeManagement } from "@/hooks/useEventTypeManagement";
 
 interface CourseDetailsFieldsProps {
   form: UseFormReturn<CourseFormData>;
 }
 
 export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }) => {
+  // Use the event type management hook to get event types
+  const {
+    eventTypes,
+    addMode: eventTypeAddMode,
+    setAddMode: setEventTypeAddMode,
+    newEventType,
+    setNewEventType,
+    handleAddEventType,
+    handleDeleteEventType
+  } = useEventTypeManagement();
+
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Course Details</h3>
+      <h3 className="text-lg font-medium">Event Details</h3>
       
       <div className="grid gap-4 md:grid-cols-2">
         {/* Event Type Select */}
@@ -30,8 +42,10 @@ export const CourseDetailsFields: React.FC<CourseDetailsFieldsProps> = ({ form }
               <FormLabel>Event Type</FormLabel>
               <FormControl>
                 <EventTypeSelect 
+                  eventTypes={eventTypes}
                   value={field.value || ""} 
                   onValueChange={field.onChange}
+                  onDelete={handleDeleteEventType}
                 />
               </FormControl>
               <FormMessage />
