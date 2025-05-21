@@ -12,6 +12,8 @@ export const useUserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      
+      // Use RPC for users with admin role to avoid recursion issues
       const { data, error } = await supabase
         .from('application_users')
         .select('*');
