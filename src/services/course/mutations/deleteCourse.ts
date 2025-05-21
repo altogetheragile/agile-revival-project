@@ -29,7 +29,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
       return false;
     }
 
-    // Verify admin role
+    // Verify admin role using standardized check_user_role function
     if (!(await checkAdminRole(user.id))) {
       console.error("User lacks admin privileges required for deletion");
       return false;

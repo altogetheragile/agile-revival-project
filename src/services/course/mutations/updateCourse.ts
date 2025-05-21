@@ -29,7 +29,7 @@ export const updateCourse = async (
     const user = await getAuthenticatedUser();
     if (!user) return null;
 
-    // If this is a template, verify admin role
+    // If this is a template, verify admin role using check_user_role
     if (courseData.isTemplate && !(await checkAdminRole(user.id))) {
       toast.error("Permission denied", {
         description: "You need admin privileges to update templates"

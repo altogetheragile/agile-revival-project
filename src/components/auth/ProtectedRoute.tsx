@@ -17,6 +17,7 @@ const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRouteProps) =>
     const checkAccess = async () => {
       if (user && adminOnly) {
         // If admin access required, refresh the status to be sure
+        // This uses the optimized check_user_role function internally
         await refreshAdminStatus(user.id);
       }
       setIsChecking(false);

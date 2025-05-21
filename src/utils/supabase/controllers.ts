@@ -36,8 +36,19 @@ export async function isUserAdmin(): Promise<boolean> {
 /**
  * Check if the current user has a specific role using the optimized check_user_role function
  * to avoid recursion issues with RLS policies
+ * 
+ * @deprecated Use checkUserRole instead for consistency with database functions
  */
 export async function hasRole(role: string): Promise<boolean> {
+  console.warn("hasRole() is deprecated. Use checkUserRole() instead for consistency.");
+  return await checkUserRole(role);
+}
+
+/**
+ * Check if the current user has a specific role using the optimized check_user_role function
+ * This is the preferred method to check roles as it matches the database function name
+ */
+export async function checkUserRole(role: string): Promise<boolean> {
   try {
     const { data: userData } = await supabase.auth.getUser();
     
@@ -58,7 +69,7 @@ export async function hasRole(role: string): Promise<boolean> {
     
     return !!data;
   } catch (error) {
-    console.error(`Exception in hasRole(${role}):`, error);
+    console.error(`Exception in checkUserRole(${role}):`, error);
     return false;
   }
 }

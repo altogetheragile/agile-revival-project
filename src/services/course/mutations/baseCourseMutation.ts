@@ -87,7 +87,7 @@ export const getAuthenticatedUser = async (): Promise<User | null> => {
   }
 };
 
-// Utility to check if user has admin role
+// Utility to check if user has admin role using the standardized check_user_role function
 export const checkAdminRole = async (userId: string): Promise<boolean> => {
   try {
     // In Dev Mode, always return true for admin role
@@ -98,7 +98,7 @@ export const checkAdminRole = async (userId: string): Promise<boolean> => {
     
     console.log("🔍 Checking if user has admin role:", userId);
     
-    // Direct RPC call to the fixed database function
+    // Direct RPC call to the standardized database function
     const { data: isAdmin, error: roleError } = await executeQuery<boolean>(
       async () => await supabase.rpc('check_user_role', {
         user_id: userId,
@@ -154,6 +154,9 @@ export const handleMutationError = (error: any, defaultMessage: string): void =>
     } else if (error.message.includes('timed out') || error.message.includes('connection')) {
       errorMessage = "Database connection issue";
       errorDescription = "Please try again in a moment.";
+    } else if (error.message.includes('infinite recursion detected')) {
+      errorMessage = "Database configuration issue";
+      errorDescription = "The system encountered a permission check loop. Please try again later.";
     } else {
       errorDescription = error.message;
     }

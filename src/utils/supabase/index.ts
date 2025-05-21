@@ -10,3 +10,6 @@ export * from './connection';
 
 // Export a convenience function for health checks
 export { checkDatabaseHealth as checkConnection } from './connection';
+
+// Add specific exports for role checking
+export { checkUserRole, isUserAdmin } from './controllers';

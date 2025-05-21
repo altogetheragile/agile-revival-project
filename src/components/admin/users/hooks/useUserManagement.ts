@@ -13,7 +13,8 @@ export const useUserManagement = () => {
     try {
       setLoading(true);
       
-      // Use RPC for users with admin role to avoid recursion issues
+      // Use direct query to application_users which now has proper RLS policies
+      // The check_user_role function is used in RLS policies to prevent recursion issues
       const { data, error } = await supabase
         .from('application_users')
         .select('*');
