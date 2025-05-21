@@ -4,7 +4,8 @@ import { PostgrestError } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
 /**
- * Check if the current user has admin role
+ * Check if the current user has admin role using the optimized check_user_role function
+ * to avoid recursion issues with RLS policies
  */
 export async function isUserAdmin(): Promise<boolean> {
   try {
@@ -14,7 +15,7 @@ export async function isUserAdmin(): Promise<boolean> {
       return false;
     }
     
-    // Use check_user_role directly with fully qualified references
+    // Use check_user_role with fully qualified references
     const { data, error } = await supabase.rpc('check_user_role', {
       user_id: userData.user.id,
       required_role: 'admin'
@@ -33,7 +34,8 @@ export async function isUserAdmin(): Promise<boolean> {
 }
 
 /**
- * Check if the current user has a specific role
+ * Check if the current user has a specific role using the optimized check_user_role function
+ * to avoid recursion issues with RLS policies
  */
 export async function hasRole(role: string): Promise<boolean> {
   try {

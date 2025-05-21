@@ -27,6 +27,11 @@ export const useCourseState = () => {
     setShowDeleted(prev => !prev);
   };
 
+  // Clear error state
+  const clearError = () => {
+    setLoadError(null);
+  };
+
   return {
     // Basic state
     courses,
@@ -39,6 +44,7 @@ export const useCourseState = () => {
     setIsLoading,
     loadError,
     setLoadError,
+    clearError,
     
     // UI state
     isFormOpen,
