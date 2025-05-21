@@ -73,3 +73,27 @@ export async function checkUserRole(role: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Check if a specific user has a specific role (used for admin verifications)
+ */
+export async function checkUserRoleById(userId: string, role: string): Promise<boolean> {
+  if (!userId) return false;
+  
+  try {
+    const { data, error } = await supabase.rpc('check_user_role', {
+      user_id: userId,
+      required_role: role
+    });
+    
+    if (error) {
+      console.error(`Error checking role ${role} for user ${userId}:`, error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error(`Exception in checkUserRoleById for ${userId}:`, error);
+    return false;
+  }
+}

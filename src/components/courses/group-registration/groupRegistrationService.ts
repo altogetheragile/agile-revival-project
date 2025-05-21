@@ -24,36 +24,50 @@ export const submitGroupRegistration = async (
     throw new Error(`Only ${availability.spotsLeft} spots available for this course.`);
   }
   
-  // Create registrations for all participants
-  const registrationsData = values.participants.map(participant => ({
-    course_id: courseId,
-    first_name: participant.firstName,
-    last_name: participant.lastName,
-    email: participant.email,
-    // Make sure phone is never null - use empty string as fallback
-    phone: participant.phone || "",
-    company: values.organizationName,
-    additional_notes: `Group registration by ${values.contactPerson.firstName} ${values.contactPerson.lastName} (${values.contactPerson.email}, ${values.contactPhone})${values.additionalNotes ? `. Notes: ${values.additionalNotes}` : ''}`,
-    status: 'pending'
-  }));
-  
-  const { error } = await supabase
-    .from('course_registrations')
-    .insert(registrationsData);
-
-  if (error) {
-    console.error("Supabase insert error:", error);
+  try {
+    // Get current user's email for RLS policy verification
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     
-    // Handle RLS violations specifically
-    if (error.message.includes('violates row-level security policy')) {
-      throw new Error("Permission error: You can only register with your own email address or for users in your organization.");
+    if (userError || !userData?.user?.email) {
+      throw new Error("You must be logged in to register for a course");
     }
     
+    // Create registrations for all participants
+    const registrationsData = values.participants.map(participant => ({
+      course_id: courseId,
+      first_name: participant.firstName,
+      last_name: participant.lastName,
+      email: participant.email,
+      // Make sure phone is never null - use empty string as fallback
+      phone: participant.phone || "",
+      company: values.organizationName,
+      additional_notes: `Group registration by ${values.contactPerson.firstName} ${values.contactPerson.lastName} (${values.contactPerson.email}, ${values.contactPhone})${values.additionalNotes ? `. Notes: ${values.additionalNotes}` : ''}`,
+      status: 'pending',
+      // Store the contact email for RLS verification
+      contact_email: userData.user.email
+    }));
+    
+    const { error } = await supabase
+      .from('course_registrations')
+      .insert(registrationsData);
+
+    if (error) {
+      console.error("Supabase insert error:", error);
+      
+      // Handle RLS violations specifically
+      if (error.message.includes('violates row-level security policy')) {
+        throw new Error("Permission error: You can only register with your own email address or for users in your organization.");
+      }
+      
+      throw error;
+    }
+    
+    return {
+      success: true,
+      participantCount
+    };
+  } catch (error: any) {
+    console.error("Registration error:", error);
     throw error;
   }
-  
-  return {
-    success: true,
-    participantCount
-  };
 };

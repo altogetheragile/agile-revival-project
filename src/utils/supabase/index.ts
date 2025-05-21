@@ -12,4 +12,4 @@ export * from './connection';
 export { checkDatabaseHealth as checkConnection } from './connection';
 
 // Add specific exports for role checking
-export { checkUserRole, isUserAdmin } from './controllers';
+export { checkUserRole, isUserAdmin, checkUserRoleById } from './controllers';

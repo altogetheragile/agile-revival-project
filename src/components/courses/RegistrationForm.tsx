@@ -95,6 +95,19 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
         return;
       }
       
+      // Get current user's email for RLS policy verification
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error("Authentication error:", userError);
+        toast({
+          title: "Authentication error",
+          description: "Please make sure you're logged in before registering.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       const registrationData = {
         course_id: courseId,
         first_name: values.firstName,
@@ -104,10 +117,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
         company: values.company || null,
         additional_notes: values.additionalNotes || null,
         status: 'pending',
-        contact_email: contactEmail, // Store the current contact email from site settings
+        contact_email: userData?.user?.email || contactEmail, // Store the current user email from authentication or site settings
       };
       
-      console.log("Submitting registration data with contact email:", contactEmail);
+      console.log("Submitting registration data with contact email:", userData?.user?.email || contactEmail);
       
       const { error, data } = await supabase
         .from('course_registrations')
