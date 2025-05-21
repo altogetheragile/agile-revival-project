@@ -43,6 +43,12 @@ export const submitGroupRegistration = async (
 
   if (error) {
     console.error("Supabase insert error:", error);
+    
+    // Handle RLS violations specifically
+    if (error.message.includes('violates row-level security policy')) {
+      throw new Error("Permission error: You can only register with your own email address or for users in your organization.");
+    }
+    
     throw error;
   }
   

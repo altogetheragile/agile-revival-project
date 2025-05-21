@@ -116,7 +116,17 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ course, onComplete 
 
       if (error) {
         console.error("Supabase insert error:", error);
-        throw error;
+        if (error.message.includes('violates row-level security policy')) {
+          // Handle RLS violation specifically
+          toast({
+            title: "Permission error",
+            description: "You can only register with your own email address. Please use the email associated with your account.",
+            variant: "destructive",
+          });
+        } else {
+          throw error;
+        }
+        return;
       }
       
       console.log("Registration successful:", data);
