@@ -1,7 +1,7 @@
 
 import { useAuth } from '@/contexts/auth';
 import { useState, useEffect } from 'react';
-import { checkUserRole } from '@/utils/supabase';
+import { checkUserRoleById } from '@/utils/supabase';
 
 export const useNavAuth = () => {
   // Using the actual auth context to get the correct auth state
@@ -13,7 +13,7 @@ export const useNavAuth = () => {
     useEffect(() => {
       const verifyAdminStatus = async () => {
         if (user && !adminStatusVerified) {
-          const confirmedAdmin = await checkUserRole(user.id, 'admin');
+          const confirmedAdmin = await checkUserRoleById(user.id, 'admin');
           setAdminStatusVerified(true);
         }
       };
