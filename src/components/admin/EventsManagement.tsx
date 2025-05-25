@@ -10,6 +10,7 @@ import { CourseErrorAlert } from "./courses/CourseErrorAlert";
 import { CourseDialogs } from "./courses/CourseDialogs";
 import { CourseTemplatesSection } from "./courses/CourseTemplatesSection";
 import { EventTypesSettings } from "./settings/EventTypesSettings";
+import { EventCategoriesSettings } from "./settings/EventCategoriesSettings";
 import { useCourseManagement } from "@/hooks/useCourseManagement";
 import { useCourseFiltering } from "@/hooks/useCourseFiltering";
 import { useMediaLibraryDialog } from "@/hooks/useMediaLibraryDialog";
@@ -118,10 +119,11 @@ const EventsManagement = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="scheduled">Scheduled Events</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="event-types">Event Types</TabsTrigger>
+          <TabsTrigger value="event-categories">Event Categories</TabsTrigger>
         </TabsList>
         
         <TabsContent value="scheduled" className="mt-6">
@@ -168,6 +170,10 @@ const EventsManagement = () => {
         
         <TabsContent value="event-types" className="mt-6">
           <EventTypesSettings />
+        </TabsContent>
+        
+        <TabsContent value="event-categories" className="mt-6">
+          <EventCategoriesSettings />
         </TabsContent>
       </Tabs>
 
