@@ -146,6 +146,15 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   console.log("CategorySelect: Available categories:", categories);
   console.log("CategorySelect: Current category:", currentCategory);
 
+  const handleCategorySelect = (selectedValue: string) => {
+    console.log("CategorySelect: Category selected:", selectedValue);
+    console.log("CategorySelect: Current value before change:", value);
+    
+    // Always set the new value, don't toggle
+    onValueChange(selectedValue);
+    setOpen(false);
+  };
+
   return (
     <div className={className}>
       <Popover open={open} onOpenChange={setOpen}>
@@ -178,11 +187,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                     key={category.id || category.value}
                     value={category.value}
                     onSelect={(currentValue) => {
-                      console.log("CategorySelect: Selected value:", currentValue);
-                      onValueChange(currentValue === value ? "" : currentValue);
-                      setOpen(false);
+                      console.log("CommandItem onSelect triggered with:", currentValue);
+                      console.log("Category object:", category);
+                      handleCategorySelect(category.value);
                     }}
-                    className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                   >
                     <Check
                       className={cn(
@@ -201,7 +210,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                     setOpen(false);
                     setNewCategoryOpen(true);
                   }}
-                  className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Create new category
