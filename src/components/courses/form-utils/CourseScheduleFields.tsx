@@ -127,94 +127,27 @@ export const CourseScheduleFields = ({
         />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Location</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder={isTemplate ? "To Be Determined" : "Enter location"} 
-                  {...field}
-                  readOnly={isTemplate}
-                  className={isTemplate ? "bg-muted" : ""}
-                />
-              </FormControl>
-              <FormDescription>
-                {isTemplate ? "Will be specified when scheduling" : "Where will the event be held?"}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="instructor"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Instructor</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder={isTemplate ? "To Be Assigned" : "Enter instructor name"} 
-                  {...field}
-                  readOnly={isTemplate}
-                  className={isTemplate ? "bg-muted" : ""}
-                />
-              </FormControl>
-              <FormDescription>
-                {isTemplate ? "Will be assigned when scheduling" : "Who will be teaching this event?"}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="spotsAvailable"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Available Spots</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  {...field} 
-                  readOnly={isTemplate}
-                  className={isTemplate ? "bg-muted" : ""}
-                  min={0}
-                  onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
-                />
-              </FormControl>
-              <FormDescription>
-                {isTemplate ? "Will be set when scheduling" : "How many spots are available?"}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="price"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Price</FormLabel>
-              <FormControl>
-                <Input placeholder="£999" {...field} />
-              </FormControl>
-              <FormDescription>
-                How much does the event cost?
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+      <FormField
+        control={form.control}
+        name="location"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Location</FormLabel>
+            <FormControl>
+              <Input 
+                placeholder={isTemplate ? "To Be Determined" : "Enter location"} 
+                {...field}
+                readOnly={isTemplate}
+                className={isTemplate ? "bg-muted" : ""}
+              />
+            </FormControl>
+            <FormDescription>
+              {isTemplate ? "Will be specified when scheduling" : "Where will the event be held?"}
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 };
