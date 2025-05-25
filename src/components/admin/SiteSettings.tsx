@@ -8,6 +8,7 @@ import { SecuritySettings } from "./settings/SecuritySettings";
 import { ServicesSettings } from "./settings/ServicesSettings";
 import { UserSettings } from "./settings/UserSettings";
 import { EventTypesSettings } from "./settings/EventTypesSettings";
+import { IntegrationsSettings } from "./settings/IntegrationsSettings";
 import { SettingsSync } from "./settings/SettingsSync";
 
 interface SiteSettingsProps {
@@ -35,6 +36,7 @@ const SiteSettings: React.FC<SiteSettingsProps> = ({ initialSection }) => {
             {activeTab === "event-types" && <EventTypesSettings />}
             {activeTab === "security" && <SecuritySettings />}
             {activeTab === "services" && <ServicesSettings />}
+            {activeTab === "integrations" && <IntegrationsSettings />}
             {activeTab === "users" && <UserSettings />}
           </div>
         </div>
