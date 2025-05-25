@@ -54,6 +54,7 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
             ) : (
               <FormControl>
                 <CategorySelect
+                  categories={categories}
                   value={field.value}
                   onValueChange={(val) => {
                     if (val === "__add_category__") {

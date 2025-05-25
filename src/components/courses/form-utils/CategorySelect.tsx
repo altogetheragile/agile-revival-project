@@ -111,8 +111,20 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     console.log("CategorySelect: Category selected:", selectedValue);
     console.log("CategorySelect: Current value before change:", value);
     
-    // Always set the new value, don't toggle
-    onValueChange(selectedValue);
+    // Find the category that matches the selected value (cmdk transforms to lowercase)
+    const matchedCategory = categories.find(cat => 
+      cat.value.toLowerCase() === selectedValue.toLowerCase() ||
+      cat.label.toLowerCase() === selectedValue.toLowerCase()
+    );
+    
+    if (matchedCategory) {
+      console.log("CategorySelect: Matched category:", matchedCategory);
+      onValueChange(matchedCategory.value);
+    } else {
+      console.log("CategorySelect: No matched category found for:", selectedValue);
+      onValueChange(selectedValue);
+    }
+    
     setOpen(false);
   };
 
@@ -142,7 +154,8 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                 {categories.map((category) => (
                   <CommandItem
                     key={category.id || category.value}
-                    value={category.value}
+                    value={category.label}
+                    keywords={[category.value, category.label]}
                     onSelect={(currentValue) => {
                       console.log("CommandItem onSelect triggered with:", currentValue);
                       console.log("Category object:", category);

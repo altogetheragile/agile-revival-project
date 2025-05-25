@@ -5,6 +5,7 @@ import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
 import { EventTypeSelect } from "../EventTypeSelect";
 import { CategorySelect } from "../CategorySelect";
+import { useCategoryManagement } from "@/hooks/useCategoryManagement";
 
 interface EventSectionProps {
   form: UseFormReturn<CourseFormData>;
@@ -17,6 +18,8 @@ export const EventSection: React.FC<EventSectionProps> = ({
   eventTypes, 
   onEventTypeDelete 
 }) => {
+  const { categories } = useCategoryManagement();
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {/* Event Type Select */}
@@ -48,6 +51,7 @@ export const EventSection: React.FC<EventSectionProps> = ({
             <FormLabel>Category</FormLabel>
             <FormControl>
               <CategorySelect 
+                categories={categories}
                 value={field.value || ""} 
                 onValueChange={field.onChange}
               />
