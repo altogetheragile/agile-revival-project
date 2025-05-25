@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Google OAuth configuration
@@ -6,8 +5,8 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/auth";
 
 // Dynamic redirect URI determination
 const getRedirectUri = () => {
-  // Use the current origin plus /auth/google/callback path for the redirect
-  return window.location.origin + "/auth/google/callback";
+  // Use the current origin plus /google-auth-callback path for the redirect
+  return window.location.origin + "/google-auth-callback";
 };
 
 // Scopes needed for Drive operations
