@@ -1,52 +1,16 @@
 
-import { Course, CourseMaterial } from "@/types/course";
-import { supabase } from "@/integrations/supabase/client";
-import { getCourseById, updateCourse } from "./courseService";
+// This service is obsolete since course materials are now managed through Google Drive
+// Materials are linked via googleDriveFolderId and googleDriveFolderUrl on the course record
+// Individual file management happens directly through Google Drive APIs
 
-export const addCourseMaterial = async (courseId: string, material: CourseMaterial): Promise<Course | null> => {
-  // Get the current course
-  const course = await getCourseById(courseId);
-  if (!course) {
-    return null;
-  }
-  
-  // Add the material to the course
-  const materials = [...(course.materials || []), material];
-  
-  // Update the course with the new materials
-  const success = await updateCourse(courseId, {
-    ...course,
-    materials
-  });
-  
-  if (success) {
-    // If successful, fetch and return the updated course
-    return await getCourseById(courseId);
-  }
-  
-  return null;
-};
+// If you need to work with course materials, use the Google Drive integration instead
+// The course record contains:
+// - googleDriveFolderId: string - ID of the Google Drive folder containing materials
+// - googleDriveFolderUrl: string - Direct URL to the Google Drive folder
 
-export const removeCourseMaterial = async (courseId: string, materialId: string): Promise<Course | null> => {
-  // Get the current course
-  const course = await getCourseById(courseId);
-  if (!course) {
-    return null;
-  }
-  
-  // Filter out the material to be removed
-  const materials = (course.materials || []).filter(m => m.id !== materialId);
-  
-  // Update the course with the filtered materials
-  const success = await updateCourse(courseId, {
-    ...course,
-    materials
-  });
-  
-  if (success) {
-    // If successful, fetch and return the updated course
-    return await getCourseById(courseId);
-  }
-  
-  return null;
+// This file is kept for backward compatibility but should not be used
+// Consider using the Google Drive hooks and services in src/hooks/google-drive/ instead
+
+export const deprecatedCourseMaterialService = {
+  notice: "This service is deprecated. Use Google Drive integration for course materials."
 };

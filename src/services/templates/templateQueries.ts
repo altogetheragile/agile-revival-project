@@ -1,4 +1,3 @@
-
 import { Course } from "@/types/course";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,7 +19,6 @@ const mapDbToCourse = (dbCourse: any): Course => ({
   skillLevel: dbCourse.skill_level,
   format: dbCourse.format,
   status: dbCourse.status,
-  materials: dbCourse.materials || [],
   googleDriveFolderId: dbCourse.google_drive_folder_id,
   googleDriveFolderUrl: dbCourse.google_drive_folder_url,
   isTemplate: dbCourse.is_template,
