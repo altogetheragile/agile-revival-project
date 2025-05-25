@@ -12,6 +12,7 @@ import { AdditionalInfoFields } from "./form-utils/AdditionalInfoFields";
 import { CourseImageField } from "./form-utils/CourseImageField";
 import { CourseStatusField } from "./form-utils/CourseStatusField";
 import { CourseFormActions } from "./form-utils/CourseFormActions";
+import { CourseGoogleDriveSection } from "./form-utils/CourseGoogleDriveSection";
 import { formatDate } from "@/lib/utils";
 
 interface CourseFormProps {
@@ -140,6 +141,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
         <CourseDetailsFields form={form} />
         <AdditionalInfoFields form={form} />
         <CourseImageField form={form} onOpenMediaLibrary={onOpenMediaLibrary || (() => {})} />
+        <CourseGoogleDriveSection courseId={initialData.id} />
         <CourseStatusField form={form} />
         <CourseFormActions 
           onCancel={onCancel} 

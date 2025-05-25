@@ -18,7 +18,7 @@ interface CourseBase {
   duration?: string;
 }
 
-// Material type definition
+// Material type definition for separate course materials table
 export interface CourseMaterial {
   id: string;
   courseId: string;
@@ -63,7 +63,6 @@ export interface Course {
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string | null;
-  materials?: CourseMaterial[];
   // Additional properties for mapping
   event_type_id?: string;
   category_id?: string;
@@ -100,7 +99,6 @@ export interface CourseFormData {
   googleDriveFolderId?: string | null;
   googleDriveFolderUrl?: string | null;
   deletedAt?: string | null;
-  materials?: CourseMaterial[];
   // Additional properties for mapping
   event_type_id?: string;
   category_id?: string;
