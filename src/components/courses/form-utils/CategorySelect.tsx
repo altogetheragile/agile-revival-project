@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
-import { getAllCategories, createCategory } from "@/services/category/categoryService";
+import { createCategory } from "@/services/category/categoryService";
 
 // Use a consistent type definition
 interface Category {
@@ -40,7 +40,7 @@ interface Category {
 interface CategorySelectProps {
   value: string;
   onValueChange: (value: string) => void;
-  categories?: Category[];
+  categories: Category[];
   className?: string;
   onDelete?: (value: string, e: React.MouseEvent) => void;
 }
@@ -48,55 +48,19 @@ interface CategorySelectProps {
 export const CategorySelect: React.FC<CategorySelectProps> = ({
   value,
   onValueChange,
-  categories: propCategories,
+  categories,
   className,
   onDelete
 }) => {
   const [open, setOpen] = useState(false);
   const [newCategoryOpen, setNewCategoryOpen] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [newLabel, setNewLabel] = useState("");
   const [newValue, setNewValue] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  // Load categories from props or fetch them
-  useEffect(() => {
-    if (propCategories) {
-      console.log("CategorySelect: Using prop categories:", propCategories);
-      setCategories(propCategories);
-    } else {
-      console.log("CategorySelect: No prop categories, fetching from API");
-      fetchCategories();
-    }
-  }, [propCategories]);
-
-  const fetchCategories = async () => {
-    setLoading(true);
-    try {
-      console.log("CategorySelect: Fetching categories...");
-      const data = await getAllCategories();
-      console.log("CategorySelect: Fetched categories:", data);
-      
-      // Ensure each category has an id property
-      const categoriesWithId = data.map(cat => ({
-        ...cat,
-        id: cat.id || cat.value
-      }));
-      
-      console.log("CategorySelect: Categories with ID:", categoriesWithId);
-      setCategories(categoriesWithId);
-    } catch (error) {
-      console.error("CategorySelect: Failed to fetch categories:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load categories",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  console.log("CategorySelect: Received categories prop:", categories);
+  console.log("CategorySelect: Current value:", value);
 
   const handleNewCategory = async () => {
     if (!newLabel.trim() || !newValue.trim()) {
@@ -121,7 +85,6 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           description: "New category created"
         });
         setNewCategoryOpen(false);
-        await fetchCategories(); // Refresh categories
         onValueChange(category.value);
         
         // Reset form
@@ -142,8 +105,6 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
 
   const currentCategory = categories.find((category) => category.value === value);
 
-  console.log("CategorySelect: Current value:", value);
-  console.log("CategorySelect: Available categories:", categories);
   console.log("CategorySelect: Current category:", currentCategory);
 
   const handleCategorySelect = (selectedValue: string) => {
@@ -168,8 +129,6 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           >
             {value && currentCategory
               ? currentCategory.label
-              : loading
-              ? "Loading categories..."
               : "Select category..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -178,9 +137,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           <Command className="bg-white dark:bg-gray-800">
             <CommandInput placeholder="Search categories..." />
             <CommandList>
-              <CommandEmpty>
-                {loading ? "Loading categories..." : "No category found."}
-              </CommandEmpty>
+              <CommandEmpty>No category found.</CommandEmpty>
               <CommandGroup>
                 {categories.map((category) => (
                   <CommandItem

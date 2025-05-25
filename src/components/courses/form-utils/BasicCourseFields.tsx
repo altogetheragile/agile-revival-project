@@ -45,6 +45,8 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
     handleDeleteEventType
   } = useEventTypeManagement();
 
+  console.log("BasicCourseFields: Categories from hook:", categories);
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Basic Information</h3>
@@ -150,8 +152,10 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
                 />
               ) : (
                 <CategorySelect
+                  categories={categories}
                   value={field.value || ""}
                   onValueChange={(value) => {
+                    console.log("BasicCourseFields: Category value changed to:", value);
                     if (value === "__add_category__") {
                       setCategoryAddMode(true);
                     } else {
