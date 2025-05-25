@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
-import CourseManagement from "@/components/admin/CourseManagement";
+import EventsManagement from "@/components/admin/EventsManagement";
 import { BlogManagement } from "@/components/admin/BlogManagement";
 import UserManagement from "@/components/admin/UserManagement";
 import SiteSettings from "@/components/admin/SiteSettings";
@@ -123,7 +123,7 @@ const AdminDashboard = () => {
               </TabsList>
               
               <TabsContent value="events" className="pt-4">
-                <CourseManagement />
+                <EventsManagement />
               </TabsContent>
               
               <TabsContent value="blog" className="pt-4">
