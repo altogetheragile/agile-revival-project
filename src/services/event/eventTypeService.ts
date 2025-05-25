@@ -263,7 +263,8 @@ export const getEventTypeUsageCounts = async (): Promise<Record<string, number>>
     const { data, error } = await supabase
       .from('courses')
       .select('event_type_id')
-      .not('event_type_id', 'is', null);
+      .not('event_type_id', 'is', null)
+      .is('deleted_at', null); // Only count non-deleted courses
     
     if (error) {
       console.error("Error fetching event type usage:", error);
