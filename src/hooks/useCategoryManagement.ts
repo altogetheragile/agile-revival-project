@@ -1,83 +1,74 @@
 
 import { useState, useEffect } from "react";
-import { COURSE_CATEGORIES } from "@/constants/courseCategories";
 import { useToast } from "@/components/ui/use-toast";
-import { useSiteSettings } from "@/contexts/site-settings";
+import { getAllCategories, createCategory, deleteCategory, Category } from "@/services/category/categoryService";
 
 export const useCategoryManagement = () => {
   const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
   const [addMode, setAddMode] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const { toast } = useToast();
-  const { settings, updateSettings } = useSiteSettings();
 
-  // Initialize categories from site settings if available, otherwise use COURSE_CATEGORIES
+  // Load categories from database
   useEffect(() => {
-    const initCategories = () => {
-      if (settings.courseCategories && Array.isArray(settings.courseCategories)) {
-        // Ensure we exclude the "all" category from editing
-        setCategories(
-          settings.courseCategories
-            .filter(cat => cat.value !== "all")
-            .map(cat => ({
-              value: cat.value,
-              label: cat.label
-            }))
-        );
-      } else {
-        // Fallback to default categories
-        setCategories(
-          COURSE_CATEGORIES
-            .filter(cat => cat.value !== "all")
-            .map(cat => ({
-              value: cat.value,
-              label: cat.label
-            }))
-        );
+    const loadCategories = async () => {
+      try {
+        console.log("useCategoryManagement: Loading categories from database...");
+        const data = await getAllCategories();
+        console.log("useCategoryManagement: Loaded categories:", data);
+        
+        // Transform database categories to the format expected by the hook
+        const transformedCategories = data.map(cat => ({
+          value: cat.value,
+          label: cat.label
+        }));
+        
+        setCategories(transformedCategories);
+      } catch (error) {
+        console.error("useCategoryManagement: Error loading categories:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load categories from database",
+          variant: "destructive"
+        });
       }
     };
     
-    initCategories();
-  }, [settings]);
-
-  const saveCategoriesToSettings = async (updatedCategories: { value: string; label: string }[]) => {
-    try {
-      // Always include the "all" category for filtering purposes
-      const allCategory = { value: "all", label: "All Courses" };
-      const categoriesForSaving = [allCategory, ...updatedCategories];
-      
-      // Save to site settings
-      await updateSettings('courseCategories', categoriesForSaving);
-      
-      console.log("Categories saved successfully:", categoriesForSaving);
-      return true;
-    } catch (error) {
-      console.error("Error saving categories:", error);
-      return false;
-    }
-  };
+    loadCategories();
+  }, [toast]);
 
   const handleAddCategory = async (onAdd: (value: string) => void) => {
     if (
       newCategory.trim() &&
       !categories.some(opt => opt.value.toLowerCase() === newCategory.trim().toLowerCase())
     ) {
-      const newCat = { value: newCategory.trim().toLowerCase(), label: newCategory.trim() };
-      const updatedCategories = [...categories, newCat];
-      
-      const success = await saveCategoriesToSettings(updatedCategories);
-      
-      if (success) {
-        setCategories(updatedCategories);
-        onAdd(newCat.value);
-        setAddMode(false);
-        setNewCategory("");
+      try {
+        const newCat = { 
+          value: newCategory.trim().toLowerCase(), 
+          label: newCategory.trim() 
+        };
         
-        toast({
-          title: "Category added",
-          description: `"${newCat.label}" has been added to categories.`
-        });
-      } else {
+        console.log("useCategoryManagement: Creating new category:", newCat);
+        
+        // Create category in database
+        const createdCategory = await createCategory(newCat);
+        
+        if (createdCategory) {
+          // Update local state
+          const updatedCategories = [...categories, newCat];
+          setCategories(updatedCategories);
+          
+          onAdd(newCat.value);
+          setAddMode(false);
+          setNewCategory("");
+          
+          toast({
+            title: "Category added",
+            description: `"${newCat.label}" has been added to categories.`
+          });
+        }
+      } catch (error) {
+        console.error("useCategoryManagement: Error creating category:", error);
         toast({
           title: "Error",
           description: "There was a problem adding the category.",
@@ -89,29 +80,31 @@ export const useCategoryManagement = () => {
 
   const handleDeleteCategory = async (value: string, onDelete: (value: string) => void) => {
     try {
-      console.log("Deleting category:", value);
-      const updatedCategories = categories.filter(cat => cat.value !== value);
-      const deletedCategory = categories.find(cat => cat.value === value);
+      console.log("useCategoryManagement: Deleting category:", value);
       
-      const success = await saveCategoriesToSettings(updatedCategories);
+      // Find the category to get its ID
+      const allCategories = await getAllCategories();
+      const categoryToDelete = allCategories.find(cat => cat.value === value);
       
-      if (success) {
-        setCategories(updatedCategories); // Update local state
-        onDelete(value);
+      if (categoryToDelete) {
+        const success = await deleteCategory(categoryToDelete.id);
         
-        toast({
-          title: "Category deleted",
-          description: `"${deletedCategory?.label || value}" has been removed from categories.`
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "There was a problem deleting the category.",
-          variant: "destructive"
-        });
+        if (success) {
+          // Update local state
+          const updatedCategories = categories.filter(cat => cat.value !== value);
+          const deletedCategory = categories.find(cat => cat.value === value);
+          
+          setCategories(updatedCategories);
+          onDelete(value);
+          
+          toast({
+            title: "Category deleted",
+            description: `"${deletedCategory?.label || value}" has been removed from categories.`
+          });
+        }
       }
     } catch (error) {
-      console.error("Error deleting category:", error);
+      console.error("useCategoryManagement: Error deleting category:", error);
       toast({
         title: "Error",
         description: "There was a problem deleting the category.",
