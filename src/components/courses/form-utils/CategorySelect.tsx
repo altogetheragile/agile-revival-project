@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, PlusCircle } from "lucide-react";
@@ -113,7 +114,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           description: "New category created"
         });
         setNewCategoryOpen(false);
-        fetchCategories();
+        await fetchCategories(); // Refresh categories
         onValueChange(category.value);
         
         // Reset form
@@ -145,13 +146,13 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             className="w-full justify-between"
             disabled={loading}
           >
-            {value
-              ? currentCategory?.label || value
+            {value && currentCategory
+              ? currentCategory.label
               : "Select category..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
+        <PopoverContent className="w-full p-0" align="start">
           <Command>
             <CommandInput placeholder="Search categories..." />
             <CommandList>
@@ -162,7 +163,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                     key={category.id || category.value}
                     value={category.value}
                     onSelect={(currentValue) => {
-                      onValueChange(currentValue);
+                      onValueChange(currentValue === value ? "" : currentValue);
                       setOpen(false);
                     }}
                   >

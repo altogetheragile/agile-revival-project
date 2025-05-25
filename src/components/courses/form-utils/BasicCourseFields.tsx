@@ -150,7 +150,8 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
                 />
               ) : (
                 <CategorySelect
-                  value={field.value}
+                  categories={categories}
+                  value={field.value || ""}
                   onValueChange={(value) => {
                     if (value === "__add_category__") {
                       setCategoryAddMode(true);
