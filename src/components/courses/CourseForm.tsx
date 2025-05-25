@@ -8,7 +8,6 @@ import { CourseFormData } from "@/types/course";
 import { BasicCourseFields } from "./form-utils/BasicCourseFields";
 import { CourseScheduleFields } from "./form-utils/CourseScheduleFields";
 import { CourseDetailsFields } from "./form-utils/CourseDetailsFields";
-import { AdditionalInfoFields } from "./form-utils/AdditionalInfoFields";
 import { CourseImageField } from "./form-utils/CourseImageField";
 import { CourseStatusField } from "./form-utils/CourseStatusField";
 import { CourseFormActions } from "./form-utils/CourseFormActions";
@@ -139,7 +138,6 @@ const CourseForm: React.FC<CourseFormProps> = ({
         <BasicCourseFields form={form} />
         <CourseScheduleFields form={form} isTemplate={isTemplateMode} />
         <CourseDetailsFields form={form} />
-        <AdditionalInfoFields form={form} />
         <CourseImageField form={form} onOpenMediaLibrary={onOpenMediaLibrary || (() => {})} />
         <CourseGoogleDriveSection courseId={initialData.id} />
         <CourseStatusField form={form} />

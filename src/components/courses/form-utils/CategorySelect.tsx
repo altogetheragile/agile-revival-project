@@ -63,8 +63,10 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   // Load categories from props or fetch them
   useEffect(() => {
     if (propCategories) {
+      console.log("CategorySelect: Using prop categories:", propCategories);
       setCategories(propCategories);
     } else {
+      console.log("CategorySelect: No prop categories, fetching from API");
       fetchCategories();
     }
   }, [propCategories]);
@@ -72,15 +74,20 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   const fetchCategories = async () => {
     setLoading(true);
     try {
+      console.log("CategorySelect: Fetching categories...");
       const data = await getAllCategories();
+      console.log("CategorySelect: Fetched categories:", data);
+      
       // Ensure each category has an id property
       const categoriesWithId = data.map(cat => ({
         ...cat,
         id: cat.id || cat.value
       }));
+      
+      console.log("CategorySelect: Categories with ID:", categoriesWithId);
       setCategories(categoriesWithId);
     } catch (error) {
-      console.error("Failed to fetch categories:", error);
+      console.error("CategorySelect: Failed to fetch categories:", error);
       toast({
         title: "Error",
         description: "Failed to load categories",
@@ -135,6 +142,10 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
 
   const currentCategory = categories.find((category) => category.value === value);
 
+  console.log("CategorySelect: Current value:", value);
+  console.log("CategorySelect: Available categories:", categories);
+  console.log("CategorySelect: Current category:", currentCategory);
+
   return (
     <div className={className}>
       <Popover open={open} onOpenChange={setOpen}>
@@ -148,24 +159,30 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           >
             {value && currentCategory
               ? currentCategory.label
+              : loading
+              ? "Loading categories..."
               : "Select category..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
-          <Command>
+        <PopoverContent className="w-full p-0 bg-white dark:bg-gray-800 border shadow-md z-50" align="start">
+          <Command className="bg-white dark:bg-gray-800">
             <CommandInput placeholder="Search categories..." />
             <CommandList>
-              <CommandEmpty>No category found.</CommandEmpty>
+              <CommandEmpty>
+                {loading ? "Loading categories..." : "No category found."}
+              </CommandEmpty>
               <CommandGroup>
                 {categories.map((category) => (
                   <CommandItem
                     key={category.id || category.value}
                     value={category.value}
                     onSelect={(currentValue) => {
+                      console.log("CategorySelect: Selected value:", currentValue);
                       onValueChange(currentValue === value ? "" : currentValue);
                       setOpen(false);
                     }}
+                    className="hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <Check
                       className={cn(
@@ -184,6 +201,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                     setOpen(false);
                     setNewCategoryOpen(true);
                   }}
+                  className="hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Create new category
@@ -195,7 +213,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
       </Popover>
 
       <Dialog open={newCategoryOpen} onOpenChange={setNewCategoryOpen}>
-        <DialogContent>
+        <DialogContent className="bg-white dark:bg-gray-800">
           <DialogHeader>
             <DialogTitle>Add new category</DialogTitle>
             <DialogDescription>
