@@ -39,7 +39,7 @@ function App() {
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
-                <Route path="/google-auth-callback" element={<GoogleAuthCallback />} />
+                <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
                 <Route path="/training-schedule" element={<TrainingSchedule />} />
                 <Route path="/course/:id" element={<CourseDetails />} />
                 <Route path="/unauthorized" element={<UnauthorizedPage />} />
