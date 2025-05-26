@@ -1,34 +1,31 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown, Trash2 } from "lucide-react";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import {
   Command,
-  CommandEmpty,
-  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
+  CommandGroup,
+  CommandEmpty,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-interface Category {
-  id?: string;
+export interface Category {
   value: string;
   label: string;
 }
 
 interface CategorySelectProps {
   value: Category | null;
-  onValueChange: (category: Category | null) => void;
+  onValueChange: (category: Category) => void;
   categories: Category[];
   className?: string;
-  onDelete?: (value: string, e: React.MouseEvent) => void;
 }
 
 export const CategorySelect: React.FC<CategorySelectProps> = ({
@@ -36,22 +33,12 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   onValueChange,
   categories,
   className,
-  onDelete,
 }) => {
   const [open, setOpen] = useState(false);
 
-  // Guard: Don't render until categories are available
   if (!categories || categories.length === 0) {
-    console.log("⚠️ CategorySelect: Skipping render — no categories yet");
     return <div className="h-10 w-full bg-gray-100 animate-pulse rounded-md" />;
   }
-
-  // Add debugging to catch value/option mismatches
-  useEffect(() => {
-    if (value && !categories.some(c => c.value === value.value)) {
-      console.warn("⚠️ CategorySelect: Selected value does not match any category", value);
-    }
-  }, [categories, value]);
 
   return (
     <div className={className}>
@@ -67,7 +54,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0 bg-white dark:bg-gray-800 border shadow-md z-50" align="start">
+        <PopoverContent className="w-full p-0 bg-white dark:bg-gray-800 z-50">
           <Command>
             <CommandInput placeholder="Search categories..." />
             <CommandList>
@@ -76,31 +63,20 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                 {categories.map((category) => (
                   <CommandItem
                     key={category.value}
+                    value={category.value}
                     onSelect={() => {
                       onValueChange(category);
                       setOpen(false);
                     }}
-                    className="flex justify-between items-center"
+                    className="hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
-                    <div className="flex items-center">
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          value?.value === category.value ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {category.label}
-                    </div>
-                    {onDelete && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(category.value, e);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-400 hover:text-red-600" />
-                      </button>
-                    )}
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value?.value === category.value ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {category.label}
                   </CommandItem>
                 ))}
               </CommandGroup>
