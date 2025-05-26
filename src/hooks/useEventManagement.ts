@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Event, EventFormData } from "@/types/event";
 import { Course, CourseFormData } from "@/types/course";
-import { getAllEvents, createEvent, updateEvent, deleteEvent, getEventById } from "@/services/eventService";
+import { getScheduledEvents, createEvent, updateEvent, deleteEvent, getEventById } from "@/services/eventService";
 import { toast } from "sonner";
 import { useConnection } from "@/contexts/ConnectionContext";
 
@@ -47,13 +46,14 @@ export const useEventManagement = () => {
         }
       }
       
-      console.log("Loading all events...");
-      const allCourses = await getAllEvents();
+      console.log("Loading scheduled events only (excluding templates)...");
+      // FIXED: Use getScheduledEvents instead of getAllEvents to exclude templates
+      const scheduledCourses = await getScheduledEvents();
       
-      if (!allCourses || allCourses.length === 0) {
-        console.log("No events loaded or empty array returned");
+      if (!scheduledCourses || scheduledCourses.length === 0) {
+        console.log("No scheduled events loaded or empty array returned");
       } else {
-        console.log(`Loaded ${allCourses.length} events successfully`);
+        console.log(`Loaded ${scheduledCourses.length} scheduled events successfully (templates excluded)`);
         // Reset retry counter on successful load
         if (loadRetries > 0) {
           setLoadRetries(0);
@@ -66,10 +66,10 @@ export const useEventManagement = () => {
       }
       
       // Convert Course[] to Event[]
-      const convertedEvents = convertCoursesToEvents(allCourses);
+      const convertedEvents = convertCoursesToEvents(scheduledCourses);
       setEvents(convertedEvents);
     } catch (error: any) {
-      console.error("Error loading events:", error);
+      console.error("Error loading scheduled events:", error);
       setLoadError(error?.message || "Failed to load events");
       
       // Check for specific error types
