@@ -79,11 +79,11 @@ const CourseForm: React.FC<CourseFormProps> = ({
   console.log("CourseForm: Final template mode determined as:", isTemplateMode);
   console.log("=== CourseForm INITIALIZATION DEBUG END ===");
   
-  // FIXED: Ensure form defaultValues respect forceTemplateMode
+  // FIXED: Update form defaultValues to respect forceTemplateMode
   const form = useForm<CourseFormData>({
     defaultValues: {
       ...initialData,
-      isTemplate: forceTemplateMode ?? initialData.isTemplate ?? false // Direct prop application
+      isTemplate: forceTemplateMode ?? initialData.isTemplate ?? false
     } as CourseFormData
   });
 
@@ -159,19 +159,19 @@ const CourseForm: React.FC<CourseFormProps> = ({
     console.log("  - form.getValues('isTemplate'):", form.getValues("isTemplate"));
     console.log("  - FINAL isTemplate:", isTemplate);
     
+    // FIXED: Runtime assertion and debug statement
+    console.log("CourseForm: Saving course with payload:", {
+      is_template: isTemplate,
+      fromForm: form.getValues("isTemplate"),
+      forceTemplateMode,
+      title: data.title
+    });
+    
     const finalData = {
       ...data,
       spotsAvailable: Number(data.spotsAvailable),
       isTemplate: isTemplate // Use the simplified template flag
     };
-    
-    // FIXED: Runtime assertion and debug statement
-    console.log("CourseForm: Saving course with payload:", {
-      is_template: finalData.isTemplate,
-      fromForm: form.getValues("isTemplate"),
-      forceTemplateMode,
-      title: finalData.title
-    });
     
     console.log("CourseForm: FINAL DATA being submitted:", finalData);
     console.log("=== CourseForm handleSubmit FIXED LOGIC DEBUG END ===");
