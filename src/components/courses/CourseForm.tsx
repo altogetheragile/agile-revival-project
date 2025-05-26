@@ -136,6 +136,9 @@ const CourseForm: React.FC<CourseFormProps> = ({
     console.log("CourseForm: Raw form data received:", data);
     console.log("CourseForm: Props at submission:", { forceTemplateMode, isTemplate });
     
+    // FIXED: Move template flag determination to the very beginning
+    const isTemplate = forceTemplateMode || form.getValues("isTemplate");
+    
     // Process learning outcomes if provided as a string
     if (typeof data.learningOutcomes === 'string') {
       data.learningOutcomes = data.learningOutcomes
@@ -150,9 +153,6 @@ const CourseForm: React.FC<CourseFormProps> = ({
       const endDateStr = formatDate(data.endDate);
       data.dates = startDateStr === endDateStr ? startDateStr : `${startDateStr} - ${endDateStr}`;
     }
-    
-    // FIXED: Simplified template flag determination with forceTemplateMode priority - MOVED BEFORE USAGE
-    const isTemplate = forceTemplateMode || form.getValues("isTemplate");
     
     console.log("CourseForm: FIXED - Template flag determination:");
     console.log("  - forceTemplateMode:", forceTemplateMode);
