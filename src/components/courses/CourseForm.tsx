@@ -151,7 +151,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
       data.dates = startDateStr === endDateStr ? startDateStr : `${startDateStr} - ${endDateStr}`;
     }
     
-    // FIXED: Simplified template flag determination with forceTemplateMode priority
+    // FIXED: Simplified template flag determination with forceTemplateMode priority - MOVED BEFORE USAGE
     const isTemplate = forceTemplateMode || form.getValues("isTemplate");
     
     console.log("CourseForm: FIXED - Template flag determination:");
