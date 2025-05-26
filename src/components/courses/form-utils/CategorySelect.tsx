@@ -16,16 +16,15 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-// Use a consistent type definition
-interface Category {
+export interface Category {
   id?: string;
   value: string;
   label: string;
 }
 
 interface CategorySelectProps {
-  value: string;
-  onValueChange: (value: string) => void;
+  value: Category | null;
+  onValueChange: (value: Category) => void;
   categories: Category[];
   className?: string;
   onDelete?: (value: string, e: React.MouseEvent) => void;
@@ -39,8 +38,6 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   onDelete,
 }) => {
   const [open, setOpen] = useState(false);
-
-  const currentCategory = categories.find((cat) => cat.value === value);
 
   if (!categories || categories.length === 0) {
     return <div className="h-10 w-full bg-gray-100 animate-pulse rounded-md" />;
@@ -56,47 +53,44 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             aria-expanded={open}
             className="w-full justify-between"
           >
-            {currentCategory ? currentCategory.label : "Select category..."}
+            {value ? value.label : "Select category..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0 bg-white dark:bg-gray-800 border shadow-md z-50" align="start">
+        <PopoverContent className="w-full p-0" align="start">
           <Command>
             <CommandInput placeholder="Search categories..." />
             <CommandList>
               <CommandEmpty>No category found.</CommandEmpty>
               <CommandGroup>
                 {categories.map((category) => {
-                  const isSelected = category.value === value;
+                  const isSelected = value?.value === category.value;
                   return (
                     <CommandItem
                       key={category.value}
                       value={category.value}
                       onSelect={() => {
-                        onValueChange(category.value);
+                        onValueChange(category);
                         setOpen(false);
                       }}
-                      className="flex justify-between items-center"
+                      className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                     >
-                      <div className="flex items-center">
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            isSelected ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {category.label}
-                      </div>
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          isSelected ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {category.label}
                       {onDelete && (
                         <button
-                          type="button"
-                          className="text-red-500 ml-2"
                           onClick={(e) => {
                             e.stopPropagation();
                             onDelete(category.value, e);
                           }}
+                          className="ml-auto text-red-500 hover:text-red-700"
                         >
-                          🗑️
+                          🗑
                         </button>
                       )}
                     </CommandItem>
