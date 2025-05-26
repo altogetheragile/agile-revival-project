@@ -1,8 +1,13 @@
-// components/CourseForm/CategorySelect.tsx
+
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 interface Category {
   id?: string;
@@ -12,8 +17,8 @@ interface Category {
 
 interface CategorySelectProps {
   categories: Category[];
-  value: string;
-  onValueChange: (value: string) => void;
+  value: Category | null;
+  onValueChange: (selectedCategory: Category | null) => void;
   onDelete?: (value: string, e: React.MouseEvent) => void;
   className?: string;
 }
@@ -25,34 +30,60 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   onDelete,
   className
 }) => {
-  const currentCategory = categories.find(cat => cat.value === value);
+  const handleChange = (newValue: string) => {
+    if (newValue === "__add_category__") {
+      onValueChange(null);
+    } else {
+      const selectedCategory = categories.find(cat => cat.value === newValue);
+      onValueChange(selectedCategory || null);
+    }
+  };
 
   return (
-    <div className={cn("relative", className)}>
-      <select
-        className="w-full h-10 border rounded-md px-3 bg-white dark:bg-gray-800"
-        value={value}
-        onChange={(e) => onValueChange(e.target.value)}
-      >
-        <option value="">Select category...</option>
-        {categories.map((category) => (
-          <option key={category.value} value={category.value}>
-            {category.label}
-          </option>
+    <Select
+      onValueChange={handleChange}
+      value={value?.value || ""}
+      defaultValue={value?.value || ""}
+    >
+      <SelectTrigger className={className}>
+        <SelectValue placeholder="Select or create a category" />
+      </SelectTrigger>
+      <SelectContent className="min-w-[200px] z-[100]">
+        {categories.map(category => (
+          <div
+            key={category.id || category.value}
+            className="flex items-center justify-between px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer group relative"
+          >
+            <SelectItem
+              value={category.value}
+              className="flex-1 cursor-pointer"
+            >
+              {category.label}
+            </SelectItem>
+            {onDelete && (
+              <button
+                type="button"
+                className="ml-2 h-5 w-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600"
+                onClick={e => {
+                  e.preventDefault(); 
+                  e.stopPropagation();
+                  onDelete(category.value, e);
+                }}
+                aria-label={`Delete category ${category.label}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
         ))}
-      </select>
-
-      {onDelete && value && currentCategory && (
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          onClick={(e) => onDelete(value, e)}
-          className="absolute right-2 top-1.5 text-red-500"
+        <SelectItem
+          key="add-category"
+          value="__add_category__"
+          className="text-blue-600 cursor-pointer border-t border-muted"
         >
-          <Trash className="h-4 w-4" />
-        </Button>
-      )}
-    </div>
+          + Add new category
+        </SelectItem>
+      </SelectContent>
+    </Select>
   );
 };
