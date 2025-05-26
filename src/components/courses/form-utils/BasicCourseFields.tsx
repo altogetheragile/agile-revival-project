@@ -149,16 +149,15 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
                 />
               ) : (
                 <CategorySelect
-                  categories={categories}
-                  value={categories.find(cat => cat.value === field.value) || null}
-                  onValueChange={(selectedCategory) => {
-                    if (selectedCategory === null) {
-                      setCategoryAddMode(true);
-                    } else {
-                      field.onChange(selectedCategory.value);
-                    }
-                  }}
-                  onDelete={(value, e) => {
+                    categories={categories}
+                          value={field.value || ""}
+                      onValueChange={(value) => {
+                        if (value === "__add_category__") {
+                          setCategoryAddMode(true);
+                        } else {
+                          field.onChange(value);
+                        }
+                      }}ete={(value, e) => {
                     if (value === field.value) {
                       field.onChange(categories[0]?.value || "");
                     }
