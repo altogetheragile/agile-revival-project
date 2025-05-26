@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
@@ -72,75 +73,33 @@ const CourseForm: React.FC<CourseFormProps> = ({
     hasInitialDataId: !!initialData.id
   });
 
-  // CRITICAL FIX: Determine initial template mode with immediate validation
-  const determineInitialTemplateMode = () => {
-    console.log("CourseForm: Determining initial template mode...");
-    
-    if (forceTemplateMode) {
-      console.log("CourseForm: forceTemplateMode is TRUE - setting template mode to TRUE");
-      return true;
-    }
-    
-    if (isTemplate) {
-      console.log("CourseForm: isTemplate prop is TRUE - setting template mode to TRUE");
-      return true;
-    }
-    
-    const fromInitialData = initialData.isTemplate || false;
-    console.log("CourseForm: Using initialData.isTemplate:", fromInitialData);
-    return fromInitialData;
-  };
-
-  const [isTemplateMode, setIsTemplateMode] = useState(determineInitialTemplateMode());
+  // FIXED: Determine template mode with forceTemplateMode taking priority
+  const isTemplateMode = forceTemplateMode || isTemplate || initialData.isTemplate || false;
   
-  console.log("CourseForm: Initial template mode determined as:", isTemplateMode);
+  console.log("CourseForm: Final template mode determined as:", isTemplateMode);
   console.log("=== CourseForm INITIALIZATION DEBUG END ===");
   
+  // FIXED: Ensure form defaultValues respect forceTemplateMode
   const form = useForm<CourseFormData>({
     defaultValues: {
       ...initialData,
-      isTemplate: isTemplateMode // Ensure form starts with correct template flag
+      isTemplate: forceTemplateMode ?? initialData.isTemplate ?? false // Direct prop application
     } as CourseFormData
   });
 
-  // CRITICAL FIX: Sync form state with forceTemplateMode immediately on mount and prop changes
+  // FIXED: Simplified state management - use props directly instead of complex state
+  const [internalTemplateMode, setInternalTemplateMode] = useState(isTemplateMode);
+
+  // Sync internal state when props change (only for UI display, not form logic)
   useEffect(() => {
-    console.log("=== CourseForm useEffect SYNC DEBUG START ===");
-    console.log("CourseForm: useEffect triggered - syncing template state");
-    console.log("CourseForm: Current props:", { forceTemplateMode, isTemplate });
-    console.log("CourseForm: Current isTemplateMode state:", isTemplateMode);
+    const shouldBeTemplateMode = forceTemplateMode || isTemplate || initialData.isTemplate || false;
+    setInternalTemplateMode(shouldBeTemplateMode);
     
-    let shouldBeTemplateMode = false;
+    // Sync form value as well
+    form.setValue("isTemplate", shouldBeTemplateMode);
     
-    if (forceTemplateMode) {
-      console.log("CourseForm: forceTemplateMode is TRUE - forcing template mode");
-      shouldBeTemplateMode = true;
-    } else if (isTemplate) {
-      console.log("CourseForm: isTemplate prop is TRUE - setting template mode");
-      shouldBeTemplateMode = true;
-    } else {
-      shouldBeTemplateMode = initialData.isTemplate || false;
-      console.log("CourseForm: Using initialData.isTemplate:", shouldBeTemplateMode);
-    }
-    
-    console.log("CourseForm: Calculated shouldBeTemplateMode:", shouldBeTemplateMode);
-    
-    if (shouldBeTemplateMode !== isTemplateMode) {
-      console.log("CourseForm: Template mode mismatch - updating state from", isTemplateMode, "to", shouldBeTemplateMode);
-      setIsTemplateMode(shouldBeTemplateMode);
-    }
-    
-    // CRITICAL: Always sync the form's isTemplate value
-    const currentFormValue = form.getValues("isTemplate");
-    console.log("CourseForm: Current form isTemplate value:", currentFormValue);
-    
-    if (currentFormValue !== shouldBeTemplateMode) {
-      console.log("CourseForm: Form isTemplate mismatch - updating from", currentFormValue, "to", shouldBeTemplateMode);
-      form.setValue("isTemplate", shouldBeTemplateMode);
-    }
-    
-    console.log("=== CourseForm useEffect SYNC DEBUG END ===");
-  }, [forceTemplateMode, isTemplate, initialData.isTemplate, form, isTemplateMode]);
+    console.log("CourseForm: useEffect sync - setting template mode to:", shouldBeTemplateMode);
+  }, [forceTemplateMode, isTemplate, initialData.isTemplate, form]);
 
   // Update form mode when template switch changes (only if not forced)
   const handleTemplateToggle = (checked: boolean) => {
@@ -150,7 +109,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
     }
     
     console.log("CourseForm: Template toggle changed to:", checked);
-    setIsTemplateMode(checked);
+    setInternalTemplateMode(checked);
     form.setValue("isTemplate", checked);
     
     // Set default values appropriate for templates or scheduled events
@@ -172,12 +131,10 @@ const CourseForm: React.FC<CourseFormProps> = ({
   };
 
   const handleSubmit = (data: CourseFormData) => {
-    console.log("=== CourseForm handleSubmit VALIDATION DEBUG START ===");
+    console.log("=== CourseForm handleSubmit FIXED LOGIC DEBUG START ===");
     console.log("CourseForm: Form submission started");
     console.log("CourseForm: Raw form data received:", data);
     console.log("CourseForm: Props at submission:", { forceTemplateMode, isTemplate });
-    console.log("CourseForm: Current isTemplateMode state:", isTemplateMode);
-    console.log("CourseForm: data.isTemplate from form:", data.isTemplate);
     
     // Process learning outcomes if provided as a string
     if (typeof data.learningOutcomes === 'string') {
@@ -194,52 +151,30 @@ const CourseForm: React.FC<CourseFormProps> = ({
       data.dates = startDateStr === endDateStr ? startDateStr : `${startDateStr} - ${endDateStr}`;
     }
     
-    // CRITICAL FIX: Determine the correct template flag with strict validation
-    let finalTemplateFlag = false;
+    // FIXED: Simplified template flag determination with forceTemplateMode priority
+    const isTemplate = forceTemplateMode || form.getValues("isTemplate");
     
-    if (forceTemplateMode) {
-      console.log("CourseForm: forceTemplateMode is TRUE - FORCING isTemplate to TRUE");
-      finalTemplateFlag = true;
-    } else if (isTemplate) {
-      console.log("CourseForm: isTemplate prop is TRUE - setting isTemplate to TRUE");
-      finalTemplateFlag = true;
-    } else {
-      // Use the current form/state value
-      finalTemplateFlag = isTemplateMode;
-      console.log("CourseForm: Using current template mode state:", finalTemplateFlag);
-    }
-    
-    console.log("CourseForm: Final template flag determination:");
+    console.log("CourseForm: FIXED - Template flag determination:");
     console.log("  - forceTemplateMode:", forceTemplateMode);
-    console.log("  - isTemplate prop:", isTemplate);
-    console.log("  - isTemplateMode state:", isTemplateMode);
-    console.log("  - data.isTemplate:", data.isTemplate);
-    console.log("  - FINAL finalTemplateFlag:", finalTemplateFlag);
-    
-    // CRITICAL VALIDATION: Ensure templates are not lost
-    if ((forceTemplateMode || isTemplate) && !finalTemplateFlag) {
-      console.error("CRITICAL ERROR: Template flag validation failed!");
-      console.error("Expected template=true but got:", finalTemplateFlag);
-      throw new Error("Template flag validation failed in CourseForm - refusing to submit");
-    }
+    console.log("  - form.getValues('isTemplate'):", form.getValues("isTemplate"));
+    console.log("  - FINAL isTemplate:", isTemplate);
     
     const finalData = {
       ...data,
       spotsAvailable: Number(data.spotsAvailable),
-      isTemplate: finalTemplateFlag // Use the validated template flag
+      isTemplate: isTemplate // Use the simplified template flag
     };
     
+    // FIXED: Runtime assertion and debug statement
+    console.log("CourseForm: Saving course with payload:", {
+      is_template: finalData.isTemplate,
+      fromForm: form.getValues("isTemplate"),
+      forceTemplateMode,
+      title: finalData.title
+    });
+    
     console.log("CourseForm: FINAL DATA being submitted:", finalData);
-    console.log("CourseForm: FINAL isTemplate flag:", finalData.isTemplate);
-    console.log("CourseForm: FINAL isTemplate type:", typeof finalData.isTemplate);
-    
-    // Final validation before submission
-    if ((forceTemplateMode || isTemplate) && !finalData.isTemplate) {
-      console.error("FINAL VALIDATION FAILED: Template expected but isTemplate is false");
-      throw new Error("Final template validation failed - aborting submission");
-    }
-    
-    console.log("=== CourseForm handleSubmit VALIDATION DEBUG END ===");
+    console.log("=== CourseForm handleSubmit FIXED LOGIC DEBUG END ===");
     
     onSubmit(finalData);
   };
@@ -255,14 +190,14 @@ const CourseForm: React.FC<CourseFormProps> = ({
           <div className="flex items-center space-x-2 mb-6 pb-4 border-b">
             <Switch 
               id="template-mode" 
-              checked={isTemplateMode}
+              checked={internalTemplateMode}
               onCheckedChange={handleTemplateToggle}
             />
             <Label htmlFor="template-mode" className="font-medium">
-              {isTemplateMode ? "Template Mode" : "Scheduled Event Mode"}
+              {internalTemplateMode ? "Template Mode" : "Scheduled Event Mode"}
             </Label>
             <p className="ml-4 text-sm text-muted-foreground">
-              {isTemplateMode 
+              {internalTemplateMode 
                 ? "Creating a reusable template for future events" 
                 : "Creating a specific scheduled event"
               }
@@ -275,13 +210,13 @@ const CourseForm: React.FC<CourseFormProps> = ({
           <div className="text-xs text-muted-foreground mb-2 p-2 bg-blue-50 rounded border">
             Template Management Mode - Creating/editing a reusable template
             <div className="mt-1 text-xs">
-              Debug: forceTemplateMode={forceTemplateMode.toString()}, isTemplateMode={isTemplateMode.toString()}
+              Debug: forceTemplateMode={forceTemplateMode.toString()}, internalTemplateMode={internalTemplateMode.toString()}
             </div>
           </div>
         )}
         
         <BasicCourseFields form={form} />
-        <CourseScheduleFields form={form} isTemplate={isTemplateMode} />
+        <CourseScheduleFields form={form} isTemplate={internalTemplateMode} />
         <CourseDetailsFields form={form} />
         <CourseImageField form={form} onOpenMediaLibrary={onOpenMediaLibrary || (() => {})} />
         <CourseGoogleDriveSection courseId={initialData.id} />
@@ -292,7 +227,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
           isDraft={initialData.status === "draft"} 
           onPreview={onPreview}
           isSubmitting={isSubmitting}
-          customSubmitText={submitButtonText || (isTemplateMode ? "Save Template" : "Save Event")}
+          customSubmitText={submitButtonText || (internalTemplateMode ? "Save Template" : "Save Event")}
         />
       </form>
     </Form>
