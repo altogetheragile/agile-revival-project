@@ -46,9 +46,6 @@ export const mapCourseToDb = (course: CourseFormData): any => {
   console.log("Input course data:", course);
   console.log("course.isTemplate value:", course.isTemplate);
   console.log("course.isTemplate type:", typeof course.isTemplate);
-  console.log("course.isTemplate === true:", course.isTemplate === true);
-  console.log("course.isTemplate === 'true':", course.isTemplate === 'true');
-  console.log("Boolean(course.isTemplate):", Boolean(course.isTemplate));
 
   let processedLearningOutcomes = course.learningOutcomes;
 
@@ -63,13 +60,29 @@ export const mapCourseToDb = (course: CourseFormData): any => {
   // Ensure status is either "draft" or "published"
   const status = course.status === "published" ? "published" : "draft";
 
-  // Explicitly ensure isTemplate is a boolean and handle edge cases
+  // Handle isTemplate conversion - account for different possible input types
   let isTemplateValue = false;
-  if (course.isTemplate === true || course.isTemplate === 'true' || course.isTemplate === 1) {
-    isTemplateValue = true;
+  if (course.isTemplate !== undefined && course.isTemplate !== null) {
+    // Handle boolean values
+    if (typeof course.isTemplate === 'boolean') {
+      isTemplateValue = course.isTemplate;
+    }
+    // Handle string values (from form inputs)
+    else if (typeof course.isTemplate === 'string') {
+      isTemplateValue = course.isTemplate === 'true' || course.isTemplate === '1';
+    }
+    // Handle number values
+    else if (typeof course.isTemplate === 'number') {
+      isTemplateValue = course.isTemplate === 1;
+    }
+    // Handle any other truthy values
+    else {
+      isTemplateValue = Boolean(course.isTemplate);
+    }
   }
 
   console.log("Final isTemplateValue:", isTemplateValue);
+  console.log("isTemplateValue type:", typeof isTemplateValue);
 
   const dbData = {
     title: course.title,
@@ -104,6 +117,7 @@ export const mapCourseToDb = (course: CourseFormData): any => {
   };
 
   console.log("Final dbData.is_template:", dbData.is_template);
+  console.log("Final dbData.is_template type:", typeof dbData.is_template);
   console.log("Final dbData object:", dbData);
   console.log("=== mapCourseToDb DEBUG END ===");
 
