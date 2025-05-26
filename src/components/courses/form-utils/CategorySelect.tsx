@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Trash2 } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -16,9 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-// Define category type
 interface Category {
-  id?: string;
   value: string;
   label: string;
 }
@@ -40,25 +38,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
-  // Guard: Don't render until categories are loaded
-  if (!categories || categories.length === 0) {
-    return null;
-  }
-
-  // Get the current category object
-  const currentCategory = categories.find((cat) => cat.value === value);
-
-  // Warn if value exists but doesn't match any category
-  useEffect(() => {
-    if (value && !currentCategory) {
-      console.warn("⚠️ CategorySelect: value does not match any category:", value);
-    }
-  }, [value, currentCategory]);
-
-  const handleValueChange = (selectedValue: string) => {
-    onValueChange(selectedValue);
-    setOpen(false);
-  };
+  const current = categories.find((c) => c.value === value);
 
   return (
     <div className={className}>
@@ -70,38 +50,43 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             aria-expanded={open}
             className="w-full justify-between"
           >
-            {currentCategory ? currentCategory.label : "Select category..."}
+            {current ? current.label : "Select category..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent
-          className="w-full p-0 bg-white dark:bg-gray-800 border shadow-md z-50"
-          align="start"
-        >
-          <Command className="bg-white dark:bg-gray-800">
+        <PopoverContent className="w-full p-0 z-50" align="start">
+          <Command>
             <CommandInput placeholder="Search categories..." />
             <CommandList>
               <CommandEmpty>No category found.</CommandEmpty>
               <CommandGroup>
-                {categories.map((category) => {
-                  const isSelected = value === category.value;
-                  return (
-                    <CommandItem
-                      key={category.value}
-                      value={category.value}
-                      onSelect={() => handleValueChange(category.value)}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          isSelected ? "opacity-100" : "opacity-0"
-                        )}
+                {categories.map((category) => (
+                  <CommandItem
+                    key={category.value}
+                    value={category.value}
+                    onSelect={(val) => {
+                      onValueChange(val);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        category.value === value ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {category.label}
+                    {onDelete && (
+                      <Trash2
+                        className="ml-auto h-4 w-4 text-red-500 hover:text-red-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(category.value, e);
+                        }}
                       />
-                      {category.label}
-                    </CommandItem>
-                  );
-                })}
+                    )}
+                  </CommandItem>
+                ))}
               </CommandGroup>
             </CommandList>
           </Command>
