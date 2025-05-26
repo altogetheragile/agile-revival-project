@@ -21,6 +21,7 @@ interface CourseFormProps {
   onOpenMediaLibrary?: () => void;
   stayOpenOnSubmit?: boolean;
   isTemplate?: boolean;
+  forceTemplateMode?: boolean; // New prop to force template mode
   formData?: CourseFormData | null;
   setFormData?: React.Dispatch<React.SetStateAction<CourseFormData | null>>;
   onPreview?: () => void;
@@ -56,19 +57,50 @@ const CourseForm: React.FC<CourseFormProps> = ({
   onCancel,
   onOpenMediaLibrary,
   stayOpenOnSubmit = false,
+  isTemplate = false,
+  forceTemplateMode = false, // New prop
   formData,
   setFormData,
   onPreview,
   isSubmitting = false,
   submitButtonText
 }) => {
-  const [isTemplateMode, setIsTemplateMode] = useState(initialData.isTemplate || false);
+  // Determine the correct initial template mode
+  const determineInitialTemplateMode = () => {
+    if (forceTemplateMode) {
+      console.log("CourseForm: Template mode forced to true");
+      return true;
+    }
+    if (isTemplate) {
+      console.log("CourseForm: Template mode set from isTemplate prop:", isTemplate);
+      return true;
+    }
+    const initialMode = initialData.isTemplate || false;
+    console.log("CourseForm: Template mode set from initialData:", initialMode);
+    return initialMode;
+  };
+
+  const [isTemplateMode, setIsTemplateMode] = useState(determineInitialTemplateMode());
+  
   const form = useForm<CourseFormData>({
     defaultValues: initialData as CourseFormData
   });
 
-  // Update form mode when template switch changes
+  console.log("CourseForm initialized with:", {
+    isTemplate,
+    forceTemplateMode,
+    isTemplateMode,
+    initialDataIsTemplate: initialData.isTemplate
+  });
+
+  // Update form mode when template switch changes (only if not forced)
   const handleTemplateToggle = (checked: boolean) => {
+    if (forceTemplateMode) {
+      console.log("CourseForm: Template toggle ignored due to forceTemplateMode");
+      return; // Don't allow changes when forced
+    }
+    
+    console.log("CourseForm: Template toggle changed to:", checked);
     setIsTemplateMode(checked);
     form.setValue("isTemplate", checked);
     
@@ -107,33 +139,55 @@ const CourseForm: React.FC<CourseFormProps> = ({
       data.dates = startDateStr === endDateStr ? startDateStr : `${startDateStr} - ${endDateStr}`;
     }
     
+    // Ensure the correct template flag is used
+    const finalTemplateFlag = forceTemplateMode || isTemplateMode;
+    
+    console.log("CourseForm submitting with:", {
+      forceTemplateMode,
+      isTemplateMode,
+      finalTemplateFlag,
+      dataIsTemplate: data.isTemplate
+    });
+    
     onSubmit({
       ...data,
       spotsAvailable: Number(data.spotsAvailable),
-      isTemplate: isTemplateMode
+      isTemplate: finalTemplateFlag // Use the determined template flag
     });
   };
+
+  // Don't show the template toggle when in forced template mode
+  const showTemplateToggle = !forceTemplateMode;
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {/* Template toggle switch */}
-        <div className="flex items-center space-x-2 mb-6 pb-4 border-b">
-          <Switch 
-            id="template-mode" 
-            checked={isTemplateMode}
-            onCheckedChange={handleTemplateToggle}
-          />
-          <Label htmlFor="template-mode" className="font-medium">
-            {isTemplateMode ? "Template Mode" : "Scheduled Event Mode"}
-          </Label>
-          <p className="ml-4 text-sm text-muted-foreground">
-            {isTemplateMode 
-              ? "Creating a reusable template for future events" 
-              : "Creating a specific scheduled event"
-            }
-          </p>
-        </div>
+        {/* Template toggle switch - only show if not forced */}
+        {showTemplateToggle && (
+          <div className="flex items-center space-x-2 mb-6 pb-4 border-b">
+            <Switch 
+              id="template-mode" 
+              checked={isTemplateMode}
+              onCheckedChange={handleTemplateToggle}
+            />
+            <Label htmlFor="template-mode" className="font-medium">
+              {isTemplateMode ? "Template Mode" : "Scheduled Event Mode"}
+            </Label>
+            <p className="ml-4 text-sm text-muted-foreground">
+              {isTemplateMode 
+                ? "Creating a reusable template for future events" 
+                : "Creating a specific scheduled event"
+              }
+            </p>
+          </div>
+        )}
+        
+        {/* Debug info when in forced template mode */}
+        {forceTemplateMode && (
+          <div className="text-xs text-muted-foreground mb-2 p-2 bg-blue-50 rounded border">
+            Template Management Mode - Creating/editing a reusable template
+          </div>
+        )}
         
         <BasicCourseFields form={form} />
         <CourseScheduleFields form={form} isTemplate={isTemplateMode} />

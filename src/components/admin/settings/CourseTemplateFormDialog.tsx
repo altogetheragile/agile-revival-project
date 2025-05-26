@@ -150,6 +150,10 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
 
   // Handle form submission with additional error handling and debugging
   const handleSubmit = async (data: CourseFormData) => {
+    console.log("CourseTemplateFormDialog: Form submission started");
+    console.log("CourseTemplateFormDialog: Data received:", data);
+    console.log("CourseTemplateFormDialog: isTemplate flag:", data.isTemplate);
+    
     // Double check authentication
     const { data: { session } } = await supabase.auth.getSession();
     
@@ -167,25 +171,27 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       return;
     }
     
-    // Explicitly preserve the template ID when editing
+    // Explicitly preserve the template ID when editing and ensure isTemplate is true
     const templateData = {
       ...data,
-      isTemplate: true,
+      isTemplate: true, // Force this to true for templates
     };
     
     if (currentTemplate) {
-      console.log("Editing existing template with ID:", currentTemplate.id);
+      console.log("CourseTemplateFormDialog: Editing existing template with ID:", currentTemplate.id);
       
       // Ensure we're using the template ID
       if (!templateData.id && currentTemplate.id) {
-        console.log("Setting missing ID from currentTemplate");
+        console.log("CourseTemplateFormDialog: Setting missing ID from currentTemplate");
         templateData.id = currentTemplate.id;
       }
       
-      console.log("Calling onSubmit with template data, ID check:", templateData.id);
-      console.log("Propagation setting:", propagateChanges);
+      console.log("CourseTemplateFormDialog: Calling onSubmit with template data, ID check:", templateData.id);
+      console.log("CourseTemplateFormDialog: Propagation setting:", propagateChanges);
+      console.log("CourseTemplateFormDialog: Final isTemplate flag:", templateData.isTemplate);
     } else {
-      console.log("Creating new template (no ID yet)");
+      console.log("CourseTemplateFormDialog: Creating new template (no ID yet)");
+      console.log("CourseTemplateFormDialog: Final isTemplate flag:", templateData.isTemplate);
       // Ensure no ID is set for new templates
       delete templateData.id;
     }
@@ -194,7 +200,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       // Pass the propagation flag to onSubmit
       onSubmit(templateData, propagateChanges);
     } catch (error) {
-      console.error("Error submitting template:", error);
+      console.error("CourseTemplateFormDialog: Error submitting template:", error);
       toast.error("Failed to save template", {
         description: error instanceof Error ? error.message : "An unexpected error occurred"
       });
@@ -247,6 +253,7 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
                 onSubmit={handleSubmit}
                 onCancel={onCancel}
                 isTemplate={true} // Always pass isTemplate as true
+                forceTemplateMode={true} // Force template mode to prevent user changes
                 onOpenMediaLibrary={() => setMediaLibOpen(true)}
                 formData={formData}
                 setFormData={setFormData}
