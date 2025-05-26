@@ -124,6 +124,13 @@ const CourseForm: React.FC<CourseFormProps> = ({
   };
 
   const handleSubmit = (data: CourseFormData) => {
+    console.log("=== CourseForm handleSubmit DEBUG START ===");
+    console.log("CourseForm: Form submission started");
+    console.log("CourseForm: Raw form data received:", data);
+    console.log("CourseForm: forceTemplateMode:", forceTemplateMode);
+    console.log("CourseForm: isTemplateMode:", isTemplateMode);
+    console.log("CourseForm: data.isTemplate (from form):", data.isTemplate);
+    
     // Process learning outcomes if provided as a string
     if (typeof data.learningOutcomes === 'string') {
       data.learningOutcomes = data.learningOutcomes
@@ -139,21 +146,34 @@ const CourseForm: React.FC<CourseFormProps> = ({
       data.dates = startDateStr === endDateStr ? startDateStr : `${startDateStr} - ${endDateStr}`;
     }
     
-    // Ensure the correct template flag is used
-    const finalTemplateFlag = forceTemplateMode || isTemplateMode;
+    // CRITICAL FIX: Determine the correct template flag
+    // When forceTemplateMode is true, ALWAYS set isTemplate to true
+    const finalTemplateFlag = forceTemplateMode ? true : (isTemplateMode || data.isTemplate);
     
-    console.log("CourseForm submitting with:", {
-      forceTemplateMode,
-      isTemplateMode,
-      finalTemplateFlag,
-      dataIsTemplate: data.isTemplate
-    });
+    console.log("CourseForm: Final template flag determination:");
+    console.log("  - forceTemplateMode:", forceTemplateMode);
+    console.log("  - isTemplateMode:", isTemplateMode);
+    console.log("  - data.isTemplate:", data.isTemplate);
+    console.log("  - finalTemplateFlag:", finalTemplateFlag);
     
-    onSubmit({
+    // Add validation to ensure templates are not lost
+    if (forceTemplateMode && !finalTemplateFlag) {
+      console.error("CRITICAL ERROR: forceTemplateMode is true but finalTemplateFlag is false!");
+      throw new Error("Template mode validation failed in CourseForm");
+    }
+    
+    const finalData = {
       ...data,
       spotsAvailable: Number(data.spotsAvailable),
       isTemplate: finalTemplateFlag // Use the determined template flag
-    });
+    };
+    
+    console.log("CourseForm: Final data being submitted:", finalData);
+    console.log("CourseForm: Final data isTemplate flag:", finalData.isTemplate);
+    console.log("CourseForm: Final data isTemplate type:", typeof finalData.isTemplate);
+    console.log("=== CourseForm handleSubmit DEBUG END ===");
+    
+    onSubmit(finalData);
   };
 
   // Don't show the template toggle when in forced template mode
