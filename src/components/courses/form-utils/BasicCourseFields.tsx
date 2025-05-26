@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   FormControl,
@@ -116,14 +115,10 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
                     }
                   }}
                   onDelete={(value, e) => {
-                    // If the current value is being deleted, reset to a default
                     if (value === field.value) {
                       field.onChange(eventTypes[0]?.value || "");
                     }
-                    
-                    handleDeleteEventType(value, () => {
-                      // This callback is called when deletion is successful
-                    });
+                    handleDeleteEventType(value, () => {});
                   }}
                 />
               )}
@@ -137,49 +132,49 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
         control={form.control}
         name="category"
         rules={{ required: "Category is required" }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Category</FormLabel>
-            <FormControl>
-              {categories.length === 0 ? (
-                <Skeleton className="h-10 w-full" />
-              ) : categoryAddMode ? (
-                <CategoryInput
-                  value={newCategory}
-                  onChange={setNewCategory}
-                  onAdd={() => handleAddCategory((value) => {
-                    field.onChange(value);
-                    setCategoryAddMode(false);
-                  })}
-                  onCancel={() => setCategoryAddMode(false)}
-                />
-              ) : (
-                <CategorySelect
-                  categories={categories}
-                  value={field.value || ""}
-                  onValueChange={(value) => {
-                    if (value === "__add_category__") {
-                      setCategoryAddMode(true);
-                    } else {
+        render={({ field }) => {
+          const currentCategoryExists = categories.some(c => c.value === field.value);
+
+          return (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <FormControl>
+                {categories.length === 0 || (field.value && !currentCategoryExists) ? (
+                  <Skeleton className="h-10 w-full" />
+                ) : categoryAddMode ? (
+                  <CategoryInput
+                    value={newCategory}
+                    onChange={setNewCategory}
+                    onAdd={() => handleAddCategory((value) => {
                       field.onChange(value);
-                    }
-                  }}
-                  onDelete={(value, e) => {
-                    // If the current value is being deleted, reset to a default
-                    if (value === field.value) {
-                      field.onChange(categories[0]?.value || "");
-                    }
-                    
-                    handleDeleteCategory(value, () => {
-                      // This callback is called when deletion is successful
-                    });
-                  }}
-                />
-              )}
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
+                      setCategoryAddMode(false);
+                    })}
+                    onCancel={() => setCategoryAddMode(false)}
+                  />
+                ) : (
+                  <CategorySelect
+                    categories={categories}
+                    value={field.value || ""}
+                    onValueChange={(value) => {
+                      if (value === "__add_category__") {
+                        setCategoryAddMode(true);
+                      } else {
+                        field.onChange(value);
+                      }
+                    }}
+                    onDelete={(value, e) => {
+                      if (value === field.value) {
+                        field.onChange(categories[0]?.value || "");
+                      }
+                      handleDeleteCategory(value, () => {});
+                    }}
+                  />
+                )}
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          );
+        }}
       />
     </div>
   );
