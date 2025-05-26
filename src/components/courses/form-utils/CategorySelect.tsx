@@ -1,20 +1,21 @@
+// components/CourseForm/CategorySelect.tsx
 import React, { useState } from "react";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown, Trash } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface Category {
   id?: string;
@@ -23,29 +24,22 @@ interface Category {
 }
 
 interface CategorySelectProps {
+  categories: Category[];
   value: string;
   onValueChange: (value: string) => void;
-  categories: Category[];
-  className?: string;
   onDelete?: (value: string, e: React.MouseEvent) => void;
+  className?: string;
 }
 
 export const CategorySelect: React.FC<CategorySelectProps> = ({
+  categories,
   value,
   onValueChange,
-  categories,
+  onDelete,
   className,
-  onDelete
 }) => {
   const [open, setOpen] = useState(false);
-
-  const selected = categories.find((c) => c.value === value);
-
-  if (!categories || categories.length === 0) {
-    return (
-      <div className="h-10 w-full bg-muted animate-pulse rounded-md" />
-    );
-  }
+  const selectedCategory = categories.find((cat) => cat.value === value);
 
   return (
     <div className={className}>
@@ -57,52 +51,51 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             aria-expanded={open}
             className="w-full justify-between"
           >
-            {selected ? selected.label : "Select category..."}
+            {selectedCategory?.label || "Select category..."}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent
-          className="w-full p-0 bg-white dark:bg-gray-800 border shadow-md z-50"
-          align="start"
-        >
+
+        <PopoverContent className="w-full p-0" align="start">
           <Command>
             <CommandInput placeholder="Search categories..." />
             <CommandList>
               <CommandEmpty>No category found.</CommandEmpty>
               <CommandGroup>
-                {categories.map((category) => (
-                  <CommandItem
-                    key={category.value}
-                    onSelect={() => {
-                      onValueChange(category.value);
-                      setOpen(false);
-                    }}
-                    className="flex justify-between"
-                  >
-                    <div className="flex items-center">
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          category.value === value
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      {category.label}
-                    </div>
-                    {onDelete && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(category.value, e);
-                        }}
-                        className="text-sm text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </CommandItem>
-                ))}
+                {categories.map((category) => {
+                  const isSelected = category.value === value;
+                  return (
+                    <CommandItem
+                      key={category.value}
+                      onSelect={() => {
+                        onValueChange(category.value);
+                        setOpen(false);
+                      }}
+                      className="flex justify-between"
+                    >
+                      <div className="flex items-center">
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            isSelected ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {category.label}
+                      </div>
+                      {onDelete && (
+                        <button
+                          className="text-red-500 text-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(category.value, e);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </CommandList>
           </Command>
