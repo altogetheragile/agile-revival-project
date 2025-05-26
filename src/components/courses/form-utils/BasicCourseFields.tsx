@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormData } from "@/types/course";
 import { CategorySelect } from "./CategorySelect";
@@ -44,8 +45,6 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
     handleAddEventType,
     handleDeleteEventType
   } = useEventTypeManagement();
-
-  console.log("BasicCourseFields: Categories from hook:", categories);
 
   return (
     <div className="space-y-4">
@@ -93,7 +92,9 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
           <FormItem>
             <FormLabel>Event Type</FormLabel>
             <FormControl>
-              {eventTypeAddMode ? (
+              {eventTypes.length === 0 ? (
+                <Skeleton className="h-10 w-full" />
+              ) : eventTypeAddMode ? (
                 <EventTypeInput
                   value={newEventType}
                   onChange={setNewEventType}
@@ -140,7 +141,9 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
           <FormItem>
             <FormLabel>Category</FormLabel>
             <FormControl>
-              {categoryAddMode ? (
+              {categories.length === 0 ? (
+                <Skeleton className="h-10 w-full" />
+              ) : categoryAddMode ? (
                 <CategoryInput
                   value={newCategory}
                   onChange={setNewCategory}
@@ -155,7 +158,6 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
                   categories={categories}
                   value={field.value || ""}
                   onValueChange={(value) => {
-                    console.log("BasicCourseFields: Category value changed to:", value);
                     if (value === "__add_category__") {
                       setCategoryAddMode(true);
                     } else {
