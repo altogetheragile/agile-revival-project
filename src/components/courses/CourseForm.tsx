@@ -136,8 +136,8 @@ const CourseForm: React.FC<CourseFormProps> = ({
     console.log("CourseForm: Raw form data received:", data);
     console.log("CourseForm: Props at submission:", { forceTemplateMode, isTemplate });
     
-    // FIXED: Move template flag determination to the very beginning
-    const isTemplate = forceTemplateMode || form.getValues("isTemplate");
+    // FIXED: Move template flag determination to the very beginning and rename to avoid conflict
+    const finalIsTemplate = forceTemplateMode || form.getValues("isTemplate");
     
     // Process learning outcomes if provided as a string
     if (typeof data.learningOutcomes === 'string') {
@@ -157,11 +157,11 @@ const CourseForm: React.FC<CourseFormProps> = ({
     console.log("CourseForm: FIXED - Template flag determination:");
     console.log("  - forceTemplateMode:", forceTemplateMode);
     console.log("  - form.getValues('isTemplate'):", form.getValues("isTemplate"));
-    console.log("  - FINAL isTemplate:", isTemplate);
+    console.log("  - FINAL finalIsTemplate:", finalIsTemplate);
     
     // FIXED: Runtime assertion and debug statement
     console.log("CourseForm: Saving course with payload:", {
-      is_template: isTemplate,
+      is_template: finalIsTemplate,
       fromForm: form.getValues("isTemplate"),
       forceTemplateMode,
       title: data.title
@@ -170,7 +170,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
     const finalData = {
       ...data,
       spotsAvailable: Number(data.spotsAvailable),
-      isTemplate: isTemplate // Use the simplified template flag
+      isTemplate: finalIsTemplate // Use the renamed template flag
     };
     
     console.log("CourseForm: FINAL DATA being submitted:", finalData);
