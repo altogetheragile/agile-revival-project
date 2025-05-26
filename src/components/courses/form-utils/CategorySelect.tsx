@@ -40,11 +40,17 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
-  // Guard: Don't render if categories are not loaded yet
-  if (!categories || categories.length === 0) {
-    return null;
-  }
+ // Guard 1: Don't render if categories are not loaded yet
+if (!categories || categories.length === 0) {
+  return <div className="h-10 w-full bg-gray-100 animate-pulse rounded-md" />;
+}
 
+// Guard 2: Don't render if value exists but doesn't match any category
+const currentCategory = categories.find(cat => cat.value === value);
+if (value && !currentCategory) {
+  console.warn("CategorySelect: selected value not found in categories →", value);
+  return <div className="h-10 w-full bg-gray-100 animate-pulse rounded-md" />;
+}
   // Value validation: warn if selected value doesn't exist in categories
   useEffect(() => {
     if (value && !categories.some(c => c.value === value)) {
