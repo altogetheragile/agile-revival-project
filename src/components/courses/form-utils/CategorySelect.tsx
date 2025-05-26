@@ -40,17 +40,35 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
+  console.log("=== CategorySelect Debug ===");
   console.log("CategorySelect: Received categories prop:", categories);
-  console.log("CategorySelect: Current value:", value);
+  console.log("CategorySelect: Current value prop:", value);
+  console.log("CategorySelect: Popover open state:", open);
 
   const currentCategory = categories.find((category) => category.value === value);
 
-  console.log("CategorySelect: Current category:", currentCategory);
+  console.log("CategorySelect: Current category found:", currentCategory);
 
   const handleValueChange = (selectedValue: string) => {
-    console.log("CategorySelect: Command value changed to:", selectedValue);
+    console.log("=== Selection Handler Debug ===");
+    console.log("CategorySelect: handleValueChange called with:", selectedValue);
+    console.log("CategorySelect: Previous value was:", value);
+    console.log("CategorySelect: About to call onValueChange with:", selectedValue);
+    
     onValueChange(selectedValue);
     setOpen(false);
+    
+    console.log("CategorySelect: onValueChange called, popover should close");
+  };
+
+  const handleItemSelect = (selectedValue: string) => {
+    console.log("=== CommandItem onSelect Debug ===");
+    console.log("CommandItem: onSelect triggered with value:", selectedValue);
+    console.log("CommandItem: Comparing with current value:", value);
+    console.log("CommandItem: Are they equal?", selectedValue === value);
+    
+    // Call the main handler
+    handleValueChange(selectedValue);
   };
 
   return (
@@ -75,25 +93,36 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             <CommandList>
               <CommandEmpty>No category found.</CommandEmpty>
               <CommandGroup>
-                {categories.map((category) => (
-                  <CommandItem
-                    key={category.value}
-                    value={category.value}
-                    onSelect={(currentValue) => {
-                      console.log("CommandItem onSelect triggered with:", currentValue);
-                      handleValueChange(currentValue);
-                    }}
-                    className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === category.value ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {category.label}
-                  </CommandItem>
-                ))}
+                {categories.map((category) => {
+                  const isSelected = value === category.value;
+                  console.log(`Category "${category.label}" (${category.value}): selected=${isSelected}`);
+                  
+                  return (
+                    <CommandItem
+                      key={category.value}
+                      value={category.value}
+                      onSelect={(currentValue) => {
+                        console.log("=== CommandItem Raw onSelect ===");
+                        console.log("Raw currentValue from cmdk:", currentValue);
+                        console.log("Expected category.value:", category.value);
+                        console.log("Direct match?", currentValue === category.value);
+                        
+                        // Use the category.value directly instead of currentValue
+                        // This bypasses any potential cmdk value transformation
+                        handleItemSelect(category.value);
+                      }}
+                      className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          isSelected ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {category.label}
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </CommandList>
           </Command>
