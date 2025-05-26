@@ -1,10 +1,11 @@
+// BasicCourseFields.tsx
 import React from "react";
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,11 +19,7 @@ import { EventTypeInput } from "./EventTypeInput";
 import { useCategoryManagement } from "@/hooks/useCategoryManagement";
 import { useEventTypeManagement } from "@/hooks/useEventTypeManagement";
 
-interface BasicCourseFieldsProps {
-  form: UseFormReturn<CourseFormData>;
-}
-
-export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) => {
+export const BasicCourseFields: React.FC<{ form: UseFormReturn<CourseFormData> }> = ({ form }) => {
   const {
     categories,
     addMode: categoryAddMode,
@@ -30,7 +27,7 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
     newCategory,
     setNewCategory,
     handleAddCategory,
-    handleDeleteCategory
+    handleDeleteCategory,
   } = useCategoryManagement();
 
   const {
@@ -40,7 +37,7 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
     newEventType,
     setNewEventType,
     handleAddEventType,
-    handleDeleteEventType
+    handleDeleteEventType,
   } = useEventTypeManagement();
 
   return (
@@ -70,10 +67,10 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
           <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
-              <Textarea 
-                placeholder="Enter course description" 
+              <Textarea
+                placeholder="Enter course description"
                 className="h-24"
-                {...field} 
+                {...field}
               />
             </FormControl>
             <FormMessage />
@@ -112,7 +109,7 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
                       field.onChange(value);
                     }
                   }}
-                  onDelete={(value, e) => {
+                  onDelete={(value) => {
                     if (value === field.value) {
                       field.onChange(eventTypes[0]?.value || "");
                     }
@@ -149,15 +146,11 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
               ) : (
                 <CategorySelect
                   categories={categories}
-                  value={categories.find(cat => cat.value === field.value) || null}
+                  value={categories.find((c) => c.value === field.value) || null}
                   onValueChange={(category) => {
-                    if (category?.value === "__add_category__") {
-                      setCategoryAddMode(true);
-                    } else if (category) {
-                      field.onChange(category.value);
-                    }
+                    field.onChange(category.value);
                   }}
-                  onDelete={(value, e) => {
+                  onDelete={(value) => {
                     if (value === field.value) {
                       field.onChange(categories[0]?.value || "");
                     }
