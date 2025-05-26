@@ -1,20 +1,20 @@
 import React, { useState } from "react";
 import { Check, ChevronsUpDown, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList
+  CommandList,
+  CommandEmpty
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 
 interface Category {
   id?: string;
@@ -38,7 +38,8 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   className
 }) => {
   const [open, setOpen] = useState(false);
-  const currentCategory = categories.find((cat) => cat.value === value);
+
+  const currentCategory = categories.find(cat => cat.value === value);
 
   return (
     <div className={cn("relative", className)}>
@@ -50,11 +51,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             aria-expanded={open}
             className="w-full justify-between"
           >
-            {currentCategory ? currentCategory.label : "Select category..."}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            {currentCategory?.label || "Select category..."}
+            <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50 shrink-0" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
+        <PopoverContent className="w-full p-0 z-50" align="start">
           <Command>
             <CommandInput placeholder="Search categories..." />
             <CommandList>
@@ -63,28 +64,35 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                 {categories.map((category) => (
                   <CommandItem
                     key={category.value}
-                    onSelect={() => {
-                      onValueChange(category.value);
+                    value={category.value}
+                    onSelect={(selectedValue) => {
+                      onValueChange(selectedValue);
                       setOpen(false);
                     }}
+                    className="flex justify-between items-center"
                   >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === category.value ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    <span className="flex-1">{category.label}</span>
+                    <div className="flex items-center">
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          category.value === value ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {category.label}
+                    </div>
                     {onDelete && (
-                      <button
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
                           onDelete(category.value, e);
                         }}
-                        className="text-red-500 ml-2"
+                        className="text-red-500"
                       >
-                        Delete
-                      </button>
+                        <Trash className="h-4 w-4" />
+                      </Button>
                     )}
                   </CommandItem>
                 ))}
