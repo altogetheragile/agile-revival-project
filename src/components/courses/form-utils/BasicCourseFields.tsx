@@ -23,7 +23,6 @@ interface BasicCourseFieldsProps {
 }
 
 export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) => {
-  // Category management
   const {
     categories,
     addMode: categoryAddMode,
@@ -34,7 +33,6 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
     handleDeleteCategory
   } = useCategoryManagement();
 
-  // Event type management
   const {
     eventTypes,
     addMode: eventTypeAddMode,
@@ -72,10 +70,10 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
           <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
-              <Textarea
-                placeholder="Enter course description"
+              <Textarea 
+                placeholder="Enter course description" 
                 className="h-24"
-                {...field}
+                {...field} 
               />
             </FormControl>
             <FormMessage />
@@ -97,12 +95,10 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
                 <EventTypeInput
                   value={newEventType}
                   onChange={setNewEventType}
-                  onAdd={() =>
-                    handleAddEventType((value) => {
-                      field.onChange(value);
-                      setEventTypeAddMode(false);
-                    })
-                  }
+                  onAdd={() => handleAddEventType((value) => {
+                    field.onChange(value);
+                    setEventTypeAddMode(false);
+                  })}
                   onCancel={() => setEventTypeAddMode(false)}
                 />
               ) : (
@@ -144,20 +140,20 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
                 <CategoryInput
                   value={newCategory}
                   onChange={setNewCategory}
-                  onAdd={() =>
-                    handleAddCategory((value) => {
-                      field.onChange(value);
-                      setCategoryAddMode(false);
-                    })
-                  }
+                  onAdd={() => handleAddCategory((value) => {
+                    field.onChange(value);
+                    setCategoryAddMode(false);
+                  })}
                   onCancel={() => setCategoryAddMode(false)}
                 />
-              ) : !categories.some((c) => c.value === field.value) ? (
-                <Skeleton className="h-10 w-full" />
               ) : (
                 <CategorySelect
                   categories={categories}
-                  value={field.value || ""}
+                  value={
+                    categories.some(c => c.value === field.value)
+                      ? field.value
+                      : ""
+                  }
                   onValueChange={(value) => {
                     if (value === "__add_category__") {
                       setCategoryAddMode(true);
