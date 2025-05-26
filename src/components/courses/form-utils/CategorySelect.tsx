@@ -111,20 +111,8 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     console.log("CategorySelect: Category selected:", selectedValue);
     console.log("CategorySelect: Current value before change:", value);
     
-    // Find the category that matches the selected value (cmdk transforms to lowercase)
-    const matchedCategory = categories.find(cat => 
-      cat.value.toLowerCase() === selectedValue.toLowerCase() ||
-      cat.label.toLowerCase() === selectedValue.toLowerCase()
-    );
-    
-    if (matchedCategory) {
-      console.log("CategorySelect: Matched category:", matchedCategory);
-      onValueChange(matchedCategory.value);
-    } else {
-      console.log("CategorySelect: No matched category found for:", selectedValue);
-      onValueChange(selectedValue);
-    }
-    
+    // Directly use the selected value since it matches our category.value
+    onValueChange(selectedValue);
     setOpen(false);
   };
 
@@ -153,13 +141,12 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
               <CommandGroup>
                 {categories.map((category) => (
                   <CommandItem
-                    key={category.id || category.value}
-                    value={category.label}
-                    keywords={[category.value, category.label]}
+                    key={category.value}
+                    value={category.value}
                     onSelect={(currentValue) => {
                       console.log("CommandItem onSelect triggered with:", currentValue);
                       console.log("Category object:", category);
-                      handleCategorySelect(category.value);
+                      handleCategorySelect(currentValue);
                     }}
                     className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                   >
