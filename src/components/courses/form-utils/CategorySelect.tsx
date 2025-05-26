@@ -70,11 +70,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0 bg-white dark:bg-gray-800 border shadow-md z-50" align="start">
-          <Command 
-            className="bg-white dark:bg-gray-800"
-            value={value}
-            onValueChange={handleValueChange}
-          >
+          <Command className="bg-white dark:bg-gray-800">
             <CommandInput placeholder="Search categories..." />
             <CommandList>
               <CommandEmpty>No category found.</CommandEmpty>
