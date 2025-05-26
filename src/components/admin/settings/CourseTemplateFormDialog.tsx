@@ -72,7 +72,9 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
   // Convert template to course form data for editing
   const templateToCourseFormData = (template: Course): CourseFormData => {
     console.log("Converting template to form data:", template);
-    return {
+    console.log("Template isTemplate value:", template.isTemplate);
+    
+    const formData = {
       id: template.id, // Explicitly include ID to ensure it's preserved
       title: template.title,
       description: template.description,
@@ -100,12 +102,17 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       googleDriveFolderId: template.googleDriveFolderId || null,
       googleDriveFolderUrl: template.googleDriveFolderUrl || null
     };
+    
+    console.log("Converted form data:", formData);
+    console.log("Form data isTemplate:", formData.isTemplate);
+    return formData;
   };
 
   // Initialize form data when currentTemplate changes
   useEffect(() => {
     if (currentTemplate) {
       console.log("Setting initial form data with template ID:", currentTemplate.id);
+      console.log("Current template isTemplate:", currentTemplate.isTemplate);
       setFormData(templateToCourseFormData(currentTemplate));
     } else {
       // Clear form data when creating a new template
@@ -150,9 +157,11 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
 
   // Handle form submission with additional error handling and debugging
   const handleSubmit = async (data: CourseFormData) => {
+    console.log("=== CourseTemplateFormDialog handleSubmit DEBUG START ===");
     console.log("CourseTemplateFormDialog: Form submission started");
     console.log("CourseTemplateFormDialog: Data received:", data);
     console.log("CourseTemplateFormDialog: isTemplate flag:", data.isTemplate);
+    console.log("CourseTemplateFormDialog: typeof isTemplate:", typeof data.isTemplate);
     
     // Double check authentication
     const { data: { session } } = await supabase.auth.getSession();
@@ -174,8 +183,11 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
     // Explicitly preserve the template ID when editing and ensure isTemplate is true
     const templateData = {
       ...data,
-      isTemplate: true, // Force this to true for templates
+      isTemplate: true, // Force this to true for templates - CRITICAL FIX
     };
+    
+    console.log("CourseTemplateFormDialog: templateData after forcing isTemplate:", templateData);
+    console.log("CourseTemplateFormDialog: templateData.isTemplate:", templateData.isTemplate);
     
     if (currentTemplate) {
       console.log("CourseTemplateFormDialog: Editing existing template with ID:", currentTemplate.id);
@@ -195,6 +207,9 @@ export const CourseTemplateFormDialog: React.FC<CourseTemplateFormDialogProps> =
       // Ensure no ID is set for new templates
       delete templateData.id;
     }
+    
+    console.log("CourseTemplateFormDialog: About to call onSubmit with final templateData:", templateData);
+    console.log("=== CourseTemplateFormDialog handleSubmit DEBUG END ===");
     
     try {
       // Pass the propagation flag to onSubmit

@@ -42,6 +42,14 @@ export const mapDbToCourse = (dbCourse: any): Course => {
 
 // Map frontend Course type to database course object
 export const mapCourseToDb = (course: CourseFormData): any => {
+  console.log("=== mapCourseToDb DEBUG START ===");
+  console.log("Input course data:", course);
+  console.log("course.isTemplate value:", course.isTemplate);
+  console.log("course.isTemplate type:", typeof course.isTemplate);
+  console.log("course.isTemplate === true:", course.isTemplate === true);
+  console.log("course.isTemplate === 'true':", course.isTemplate === 'true');
+  console.log("Boolean(course.isTemplate):", Boolean(course.isTemplate));
+
   let processedLearningOutcomes = course.learningOutcomes;
 
   // Handle the case where learning outcomes are provided as a string (from form input)
@@ -55,7 +63,15 @@ export const mapCourseToDb = (course: CourseFormData): any => {
   // Ensure status is either "draft" or "published"
   const status = course.status === "published" ? "published" : "draft";
 
-  return {
+  // Explicitly ensure isTemplate is a boolean and handle edge cases
+  let isTemplateValue = false;
+  if (course.isTemplate === true || course.isTemplate === 'true' || course.isTemplate === 1) {
+    isTemplateValue = true;
+  }
+
+  console.log("Final isTemplateValue:", isTemplateValue);
+
+  const dbData = {
     title: course.title,
     description: course.description,
     dates: course.dates,
@@ -79,11 +95,25 @@ export const mapCourseToDb = (course: CourseFormData): any => {
     status: status,
     google_drive_folder_id: course.googleDriveFolderId,
     google_drive_folder_url: course.googleDriveFolderUrl,
-    is_template: course.isTemplate || false,
+    is_template: isTemplateValue,
     template_id: course.templateId,
     image_url: course.imageUrl,
     image_aspect_ratio: course.imageAspectRatio || "16/9",
     image_size: course.imageSize || 100,
     image_layout: course.imageLayout || "standard"
   };
+
+  console.log("Final dbData.is_template:", dbData.is_template);
+  console.log("Final dbData object:", dbData);
+  console.log("=== mapCourseToDb DEBUG END ===");
+
+  // Add validation to catch templates being saved incorrectly
+  if (course.isTemplate && !dbData.is_template) {
+    console.error("CRITICAL ERROR: Template flag lost during mapping!");
+    console.error("Original course.isTemplate:", course.isTemplate);
+    console.error("Final dbData.is_template:", dbData.is_template);
+    throw new Error("Template flag validation failed - template would be saved as regular course");
+  }
+
+  return dbData;
 };
