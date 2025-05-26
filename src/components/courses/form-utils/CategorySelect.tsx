@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, PlusCircle } from "lucide-react";
@@ -107,11 +106,8 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
 
   console.log("CategorySelect: Current category:", currentCategory);
 
-  const handleCategorySelect = (selectedValue: string) => {
-    console.log("CategorySelect: Category selected:", selectedValue);
-    console.log("CategorySelect: Current value before change:", value);
-    
-    // Directly use the selected value since it matches our category.value
+  const handleValueChange = (selectedValue: string) => {
+    console.log("CategorySelect: Command value changed to:", selectedValue);
     onValueChange(selectedValue);
     setOpen(false);
   };
@@ -134,7 +130,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0 bg-white dark:bg-gray-800 border shadow-md z-50" align="start">
-          <Command className="bg-white dark:bg-gray-800">
+          <Command 
+            className="bg-white dark:bg-gray-800"
+            value={value}
+            onValueChange={handleValueChange}
+          >
             <CommandInput placeholder="Search categories..." />
             <CommandList>
               <CommandEmpty>No category found.</CommandEmpty>
@@ -143,11 +143,6 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                   <CommandItem
                     key={category.value}
                     value={category.value}
-                    onSelect={(currentValue) => {
-                      console.log("CommandItem onSelect triggered with:", currentValue);
-                      console.log("Category object:", category);
-                      handleCategorySelect(currentValue);
-                    }}
                     className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                   >
                     <Check
