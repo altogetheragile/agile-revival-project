@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
+// Define category type
 interface Category {
   id?: string;
   value: string;
@@ -35,27 +36,24 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   onValueChange,
   categories,
   className,
+  onDelete,
 }) => {
   const [open, setOpen] = useState(false);
 
-  // Guard 1: Don't render if categories are not loaded yet
+  // Guard: Don't render until categories are loaded
   if (!categories || categories.length === 0) {
-    return <div className="h-10 w-full bg-gray-100 animate-pulse rounded-md" />;
+    return null;
   }
 
-  // Guard 2: Don't render if value exists but doesn't match any category
-  const currentCategory = categories.find(cat => cat.value === value);
-  if (value && !currentCategory) {
-    console.warn("CategorySelect: selected value not found in categories →", value);
-    return <div className="h-10 w-full bg-gray-100 animate-pulse rounded-md" />;
-  }
+  // Get the current category object
+  const currentCategory = categories.find((cat) => cat.value === value);
 
-  // Optional dev-time warning
+  // Warn if value exists but doesn't match any category
   useEffect(() => {
-    if (value && !categories.some(c => c.value === value)) {
-      console.warn("⚠️ CategorySelect: Selected value does not match any category", value);
+    if (value && !currentCategory) {
+      console.warn("⚠️ CategorySelect: value does not match any category:", value);
     }
-  }, [categories, value]);
+  }, [value, currentCategory]);
 
   const handleValueChange = (selectedValue: string) => {
     onValueChange(selectedValue);
@@ -72,13 +70,14 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             aria-expanded={open}
             className="w-full justify-between"
           >
-            {value && currentCategory
-              ? currentCategory.label
-              : "Select category..."}
+            {currentCategory ? currentCategory.label : "Select category..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0 bg-white dark:bg-gray-800 border shadow-md z-50" align="start">
+        <PopoverContent
+          className="w-full p-0 bg-white dark:bg-gray-800 border shadow-md z-50"
+          align="start"
+        >
           <Command className="bg-white dark:bg-gray-800">
             <CommandInput placeholder="Search categories..." />
             <CommandList>
@@ -86,14 +85,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
               <CommandGroup>
                 {categories.map((category) => {
                   const isSelected = value === category.value;
-
                   return (
                     <CommandItem
                       key={category.value}
                       value={category.value}
-                      onSelect={() => {
-                        handleValueChange(category.value);
-                      }}
+                      onSelect={() => handleValueChange(category.value)}
                       className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                     >
                       <Check
