@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   FormControl,
@@ -149,16 +150,12 @@ export const BasicCourseFields: React.FC<BasicCourseFieldsProps> = ({ form }) =>
               ) : (
                 <CategorySelect
                   categories={categories}
-                  value={
-                    categories.some(c => c.value === field.value)
-                      ? field.value
-                      : ""
-                  }
-                  onValueChange={(value) => {
-                    if (value === "__add_category__") {
+                  value={categories.find(cat => cat.value === field.value) || null}
+                  onValueChange={(selectedCategory) => {
+                    if (selectedCategory === null) {
                       setCategoryAddMode(true);
                     } else {
-                      field.onChange(value);
+                      field.onChange(selectedCategory.value);
                     }
                   }}
                   onDelete={(value, e) => {

@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   FormControl,
@@ -113,14 +112,11 @@ export const BasicEventFields: React.FC<BasicEventFieldsProps> = ({ form }) => {
                     }
                   }}
                   onDelete={(value, e) => {
-                    // If the current value is being deleted, reset to a default
                     if (value === field.value) {
                       field.onChange(eventTypes[0]?.value || "");
                     }
                     
-                    handleDeleteEventType(value, () => {
-                      // This callback is called when deletion is successful
-                    });
+                    handleDeleteEventType(value, () => {});
                   }}
                 />
               )}
@@ -151,23 +147,20 @@ export const BasicEventFields: React.FC<BasicEventFieldsProps> = ({ form }) => {
               ) : (
                 <CategorySelect
                   categories={categories}
-                  value={field.value}
-                  onValueChange={(value) => {
-                    if (value === "__add_category__") {
+                  value={categories.find(cat => cat.value === field.value) || null}
+                  onValueChange={(selectedCategory) => {
+                    if (selectedCategory === null) {
                       setCategoryAddMode(true);
                     } else {
-                      field.onChange(value);
+                      field.onChange(selectedCategory.value);
                     }
                   }}
                   onDelete={(value, e) => {
-                    // If the current value is being deleted, reset to a default
                     if (value === field.value) {
                       field.onChange(categories[0]?.value || "");
                     }
                     
-                    handleDeleteCategory(value, () => {
-                      // This callback is called when deletion is successful
-                    });
+                    handleDeleteCategory(value, () => {});
                   }}
                 />
               )}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, Trash2 } from "lucide-react";
@@ -23,8 +24,8 @@ interface Category {
 }
 
 interface CategorySelectProps {
-  value: string;
-  onValueChange: (value: string) => void;
+  value: Category | null;
+  onValueChange: (category: Category | null) => void;
   categories: Category[];
   className?: string;
   onDelete?: (value: string, e: React.MouseEvent) => void;
@@ -41,10 +42,16 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
 
   // Guard: Don't render until categories are available
   if (!categories || categories.length === 0) {
+    console.log("⚠️ CategorySelect: Skipping render — no categories yet");
     return <div className="h-10 w-full bg-gray-100 animate-pulse rounded-md" />;
   }
 
-  const currentCategory = categories.find((c) => c.value === value);
+  // Add debugging to catch value/option mismatches
+  useEffect(() => {
+    if (value && !categories.some(c => c.value === value.value)) {
+      console.warn("⚠️ CategorySelect: Selected value does not match any category", value);
+    }
+  }, [categories, value]);
 
   return (
     <div className={className}>
@@ -56,12 +63,12 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             aria-expanded={open}
             className="w-full justify-between"
           >
-            {currentCategory ? currentCategory.label : "Select category..."}
+            {value ? value.label : "Select category..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0 bg-white dark:bg-gray-800 border shadow-md z-50" align="start">
-          <Command value={value} onValueChange={onValueChange}>
+          <Command>
             <CommandInput placeholder="Search categories..." />
             <CommandList>
               <CommandEmpty>No category found.</CommandEmpty>
@@ -69,14 +76,17 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                 {categories.map((category) => (
                   <CommandItem
                     key={category.value}
-                    value={category.value}
+                    onSelect={() => {
+                      onValueChange(category);
+                      setOpen(false);
+                    }}
                     className="flex justify-between items-center"
                   >
                     <div className="flex items-center">
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          value === category.value ? "opacity-100" : "opacity-0"
+                          value?.value === category.value ? "opacity-100" : "opacity-0"
                         )}
                       />
                       {category.label}

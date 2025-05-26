@@ -52,8 +52,10 @@ export const EventSection: React.FC<EventSectionProps> = ({
             <FormControl>
               <CategorySelect 
                 categories={categories}
-                value={field.value || ""} 
-                onValueChange={field.onChange}
+                value={categories.find(cat => cat.value === field.value) || null}
+                onValueChange={(selectedCategory) => {
+                  field.onChange(selectedCategory?.value || "");
+                }}
               />
             </FormControl>
             <FormMessage />

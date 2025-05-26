@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   FormControl,
@@ -55,17 +54,16 @@ export const CourseCategoryFields: React.FC<CourseCategoryFieldsProps> = ({ form
               <FormControl>
                 <CategorySelect
                   categories={categories}
-                  value={field.value}
-                  onValueChange={(val) => {
-                    if (val === "__add_category__") {
+                  value={categories.find(cat => cat.value === field.value) || null}
+                  onValueChange={(selectedCategory) => {
+                    if (selectedCategory === null) {
                       setAddMode(true);
                     } else {
-                      field.onChange(val);
+                      field.onChange(selectedCategory.value);
                     }
                   }}
                   onDelete={(value, e) => {
                     handleDeleteCategory(value, (deletedValue) => {
-                      // If currently selected category was deleted, select the first available category or empty string
                       if (field.value === deletedValue) {
                         field.onChange(categories[0]?.value ?? "");
                       }
