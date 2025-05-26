@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
 import {
@@ -39,6 +39,18 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   className,
 }) => {
   const [open, setOpen] = useState(false);
+
+  // Guard: Don't render if categories are not loaded yet
+  if (!categories || categories.length === 0) {
+    return null;
+  }
+
+  // Value validation: warn if selected value doesn't exist in categories
+  useEffect(() => {
+    if (value && !categories.some(c => c.value === value)) {
+      console.warn("⚠️ CategorySelect: Selected value does not match any category", value);
+    }
+  }, [categories, value]);
 
   const currentCategory = categories.find((category) => category.value === value);
 
